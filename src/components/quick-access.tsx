@@ -15,7 +15,7 @@ export default function QuickAccess({ links }: QuickAccessProps) {
   }
 
   return (
-    <div className="my-0">
+    <div className="my-3 sm:my-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
