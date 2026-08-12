@@ -200,6 +200,12 @@ export default function Sidebar({
     })),
   ];
 
+  const workspaceTools = [
+    { id: "feature-calendar", name: "日历日程", icon: "📅" },
+    { id: "feature-projects", name: "项目管理", icon: "🗂️" },
+    { id: "feature-dashboard", name: "数据看板", icon: "📈" },
+  ];
+
   return (
     <>
       {/* Mobile Top Bar */}
@@ -254,6 +260,9 @@ export default function Sidebar({
 
           {/* Main Navigation Menu - 在品牌与底部抽屉之间滚动 */}
           <nav className="flex-1 min-h-0 flex flex-col gap-1.5 overflow-y-auto pr-1 scrollbar-thin">
+            <div className="px-3.5 mb-1 text-[10px] font-bold tracking-wider text-gray-400 dark:text-slate-500 uppercase">
+              分类书签
+            </div>
             {dynamicNavItems.map((item) => {
               const isSelected = activeCategory === item.id;
 
@@ -272,6 +281,32 @@ export default function Sidebar({
                 >
                   <span className="text-sm">{item.icon}</span>
                   <span className="truncate">{item.name}</span>
+                </button>
+              );
+            })}
+
+            {/* 工作空间应用扩展：日历日程、项目管理、数据看板 */}
+            <div className="px-3.5 mt-4 mb-1 text-[10px] font-bold tracking-wider text-gray-400 dark:text-slate-500 uppercase">
+              工作空间
+            </div>
+            {workspaceTools.map((tool) => {
+              const isSelected = activeCategory === tool.id;
+
+              return (
+                <button
+                  key={tool.id}
+                  onClick={() => {
+                    onSelectCategory(tool.id);
+                    setMobileOpen(false);
+                  }}
+                  className={`flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                    isSelected
+                      ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                  }`}
+                >
+                  <span className="text-sm">{tool.icon}</span>
+                  <span className="truncate">{tool.name}</span>
                 </button>
               );
             })}

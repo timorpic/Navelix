@@ -7,6 +7,9 @@ import QuickAccess from "@/components/quick-access";
 import RightSidebar from "@/components/right-sidebar";
 import CardGrid from "@/components/card-grid";
 import CategoryColumns from "@/components/category-columns";
+import CalendarView from "@/components/calendar-view";
+import ProjectsView from "@/components/projects-view";
+import DashboardView from "@/components/dashboard-view";
 import { useNavelixData } from "@/hooks/use-navelix-data";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useLinkStatus } from "@/hooks/use-link-status";
@@ -98,11 +101,17 @@ export default function Home() {
             onSearchChange={setSearchQuery}
           />
 
-          {isFiltering ? (
+          {activeCategory === "feature-calendar" ? (
+            <CalendarView />
+          ) : activeCategory === "feature-projects" ? (
+            <ProjectsView />
+          ) : activeCategory === "feature-dashboard" ? (
+            <DashboardView categories={categories} links={links} config={config} />
+          ) : isFiltering ? (
             /* Search / Category Filtered View */
             <div className="flex flex-col gap-4 mt-2">
               <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-gray-900">
+                <h2 className="text-base font-bold text-gray-900 dark:text-white">
                   {activeCategory === "all"
                     ? `搜索结果 ("${searchQuery}")`
                     : categories.find((c) => c.id === activeCategory)?.name ||
@@ -113,7 +122,7 @@ export default function Home() {
                     setActiveCategory("all");
                     setSearchQuery("");
                   }}
-                  className="text-xs text-[#00C776] hover:underline"
+                  className="text-xs text-[#00C776] hover:underline cursor-pointer"
                 >
                   清除筛选
                 </button>

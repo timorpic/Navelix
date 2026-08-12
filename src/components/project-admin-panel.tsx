@@ -59,7 +59,7 @@ export default function ProjectAdminPanel() {
     load();
   };
 
-  const startEdit = (p: Project) => { setEditing(p); setName(p.name); setColor(p.color); setError(""); };
+  const startEdit = (p: Project) => { setEditing(p); setName(p.name); setColor(p.color || "#00C776"); setError(""); };
 
   const todoCount = (pid: string) => todos.filter((t) => t.projectId === pid).length;
   const doneCount = (pid: string) => todos.filter((t) => t.projectId === pid && t.done).length;

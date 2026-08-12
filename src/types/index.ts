@@ -42,8 +42,11 @@ export interface TodoItem {
 export interface Project {
   id: string;
   name: string;
-  color: string;
-  sortOrder: number;
+  status?: string;
+  statusColor?: string;
+  url?: string;
+  color?: string;
+  sortOrder?: number;
 }
 
 export interface SystemConfig {
