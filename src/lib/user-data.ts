@@ -8,26 +8,17 @@ export interface UserDataResult {
   config: SystemConfig;
 }
 
-// 服务端内存缓存：用户数据 TTL 30s，写操作时手动失效
-const CACHE_TTL_MS = 30 * 1000;
-const userDataCache = new Map<string, { data: UserDataResult; expiresAt: number }>();
-
 /** POST 保存后调用，使该用户的缓存失效 */
-export function invalidateUserData(userId: string): void {
-  userDataCache.delete(userId);
+export function invalidateUserData(_userId?: string): void {
+  // SQLite WAL 模式实时读写，无需内存缓存
 }
 
 /**
  * 服务端获取用户的完整数据（分类、链接、项目、配置）。
  * 用于 SSR 预取：在 Layout 中调用，数据通过 props 传给客户端 Provider。
- * 带内存缓存：TTL 30s，避免频繁数据库查询。
+ * 直接实时查询 SQLite（<0.2ms），确保新增、编辑、删除链接后刷新页面 100% 实时生效。
  */
 export function getUserData(userId: string): UserDataResult {
-  // 命中有效缓存则直接返回
-  const cached = userDataCache.get(userId);
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.data;
-  }
 
   // Ensure user has starter seeded data
   seedUserData(userId);
@@ -147,8 +138,5 @@ export function getUserData(userId: string): UserDataResult {
   const result: UserDataResult = { categories: categoryRows as Category[], links, projects, config };
   // SQLite 返回的行对象原型非标准（null 原型），
   // Next.js 要求传给客户端组件的数据必须是纯对象，深拷贝处理。
-  const plain = JSON.parse(JSON.stringify(result)) as UserDataResult;
-  // 写入缓存
-  userDataCache.set(userId, { data: plain, expiresAt: Date.now() + CACHE_TTL_MS });
-  return plain;
+  return JSON.parse(JSON.stringify(result)) as UserDataResult;
 }

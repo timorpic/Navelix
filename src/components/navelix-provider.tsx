@@ -209,7 +209,13 @@ export function NavelixProvider({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ categories: nextCats, links: nextLinks }),
-      }).catch((e) => console.warn("[Navelix] 保存失败", e));
+      })
+        .then((res) => {
+          if (!res.ok) {
+            console.error("[Navelix] 保存配置至服务器失败 HTTP Status:", res.status);
+          }
+        })
+        .catch((e) => console.warn("[Navelix] 保存失败", e));
 
       try {
         localStorage.setItem(
