@@ -92,9 +92,9 @@ export default function KnowledgeGraph({
       </div>
 
       {/* Constellation Network Canvas Container */}
-      <div className="relative flex-1 min-h-[250px] w-full bg-[#0d121d] dark:bg-[#0b0f19] rounded-2xl border border-slate-800 overflow-hidden select-none">
+      <div className="relative flex-1 min-h-[250px] w-full bg-[#f8fafc] dark:bg-[#0b0f19] rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden select-none transition-colors">
         {/* Ambient Glow Gradient Background */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,199,118,0.08)_0%,transparent_70%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,199,118,0.12)_0%,transparent_70%)] dark:bg-[radial-gradient(circle_at_center,rgba(0,199,118,0.08)_0%,transparent_70%)] pointer-events-none" />
 
         {/* SVG Constellation Web Connection Lines */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
@@ -108,10 +108,10 @@ export default function KnowledgeGraph({
                 y1="50%"
                 x2={`${pos.x}%`}
                 y2={`${pos.y}%`}
-                stroke={isHovered ? pos.color.line : "rgba(255, 255, 255, 0.12)"}
-                strokeWidth={isHovered ? "1.8" : "1"}
+                stroke={isHovered ? pos.color.line : "rgba(148, 163, 184, 0.35)"}
+                strokeWidth={isHovered ? "2" : "1"}
                 strokeDasharray={isHovered ? "none" : "3 3"}
-                className="transition-all duration-200"
+                className="transition-all duration-200 dark:stroke-[rgba(255,255,255,0.12)]"
               />
             );
           })}
@@ -126,16 +126,17 @@ export default function KnowledgeGraph({
                 y1={`${pos.y}%`}
                 x2={`${nextPos.x}%`}
                 y2={`${nextPos.y}%`}
-                stroke="rgba(255, 255, 255, 0.08)"
+                stroke="rgba(148, 163, 184, 0.2)"
                 strokeWidth="1"
                 strokeDasharray="2 2"
+                className="dark:stroke-[rgba(255,255,255,0.08)]"
               />
             );
           })}
         </svg>
 
         {/* Central Core Hub Node */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-purple-900/90 to-indigo-900/90 border border-purple-400/40 text-white shadow-[0_0_25px_rgba(168,85,247,0.5)] backdrop-blur-md">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-900/90 dark:to-indigo-900/90 border border-purple-300 dark:border-purple-400/40 text-white shadow-[0_0_20px_rgba(147,51,234,0.3)] dark:shadow-[0_0_25px_rgba(168,85,247,0.5)] backdrop-blur-md">
           <span className="text-base animate-pulse">{centerIcon}</span>
           <span className="text-xs font-black tracking-wide truncate max-w-[90px]">
             {centerTitle}
@@ -165,15 +166,15 @@ export default function KnowledgeGraph({
                 <span
                   className={`w-3.5 h-3.5 rounded-full transition-transform duration-200 ${
                     pos.color.dot
-                  } ${isHovered ? "scale-130 ring-2 ring-white/60" : "scale-100"}`}
+                  } ${isHovered ? "scale-130 ring-2 ring-emerald-400/80 dark:ring-white/60" : "scale-100"}`}
                 />
 
                 {/* Translucent Glass Pill Label */}
                 <div
                   className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap transition-all duration-200 backdrop-blur-md border ${
                     isHovered
-                      ? "bg-[#00C776] text-white border-[#00C776] shadow-[0_0_15px_rgba(0,199,118,0.6)]"
-                      : "bg-slate-900/80 text-slate-200 border-slate-700/80 group-hover:border-slate-500"
+                      ? "bg-[#00C776] text-white border-[#00C776] shadow-[0_0_15px_rgba(0,199,118,0.5)]"
+                      : "bg-white/95 text-gray-800 border-gray-200/90 shadow-2xs dark:bg-slate-900/90 dark:text-slate-200 dark:border-slate-700/80 group-hover:border-[#00C776]"
                   }`}
                 >
                   {pos.link.title}
