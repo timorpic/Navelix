@@ -45,7 +45,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/${{ github.repository }}
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
             ${{ env.DOCKERHUB_USERNAME != '' && format('docker.io/{0}/navelix', env.DOCKERHUB_USERNAME) || '' }}
           tags: |
             # sha-<short> — 每次构建，不可变锚点
@@ -57,6 +57,8 @@ jobs:
             # semver — 只有推送 Git tag（v1.0.0）时才生成
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+          flavor: |
+            lowercase=true
 
       - name: Get build metadata
         id: date
