@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useNavelixData } from "@/hooks/use-navelix-data";
 import type { AIChatMessage } from "@/types";
-import TodoWidget from "./todo-widget";
 import FocusStatsWidget from "./focus-stats-widget";
 import ActivityFeed from "./activity-feed";
 
@@ -212,9 +211,6 @@ export default function RightSidebar() {
 
       {/* Widget 1.4: Focus Stats */}
       <FocusStatsWidget />
-
-      {/* Widget 1.5: Todo List */}
-      <TodoWidget />
 
       {/* Widget 2: Activity Feed */}
       <ActivityFeed links={links} />

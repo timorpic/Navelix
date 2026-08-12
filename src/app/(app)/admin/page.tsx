@@ -27,7 +27,7 @@ import {
 import { resolveAvatar } from "@/lib/avatars";
 import type { Category, SiteLink } from "@/types";
 import AdminUsersPanel from "./admin-users";
-import TodoAdminPanel from "@/components/todo-admin-panel";
+import ScheduleAdminPanel from "@/components/schedule-admin-panel";
 import ProjectAdminPanel from "@/components/project-admin-panel";
 
 
@@ -36,10 +36,8 @@ type AdminTab =
   | "categories"
   | "quickAccess"
   | "projects"
-  | "todos"
-  | "personalization"
+  | "schedules"
   | "users"
-  | "data"
   | "analytics"
   | "system";
 
@@ -108,6 +106,8 @@ export default function AdminPage() {
 
   // Active Admin Tab
   const [activeTab, setActiveTab] = useState<AdminTab>("links");
+  const [systemSubTab, setSystemSubTab] = useState<"global" | "personalization">("global");
+  const [systemSubMenuOpen, setSystemSubMenuOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
 
@@ -251,7 +251,8 @@ export default function AdminPage() {
 
   // 打开个性化设置时同步当前头像草稿（渲染期同步，避免 effect 重置用户正在编辑的草稿）
   if (
-    activeTab === "personalization" &&
+    activeTab === "system" &&
+    systemSubTab === "personalization" &&
     currentUser &&
     avatarDraftSource !== (currentUser.avatar || "")
   ) {
@@ -271,9 +272,8 @@ export default function AdminPage() {
       label: "快捷访问",
       badge: links.filter((l) => l.isQuickAccess).length,
     },
-    { id: "todos", icon: "✅", label: "待办事项" },
     { id: "projects", icon: "📁", label: "项目管理" },
-    { id: "personalization", icon: "🎨", label: "个性化设置" },
+    { id: "schedules", icon: "📅", label: "日程管理" },
     ...(currentUser?.role === "admin"
       ? [
           {
@@ -284,7 +284,6 @@ export default function AdminPage() {
           },
         ]
       : []),
-    { id: "data", icon: "📦", label: "配置导入导出" },
     { id: "analytics", icon: "📊", label: "访问统计" },
     { id: "system", icon: "⚙️", label: "系统设置" },
   ];
@@ -596,31 +595,71 @@ export default function AdminPage() {
     }
   };
 
-  const handleExport = () => {
-    // Never write the AI API key into an exported config file.
-    const safeConfig = { ...config };
-    delete safeConfig.aiApiKey;
-    delete safeConfig.weatherApiKey;
-    const data = JSON.stringify(
-      { categories, links, config: safeConfig, exportTime: new Date().toISOString() },
-      null,
-      2,
-    );
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `navelix-full-config-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    notify("数据管理", "全量配置文件导出成功");
+  const handleExport = async () => {
+    try {
+      // 1. Fetch latest DB data for user (categories, links, projects, todos, config)
+      const res = await fetch("/api/user/data");
+      const dbData = res.ok ? await res.json() : {};
+
+      const safeConfig = { ...(dbData.config || config) };
+      delete safeConfig.aiApiKey;
+      delete safeConfig.weatherApiKey;
+
+      // 2. Collect local storage state (Focus Tracker stats, Quick Notes, Link Usage)
+      let focusTracker = null;
+      let quickNotes = null;
+      let linkUsage = null;
+
+      try {
+        focusTracker = JSON.parse(localStorage.getItem("navelix.focus.tracker.v1") || "null");
+      } catch { /* ignore */ }
+      try {
+        quickNotes = JSON.parse(localStorage.getItem("navelix.quick.notes") || "null");
+      } catch { /* ignore */ }
+      try {
+        linkUsage = JSON.parse(localStorage.getItem("navelix.link.usage") || "null");
+      } catch { /* ignore */ }
+
+      const exportPayload = {
+        version: "2.0",
+        exportTime: new Date().toISOString(),
+        categories: dbData.categories || categories,
+        links: dbData.links || links,
+        projects: dbData.projects || [],
+        todos: dbData.todos || [],
+        config: safeConfig,
+        localStorageData: {
+          focusTracker,
+          quickNotes,
+          linkUsage,
+        },
+      };
+
+      const dataStr = JSON.stringify(exportPayload, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `navelix-full-backup-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      const projectCount = (dbData.projects || []).length;
+      const todoCount = (dbData.todos || []).length;
+      notify(
+        "数据管理",
+        `全量数据导出成功：包含 ${(dbData.links || links).length} 链接、${(dbData.categories || categories).length} 分组、${projectCount} 项目、${todoCount} 日程`,
+      );
+    } catch {
+      flash("导出全量配置失败");
+    }
   };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const parsed = JSON.parse(String(reader.result));
         const cats: Category[] = Array.isArray(parsed.categories)
@@ -638,20 +677,61 @@ export default function AdminPage() {
                 typeof l.url === "string",
             )
           : [];
-        if (parsed.config) {
-          // Do not restore a previously exported API key.
-          const safeCfg = { ...parsed.config };
+        const projs = Array.isArray(parsed.projects) ? parsed.projects : [];
+        const tds = Array.isArray(parsed.todos) ? parsed.todos : [];
+
+        // Save categories, links, projects, todos, and config to DB
+        const safeCfg = parsed.config ? { ...parsed.config } : undefined;
+        if (safeCfg) {
           delete safeCfg.aiApiKey;
           delete safeCfg.weatherApiKey;
+        }
+
+        const saveRes = await fetch("/api/user/data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            categories: cats,
+            links: lnks,
+            projects: projs,
+            todos: tds,
+            config: safeCfg,
+          }),
+        });
+
+        if (!saveRes.ok) {
+          throw new Error("保存数据到服务器失败");
+        }
+
+        // Restore LocalStorage items if present
+        if (parsed.localStorageData) {
+          const ls = parsed.localStorageData;
+          if (ls.focusTracker) {
+            localStorage.setItem("navelix.focus.tracker.v1", JSON.stringify(ls.focusTracker));
+          }
+          if (ls.quickNotes) {
+            localStorage.setItem("navelix.quick.notes", JSON.stringify(ls.quickNotes));
+          }
+          if (ls.linkUsage) {
+            localStorage.setItem("navelix.link.usage", JSON.stringify(ls.linkUsage));
+          }
+        }
+
+        if (safeCfg) {
           updateConfig(safeCfg);
         }
         importData(cats, lnks);
+
         notify(
           "数据管理",
-          `全量配置导入成功：包含 ${lnks.length} 个链接与 ${cats.length} 个分组`,
+          `全网全量配置导入成功：恢复 ${lnks.length} 链接、${cats.length} 分组、${projs.length} 项目、${tds.length} 日程`,
         );
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 1200);
       } catch {
-        flash("导入失败：无效的 JSON 配置文件");
+        flash("导入失败：无效或损坏的 JSON 配置文件");
       }
       if (fileRef.current) fileRef.current.value = "";
     };
@@ -721,7 +801,76 @@ export default function AdminPage() {
 
           {/* Admin Navigation Menu Items with Badge Counters */}
           <nav className="flex flex-col gap-1.5">
-            {adminNavItems.map((item) => renderNavButton(item))}
+            {adminNavItems.map((item) => {
+              if (item.id === "system") {
+                const isSystemActive = activeTab === "system";
+                return (
+                  <div key="system-menu" className="flex flex-col gap-1">
+                    <button
+                      onClick={() => {
+                        setActiveTab("system");
+                        setSystemSubMenuOpen((prev) => (isSystemActive ? !prev : true));
+                      }}
+                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                        isSystemActive
+                          ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
+                          : "text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-sm">⚙️</span>
+                        <span className="truncate">系统设置</span>
+                      </div>
+                      <svg
+                        className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                          systemSubMenuOpen || isSystemActive ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {/* Sub-menu Items */}
+                    {(systemSubMenuOpen || isSystemActive) && (
+                      <div className="pl-4 pr-1 py-1 flex flex-col gap-1 border-l-2 border-gray-200 dark:border-slate-700/60 ml-4 my-0.5 animate-fadeIn">
+                        <button
+                          onClick={() => {
+                            setActiveTab("system");
+                            setSystemSubTab("global");
+                          }}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                            isSystemActive && systemSubTab === "global"
+                              ? "bg-teal-50 dark:bg-teal-950/60 text-[#00C776] font-bold"
+                              : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800/60"
+                          }`}
+                        >
+                          <span className="text-xs">⚙️</span>
+                          <span>全局与数据</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setActiveTab("system");
+                            setSystemSubTab("personalization");
+                          }}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                            isSystemActive && systemSubTab === "personalization"
+                              ? "bg-teal-50 dark:bg-teal-950/60 text-[#00C776] font-bold"
+                              : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800/60"
+                          }`}
+                        >
+                          <span className="text-xs">🎨</span>
+                          <span>个性化外观</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              return renderNavButton(item);
+            })}
           </nav>
         </div>
 
@@ -1468,14 +1617,403 @@ export default function AdminPage() {
           )}
 
 
-          {/* TAB 3.5: ✅ 待办事项管理 */}
-          {activeTab === "todos" && <TodoAdminPanel />}
-
           {/* TAB 3.6: 📁 项目管理 */}
           {activeTab === "projects" && <ProjectAdminPanel />}
 
-          {/* TAB 3: 🎨 个性化设置 */}
-          {activeTab === "personalization" && (
+          {/* TAB 3.7: 📅 日程管理 */}
+          {activeTab === "schedules" && <ScheduleAdminPanel />}
+
+          {/* TAB 4: 👤 账号管理 */}
+          {activeTab === "users" && currentUser?.role === "admin" && <AdminUsersPanel />}
+
+          {/* TAB 6: 📊 访问统计 */}
+          {activeTab === "analytics" && (
+            <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
+              <div>
+                <h2 className="text-base font-bold text-gray-900 dark:text-white">访问数据与热门统计</h2>
+                <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
+                  基于本机浏览器记录的真实点击数据（localStorage）
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 bg-gray-50 dark:bg-slate-900/60 rounded-xl text-center">
+                  <span className="text-xs text-gray-400 dark:text-slate-400">今日总点击量</span>
+                  <p className="text-2xl font-extrabold text-gray-900 dark:text-white mt-1">
+                    {usageStats.todayClicks > 0
+                      ? `${usageStats.todayClicks.toLocaleString()} 次`
+                      : "暂无数据"}
+                  </p>
+                </div>
+                <div className="p-4 bg-gray-50 dark:bg-slate-900/60 rounded-xl text-center">
+                  <span className="text-xs text-gray-400 dark:text-slate-400">最受关注分类</span>
+                  <p className="text-2xl font-extrabold text-teal-600 dark:text-teal-400 mt-1">
+                    {usageStats.topCategoryId
+                      ? categoryName(usageStats.topCategoryId)
+                      : "暂无数据"}
+                  </p>
+                </div>
+                <div className="p-4 bg-gray-50 dark:bg-slate-900/60 rounded-xl text-center">
+                  <span className="text-xs text-gray-400 dark:text-slate-400">热度最高链接</span>
+                  <p className="text-2xl font-extrabold text-purple-600 dark:text-purple-400 mt-1">
+                    {usageStats.topLink?.title || "暂无数据"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 7: ⚙️ 系统设置 */}
+          {activeTab === "system" && (
+            <div className="space-y-5">
+              {/* 二级子菜单 Tab 选项卡 */}
+              <div className="flex items-center gap-2 border-b border-gray-200 dark:border-slate-700/80 pb-3">
+                <button
+                  onClick={() => setSystemSubTab("global")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    systemSubTab === "global"
+                      ? "bg-[#00C776] text-white shadow-xs"
+                      : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200/80 dark:border-slate-700"
+                  }`}
+                >
+                  <span>⚙️</span>
+                  <span>全局与数据管理</span>
+                </button>
+                <button
+                  onClick={() => setSystemSubTab("personalization")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    systemSubTab === "personalization"
+                      ? "bg-[#00C776] text-white shadow-xs"
+                      : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200/80 dark:border-slate-700"
+                  }`}
+                >
+                  <span>🎨</span>
+                  <span>个性化与外观配置</span>
+                </button>
+              </div>
+
+              {/* 子菜单 1：全局与数据管理 */}
+              {systemSubTab === "global" && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* 左栏：系统全局参数设置 (5 cols) */}
+              <div className="lg:col-span-5 bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
+                <div>
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white">系统全局参数设置</h2>
+                  <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
+                    站点标题、搜索引擎、链接状态检测与数据维护
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label
+                      htmlFor="admin-site-title"
+                      className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1"
+                    >
+                      站点标题（浏览器标签页）
+                    </label>
+                    <input
+                      id="admin-site-title"
+                      name="siteTitle"
+                      type="text"
+                      value={config.siteTitle || ""}
+                      onChange={(e) => updateConfig({ siteTitle: e.target.value })}
+                      placeholder="Navelix · Personal Digital Hub"
+                      className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-lg px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="admin-search-engine"
+                      className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1"
+                    >
+                      默认搜索引擎
+                    </label>
+                    <select
+                      id="admin-search-engine"
+                      name="searchEngine"
+                      value={config.searchEngine}
+                      onChange={(e) =>
+                        updateConfig({
+                          searchEngine: e.target.value as "google" | "baidu" | "bing" | "perplexity",
+                        })
+                      }
+                      className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-lg px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
+                    >
+                      <option value="google">Google</option>
+                      <option value="baidu">Baidu</option>
+                      <option value="bing">Bing</option>
+                      <option value="perplexity">Perplexity AI</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
+                    <div>
+                      <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
+                        链接状态检测
+                      </p>
+                      <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
+                        定时检查书签在线/离线状态
+                      </p>
+                    </div>
+                    <button
+                      onClick={() =>
+                        updateConfig({
+                          linkStatusEnabled: !config.linkStatusEnabled,
+                        })
+                      }
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                        config.linkStatusEnabled
+                          ? "bg-[#00C776] text-white"
+                          : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
+                      }`}
+                    >
+                      {config.linkStatusEnabled ? "已开启" : "已关闭"}
+                    </button>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="admin-link-status-interval"
+                      className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1"
+                    >
+                      检测间隔
+                    </label>
+                    <select
+                      id="admin-link-status-interval"
+                      name="linkStatusInterval"
+                      value={config.linkStatusInterval || 60}
+                      onChange={(e) =>
+                        updateConfig({
+                          linkStatusInterval: Number(e.target.value),
+                        })
+                      }
+                      className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-lg px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
+                    >
+                      <option value={30}>每 30 秒</option>
+                      <option value={60}>每 60 秒（推荐）</option>
+                      <option value={120}>每 2 分钟</option>
+                      <option value={300}>每 5 分钟</option>
+                    </select>
+                  </div>
+
+                  <div className="pt-2 border-t border-gray-100 dark:border-slate-700/60 flex items-center gap-2">
+                    <button
+                      onClick={handleClearNotifications}
+                      className="px-3.5 py-1.5 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold cursor-pointer"
+                    >
+                      清空操作记录
+                    </button>
+                    <button
+                      onClick={() => setShowReset(true)}
+                      className="px-3.5 py-1.5 border border-rose-200 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl text-xs font-semibold cursor-pointer"
+                    >
+                      重置默认状态
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 右栏：📦 配置与数据导入导出 (7 cols) */}
+              <div className="lg:col-span-7 bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
+                <div>
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                    <span>📦</span>
+                    <span>配置与数据导入导出</span>
+                  </h3>
+                  <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
+                    支持一键导出 Navelix 全量配置，或从 Sun-Panel / Chrome HTML 书签导入数据
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* Card 1: Sun-Panel JSON 兼容导入 */}
+                  <div className="bg-gray-50/50 dark:bg-slate-900/40 rounded-2xl p-4 border border-teal-100 dark:border-teal-900/60 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">☀️</span>
+                      <h4 className="text-xs font-bold text-gray-900 dark:text-white">
+                        导入 Sun-Panel 配置文件
+                      </h4>
+                    </div>
+                    <p className="text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
+                      无缝兼容 Sun-Panel 导出的 JSON 配置文件，自动解析分类与网址并合并。
+                    </p>
+                    <input
+                      ref={sunPanelFileRef}
+                      type="file"
+                      name="sun-panel-file"
+                      accept=".json,application/json"
+                      aria-label="选择 Sun-Panel JSON 文件"
+                      className="hidden"
+                      onChange={handleSunPanelImport}
+                    />
+                    <button
+                      onClick={() => sunPanelFileRef.current?.click()}
+                      className="w-full py-1.5 bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <span>☀️</span>
+                      <span>选择 JSON 文件</span>
+                    </button>
+                  </div>
+
+                  {/* Card 2: Chrome / 浏览器 HTML 书签导入 */}
+                  <div className="bg-gray-50/50 dark:bg-slate-900/40 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">🌐</span>
+                      <h4 className="text-xs font-bold text-gray-900 dark:text-white">
+                        导入 Chrome / HTML 书签
+                      </h4>
+                    </div>
+                    <p className="text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
+                      解析 Chrome、Edge 或 Safari 导出的 HTML 书签文件并智能归类。
+                    </p>
+                    <input
+                      ref={bookmarkFileRef}
+                      type="file"
+                      name="bookmark-file"
+                      accept=".html,text/html"
+                      aria-label="选择 HTML 书签文件"
+                      className="hidden"
+                      onChange={handleBookmarksImport}
+                    />
+                    <button
+                      onClick={() => bookmarkFileRef.current?.click()}
+                      className="w-full py-1.5 bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-sky-600 dark:text-sky-400 text-xs font-semibold rounded-xl border border-sky-200 dark:border-sky-900 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <span>🌐</span>
+                      <span>选择 HTML 文件</span>
+                    </button>
+                  </div>
+
+                  {/* Card 3: 导出全量 Navelix JSON */}
+                  <div className="bg-gray-50/50 dark:bg-slate-900/40 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 space-y-2.5">
+                    <h4 className="text-xs font-bold text-gray-900 dark:text-white">导出全量配置 JSON</h4>
+                    <p className="text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
+                      导出包含全量书签、分组与个性化外观在内的 Navelix JSON 文件。
+                    </p>
+                    <button
+                      onClick={handleExport}
+                      className="w-full py-1.5 bg-gray-900 dark:bg-slate-700 hover:bg-black dark:hover:bg-slate-600 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                    >
+                      导出 Navelix JSON
+                    </button>
+                  </div>
+
+                  {/* Card 4: 导入全量 Navelix JSON */}
+                  <div className="bg-gray-50/50 dark:bg-slate-900/40 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 space-y-2.5">
+                    <h4 className="text-xs font-bold text-gray-900 dark:text-white">导入全量 Navelix JSON</h4>
+                    <p className="text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
+                      选择 Navelix 导出的 JSON 文件一键还原书签与外观配置。
+                    </p>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      name="navelix-config-file"
+                      accept=".json,application/json"
+                      aria-label="选择 Navelix JSON 文件"
+                      className="hidden"
+                      onChange={handleImport}
+                    />
+                    <button
+                      onClick={() => fileRef.current?.click()}
+                      className="w-full py-1.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                    >
+                      选择 Navelix JSON
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 底部：版本与更新 (12 cols) */}
+              <div className="lg:col-span-12 bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs transition-colors">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-lg">🔄</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                      版本与更新
+                    </h3>
+                    <p className="text-xs text-gray-400 dark:text-slate-400">
+                      对比 Docker Hub 的 latest 镜像，应用内自检更新
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={handleCheckUpdate}
+                    disabled={checkingUpdate}
+                    className="h-9 px-4 rounded-lg bg-[#14B8A6] hover:bg-[#0D9488] text-white text-xs font-semibold transition-colors disabled:opacity-60 cursor-pointer"
+                  >
+                    {checkingUpdate ? "检查中…" : "检查更新"}
+                  </button>
+                  {updateResult?.local?.isDockerBuild && (
+                    <span className="text-[11px] text-gray-400 dark:text-slate-400">
+                      当前版本：
+                      {updateResult.local.version
+                        ? updateResult.local.version
+                        : updateResult.local.sourceSha
+                        ? updateResult.local.sourceSha.slice(0, 7)
+                        : "unknown"}
+                      {updateResult.local.buildDate
+                        ? ` · ${new Date(updateResult.local.buildDate).toLocaleString("zh-CN")}`
+                        : ""}
+                    </span>
+                  )}
+                </div>
+
+                {updateResult && (
+                  <div className="mt-3">
+                    {updateResult.error && (
+                      <p className="text-xs text-red-500">{updateResult.error}</p>
+                    )}
+                    {!updateResult.error &&
+                      updateResult.updateAvailable === false && (
+                        <p className="text-xs text-emerald-600">
+                          ✅ 已是最新版本
+                          {updateResult.remote?.versionTag
+                            ? `（最新 ${updateResult.remote.versionTag}）`
+                            : updateResult.remote?.lastUpdated
+                            ? `（${new Date(updateResult.remote.lastUpdated).toLocaleString("zh-CN")} 构建）`
+                            : ""}
+                        </p>
+                      )}
+                    {!updateResult.error &&
+                      updateResult.updateAvailable === true && (
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40 p-3">
+                          <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                            🚀 检测到新版本
+                            {updateResult.remote?.versionTag
+                              ? `（${updateResult.remote.versionTag}）`
+                              : updateResult.remote?.lastUpdated
+                              ? `（${new Date(updateResult.remote.lastUpdated).toLocaleString("zh-CN")}）`
+                              : ""}
+                          </p>
+                          <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-500/80">
+                            请拉取最新镜像并重启容器。
+                          </p>
+                        </div>
+                      )}
+                    {!updateResult.error &&
+                      updateResult.updateAvailable === null &&
+                      !updateResult.local.isDockerBuild && (
+                        <p className="text-xs text-gray-400">
+                          当前不是 Docker 构建（开发环境），无法对比版本。
+                        </p>
+                      )}
+                    {!updateResult.error &&
+                      updateResult.updateAvailable === null &&
+                      updateResult.local.isDockerBuild && (
+                        <p className="text-xs text-gray-400">
+                          当前镜像为旧版本，缺少构建元数据，无法自动对比；请先升级到带自检能力的镜像后重试。
+                        </p>
+                      )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 子菜单 2：个性化与外观配置 */}
+          {systemSubTab === "personalization" && (
             <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100/90 dark:border-slate-700 shadow-2xs space-y-6 transition-colors">
               <div>
                 <h2 className="text-base font-bold text-gray-900 dark:text-white">个性化参数设置</h2>
@@ -1677,9 +2215,6 @@ export default function AdminPage() {
                       placeholder="https://api.openai.com/v1"
                       className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
                     />
-                    <p className="text-[10px] text-gray-400 dark:text-slate-400">
-                      支持第三方中转或自建 API 代理服务
-                    </p>
                   </div>
 
                   <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
@@ -1698,9 +2233,6 @@ export default function AdminPage() {
                       placeholder={config.aiKeyConfigured ? "已配置 - 留空则保持不变" : "sk-...（未配置）"}
                       className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
                     />
-                    <p className="text-[10px] text-gray-400 dark:text-slate-400">
-                      密钥安全保存在当前账号的独立配置中
-                    </p>
                   </div>
 
                   <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
@@ -1719,9 +2251,6 @@ export default function AdminPage() {
                       placeholder="gpt-4o-mini 或 deepseek-chat"
                       className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
                     />
-                    <p className="text-[10px] text-gray-400 dark:text-slate-400">
-                      例如: gpt-4o-mini, deepseek-chat, qwen-max
-                    </p>
                   </div>
                 </div>
               </div>
@@ -1778,492 +2307,10 @@ export default function AdminPage() {
                       className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
                     />
                   </div>
-
-                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
-                    <label
-                      htmlFor="admin-social-linkedin"
-                      className="block text-xs font-bold text-gray-800 dark:text-slate-200"
-                    >
-                      LinkedIn 链接
-                    </label>
-                    <input
-                      id="admin-social-linkedin"
-                      name="socialLinkedin"
-                      type="text"
-                      value={config.socialLinkedin || ""}
-                      onChange={(e) =>
-                        updateConfig({ socialLinkedin: e.target.value })
-                      }
-                      placeholder="https://linkedin.com/in/你的账号"
-                      className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
-                    />
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
-                    <label
-                      htmlFor="admin-social-email"
-                      className="block text-xs font-bold text-gray-800 dark:text-slate-200"
-                    >
-                      邮箱地址
-                    </label>
-                    <input
-                      id="admin-social-email"
-                      name="socialEmail"
-                      type="text"
-                      value={config.socialEmail || ""}
-                      onChange={(e) =>
-                        updateConfig({ socialEmail: e.target.value })
-                      }
-                      placeholder="you@example.com"
-                      className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Weather Config */}
-              <div className="pt-5 border-t border-gray-100 dark:border-slate-700">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-lg">🌤️</span>
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                      天气服务
-                    </h3>
-                    <p className="text-xs text-gray-400 dark:text-slate-400">
-                      配置天气 API，开启后侧边栏可查看实时天气（默认心知天气 / Seniverse）
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* 启用开关 */}
-                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
-                    <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
-                      启用天气
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() =>
-                          updateConfig({ weatherEnabled: !config.weatherEnabled })
-                        }
-                        className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${
-                          config.weatherEnabled
-                            ? "bg-[#00C776]"
-                            : "bg-gray-300 dark:bg-slate-600"
-                        }`}
-                      >
-                        <span
-                          className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${
-                            config.weatherEnabled ? "translate-x-5" : ""
-                          }`}
-                        />
-                      </button>
-                      <span className="text-[11px] text-gray-500 dark:text-slate-400">
-                        {config.weatherEnabled ? "已启用" : "已关闭"}
-                      </span>
-                    </div>
-                  </div>
-
-
-                  {/* API Key */}
-                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
-                    <label
-                      htmlFor="admin-weather-api-key"
-                      className="block text-xs font-bold text-gray-800 dark:text-slate-200"
-                    >
-                      API Key / 密钥
-                    </label>
-                    <input
-                      id="admin-weather-api-key"
-                      name="weatherApiKey"
-                      type="password"
-                      value={config.weatherApiKey ?? ""}
-                      onChange={(e) =>
-                        updateConfig({ weatherApiKey: e.target.value })
-                      }
-                      placeholder={config.weatherKeyConfigured ? "已配置 - 留空则保持不变" : "心知天气 API Key（未配置）"}
-                      className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
-                    />
-                    <p className="text-[10px] text-gray-400 dark:text-slate-400">
-                      密钥安全保存在当前账号的独立配置中
-                    </p>
-                  </div>
-
-                  {/* 位置坐标 */}
-                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
-                    <label
-                      htmlFor="admin-weather-location"
-                      className="block text-xs font-bold text-gray-800 dark:text-slate-200"
-                    >
-                      位置坐标 / LocationID
-                    </label>
-                    <input
-                      id="admin-weather-location"
-                      name="weatherLocation"
-                      type="text"
-                      value={config.weatherLocation || ""}
-                      onChange={(e) =>
-                        updateConfig({ weatherLocation: e.target.value })
-                      }
-                      placeholder="城市拼音 或 经纬度"
-                      className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
-                    />
-                    <p className="text-[10px] text-gray-400 dark:text-slate-400">
-                      心知天气支持城市拼音、中文名、经纬度或 LocationID
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* TAB 4: 👤 账号管理 */}
-                    {activeTab === "users" && currentUser?.role === "admin" && <AdminUsersPanel />}
-          {/* TAB 5: 📦 配置导入导出 */}
-          {activeTab === "data" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Card 1: Sun-Panel JSON 兼容导入 */}
-              <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-teal-100 dark:border-teal-900/60 shadow-2xs space-y-3 transition-colors">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">☀️</span>
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                    导入 Sun-Panel 配置文件
-                  </h3>
-                </div>
-                <p className="text-xs text-gray-400 dark:text-slate-400">
-                  无缝兼容 Sun-Panel 导出的 JSON 配置文件，自动解析分类分组与导航网址并合并至当前账号。
-                </p>
-                <input
-                  ref={sunPanelFileRef}
-                  type="file"
-                  name="sun-panel-file"
-                  accept=".json,application/json"
-                  aria-label="选择 Sun-Panel JSON 文件"
-                  className="hidden"
-                  onChange={handleSunPanelImport}
-                />
-                <button
-                  onClick={() => sunPanelFileRef.current?.click()}
-                  className="px-4 py-2 bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
-                >
-                  <span>☀️</span>
-                  <span>选择 Sun-Panel JSON 文件</span>
-                </button>
-              </div>
-
-              {/* Card 2: Chrome / 浏览器 HTML 书签导入 */}
-              <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-3 transition-colors">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">🌐</span>
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                    导入 Chrome / 浏览器 HTML 书签
-                  </h3>
-                </div>
-                <p className="text-xs text-gray-400 dark:text-slate-400">
-                  解析 Chrome、Edge 或 Safari 导出的 HTML 书签文件，自动分类合并至系统。
-                </p>
-                <input
-                  ref={bookmarkFileRef}
-                  type="file"
-                  name="bookmark-file"
-                  accept=".html,text/html"
-                  aria-label="选择 HTML 书签文件"
-                  className="hidden"
-                  onChange={handleBookmarksImport}
-                />
-                <button
-                  onClick={() => bookmarkFileRef.current?.click()}
-                  className="px-4 py-2 bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-sky-600 dark:text-sky-400 text-xs font-semibold rounded-xl border border-sky-200 dark:border-sky-900 transition-colors cursor-pointer flex items-center gap-1.5"
-                >
-                  <span>🌐</span>
-                  <span>选择 HTML 书签文件</span>
-                </button>
-              </div>
-
-              {/* Card 3: 导出全量 Navelix JSON */}
-              <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-3 transition-colors">
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">导出全量配置 JSON</h3>
-                <p className="text-xs text-gray-400 dark:text-slate-400">
-                  导出包含全量书签、分组与个性化外观在内的 Navelix JSON 配置文件。
-                </p>
-                <button
-                  onClick={handleExport}
-                  className="px-4 py-2 bg-gray-900 dark:bg-slate-700 hover:bg-black dark:hover:bg-slate-600 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
-                >
-                  导出 Navelix 配置 JSON
-                </button>
-              </div>
-
-              {/* Card 4: 导入全量 Navelix JSON */}
-              <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-3 transition-colors">
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">导入全量 Navelix JSON</h3>
-                <p className="text-xs text-gray-400 dark:text-slate-400">
-                  选择 Navelix 导出的 JSON 文件一键还原书签与外观配置。
-                </p>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  name="navelix-config-file"
-                  accept=".json,application/json"
-                  aria-label="选择 Navelix JSON 文件"
-                  className="hidden"
-                  onChange={handleImport}
-                />
-                <button
-                  onClick={() => fileRef.current?.click()}
-                  className="px-4 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
-                >
-                  选择 Navelix JSON 文件
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 6: 📊 访问统计 */}
-          {activeTab === "analytics" && (
-            <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
-              <div>
-                <h2 className="text-base font-bold text-gray-900 dark:text-white">访问数据与热门统计</h2>
-                <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-                  基于本机浏览器记录的真实点击数据（localStorage）
-                </p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 bg-gray-50 dark:bg-slate-900/60 rounded-xl text-center">
-                  <span className="text-xs text-gray-400 dark:text-slate-400">今日总点击量</span>
-                  <p className="text-2xl font-extrabold text-gray-900 dark:text-white mt-1">
-                    {usageStats.todayClicks > 0
-                      ? `${usageStats.todayClicks.toLocaleString()} 次`
-                      : "暂无数据"}
-                  </p>
-                </div>
-                <div className="p-4 bg-gray-50 dark:bg-slate-900/60 rounded-xl text-center">
-                  <span className="text-xs text-gray-400 dark:text-slate-400">最受关注分类</span>
-                  <p className="text-2xl font-extrabold text-teal-600 dark:text-teal-400 mt-1">
-                    {usageStats.topCategoryId
-                      ? categoryName(usageStats.topCategoryId)
-                      : "暂无数据"}
-                  </p>
-                </div>
-                <div className="p-4 bg-gray-50 dark:bg-slate-900/60 rounded-xl text-center">
-                  <span className="text-xs text-gray-400 dark:text-slate-400">热度最高链接</span>
-                  <p className="text-2xl font-extrabold text-purple-600 dark:text-purple-400 mt-1">
-                    {usageStats.topLink?.title || "暂无数据"}
-                  </p>
                 </div>
               </div>
             </div>
           )}
-
-          {/* TAB 7: ⚙️ 系统设置 */}
-          {activeTab === "system" && (
-            <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
-              <div>
-                <h2 className="text-base font-bold text-gray-900 dark:text-white">系统全局参数设置</h2>
-                <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-                  站点标题、搜索引擎、链接状态检测与数据维护
-                </p>
-              </div>
-              <div className="max-w-md space-y-3">
-                <div>
-                  <label
-                    htmlFor="admin-site-title"
-                    className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1"
-                  >
-                    站点标题（浏览器标签页）
-                  </label>
-                  <input
-                    id="admin-site-title"
-                    name="siteTitle"
-                    type="text"
-                    value={config.siteTitle || ""}
-                    onChange={(e) => updateConfig({ siteTitle: e.target.value })}
-                    placeholder="Navelix · Personal Digital Hub"
-                    className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-lg px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="admin-search-engine"
-                    className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1"
-                  >
-                    默认搜索引擎
-                  </label>
-                  <select
-                    id="admin-search-engine"
-                    name="searchEngine"
-                    value={config.searchEngine}
-                    onChange={(e) =>
-                      updateConfig({
-                        searchEngine: e.target.value as "google" | "baidu" | "bing" | "perplexity",
-                      })
-                    }
-                    className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-lg px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
-                  >
-                    <option value="google">Google</option>
-                    <option value="baidu">Baidu</option>
-                    <option value="bing">Bing</option>
-                    <option value="perplexity">Perplexity AI</option>
-                  </select>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
-                  <div>
-                    <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
-                      链接状态检测
-                    </p>
-                    <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
-                      定时检查书签在线/离线状态
-                    </p>
-                  </div>
-                  <button
-                    onClick={() =>
-                      updateConfig({
-                        linkStatusEnabled: !config.linkStatusEnabled,
-                      })
-                    }
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                      config.linkStatusEnabled
-                        ? "bg-[#00C776] text-white"
-                        : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
-                    }`}
-                  >
-                    {config.linkStatusEnabled ? "已开启" : "已关闭"}
-                  </button>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="admin-link-status-interval"
-                    className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1"
-                  >
-                    检测间隔
-                  </label>
-                  <select
-                    id="admin-link-status-interval"
-                    name="linkStatusInterval"
-                    value={config.linkStatusInterval || 60}
-                    onChange={(e) =>
-                      updateConfig({
-                        linkStatusInterval: Number(e.target.value),
-                      })
-                    }
-                    className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-lg px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
-                  >
-                    <option value={30}>每 30 秒</option>
-                    <option value={60}>每 60 秒（推荐）</option>
-                    <option value={120}>每 2 分钟</option>
-                    <option value={300}>每 5 分钟</option>
-                  </select>
-                </div>
-
-                <div className="pt-1">
-                  <button
-                    onClick={handleClearNotifications}
-                    className="px-4 py-2 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold cursor-pointer"
-                  >
-                    清空操作记录
-                  </button>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={() => setShowReset(true)}
-                    className="px-4 py-2 border border-rose-200 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl text-xs font-semibold cursor-pointer"
-                  >
-                    重置为初始默认状态
-                  </button>
-                </div>
-              </div>
-
-              {/* 版本与更新 */}
-              <div className="pt-5 border-t border-gray-100 dark:border-slate-700">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-lg">🔄</span>
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                      版本与更新
-                    </h3>
-                    <p className="text-xs text-gray-400 dark:text-slate-400">
-                      对比 Docker Hub 的 latest 镜像，应用内自检更新
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    onClick={handleCheckUpdate}
-                    disabled={checkingUpdate}
-                    className="h-9 px-4 rounded-lg bg-[#14B8A6] hover:bg-[#0D9488] text-white text-xs font-semibold transition-colors disabled:opacity-60 cursor-pointer"
-                  >
-                    {checkingUpdate ? "检查中…" : "检查更新"}
-                  </button>
-                  {updateResult?.local?.isDockerBuild && (
-                    <span className="text-[11px] text-gray-400 dark:text-slate-400">
-                      当前版本：
-                      {updateResult.local.version
-                        ? updateResult.local.version
-                        : updateResult.local.sourceSha
-                        ? updateResult.local.sourceSha.slice(0, 7)
-                        : "unknown"}
-                      {updateResult.local.buildDate
-                        ? ` · ${new Date(updateResult.local.buildDate).toLocaleString("zh-CN")}`
-                        : ""}
-                    </span>
-                  )}
-                </div>
-
-                {updateResult && (
-                  <div className="mt-3">
-                    {updateResult.error && (
-                      <p className="text-xs text-red-500">{updateResult.error}</p>
-                    )}
-                    {!updateResult.error &&
-                      updateResult.updateAvailable === false && (
-                        <p className="text-xs text-emerald-600">
-                          ✅ 已是最新版本
-                          {updateResult.remote?.versionTag
-                            ? `（最新 ${updateResult.remote.versionTag}）`
-                            : updateResult.remote?.lastUpdated
-                            ? `（${new Date(updateResult.remote.lastUpdated).toLocaleString("zh-CN")} 构建）`
-                            : ""}
-                        </p>
-                      )}
-                    {!updateResult.error &&
-                      updateResult.updateAvailable === true && (
-                        <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40 p-3">
-                          <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-                            🚀 检测到新版本
-                            {updateResult.remote?.versionTag
-                              ? `（${updateResult.remote.versionTag}）`
-                              : updateResult.remote?.lastUpdated
-                              ? `（${new Date(updateResult.remote.lastUpdated).toLocaleString("zh-CN")}）`
-                              : ""}
-                          </p>
-                          <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-500/80">
-                            请拉取最新镜像并重启容器。
-                          </p>
-                        </div>
-                      )}
-                    {!updateResult.error &&
-                      updateResult.updateAvailable === null &&
-                      !updateResult.local.isDockerBuild && (
-                        <p className="text-xs text-gray-400">
-                          当前不是 Docker 构建（开发环境），无法对比版本。
-                        </p>
-                      )}
-                    {!updateResult.error &&
-                      updateResult.updateAvailable === null &&
-                      updateResult.local.isDockerBuild && (
-                        <p className="text-xs text-gray-400">
-                          当前镜像为旧版本，缺少构建元数据，无法自动对比；请先升级到带自检能力的镜像后重试。
-                        </p>
-                      )}
-                  </div>
-                )}
-              </div>
             </div>
           )}
         </main>

@@ -74,6 +74,36 @@ export async function GET(req: NextRequest) {
     url: p.url,
   }));
 
+  // Fetch todos/schedules
+  const todoRows = db
+    .prepare(
+      `SELECT id, title, priority, done, due_date, project_id, created_at, sort_order
+       FROM user_todos
+       WHERE user_id = ?
+       ORDER BY done ASC, sort_order ASC, created_at ASC`,
+    )
+    .all(userId) as Array<{
+    id: string;
+    title: string;
+    priority: string;
+    done: number;
+    due_date: string;
+    project_id: string;
+    created_at: number;
+    sort_order: number;
+  }>;
+
+  const todos = todoRows.map((t) => ({
+    id: t.id,
+    title: t.title,
+    priority: t.priority,
+    done: t.done === 1,
+    dueDate: t.due_date,
+    projectId: t.project_id,
+    createdAt: t.created_at,
+    sortOrder: t.sort_order,
+  }));
+
   // Fetch config
   const configRow = db
     .prepare("SELECT * FROM user_configs WHERE user_id = ?")
@@ -155,6 +185,7 @@ export async function GET(req: NextRequest) {
     categories: categoryRows,
     links,
     projects,
+    todos,
     config,
   });
 }
@@ -222,6 +253,41 @@ export async function POST(req: NextRequest) {
             String(p.statusColor || ""),
             String(p.url || ""),
             index,
+          );
+        },
+      );
+    }
+
+    if (Array.isArray(body.todos)) {
+      db.prepare("DELETE FROM user_todos WHERE user_id = ?").run(userId);
+      const insertTodo = db.prepare(`
+        INSERT INTO user_todos (id, user_id, title, priority, done, due_date, project_id, created_at, sort_order)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      body.todos.forEach(
+        (
+          t: {
+            id?: string;
+            title?: string;
+            priority?: string;
+            done?: boolean;
+            dueDate?: string;
+            projectId?: string;
+            createdAt?: number;
+            sortOrder?: number;
+          },
+          index: number,
+        ) => {
+          insertTodo.run(
+            String(t.id || `todo-${Date.now()}-${index}`),
+            userId,
+            String(t.title || "未命名日程"),
+            String(t.priority || "medium"),
+            t.done ? 1 : 0,
+            String(t.dueDate || ""),
+            String(t.projectId || ""),
+            t.createdAt || Date.now(),
+            t.sortOrder ?? index,
           );
         },
       );

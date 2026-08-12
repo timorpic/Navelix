@@ -1,41 +1,28 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useFocusTracker } from "@/hooks/use-focus-tracker";
 
 export default function FocusStatsWidget() {
-  const [totalHours, setTotalHours] = useState(28.5);
-  const [weeklyChange, setWeeklyChange] = useState(15.8);
-  const [dailyAverage, setDailyAverage] = useState(4.1);
-  const [isPositive, setIsPositive] = useState(true);
+  const { totalHours, weeklyChange, dailyAverage, isPositive, weeklyData } =
+    useFocusTracker();
 
-  // Load or calculate local focus statistics
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("navelix.focus.stats");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (typeof parsed.totalHours === "number") setTotalHours(parsed.totalHours);
-        if (typeof parsed.weeklyChange === "number") {
-          setWeeklyChange(Math.abs(parsed.weeklyChange));
-          setIsPositive(parsed.weeklyChange >= 0);
-        }
-        if (typeof parsed.dailyAverage === "number") setDailyAverage(parsed.dailyAverage);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
+  const maxHours = Math.max(...weeklyData, 1);
+  const dayNames = ["一", "二", "三", "四", "五", "六", "日"];
+  const currentDayIdx = (new Date().getDay() + 6) % 7; // 0=Mon, 6=Sun
 
   return (
     <div className="flex flex-col bg-white dark:bg-slate-800/90 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-colors">
       {/* Header */}
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-2">
-          <span className="p-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs">
-            ⏱️
+          <span className="p-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs flex items-center justify-center">
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M5 19h2V10H5v9zm7 0h2V5h-2v14zm7 0h2v-7h-2v7zm2 2H3v-2h18v2z" />
+            </svg>
           </span>
-          <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-            专注统计
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1">
+            <span>专注统计</span>
           </h3>
         </div>
         <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 text-[10px] font-bold">
@@ -80,8 +67,45 @@ export default function FocusStatsWidget() {
         </div>
       </div>
 
+      {/* Mini 7-Day Weekly Bar Chart */}
+      <div className="mt-2.5 mb-1 pt-2 px-1 border-t border-gray-100 dark:border-slate-700/60 flex flex-col gap-1">
+        <div className="flex items-end justify-between h-10 gap-1.5">
+          {weeklyData.map((val, idx) => {
+            const heightPercent = Math.round((val / maxHours) * 100);
+            const isToday = idx === currentDayIdx;
+            return (
+              <div key={idx} className="flex-1 flex flex-col items-center gap-1 group relative">
+                <div
+                  className="w-full rounded-t-md transition-all duration-200"
+                  style={{ height: `${heightPercent}%` }}
+                >
+                  <div
+                    className={`w-full h-full rounded-t-md transition-all ${
+                      isToday
+                        ? "bg-[#00C776] shadow-[0_0_8px_rgba(0,199,118,0.7)]"
+                        : "bg-[#00C776]/30 dark:bg-[#00C776]/25 group-hover:bg-[#00C776]/60"
+                    }`}
+                  />
+                </div>
+                {/* Tooltip on hover */}
+                <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 dark:bg-slate-700 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none whitespace-nowrap z-20">
+                  {val}h
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-slate-500 font-semibold px-0.5">
+          {dayNames.map((d, i) => (
+            <span key={i} className={i === currentDayIdx ? "text-[#00C776] font-bold" : ""}>
+              {d}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* Sub Stats Footer */}
-      <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-slate-700/60 flex items-center justify-between text-[11px]">
+      <div className="mt-2 pt-2 border-t border-gray-100 dark:border-slate-700/60 flex items-center justify-between text-[11px]">
         <span className="text-gray-400 dark:text-slate-400">
           日均专注 {dailyAverage} 小时
         </span>

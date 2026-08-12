@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { Category, Project, SiteLink, TodoItem } from "@/types";
 import { useNavelixData } from "@/hooks/use-navelix-data";
+import { useFocusTracker } from "@/hooks/use-focus-tracker";
 import AddLinkModal from "./add-link-modal";
 
 interface TopStatsBarProps {
@@ -16,9 +17,12 @@ export default function TopStatsBar({
   links,
   onSelectCategory,
 }: TopStatsBarProps) {
+  const { weeklyData } = useFocusTracker();
+  const currentDayIdx = (new Date().getDay() + 6) % 7;
+  const todayFocusHours = weeklyData[currentDayIdx] || 0;
+
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [focusHours, setFocusHours] = useState(8.5);
   const [showAddLinkModal, setShowAddLinkModal] = useState(false);
 
   // Quick Action Modal States
@@ -154,7 +158,7 @@ export default function TopStatsBar({
           </div>
           <div className="my-1">
             <span className="text-xl font-extrabold text-gray-900 dark:text-white">
-              {focusHours}
+              {todayFocusHours}
             </span>
             <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400 ml-1">
               小时
