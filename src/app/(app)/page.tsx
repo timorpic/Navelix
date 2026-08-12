@@ -80,7 +80,7 @@ export default function Home() {
 
       {/* 2. Center Workspace Main Area */}
       <main className="flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-8">
-        <div className={`${maxWidthClass} mx-auto flex flex-col gap-6 transition-all duration-300`}>
+        <div className={`${maxWidthClass} mx-auto flex flex-col gap-3.5 transition-all duration-300`}>
           {notice && (
             <div className="flex items-center justify-between p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs font-semibold text-amber-800 animate-fadeIn shadow-2xs">
               <div className="flex items-center gap-2">

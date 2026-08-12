@@ -143,7 +143,7 @@ export default function TopStatsBar({
   const { addLink } = useNavelixData();
 
   return (
-    <div className="flex flex-col gap-4 mb-6">
+    <div className="flex flex-col gap-4 mb-0">
       {/* 5 Column Grid Top Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-3.5">
         {/* 卡片 1：今日专注 */}

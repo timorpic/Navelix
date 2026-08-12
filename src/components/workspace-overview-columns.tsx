@@ -107,7 +107,7 @@ export default function WorkspaceOverviewColumns({
   }, [links, activeGraphCategory]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 my-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 my-0">
       {/* 栏目 1：项目概览 (Project Overview) */}
       <div className="flex flex-col bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-colors">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-slate-700/60">
