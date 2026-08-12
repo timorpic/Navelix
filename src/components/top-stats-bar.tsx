@@ -143,93 +143,93 @@ export default function TopStatsBar({
   const { addLink } = useNavelixData();
 
   return (
-    <div className="flex flex-col gap-4 mb-0">
+    <div className="flex flex-col gap-2 mb-0">
       {/* 5 Column Grid Top Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-3">
         {/* 卡片 1：今日专注 */}
-        <div className="lg:col-span-2 flex flex-col justify-between p-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
-          <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-            <span className="p-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60">⏱️</span>
+        <div className="lg:col-span-2 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="p-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60">⏱️</span>
             <span>今日专注</span>
           </div>
-          <div className="my-2">
-            <span className="text-2xl font-black text-gray-900 dark:text-white">
+          <div className="my-1">
+            <span className="text-xl font-extrabold text-gray-900 dark:text-white">
               {focusHours}
             </span>
-            <span className="text-xs font-bold text-gray-500 dark:text-slate-400 ml-1">
+            <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400 ml-1">
               小时
             </span>
           </div>
-          <p className="text-[11px] text-gray-400 dark:text-slate-500">
+          <p className="text-[10px] text-gray-400 dark:text-slate-500">
             专注时间
           </p>
         </div>
 
         {/* 卡片 2：待办任务 */}
-        <div className="lg:col-span-2 flex flex-col justify-between p-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
-          <div className="flex items-center gap-2 text-xs font-bold text-sky-600 dark:text-sky-400">
-            <span className="p-1 rounded-lg bg-sky-50 dark:bg-sky-950/60">📋</span>
+        <div className="lg:col-span-2 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-sky-600 dark:text-sky-400">
+            <span className="p-0.5 rounded bg-sky-50 dark:bg-sky-950/60">📋</span>
             <span>待办任务</span>
           </div>
-          <div className="my-2">
-            <span className="text-2xl font-black text-gray-900 dark:text-white">
+          <div className="my-1">
+            <span className="text-xl font-extrabold text-gray-900 dark:text-white">
               {pendingTodosCount}
             </span>
-            <span className="text-xs font-bold text-gray-500 dark:text-slate-400 ml-1">
+            <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400 ml-1">
               项
             </span>
           </div>
-          <p className="text-[11px] text-gray-400 dark:text-slate-500">
+          <p className="text-[10px] text-gray-400 dark:text-slate-500">
             待完成
           </p>
         </div>
 
         {/* 卡片 3：知识笔记/书签 */}
-        <div className="lg:col-span-2 flex flex-col justify-between p-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
-          <div className="flex items-center gap-2 text-xs font-bold text-purple-600 dark:text-purple-400">
-            <span className="p-1 rounded-lg bg-purple-50 dark:bg-purple-950/60">📚</span>
+        <div className="lg:col-span-2 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-purple-600 dark:text-purple-400">
+            <span className="p-0.5 rounded bg-purple-50 dark:bg-purple-950/60">📚</span>
             <span>知识笔记</span>
           </div>
-          <div className="my-2">
-            <span className="text-2xl font-black text-gray-900 dark:text-white">
+          <div className="my-1">
+            <span className="text-xl font-extrabold text-gray-900 dark:text-white">
               {links.length}
             </span>
-            <span className="text-xs font-bold text-gray-500 dark:text-slate-400 ml-1">
+            <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400 ml-1">
               篇
             </span>
           </div>
-          <p className="text-[11px] text-gray-400 dark:text-slate-500">
+          <p className="text-[10px] text-gray-400 dark:text-slate-500">
             累计记录
           </p>
         </div>
 
         {/* 卡片 4：项目进度 */}
-        <div className="lg:col-span-2 flex flex-col justify-between p-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
-          <div className="flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-400">
-            <span className="p-1 rounded-lg bg-amber-50 dark:bg-amber-950/60">📊</span>
+        <div className="lg:col-span-2 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+            <span className="p-0.5 rounded bg-amber-50 dark:bg-amber-950/60">📊</span>
             <span>项目进度</span>
           </div>
-          <div className="my-2">
-            <span className="text-2xl font-black text-gray-900 dark:text-white">
+          <div className="my-1">
+            <span className="text-xl font-extrabold text-gray-900 dark:text-white">
               {averageProjectProgress}%
             </span>
           </div>
-          <p className="text-[11px] text-gray-400 dark:text-slate-500">
+          <p className="text-[10px] text-gray-400 dark:text-slate-500">
             平均进度
           </p>
         </div>
 
         {/* 卡片 5：快速操作 (Quick Actions 4 cols) */}
-        <div className="lg:col-span-4 flex flex-col justify-between p-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
-          <div className="flex items-center gap-2 text-xs font-bold text-amber-500 mb-2.5">
-            <span className="p-1 rounded-lg bg-amber-50 dark:bg-amber-950/60">⚡</span>
+        <div className="lg:col-span-4 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-500 mb-1.5">
+            <span className="p-0.5 rounded bg-amber-50 dark:bg-amber-950/60">⚡</span>
             <span>快速操作</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1.5">
             <button
               onClick={() => setShowAddLinkModal(true)}
-              className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
+              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>📝</span>
               <span className="truncate">新建书签</span>
@@ -237,7 +237,7 @@ export default function TopStatsBar({
 
             <button
               onClick={() => setShowQuickNoteModal(true)}
-              className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
+              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>💡</span>
               <span className="truncate">记录想法</span>
@@ -245,7 +245,7 @@ export default function TopStatsBar({
 
             <button
               onClick={() => setShowAddLinkModal(true)}
-              className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
+              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>📤</span>
               <span className="truncate">上传文件</span>
@@ -253,7 +253,7 @@ export default function TopStatsBar({
 
             <button
               onClick={() => setShowTaskModal(true)}
-              className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
+              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>☑️</span>
               <span className="truncate">创建任务</span>
@@ -261,7 +261,7 @@ export default function TopStatsBar({
 
             <button
               onClick={() => onSelectCategory && onSelectCategory("feature-projects")}
-              className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
+              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>📂</span>
               <span className="truncate">新建项目</span>
@@ -269,7 +269,7 @@ export default function TopStatsBar({
 
             <button
               onClick={() => setShowAiModal(true)}
-              className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
+              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>🤖</span>
               <span className="truncate">AI 助手</span>
