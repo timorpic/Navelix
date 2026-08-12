@@ -364,118 +364,106 @@ db.prepare(
   "DELETE FROM notifications WHERE created_at < ?",
 ).run(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-// Seed user starter categories and links if empty
+// Seed user starter categories and links ONLY ONCE on initial user creation
 export function seedUserData(userId: string) {
-  const catCount = (
-    db
-      .prepare("SELECT COUNT(*) AS c FROM user_categories WHERE user_id = ?")
-      .get(userId) as { c: number }
-  ).c;
+  const configExists = db
+    .prepare("SELECT 1 FROM user_configs WHERE user_id = ?")
+    .get(userId);
 
-  if (catCount === 0) {
-    const insertCat = db.prepare(`
-      INSERT OR REPLACE INTO user_categories (id, user_id, name, label, icon, color)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `);
-    for (const c of seedCategories) {
-      insertCat.run(c.id, userId, c.name, c.label, c.icon, c.color);
+  // 如果用户已经进行过初始化（已存在配置记录），绝对不要重复 re-seed 覆盖用户数据
+  if (configExists) {
+    return;
+  }
+
+  const insertCat = db.prepare(`
+    INSERT OR REPLACE INTO user_categories (id, user_id, name, label, icon, color)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  for (const c of seedCategories) {
+    insertCat.run(c.id, userId, c.name, c.label, c.icon, c.color);
+  }
+
+  const insertLink = db.prepare(`
+    INSERT OR REPLACE INTO user_links (id, user_id, title, url, description, icon, category, is_quick_access)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const mergedLinks = [...seedLinks];
+  for (const q of seedQuickAccess) {
+    const existingIndex = mergedLinks.findIndex(
+      (l) => l.url.toLowerCase() === q.url.toLowerCase(),
+    );
+    if (existingIndex >= 0) {
+      const existing = mergedLinks[existingIndex];
+      mergedLinks[existingIndex] = {
+        ...existing,
+        isQuickAccess: true,
+        icon: existing.icon || q.icon,
+      };
+    } else {
+      mergedLinks.push(q);
     }
   }
 
-  const linkCount = (
-    db
-      .prepare("SELECT COUNT(*) AS c FROM user_links WHERE user_id = ?")
-      .get(userId) as { c: number }
-  ).c;
-
-  if (linkCount === 0) {
-    const insertLink = db.prepare(`
-      INSERT OR REPLACE INTO user_links (id, user_id, title, url, description, icon, category, is_quick_access)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    // Merge quick-access defaults into the seed list, promoting existing links
-    // with the same URL instead of creating duplicates.
-    const mergedLinks = [...seedLinks];
-    for (const q of seedQuickAccess) {
-      const existingIndex = mergedLinks.findIndex(
-        (l) => l.url.toLowerCase() === q.url.toLowerCase(),
-      );
-      if (existingIndex >= 0) {
-        const existing = mergedLinks[existingIndex];
-        mergedLinks[existingIndex] = {
-          ...existing,
-          isQuickAccess: true,
-          icon: existing.icon || q.icon,
-        };
-      } else {
-        mergedLinks.push(q);
-      }
-    }
-
-    for (const l of mergedLinks) {
-      insertLink.run(
-        l.id,
-        userId,
-        l.title,
-        l.url,
-        l.description,
-        l.icon,
-        l.category,
-        l.isQuickAccess ? 1 : 0,
-      );
-    }
+  for (const l of mergedLinks) {
+    insertLink.run(
+      l.id,
+      userId,
+      l.title,
+      l.url,
+      l.description,
+      l.icon,
+      l.category,
+      l.isQuickAccess ? 1 : 0,
+    );
   }
 
-  const projectCount = (
-    db
-      .prepare("SELECT COUNT(*) AS c FROM projects WHERE user_id = ?")
-      .get(userId) as { c: number }
-  ).c;
+  const insertProject = db.prepare(`
+    INSERT OR REPLACE INTO projects (id, user_id, name, status, status_color, url, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+  const defaults = [
+    {
+      id: "p1",
+      name: "IT 运维管家官网",
+      status: "进行中",
+      statusColor:
+        "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900",
+      url: "https://github.com",
+    },
+    {
+      id: "p2",
+      name: "AI Memory Architecture",
+      status: "研究中",
+      statusColor:
+        "bg-sky-50 text-sky-600 border border-sky-200 dark:bg-sky-950/50 dark:text-sky-400 dark:border-sky-900",
+      url: "https://github.com",
+    },
+    {
+      id: "p3",
+      name: "Personal Knowledge Base",
+      status: "维护中",
+      statusColor:
+        "bg-teal-50 text-teal-600 border border-teal-200 dark:bg-teal-950/50 dark:text-teal-400 dark:border-teal-900",
+      url: "https://github.com",
+    },
+  ];
+  defaults.forEach((p, index) => {
+    insertProject.run(
+      p.id,
+      userId,
+      p.name,
+      p.status,
+      p.statusColor,
+      p.url,
+      index,
+    );
+  });
 
-  if (projectCount === 0) {
-    const insertProject = db.prepare(`
-      INSERT OR REPLACE INTO projects (id, user_id, name, status, status_color, url, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
-    const defaults = [
-      {
-        id: "p1",
-        name: "IT 运维管家官网",
-        status: "进行中",
-        statusColor:
-          "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900",
-        url: "https://github.com",
-      },
-      {
-        id: "p2",
-        name: "AI Memory Architecture",
-        status: "研究中",
-        statusColor:
-          "bg-sky-50 text-sky-600 border border-sky-200 dark:bg-sky-950/50 dark:text-sky-400 dark:border-sky-900",
-        url: "https://github.com",
-      },
-      {
-        id: "p3",
-        name: "Personal Knowledge Base",
-        status: "维护中",
-        statusColor:
-          "bg-teal-50 text-teal-600 border border-teal-200 dark:bg-teal-950/50 dark:text-teal-400 dark:border-teal-900",
-        url: "https://github.com",
-      },
-    ];
-    defaults.forEach((p, index) => {
-      insertProject.run(
-        p.id,
-        userId,
-        p.name,
-        p.status,
-        p.statusColor,
-        p.url,
-        index,
-      );
-    });
-  }
+  db.prepare(`
+    INSERT OR REPLACE INTO user_configs (user_id, logo_text, site_title)
+    VALUES (?, 'Navelix', 'Navelix · Personal Digital Hub')
+  `).run(userId);
 }
 
 export const SESSION_COOKIE = "navelix_session";

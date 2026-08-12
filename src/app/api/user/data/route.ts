@@ -188,18 +188,19 @@ export async function POST(req: NextRequest) {
     if (Array.isArray(body.links)) {
       db.prepare("DELETE FROM user_links WHERE user_id = ?").run(userId);
       const insertLink = db.prepare(`
-        INSERT INTO user_links (id, user_id, title, url, description, icon, category, is_quick_access)
+        INSERT OR REPLACE INTO user_links (id, user_id, title, url, description, icon, category, is_quick_access)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `);
       for (const l of body.links) {
+        if (!l || typeof l !== "object") continue;
         insertLink.run(
-          l.id,
+          String(l.id || crypto.randomUUID()),
           userId,
-          l.title,
-          l.url,
-          l.description || "",
-          l.icon || "",
-          l.category,
+          String(l.title || "未命名链接"),
+          String(l.url || "https://example.com"),
+          String(l.description || ""),
+          String(l.icon || ""),
+          String(l.category || "uncategorized"),
           l.isQuickAccess ? 1 : 0,
         );
       }
