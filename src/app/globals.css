@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f6f8fa;
+  --foreground: #111827;
+  --card-bg: #ffffff;
+  --card-border: #f1f5f9;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #f1f5f9;
+  --text-muted: #6b7280;
+}
+
+html.dark,
+body.dark {
+  --background: #151218;
+  --foreground: #6D6B75;
+  --card-bg: #1c1920;
+  --card-border: #2a2530;
+  --sidebar-bg: #151218;
+  --sidebar-border: #1c1920;
+  --text-muted: #6D6B75;
+}
+
+/* ── Tailwind 色阶覆盖（仅 dark 作用域）── */
+/* slate → 新深色体系 */
+.dark {
+  --color-slate-50: #6D6B75;
+  --color-slate-100: #FFFFFF;
+  --color-slate-200: #FFFFFF;
+  --color-slate-300: #6D6B75;
+  --color-slate-400: #6D6B75;
+  --color-slate-500: #6D6B75;
+  --color-slate-600: #2a2530;
+  --color-slate-700: #2a2530;
+  --color-slate-800: #1c1920;
+  --color-slate-900: #151218;
+
+  /* teal → 新辅助色 #00C776 系（实色，避免与 /NN 透明度叠加） */
+  --color-teal-400: #00C776;
+  --color-teal-800: #0d4a2a;
+  --color-teal-900: #0a3d24;
+  --color-teal-950: #072d1a;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  min-height: 100vh;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-16px);
+  }
+}
+
+.animate-float {
+  animation: float 7s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out both;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+/* Dark mode smooth transitions */
+.dark body {
+  background-color: #151218;
+  color: #6D6B75;
+}
+
+.dark main {
+  background-color: #151218;
+}
+
+.dark .bg-gradient-to-r.from-\[\#EBF9F9\] {
+  background: linear-gradient(to right, #1c1920, #252028, #1c1920);
+  border-color: #00c77640;
+}
+
+.dark .bg-gradient-to-b.from-\[\#F2FBFB\] {
+  background: linear-gradient(to bottom, #252028, #1c1920);
+  border-color: #00c77640;
+}
+
+.dark .bg-gradient-to-br.from-\[\#EBF9F9\] {
+  background: linear-gradient(to bottom right, #252028, #1c1920);
+  border-color: #00c77640;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #4a4850;
+}

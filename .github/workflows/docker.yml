@@ -1,0 +1,200 @@
+name: Build and Validate Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || secrets.DOCKER_USERNAME || secrets.DOCKER_HUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_PASSWORD || secrets.DOCKER_HUB_TOKEN || secrets.DOCKERHUB_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub (Optional)
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+            ${{ env.DOCKERHUB_USERNAME != '' && format('docker.io/{0}/navelix', env.DOCKERHUB_USERNAME) || '' }}
+          tags: |
+            # sha-<short> — 每次构建，不可变锚点
+            type=sha,prefix=sha-
+            # sha-<full> — 完整 SHA，供冒烟测试精确拉取
+            type=raw,value=sha-${{ github.sha }}
+            # latest — 在 main 分支及 Git Tag 推送时均生成
+            type=raw,value=latest
+            # semver — 只有推送 Git tag（v1.0.0）时才生成
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Get build metadata
+        id: date
+        run: |
+          echo "build_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          SHORT_SHA="${{ github.sha }}"
+          SHORT_SHA="${SHORT_SHA:0:7}"
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "version=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          no-cache: true
+          provenance: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            SOURCE_SHA=${{ github.sha }}
+            BUILD_DATE=${{ steps.date.outputs.build_date }}
+            NAVELIX_VERSION=${{ steps.date.outputs.version }}
+
+      - name: Update Docker Hub Description
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+          repository: ${{ env.DOCKERHUB_USERNAME }}/navelix
+          short-description: "Navelix · Personal Digital Hub - 零依赖本地私有部署个人数字工作空间"
+          readme-filepath: ./DOCKER.md
+
+  smoke-test:
+    name: Smoke Test Image
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run container and verify health & features
+        run: |
+          IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_TAG="${IMAGE_NAME}:sha-${{ github.sha }}"
+
+          echo "Pulling image ${IMAGE_TAG}..."
+          docker pull "${IMAGE_TAG}"
+
+          echo "Starting container on port 3721..."
+          CONTAINER_ID=$(docker run -d --name smoke-test-app \
+            -e PORT=3721 \
+            -p 3721:3721 \
+            -e NAVELIX_ADMIN_PASSWORD=ci-test-password \
+            "${IMAGE_TAG}")
+
+          echo "Polling http://localhost:3721/login..."
+          READY=false
+          for i in {1..30}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3721/login || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "Server is ready! GET /login returned HTTP 200."
+              READY=true
+              break
+            fi
+            echo "Attempt $i/30: GET /login returned HTTP '$STATUS', retrying..."
+            sleep 2
+          done
+
+          if [ "$READY" != "true" ]; then
+            echo "Error: Server failed to respond with HTTP 200 on /login."
+            docker logs smoke-test-app
+            exit 1
+          fi
+
+          echo "Testing authentication with POST /api/auth/login..."
+          curl -s -c /tmp/navelix-cookies.txt -X POST http://localhost:3721/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"username":"admin","password":"ci-test-password"}' > /tmp/login-result.json
+          LOGIN_STATUS=$(cat /tmp/login-result.json | python3 -c "import sys,json; print('200' if json.load(sys.stdin).get('user',{}).get('id') else '401')" 2>/dev/null || echo "401")
+          if [ "$LOGIN_STATUS" != "200" ]; then
+            echo "Error: POST /api/auth/login failed (HTTP $LOGIN_STATUS)."
+            cat /tmp/login-result.json
+            docker logs smoke-test-app
+            exit 1
+          fi
+          echo "Authentication test passed!"
+
+          echo "Testing GET /api/user/data (fetch seeded data)..."
+          curl -s -b /tmp/navelix-cookies.txt http://localhost:3721/api/user/data > /tmp/user-data.json
+          cat /tmp/user-data.json | python3 -c "import sys,json; d=json.load(sys.stdin); assert isinstance(d.get('categories'),list) and len(d['categories'])>0, 'categories empty'; assert isinstance(d.get('links'),list), 'links missing'; assert isinstance(d.get('config'),dict), 'config missing'; assert 'aiApiKey' not in d.get('config',{}), 'aiApiKey leaked!'; assert 'weatherApiKey' not in d.get('config',{}), 'weatherApiKey leaked!'; print('GET /api/user/data OK: categories=%d links=%d' % (len(d['categories']), len(d['links'])))" || { echo "GET /api/user/data test FAILED"; docker logs smoke-test-app; exit 1; }
+          echo "GET /api/user/data test passed!"
+
+          echo "Testing POST /api/user/data (save config)..."
+          curl -s -b /tmp/navelix-cookies.txt -X POST http://localhost:3721/api/user/data \
+            -H "Content-Type: application/json" \
+            -d '{"config":{"logoText":"SmokeTest"}}' > /tmp/save-result.json
+          SAVE_STATUS=$(cat /tmp/save-result.json | python3 -c "import sys,json; print('200' if json.load(sys.stdin).get('success') else '500')" 2>/dev/null || echo "500")
+          if [ "$SAVE_STATUS" != "200" ]; then
+            echo "Error: POST /api/user/data failed."
+            cat /tmp/save-result.json
+            docker logs smoke-test-app
+            exit 1
+          fi
+          echo "POST /api/user/data test passed!"
+
+          echo "Verifying changed config persisted + API key not leaked..."
+          curl -s -b /tmp/navelix-cookies.txt http://localhost:3721/api/user/data > /tmp/verify-data.json
+          cat /tmp/verify-data.json | python3 -c "import sys,json; d=json.load(sys.stdin); cfg=d.get('config',{}); assert cfg.get('logoText')=='SmokeTest', 'logoText not persisted'; assert 'aiApiKey' not in cfg, 'aiApiKey leaked!'; assert 'weatherApiKey' not in cfg, 'weatherApiKey leaked!'; print('Config persistence + security check passed (OK)')" || { echo "Verification FAILED"; docker logs smoke-test-app; exit 1; }
+          echo "All CRUD smoke tests passed!"
+
+          echo "Verifying container user is non-root..."
+          CONTAINER_USER=$(docker exec smoke-test-app whoami)
+          echo "Container user: $CONTAINER_USER"
+          if [ "$CONTAINER_USER" = "root" ]; then
+            echo "Error: Container process is running as root!"
+            exit 1
+          fi
+
+          echo "Verifying data directory is writable..."
+          docker exec smoke-test-app test -w /app/data || (echo "Error: /app/data is not writable" && exit 1)
+          docker exec smoke-test-app touch /app/data/ci-write-test.txt
+          docker exec smoke-test-app rm /app/data/ci-write-test.txt
+          echo "Data directory write check passed!"
+
+          echo "All smoke tests passed successfully!"
+          docker stop smoke-test-app
+          docker rm smoke-test-app
