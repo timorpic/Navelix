@@ -24,7 +24,12 @@ export async function PATCH(
   const fields: string[] = [];
   const vals: (string | number)[] = [];
   if (body.name !== undefined) { fields.push("name = ?"); vals.push(String(body.name).trim()); }
-  if (body.color !== undefined) { fields.push("status_color = ?"); vals.push(body.color); }
+  if (body.status !== undefined) { fields.push("status = ?"); vals.push(String(body.status).trim()); }
+  if (body.color !== undefined || body.statusColor !== undefined) {
+    fields.push("status_color = ?");
+    vals.push(String(body.color || body.statusColor).trim());
+  }
+  if (body.url !== undefined) { fields.push("url = ?"); vals.push(String(body.url).trim()); }
   if (body.sortOrder !== undefined) { fields.push("sort_order = ?"); vals.push(Number(body.sortOrder)); }
   if (fields.length === 0) return NextResponse.json({ error: "无更新字段" }, { status: 400 });
   vals.push(id, userId);
