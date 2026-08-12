@@ -6,6 +6,7 @@ import HeroBanner from "@/components/hero-banner";
 import QuickAccess from "@/components/quick-access";
 import RightSidebar from "@/components/right-sidebar";
 import CardGrid from "@/components/card-grid";
+import CategoryColumns from "@/components/category-columns";
 import { useNavelixData } from "@/hooks/use-navelix-data";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useLinkStatus } from "@/hooks/use-link-status";
@@ -124,6 +125,13 @@ export default function Home() {
             <>
               {/* Quick Access Section */}
               <QuickAccess links={quickAccessLinks} />
+
+              {/* All Categories & Links Grid */}
+              <CategoryColumns
+                categories={categories}
+                links={links}
+                onViewCategory={(catId: string) => setActiveCategory(catId)}
+              />
             </>
           )}
         </div>

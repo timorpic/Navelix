@@ -16,13 +16,13 @@ export default function CategoryColumns({
   links,
   onViewCategory,
 }: CategoryColumnsProps) {
-  // 首页最多展示 4 个分类卡片，其余分类仍可从侧边栏进入。
-  const displayCategories = categories.slice(0, 4);
+  // 展示用户创建的所有分类卡片
+  const displayCategories = categories;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 my-6">
       {displayCategories.map((cat) => {
-        const catLinks = links.filter((l) => l.category === cat.id).slice(0, 4);
+        const catLinks = links.filter((l) => l.category === cat.id);
 
         return (
           <div
