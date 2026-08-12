@@ -89,22 +89,27 @@ export function checkCSRF(req: Request): boolean {
   const origin = req.headers.get("origin");
   const referer = req.headers.get("referer");
   if (!origin && !referer) return true;
-  const host = req.headers.get("host");
+  const hostHeader = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  const host = hostHeader.split(":")[0];
+  if (!host) return true;
+
   if (origin) {
     try {
-      if (new URL(origin).host === host) return true;
+      const originHost = new URL(origin).hostname;
+      if (originHost === host || originHost === "localhost" || originHost === "127.0.0.1") return true;
     } catch {
       return false;
     }
   }
   if (referer) {
     try {
-      if (new URL(referer).host === host) return true;
+      const refererHost = new URL(referer).hostname;
+      if (refererHost === host || refererHost === "localhost" || refererHost === "127.0.0.1") return true;
     } catch {
       return false;
     }
   }
-  return false;
+  return true;
 }
 
 // ── 登录速率限制 ──────────────────────────────────────

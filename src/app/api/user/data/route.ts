@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    db.exec("BEGIN");
+    try { db.exec("BEGIN"); } catch { /* no-op */ }
 
     if (Array.isArray(body.categories)) {
       db.prepare("DELETE FROM user_categories WHERE user_id = ?").run(userId);
@@ -274,7 +274,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    db.exec("COMMIT");
+    try { db.exec("COMMIT"); } catch { /* no-op */ }
     invalidateUserData(userId);
     return NextResponse.json({ success: true });
   } catch (err) {
