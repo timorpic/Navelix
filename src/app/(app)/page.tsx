@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Sidebar from "@/components/sidebar";
 import HeroBanner from "@/components/hero-banner";
 import QuickAccess from "@/components/quick-access";
+import TopStatsBar from "@/components/top-stats-bar";
 import RightSidebar from "@/components/right-sidebar";
 import CardGrid from "@/components/card-grid";
 import WorkspaceOverviewColumns from "@/components/workspace-overview-columns";
@@ -132,6 +133,13 @@ export default function Home() {
           ) : (
             /* Standard Dashboard View */
             <>
+              {/* 顶部五卡片：今日专注、待办任务、知识笔记、项目进度、快速操作 */}
+              <TopStatsBar
+                categories={categories}
+                links={links}
+                onSelectCategory={(id: string) => setActiveCategory(id)}
+              />
+
               {/* Quick Access Section */}
               <QuickAccess links={quickAccessLinks} />
 
