@@ -6,7 +6,7 @@ import HeroBanner from "@/components/hero-banner";
 import QuickAccess from "@/components/quick-access";
 import RightSidebar from "@/components/right-sidebar";
 import CardGrid from "@/components/card-grid";
-import CategoryColumns from "@/components/category-columns";
+import WorkspaceOverviewColumns from "@/components/workspace-overview-columns";
 import CalendarView from "@/components/calendar-view";
 import ProjectsView from "@/components/projects-view";
 import DashboardView from "@/components/dashboard-view";
@@ -135,11 +135,11 @@ export default function Home() {
               {/* Quick Access Section */}
               <QuickAccess links={quickAccessLinks} />
 
-              {/* All Categories & Links Grid */}
-              <CategoryColumns
+              {/* 首页三栏：项目概览、日程概览、知识图谱 */}
+              <WorkspaceOverviewColumns
                 categories={categories}
                 links={links}
-                onViewCategory={(catId: string) => setActiveCategory(catId)}
+                onSelectCategory={(id: string) => setActiveCategory(id)}
               />
             </>
           )}
