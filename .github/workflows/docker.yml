@@ -40,12 +40,17 @@ jobs:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
 
+      - name: Lowercase repository name
+        id: repo_name
+        run: |
+          echo "repo=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
+            ghcr.io/${{ steps.repo_name.outputs.repo }}
             ${{ env.DOCKERHUB_USERNAME != '' && format('docker.io/{0}/navelix', env.DOCKERHUB_USERNAME) || '' }}
           tags: |
             # sha-<short> — 每次构建，不可变锚点
@@ -57,8 +62,6 @@ jobs:
             # semver — 只有推送 Git tag（v1.0.0）时才生成
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-          flavor: |
-            lowercase=true
 
       - name: Get build metadata
         id: date
