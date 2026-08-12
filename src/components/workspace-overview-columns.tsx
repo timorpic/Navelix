@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import BrandIcon from "./brand-icon";
+import KnowledgeGraph from "./knowledge-graph";
 import type { Category, Project, SiteLink, TodoItem } from "@/types";
 import { recordLinkUsage } from "@/lib/link-usage";
 
@@ -287,7 +288,7 @@ export default function WorkspaceOverviewColumns({
         </div>
       </div>
 
-      {/* 栏目 3：知识图谱 (Knowledge Graph Hub) */}
+      {/* 栏目 3：知识图谱 (Interactive Network Constellation Graph) */}
       <div className="flex flex-col bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-colors">
         <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100 dark:border-slate-700/60">
           <div className="flex items-center gap-2">
@@ -299,65 +300,10 @@ export default function WorkspaceOverviewColumns({
               {links.length} 节点
             </span>
           </div>
-          {activeGraphCategory && (
-            <button
-              onClick={() => setActiveGraphCategory(null)}
-              className="text-[11px] text-[#00C776] hover:underline cursor-pointer"
-            >
-              全部节点
-            </button>
-          )}
         </div>
 
-        {/* Category Node Filter Cluster */}
-        <div className="flex items-center gap-1.5 flex-wrap mb-3">
-          {categories.map((c) => {
-            const isCatActive = activeGraphCategory === c.id;
-            return (
-              <button
-                key={c.id}
-                onClick={() =>
-                  setActiveGraphCategory(isCatActive ? null : c.id)
-                }
-                className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all duration-150 flex items-center gap-1 cursor-pointer ${
-                  isCatActive
-                    ? "bg-[#00C776] text-white shadow-xs"
-                    : "bg-gray-100 dark:bg-slate-900 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700"
-                }`}
-              >
-                <span>{c.icon || "📌"}</span>
-                <span>{c.name}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Knowledge Link Nodes Network Cloud */}
-        <div className="flex-1 min-h-[170px] max-h-[220px] overflow-y-auto pr-1 flex flex-wrap content-start gap-2 bg-gray-50/50 dark:bg-slate-900/40 p-3 rounded-xl border border-gray-100/80 dark:border-slate-800">
-          {filteredGraphLinks.length === 0 ? (
-            <div className="w-full py-8 text-center text-xs text-gray-400">
-              该分类暂无关联知识节点
-            </div>
-          ) : (
-            filteredGraphLinks.map((item) => (
-              <a
-                key={item.id}
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => recordLinkUsage(item.id)}
-                className="group flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-2xs hover:border-[#00C776] hover:shadow-xs transition-all duration-150 cursor-pointer"
-              >
-                <div className="w-4 h-4 rounded bg-gray-50 dark:bg-slate-900 flex items-center justify-center shrink-0">
-                  <BrandIcon name={item.icon || item.title} className="w-3 h-3" />
-                </div>
-                <span className="text-xs font-semibold text-gray-700 dark:text-slate-200 group-hover:text-[#00C776] transition-colors truncate max-w-[120px]">
-                  {item.title}
-                </span>
-              </a>
-            ))
-          )}
-        </div>
+        {/* 交互连线星图 */}
+        <KnowledgeGraph categories={categories} links={links} />
       </div>
     </div>
   );
