@@ -108,7 +108,7 @@ export default function WorkspaceOverviewColumns({
   }, [links, activeGraphCategory]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 my-0">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 my-0">
       {/* 栏目 1：项目概览 (Project Overview) */}
       <div className="flex flex-col bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-colors">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-slate-700/60">
@@ -286,24 +286,6 @@ export default function WorkspaceOverviewColumns({
             ))
           )}
         </div>
-      </div>
-
-      {/* 栏目 3：知识图谱 (Interactive Network Constellation Graph) */}
-      <div className="flex flex-col bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-colors">
-        <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100 dark:border-slate-700/60">
-          <div className="flex items-center gap-2">
-            <span className="text-base">🌐</span>
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-              知识图谱
-            </h3>
-            <span className="px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 text-[10px] font-bold">
-              {links.length} 节点
-            </span>
-          </div>
-        </div>
-
-        {/* 交互连线星图 */}
-        <KnowledgeGraph categories={categories} links={links} />
       </div>
     </div>
   );
