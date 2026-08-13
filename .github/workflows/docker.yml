@@ -53,15 +53,9 @@ jobs:
             ghcr.io/${{ steps.repo_name.outputs.repo }}
             ${{ env.DOCKERHUB_USERNAME != '' && format('docker.io/{0}/navelix', env.DOCKERHUB_USERNAME) || '' }}
           tags: |
-            # sha-<short> — 每次构建，不可变锚点
-            type=sha,prefix=sha-
-            # sha-<full> — 完整 SHA，供冒烟测试精确拉取
-            type=raw,value=sha-${{ github.sha }}
-            # latest — 在 main 分支及 Git Tag 推送时均生成
             type=raw,value=latest
-            # semver — 只有推送 Git tag（v1.0.0）时才生成
+            type=sha,prefix=sha-
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
 
       - name: Get build metadata
         id: date
@@ -119,7 +113,8 @@ jobs:
       - name: Run container and verify health & features
         run: |
           IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_TAG="${IMAGE_NAME}:sha-${{ github.sha }}"
+          SHORT_SHA="${{ github.sha }}"
+          IMAGE_TAG="${IMAGE_NAME}:sha-${SHORT_SHA:0:7}"
 
           echo "Pulling image ${IMAGE_TAG}..."
           docker pull "${IMAGE_TAG}"
