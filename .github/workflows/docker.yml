@@ -16,8 +16,8 @@ jobs:
       contents: read
       packages: write
     env:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || secrets.DOCKER_USERNAME || secrets.DOCKER_HUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN || secrets.DOCKER_PASSWORD || secrets.DOCKER_HUB_TOKEN || secrets.DOCKERHUB_PASSWORD }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
     steps:
       - name: Checkout repository
@@ -153,6 +153,7 @@ jobs:
           echo "Testing authentication with POST /api/auth/login..."
           curl -s -c /tmp/navelix-cookies.txt -X POST http://localhost:3721/api/auth/login \
             -H "Content-Type: application/json" \
+            -H "Origin: http://localhost:3721" \
             -d '{"username":"admin","password":"ci-test-password"}' > /tmp/login-result.json
           LOGIN_STATUS=$(cat /tmp/login-result.json | python3 -c "import sys,json; print('200' if json.load(sys.stdin).get('user',{}).get('id') else '401')" 2>/dev/null || echo "401")
           if [ "$LOGIN_STATUS" != "200" ]; then
@@ -171,6 +172,7 @@ jobs:
           echo "Testing POST /api/user/data (save config)..."
           curl -s -b /tmp/navelix-cookies.txt -X POST http://localhost:3721/api/user/data \
             -H "Content-Type: application/json" \
+            -H "Origin: http://localhost:3721" \
             -d '{"config":{"logoText":"SmokeTest"}}' > /tmp/save-result.json
           SAVE_STATUS=$(cat /tmp/save-result.json | python3 -c "import sys,json; print('200' if json.load(sys.stdin).get('success') else '500')" 2>/dev/null || echo "500")
           if [ "$SAVE_STATUS" != "200" ]; then
