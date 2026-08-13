@@ -344,48 +344,48 @@ export function saveUserConfigs(
     .get(userId) as Record<string, unknown> | undefined;
 
   const str =
-    (key: string, fallback: string) =>
-    (typeof cfg[key] === "string" ? (cfg[key] as string) : String(currentRow?.[key] ?? fallback));
+    (cfgKey: string, column: string, fallback: string) =>
+    (typeof cfg[cfgKey] === "string" ? (cfg[cfgKey] as string) : String(currentRow?.[column] ?? fallback));
   const bool =
-    (key: string, fallback: number) =>
-    typeof cfg[key] === "boolean"
-      ? cfg[key]
+    (cfgKey: string, column: string, fallback: number) =>
+    typeof cfg[cfgKey] === "boolean"
+      ? cfg[cfgKey]
         ? 1
         : 0
-      : Number(currentRow?.[key] ?? fallback);
+      : Number(currentRow?.[column] ?? fallback);
   const num =
-    (key: string, fallback: number) =>
-    typeof cfg[key] === "number"
-      ? (cfg[key] as number)
-      : Number(currentRow?.[key] ?? fallback);
+    (cfgKey: string, column: string, fallback: number) =>
+    typeof cfg[cfgKey] === "number"
+      ? (cfg[cfgKey] as number)
+      : Number(currentRow?.[column] ?? fallback);
   /** API Key 类字段：传入非空字符串才更新，否则沿用旧值（实现"留空不变"） */
   const secret =
-    (key: string) =>
-    typeof cfg[key] === "string" && (cfg[key] as string).trim() !== ""
-      ? (cfg[key] as string).trim()
-      : String(currentRow?.[key] || "");
+    (cfgKey: string, column: string) =>
+    typeof cfg[cfgKey] === "string" && (cfg[cfgKey] as string).trim() !== ""
+      ? (cfg[cfgKey] as string).trim()
+      : String(currentRow?.[column] || "");
 
-  const logoText = str("logoText", "Navelix");
-  const logoImage = str("logoImage", "");
-  const showSearchBar = bool("showSearchBar", 1);
-  const maxWidth = str("maxWidth", "1200px");
-  const customFooter = str("customFooter", "© 2026 Navelix. 保留所有权利。");
-  const theme = str("theme", "system");
-  const searchEngine = str("searchEngine", "google");
-  const aiBaseUrl = str("aiBaseUrl", "https://api.openai.com/v1");
-  const aiApiKey = secret("aiApiKey");
-  const aiModel = str("aiModel", "gpt-4o-mini");
-  const siteTitle = str("siteTitle", "Navelix · Personal Digital Hub");
-  const linkStatusEnabled = bool("linkStatusEnabled", 1);
-  const linkStatusInterval = num("linkStatusInterval", 60);
-  const socialGithub = str("socialGithub", "");
-  const socialX = str("socialX", "");
-  const socialLinkedin = str("socialLinkedin", "");
-  const socialEmail = str("socialEmail", "");
-  const weatherEnabled = bool("weatherEnabled", 0);
-  const weatherApiKey = secret("weatherApiKey");
-  const weatherLocation = str("weatherLocation", "");
-  const weatherApiBaseUrl = str("weatherApiBaseUrl", "https://api.seniverse.com");
+  const logoText = str("logoText", "logo_text", "Navelix");
+  const logoImage = str("logoImage", "logo_image", "");
+  const showSearchBar = bool("showSearchBar", "show_search_bar", 1);
+  const maxWidth = str("maxWidth", "max_width", "1200px");
+  const customFooter = str("customFooter", "custom_footer", "© 2026 Navelix. 保留所有权利。");
+  const theme = str("theme", "theme", "system");
+  const searchEngine = str("searchEngine", "search_engine", "google");
+  const aiBaseUrl = str("aiBaseUrl", "ai_base_url", "https://api.openai.com/v1");
+  const aiApiKey = secret("aiApiKey", "ai_api_key");
+  const aiModel = str("aiModel", "ai_model", "gpt-4o-mini");
+  const siteTitle = str("siteTitle", "site_title", "Navelix · Personal Digital Hub");
+  const linkStatusEnabled = bool("linkStatusEnabled", "link_status_enabled", 1);
+  const linkStatusInterval = num("linkStatusInterval", "link_status_interval", 60);
+  const socialGithub = str("socialGithub", "social_github", "");
+  const socialX = str("socialX", "social_x", "");
+  const socialLinkedin = str("socialLinkedin", "social_linkedin", "");
+  const socialEmail = str("socialEmail", "social_email", "");
+  const weatherEnabled = bool("weatherEnabled", "weather_enabled", 0);
+  const weatherApiKey = secret("weatherApiKey", "weather_api_key");
+  const weatherLocation = str("weatherLocation", "weather_location", "");
+  const weatherApiBaseUrl = str("weatherApiBaseUrl", "weather_api_base_url", "https://api.seniverse.com");
 
   db.prepare(`
     INSERT OR REPLACE INTO user_configs (user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url)
