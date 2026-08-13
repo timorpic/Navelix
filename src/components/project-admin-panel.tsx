@@ -35,7 +35,11 @@ export default function ProjectAdminPanel() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    queueMicrotask(() => {
+      load();
+    });
+  }, [load]);
 
   const resetForm = () => {
     setName("");

@@ -72,7 +72,9 @@ export default function ActivityFeed({ links }: { links: SiteLink[] }) {
   }, [links]);
 
   useEffect(() => {
-    load();
+    queueMicrotask(() => {
+      load();
+    });
     const handle = () => load();
     window.addEventListener("navelix-link-clicked", handle);
     return () => window.removeEventListener("navelix-link-clicked", handle);

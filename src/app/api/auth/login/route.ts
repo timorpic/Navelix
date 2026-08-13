@@ -5,20 +5,13 @@ import { db, SESSION_COOKIE } from "@/lib/db";
 import {
   checkLoginRateLimit,
   createSession,
+  getClientId,
   recordLoginFailure,
   resetLoginRateLimit,
   sessionCookieOptions,
   toPublicUser,
   verifyPassword,
 } from "@/lib/auth";
-
-function getClientId(req: Request): string {
-  const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim();
-  const realIp = req.headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
-  return "unknown";
-}
 
 export async function POST(req: Request) {
   const clientId = getClientId(req);

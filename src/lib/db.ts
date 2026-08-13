@@ -5,12 +5,12 @@ import {
   generateStrongPassword,
   hashPassword,
   verifyPassword,
-} from "./password";
+} from "./password.ts";
 import {
   categories as seedCategories,
   seedQuickAccess,
   siteLinks as seedLinks,
-} from "@/data/links";
+} from "../data/links.ts";
 
 // Server-only module: never import from client components.
 
@@ -28,6 +28,7 @@ export const db = new DatabaseSync(path.join(DATA_DIR, "nexus.db"));
 //    if another worker is already doing it, we get "database is locked" — ignore it,
 //    since WAL mode is already active (or will be set by the winner).
 db.exec("PRAGMA busy_timeout = 5000;");
+db.exec("PRAGMA foreign_keys = ON;");
 try {
   db.exec("PRAGMA journal_mode = WAL;");
 } catch (e: unknown) {
@@ -51,14 +52,14 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS sessions (
     token_hash TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     expires_at INTEGER NOT NULL,
     created_at INTEGER NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS user_categories (
     id TEXT NOT NULL,
-    user_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     label TEXT NOT NULL,
     icon TEXT NOT NULL,
@@ -68,7 +69,7 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS user_links (
     id TEXT NOT NULL,
-    user_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     url TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
@@ -79,7 +80,7 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS user_configs (
-    user_id TEXT PRIMARY KEY,
+    user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     logo_text TEXT NOT NULL DEFAULT 'Navelix',
     logo_image TEXT NOT NULL DEFAULT '',
     show_search_bar INTEGER NOT NULL DEFAULT 1,
@@ -102,7 +103,7 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS notifications (
     id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     content TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL,
@@ -114,7 +115,7 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS projects (
     id TEXT NOT NULL,
-    user_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     status TEXT NOT NULL,
     status_color TEXT NOT NULL DEFAULT '',
@@ -125,7 +126,7 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS user_todos (
     id TEXT NOT NULL,
-    user_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     priority TEXT NOT NULL DEFAULT 'medium',
     done INTEGER NOT NULL DEFAULT 0,
@@ -334,6 +335,181 @@ if (user_version < 3) {
     }
   }
   db.exec("PRAGMA user_version = 3");
+}
+
+if (user_version < 5) {
+  try {
+    db.exec("PRAGMA foreign_keys = OFF;");
+    db.exec("BEGIN TRANSACTION;");
+
+    db.exec(`
+      DROP TABLE IF EXISTS sessions_new;
+      CREATE TABLE sessions_new (
+        token_hash TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        expires_at INTEGER NOT NULL,
+        created_at INTEGER NOT NULL
+      );
+      INSERT OR IGNORE INTO sessions_new SELECT * FROM sessions;
+      DROP TABLE sessions;
+      ALTER TABLE sessions_new RENAME TO sessions;
+
+      DROP TABLE IF EXISTS user_categories_new;
+      CREATE TABLE user_categories_new (
+        id TEXT NOT NULL,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        label TEXT NOT NULL,
+        icon TEXT NOT NULL,
+        color TEXT NOT NULL,
+        PRIMARY KEY (id, user_id)
+      );
+      INSERT OR IGNORE INTO user_categories_new SELECT * FROM user_categories;
+      DROP TABLE user_categories;
+      ALTER TABLE user_categories_new RENAME TO user_categories;
+
+      DROP TABLE IF EXISTS user_links_new;
+      CREATE TABLE user_links_new (
+        id TEXT NOT NULL,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        url TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        icon TEXT NOT NULL DEFAULT '',
+        category TEXT NOT NULL,
+        is_quick_access INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (id, user_id)
+      );
+      INSERT OR IGNORE INTO user_links_new SELECT * FROM user_links;
+      DROP TABLE user_links;
+      ALTER TABLE user_links_new RENAME TO user_links;
+
+      DROP TABLE IF EXISTS user_configs_new;
+      CREATE TABLE user_configs_new (
+        user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        logo_text TEXT NOT NULL DEFAULT 'Navelix',
+        logo_image TEXT NOT NULL DEFAULT '',
+        show_search_bar INTEGER NOT NULL DEFAULT 1,
+        max_width TEXT NOT NULL DEFAULT '1200px',
+        custom_footer TEXT NOT NULL DEFAULT '© 2026 Navelix. 保留所有权利。',
+        language TEXT NOT NULL DEFAULT 'zh',
+        theme TEXT NOT NULL DEFAULT 'light',
+        search_engine TEXT NOT NULL DEFAULT 'google',
+        ai_base_url TEXT NOT NULL DEFAULT 'https://api.openai.com/v1',
+        ai_api_key TEXT NOT NULL DEFAULT '',
+        ai_model TEXT NOT NULL DEFAULT 'gpt-4o-mini',
+        site_title TEXT NOT NULL DEFAULT 'Navelix · Personal Digital Hub',
+        link_status_enabled INTEGER NOT NULL DEFAULT 1,
+        link_status_interval INTEGER NOT NULL DEFAULT 60,
+        social_github TEXT NOT NULL DEFAULT '',
+        social_x TEXT NOT NULL DEFAULT '',
+        social_linkedin TEXT NOT NULL DEFAULT '',
+        social_email TEXT NOT NULL DEFAULT '',
+        weather_enabled INTEGER NOT NULL DEFAULT 0,
+        weather_api_key TEXT NOT NULL DEFAULT '',
+        weather_location TEXT NOT NULL DEFAULT '',
+        weather_api_base_url TEXT NOT NULL DEFAULT 'https://api.seniverse.com'
+      );
+      INSERT OR IGNORE INTO user_configs_new (
+        user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url
+      )
+      SELECT
+        user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url
+      FROM user_configs;
+      DROP TABLE user_configs;
+      ALTER TABLE user_configs_new RENAME TO user_configs;
+
+      DROP TABLE IF EXISTS notifications_new;
+      CREATE TABLE notifications_new (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL DEFAULT '',
+        created_at INTEGER NOT NULL,
+        read INTEGER NOT NULL DEFAULT 0
+      );
+      INSERT OR IGNORE INTO notifications_new SELECT * FROM notifications;
+      DROP TABLE notifications;
+      ALTER TABLE notifications_new RENAME TO notifications;
+
+      DROP TABLE IF EXISTS projects_new;
+      CREATE TABLE projects_new (
+        id TEXT NOT NULL,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        status TEXT NOT NULL,
+        status_color TEXT NOT NULL DEFAULT '',
+        url TEXT NOT NULL DEFAULT '',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (id, user_id)
+      );
+      INSERT OR IGNORE INTO projects_new SELECT * FROM projects;
+      DROP TABLE projects;
+      ALTER TABLE projects_new RENAME TO projects;
+
+      DROP TABLE IF EXISTS user_todos_new;
+      CREATE TABLE user_todos_new (
+        id TEXT NOT NULL,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        priority TEXT NOT NULL DEFAULT 'medium',
+        done INTEGER NOT NULL DEFAULT 0,
+        due_date TEXT NOT NULL DEFAULT '',
+        project_id TEXT NOT NULL DEFAULT '',
+        created_at INTEGER NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (id, user_id)
+      );
+      INSERT OR IGNORE INTO user_todos_new SELECT * FROM user_todos;
+      DROP TABLE user_todos;
+      ALTER TABLE user_todos_new RENAME TO user_todos;
+    `);
+
+    db.exec("COMMIT;");
+  } catch {
+    try { db.exec("ROLLBACK;"); } catch {}
+  } finally {
+    db.exec("PRAGMA foreign_keys = ON;");
+  }
+  db.exec("PRAGMA user_version = 5");
+}
+
+if (user_version < 6) {
+  // 一次性自动修复：清理并重置旧版本 SELECT * 引起的 user_configs 列错位
+  const rows = db.prepare("SELECT * FROM user_configs").all() as Record<string, unknown>[];
+  for (const r of rows) {
+    if (
+      typeof r.show_search_bar === "string" ||
+      typeof r.theme !== "string" ||
+      !["light", "dark", "system"].includes(String(r.theme))
+    ) {
+      db.prepare(`
+        UPDATE user_configs SET
+          logo_text = 'Navelix',
+          logo_image = '',
+          show_search_bar = 1,
+          max_width = '1200px',
+          custom_footer = '© 2026 Navelix. 保留所有权利。',
+          theme = 'system',
+          search_engine = 'google',
+          ai_base_url = 'https://api.openai.com/v1',
+          ai_model = 'gpt-4o-mini',
+          site_title = 'Navelix · Personal Digital Hub',
+          link_status_enabled = 1,
+          link_status_interval = 60,
+          social_github = '',
+          social_x = '',
+          social_linkedin = '',
+          social_email = '',
+          weather_enabled = 0,
+          weather_api_key = '',
+          weather_location = '',
+          weather_api_base_url = 'https://api.seniverse.com'
+        WHERE user_id = ?
+      `).run(r.user_id as string);
+    }
+  }
+  db.exec("PRAGMA user_version = 6");
 }
 
 // 将旧版本默认品牌文案迁移到 Navelix（用户自定义过的值不受影响）

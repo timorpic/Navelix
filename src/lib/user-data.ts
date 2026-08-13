@@ -1,4 +1,4 @@
-import { db, seedUserData } from "./db";
+import { db, seedUserData } from "./db.ts";
 import type { Category, Project, SiteLink, SystemConfig } from "@/types";
 
 export interface UserDataResult {
@@ -9,7 +9,7 @@ export interface UserDataResult {
 }
 
 /** POST 保存后调用，使该用户的缓存失效 */
-export function invalidateUserData(_userId?: string): void {
+export function invalidateUserData(): void {
   // SQLite WAL 模式实时读写，无需内存缓存
 }
 
@@ -90,7 +90,7 @@ export function getUserData(userId: string): UserDataResult {
     ? {
         logoText: String(configRow.logo_text || "Navelix"),
         logoImage: String(configRow.logo_image || ""),
-        showSearchBar: configRow.show_search_bar === 1,
+        showSearchBar: configRow.show_search_bar === 1 || configRow.show_search_bar === true || configRow.show_search_bar === "1",
         maxWidth: (configRow.max_width as SystemConfig["maxWidth"]) || "1200px",
         customFooter: String(configRow.custom_footer || "© 2026 Navelix. 保留所有权利。"),
         theme: (configRow.theme as SystemConfig["theme"]) || "system",

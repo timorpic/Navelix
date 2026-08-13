@@ -1,33 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { safeFetch } from "@/lib/ssrf";
 
 const TIMEOUT_MS = 8_000;
 const MAX_URLS = 20;
 
 async function checkUrl(url: string): Promise<"online" | "offline"> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    let res = await fetch(url, {
+    let res = await safeFetch(url, {
       method: "HEAD",
-      redirect: "follow",
-      signal: controller.signal,
+      timeoutMs: TIMEOUT_MS,
       cache: "no-store",
     });
     // 部分站点不支持 HEAD，回退为 GET 探测
     if (res.status === 405 || res.status === 501) {
-      res = await fetch(url, {
+      res = await safeFetch(url, {
         method: "GET",
-        redirect: "follow",
-        signal: controller.signal,
+        timeoutMs: TIMEOUT_MS,
         cache: "no-store",
       });
     }
     return res.ok ? "online" : "offline";
   } catch {
     return "offline";
-  } finally {
-    clearTimeout(timer);
   }
 }
 

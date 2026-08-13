@@ -4,7 +4,7 @@ import { checkCSRF, getSessionUser } from "@/lib/auth";
 import { invalidateUserData } from "@/lib/user-data";
 import type { SiteLink, SystemConfig } from "@/types";
 // GET /api/user/data - Fetch categories, links, and config for current logged-in user
-export async function GET(req: NextRequest) {
+export async function GET() {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
@@ -137,7 +137,7 @@ export async function GET(req: NextRequest) {
     ? {
         logoText: configRow.logo_text,
         logoImage: configRow.logo_image,
-        showSearchBar: configRow.show_search_bar === 1,
+        showSearchBar: configRow.show_search_bar === 1 || (configRow.show_search_bar as unknown) === true || (configRow.show_search_bar as unknown) === "1",
         maxWidth: configRow.max_width,
         customFooter: configRow.custom_footer,
         theme: configRow.theme,
@@ -203,29 +203,52 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    try { db.exec("BEGIN"); } catch { /* no-op */ }
+    db.exec("BEGIN IMMEDIATE");
 
     if (Array.isArray(body.categories)) {
-      db.prepare("DELETE FROM user_categories WHERE user_id = ?").run(userId);
-      const insertCat = db.prepare(`
+      const incomingIds: string[] = [];
+      const upsertCat = db.prepare(`
         INSERT INTO user_categories (id, user_id, name, label, icon, color)
         VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id, user_id) DO UPDATE SET
+          name = excluded.name,
+          label = excluded.label,
+          icon = excluded.icon,
+          color = excluded.color
       `);
       for (const c of body.categories) {
-        insertCat.run(c.id, userId, c.name, c.label || c.name, c.icon || "📂", c.color || "#00C776");
+        if (!c || typeof c !== "object") continue;
+        const catId = String(c.id || crypto.randomUUID());
+        incomingIds.push(catId);
+        upsertCat.run(catId, userId, String(c.name || ""), String(c.label || c.name || ""), String(c.icon || "📂"), String(c.color || "#00C776"));
+      }
+      if (incomingIds.length > 0) {
+        const placeholders = incomingIds.map(() => "?").join(",");
+        db.prepare(`DELETE FROM user_categories WHERE user_id = ? AND id NOT IN (${placeholders})`).run(userId, ...incomingIds);
+      } else {
+        db.prepare("DELETE FROM user_categories WHERE user_id = ?").run(userId);
       }
     }
 
     if (Array.isArray(body.links)) {
-      db.prepare("DELETE FROM user_links WHERE user_id = ?").run(userId);
-      const insertLink = db.prepare(`
-        INSERT OR REPLACE INTO user_links (id, user_id, title, url, description, icon, category, is_quick_access)
+      const incomingIds: string[] = [];
+      const upsertLink = db.prepare(`
+        INSERT INTO user_links (id, user_id, title, url, description, icon, category, is_quick_access)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id, user_id) DO UPDATE SET
+          title = excluded.title,
+          url = excluded.url,
+          description = excluded.description,
+          icon = excluded.icon,
+          category = excluded.category,
+          is_quick_access = excluded.is_quick_access
       `);
       for (const l of body.links) {
         if (!l || typeof l !== "object") continue;
-        insertLink.run(
-          String(l.id || crypto.randomUUID()),
+        const linkId = String(l.id || crypto.randomUUID());
+        incomingIds.push(linkId);
+        upsertLink.run(
+          linkId,
           userId,
           String(l.title || "未命名链接"),
           String(l.url || "https://example.com"),
@@ -235,18 +258,33 @@ export async function POST(req: NextRequest) {
           l.isQuickAccess ? 1 : 0,
         );
       }
+      if (incomingIds.length > 0) {
+        const placeholders = incomingIds.map(() => "?").join(",");
+        db.prepare(`DELETE FROM user_links WHERE user_id = ? AND id NOT IN (${placeholders})`).run(userId, ...incomingIds);
+      } else {
+        db.prepare("DELETE FROM user_links WHERE user_id = ?").run(userId);
+      }
     }
 
     if (Array.isArray(body.projects)) {
-      db.prepare("DELETE FROM projects WHERE user_id = ?").run(userId);
-      const insertProject = db.prepare(`
+      const incomingIds: string[] = [];
+      const upsertProject = db.prepare(`
         INSERT INTO projects (id, user_id, name, status, status_color, url, sort_order)
         VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id, user_id) DO UPDATE SET
+          name = excluded.name,
+          status = excluded.status,
+          status_color = excluded.status_color,
+          url = excluded.url,
+          sort_order = excluded.sort_order
       `);
       body.projects.forEach(
         (p: { id?: string; name?: string; status?: string; statusColor?: string; url?: string }, index: number) => {
-          insertProject.run(
-            String(p.id || `proj-${Date.now()}-${index}`),
+          if (!p || typeof p !== "object") return;
+          const projId = String(p.id || `proj-${Date.now()}-${index}`);
+          incomingIds.push(projId);
+          upsertProject.run(
+            projId,
             userId,
             String(p.name || "未命名项目"),
             String(p.status || "进行中"),
@@ -256,13 +294,26 @@ export async function POST(req: NextRequest) {
           );
         },
       );
+      if (incomingIds.length > 0) {
+        const placeholders = incomingIds.map(() => "?").join(",");
+        db.prepare(`DELETE FROM projects WHERE user_id = ? AND id NOT IN (${placeholders})`).run(userId, ...incomingIds);
+      } else {
+        db.prepare("DELETE FROM projects WHERE user_id = ?").run(userId);
+      }
     }
 
     if (Array.isArray(body.todos)) {
-      db.prepare("DELETE FROM user_todos WHERE user_id = ?").run(userId);
-      const insertTodo = db.prepare(`
+      const incomingIds: string[] = [];
+      const upsertTodo = db.prepare(`
         INSERT INTO user_todos (id, user_id, title, priority, done, due_date, project_id, created_at, sort_order)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id, user_id) DO UPDATE SET
+          title = excluded.title,
+          priority = excluded.priority,
+          done = excluded.done,
+          due_date = excluded.due_date,
+          project_id = excluded.project_id,
+          sort_order = excluded.sort_order
       `);
       body.todos.forEach(
         (
@@ -278,8 +329,11 @@ export async function POST(req: NextRequest) {
           },
           index: number,
         ) => {
-          insertTodo.run(
-            String(t.id || `todo-${Date.now()}-${index}`),
+          if (!t || typeof t !== "object") return;
+          const todoId = String(t.id || `todo-${Date.now()}-${index}`);
+          incomingIds.push(todoId);
+          upsertTodo.run(
+            todoId,
             userId,
             String(t.title || "未命名日程"),
             String(t.priority || "medium"),
@@ -291,61 +345,102 @@ export async function POST(req: NextRequest) {
           );
         },
       );
+      if (incomingIds.length > 0) {
+        const placeholders = incomingIds.map(() => "?").join(",");
+        db.prepare(`DELETE FROM user_todos WHERE user_id = ? AND id NOT IN (${placeholders})`).run(userId, ...incomingIds);
+      } else {
+        db.prepare("DELETE FROM user_todos WHERE user_id = ?").run(userId);
+      }
     }
 
     if (body.config) {
       const cfg = body.config;
-      // 安全：密钥字段为空时保留数据库现有值（不下发明文，不覆盖）
       const currentRow = db
-        .prepare(
-          "SELECT ai_api_key, weather_api_key FROM user_configs WHERE user_id = ?",
-        )
-        .get(userId) as
-        | { ai_api_key: string; weather_api_key: string }
-        | undefined;
+        .prepare("SELECT * FROM user_configs WHERE user_id = ?")
+        .get(userId) as Record<string, unknown> | undefined;
+
+      const logoText = typeof cfg.logoText === "string" ? cfg.logoText : String(currentRow?.logo_text || "Navelix");
+      const logoImage = typeof cfg.logoImage === "string" ? cfg.logoImage : String(currentRow?.logo_image || "");
+      const showSearchBar =
+        typeof cfg.showSearchBar === "boolean"
+          ? cfg.showSearchBar
+            ? 1
+            : 0
+          : Number(currentRow?.show_search_bar ?? 1);
+      const maxWidth = typeof cfg.maxWidth === "string" ? cfg.maxWidth : String(currentRow?.max_width || "1200px");
+      const customFooter = typeof cfg.customFooter === "string" ? cfg.customFooter : String(currentRow?.custom_footer || "© 2026 Navelix. 保留所有权利。");
+      const theme = typeof cfg.theme === "string" ? cfg.theme : String(currentRow?.theme || "system");
+      const searchEngine = typeof cfg.searchEngine === "string" ? cfg.searchEngine : String(currentRow?.search_engine || "google");
+      const aiBaseUrl = typeof cfg.aiBaseUrl === "string" ? cfg.aiBaseUrl : String(currentRow?.ai_base_url || "https://api.openai.com/v1");
       const aiApiKey =
         typeof cfg.aiApiKey === "string" && cfg.aiApiKey.trim() !== ""
           ? cfg.aiApiKey.trim()
-          : (currentRow?.ai_api_key || "");
+          : String(currentRow?.ai_api_key || "");
+      const aiModel = typeof cfg.aiModel === "string" ? cfg.aiModel : String(currentRow?.ai_model || "gpt-4o-mini");
+      const siteTitle = typeof cfg.siteTitle === "string" ? cfg.siteTitle : String(currentRow?.site_title || "Navelix · Personal Digital Hub");
+      const linkStatusEnabled =
+        typeof cfg.linkStatusEnabled === "boolean"
+          ? cfg.linkStatusEnabled
+            ? 1
+            : 0
+          : Number(currentRow?.link_status_enabled ?? 1);
+      const linkStatusInterval = typeof cfg.linkStatusInterval === "number" ? cfg.linkStatusInterval : Number(currentRow?.link_status_interval ?? 60);
+      const socialGithub = typeof cfg.socialGithub === "string" ? cfg.socialGithub : String(currentRow?.social_github || "");
+      const socialX = typeof cfg.socialX === "string" ? cfg.socialX : String(currentRow?.social_x || "");
+      const socialLinkedin = typeof cfg.socialLinkedin === "string" ? cfg.socialLinkedin : String(currentRow?.social_linkedin || "");
+      const socialEmail = typeof cfg.socialEmail === "string" ? cfg.socialEmail : String(currentRow?.social_email || "");
+
+      const weatherEnabled =
+        typeof cfg.weatherEnabled === "boolean"
+          ? cfg.weatherEnabled
+            ? 1
+            : 0
+          : Number(currentRow?.weather_enabled ?? 0);
       const weatherApiKey =
         typeof cfg.weatherApiKey === "string" && cfg.weatherApiKey.trim() !== ""
           ? cfg.weatherApiKey.trim()
-          : (currentRow?.weather_api_key || "");
+          : String(currentRow?.weather_api_key || "");
+      const weatherLocation = typeof cfg.weatherLocation === "string" ? cfg.weatherLocation : String(currentRow?.weather_location || "");
+      const weatherApiBaseUrl = typeof cfg.weatherApiBaseUrl === "string" ? cfg.weatherApiBaseUrl : String(currentRow?.weather_api_base_url || "https://api.seniverse.com");
 
       db.prepare(`
         INSERT OR REPLACE INTO user_configs (user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         userId,
-        cfg.logoText || "Navelix",
-        cfg.logoImage || "",
-        cfg.showSearchBar ? 1 : 0,
-        cfg.maxWidth || "1200px",
-        cfg.customFooter || "© 2026 Navelix. 保留所有权利。",
-        cfg.theme || "system",
-        cfg.searchEngine || "google",
-        cfg.aiBaseUrl || "https://api.openai.com/v1",
+        logoText,
+        logoImage,
+        showSearchBar,
+        maxWidth,
+        customFooter,
+        theme,
+        searchEngine,
+        aiBaseUrl,
         aiApiKey,
-        cfg.aiModel || "gpt-4o-mini",
-        cfg.siteTitle || "Navelix · Personal Digital Hub",
-        cfg.linkStatusEnabled === false ? 0 : 1,
-        cfg.linkStatusInterval || 60,
-        cfg.socialGithub || "",
-        cfg.socialX || "",
-        cfg.socialLinkedin || "",
-        cfg.socialEmail || "",
-        cfg.weatherEnabled ? 1 : 0,
+        aiModel,
+        siteTitle,
+        linkStatusEnabled,
+        linkStatusInterval,
+        socialGithub,
+        socialX,
+        socialLinkedin,
+        socialEmail,
+        weatherEnabled,
         weatherApiKey,
-        cfg.weatherLocation || "",
-        cfg.weatherApiBaseUrl || "https://api.seniverse.com",
+        weatherLocation,
+        weatherApiBaseUrl,
       );
     }
 
-    try { db.exec("COMMIT"); } catch { /* no-op */ }
-    invalidateUserData(userId);
+    db.exec("COMMIT");
+    invalidateUserData();
     return NextResponse.json({ success: true });
   } catch (err) {
-    try { db.exec("ROLLBACK"); } catch { /* no-op */ }
+    try {
+      db.exec("ROLLBACK");
+    } catch {
+      // rollback error ignore
+    }
     const message = err instanceof Error ? err.message : "保存配置失败";
     return NextResponse.json({ error: message }, { status: 500 });
   }

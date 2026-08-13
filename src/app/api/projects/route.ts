@@ -1,22 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, SESSION_COOKIE } from "@/lib/db";
-import { createHash } from "node:crypto";
-import type { Project } from "@/types";
+import { db } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth";
 
-function getUserIdFromSession(req: NextRequest): string | null {
-  const token = req.cookies.get(SESSION_COOKIE)?.value || "";
-  if (!token) return null;
-  const tokenHash = createHash("sha256").update(token).digest("hex");
-  const session = db
-    .prepare("SELECT user_id, expires_at FROM sessions WHERE token_hash = ?")
-    .get(tokenHash) as { user_id: string; expires_at: number } | undefined;
-  if (!session || session.expires_at < Date.now()) return null;
-  return session.user_id;
-}
-
-export async function GET(req: NextRequest) {
-  const userId = getUserIdFromSession(req);
-  if (!userId) return NextResponse.json({ error: "未登录" }, { status: 401 });
+export async function GET() {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  const userId = user.id;
   const rows = db
     .prepare("SELECT id, name, status, status_color, url, sort_order FROM projects WHERE user_id = ? ORDER BY sort_order ASC")
     .all(userId) as { id: string; name: string; status: string; status_color: string; url: string; sort_order: number }[];
@@ -34,8 +23,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const userId = getUserIdFromSession(req);
-  if (!userId) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  const userId = user.id;
   try {
     const body = await req.json();
     const name = String(body.name || "").trim();

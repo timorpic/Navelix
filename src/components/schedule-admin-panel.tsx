@@ -45,7 +45,9 @@ export default function ScheduleAdminPanel() {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    queueMicrotask(() => {
+      fetchData();
+    });
   }, [fetchData]);
 
   // Open Modal for Create or Edit

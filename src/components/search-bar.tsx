@@ -1,51 +1,52 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useNavelixConfig } from "@/hooks/use-navelix-config";
 
-const ENGINES = [
-  { id: "google", name: "Google", url: "https://www.google.com/search?q=" },
-  { id: "bing", name: "Bing", url: "https://www.bing.com/search?q=" },
-  { id: "baidu", name: "Baidu", url: "https://www.baidu.com/s?wd=" },
-  { id: "duckduckgo", name: "DuckDuckGo", url: "https://duckduckgo.com/?q=" },
-  { id: "github", name: "GitHub", url: "https://github.com/search?q=" },
-];
-
-const ENGINE_KEY = "navelix.search-engine.v1";
+const SEARCH_ENGINE_URLS: Record<string, string> = {
+  google: "https://www.google.com/search?q=",
+  baidu: "https://www.baidu.com/s?wd=",
+  bing: "https://www.bing.com/search?q=",
+  perplexity: "https://www.perplexity.ai/search?q=",
+  duckduckgo: "https://duckduckgo.com/?q=",
+  github: "https://github.com/search?q=",
+};
 
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
+  className?: string;
 }
 
-export default function SearchBar({ value, onChange }: SearchBarProps) {
-  const [engine, setEngine] = useState("google");
+export default function SearchBar({ value, onChange, className = "" }: SearchBarProps) {
+  const { config } = useNavelixConfig();
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  // ⌘K / Ctrl+K keyboard shortcut focus
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(ENGINE_KEY);
-      if (saved && ENGINES.some((e) => e.id === saved)) {
-        setEngine(saved);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
       }
-    } catch {}
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-
-  const handleEngineChange = (id: string) => {
-    setEngine(id);
-    localStorage.setItem(ENGINE_KEY, id);
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const query = value.trim();
     if (!query) return;
-    const target = ENGINES.find((en) => en.id === engine) ?? ENGINES[0];
-    window.open(target.url + encodeURIComponent(query), "_blank");
+    const engineUrl =
+      SEARCH_ENGINE_URLS[config.searchEngine] || SEARCH_ENGINE_URLS.google;
+    window.open(engineUrl + encodeURIComponent(query), "_blank");
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative w-full max-w-2xl">
-      <div className="relative flex items-center">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+    <form onSubmit={handleSubmit} className={`relative w-full ${className}`}>
+      <div className="relative flex items-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl border border-gray-200/80 dark:border-slate-700 shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#00C776]/40 focus-within:border-[#00C776]">
+        <div className="pl-4 pr-2 text-[#00C776] shrink-0">
           <svg
             width="18"
             height="18"
@@ -60,39 +61,23 @@ export default function SearchBar({ value, onChange }: SearchBarProps) {
             <path d="m21 21-4.35-4.35" />
           </svg>
         </div>
+
         <input
           id="main-search-input"
+          ref={inputRef}
           name="search"
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          aria-label="搜索"
-          placeholder="Search anything..."
-          className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 pl-12 pr-44 text-sm text-gray-900 placeholder-gray-400 transition-all focus:border-[#00C776] focus:outline-none focus:ring-2 focus:ring-[#00C776]/30"
+          aria-label="搜索任意内容..."
+          placeholder="搜索书签或全网任意内容..."
+          className="h-12 w-full bg-transparent pl-2 pr-14 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none"
         />
-        <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-2">
-          <select
-            name="search-engine"
-            value={engine}
-            onChange={(e) => handleEngineChange(e.target.value)}
-            aria-label="Search engine"
-            className="h-7 rounded-md border border-gray-200 bg-white px-1.5 text-[11px] font-medium text-gray-500 transition-colors focus:border-[#00C776] focus:outline-none"
-          >
-            {ENGINES.map((en) => (
-              <option key={en.id} value={en.id}>
-                {en.name}
-              </option>
-            ))}
-          </select>
-          <span className="rounded-md border border-gray-200 bg-white px-2 py-1 font-mono text-[11px] text-gray-400">
-            ⌘K
-          </span>
-          <button
-            type="submit"
-            className="h-8 rounded-lg bg-[#00C776] px-4 text-sm font-medium text-white transition-colors hover:bg-[#009a5a]"
-          >
-            Search
-          </button>
+
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+          <kbd className="px-2 py-0.5 text-xs font-semibold text-gray-400 dark:text-slate-400 bg-gray-100/80 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md">
+            ⌘ K
+          </kbd>
         </div>
       </div>
     </form>

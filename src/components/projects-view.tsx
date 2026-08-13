@@ -37,7 +37,9 @@ export default function ProjectsView() {
   }, []);
 
   useEffect(() => {
-    fetchProjects();
+    queueMicrotask(() => {
+      fetchProjects();
+    });
   }, [fetchProjects]);
 
   const resetForm = () => {

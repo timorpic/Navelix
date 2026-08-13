@@ -31,7 +31,9 @@ export default function TodoAdminPanel() {
   }, []);
 
   useEffect(() => {
-    loadTodos();
+    queueMicrotask(() => {
+      loadTodos();
+    });
   }, [loadTodos]);
 
   const resetForm = () => {

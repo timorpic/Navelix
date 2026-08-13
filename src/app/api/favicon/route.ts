@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { safeFetch } from "@/lib/ssrf";
 
 const FETCH_TIMEOUT_MS = 8_000;
 const MAX_ICON_BYTES = 1_000_000;
@@ -8,13 +9,7 @@ async function fetchWithTimeout(
   url: string,
   init?: RequestInit,
 ): Promise<Response> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
+  return await safeFetch(url, { ...init, timeoutMs: FETCH_TIMEOUT_MS });
 }
 
 // 从 HTML 中提取 <link rel="icon"> 等图标声明

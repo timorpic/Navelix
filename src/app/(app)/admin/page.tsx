@@ -102,7 +102,7 @@ export default function AdminPage() {
     mergeBookmarks,
   } = useNavelixData();
 
-  const { config, updateConfig, resetConfig, isDark } = useNavelixConfig();
+  const { config, updateConfig, resetConfig } = useNavelixConfig();
 
   // Active Admin Tab
   const [activeTab, setActiveTab] = useState<AdminTab>("links");
@@ -2249,6 +2249,81 @@ export default function AdminPage() {
                       value={config.aiModel || ""}
                       onChange={(e) => updateConfig({ aiModel: e.target.value })}
                       placeholder="gpt-4o-mini 或 deepseek-chat"
+                      className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Weather API Config Section */}
+              <div className="pt-5 border-t border-gray-100 dark:border-slate-700">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-lg">🌤️</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                      天气组件 API 配置 (心知天气)
+                    </h3>
+                    <p className="text-xs text-gray-400 dark:text-slate-400">
+                      配置心知天气 API Key 与城市位置（如 beijing 或 shanghai），启用后侧边栏将同步展示天气与气温。
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
+                    <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
+                      天气组件开关
+                    </label>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs text-gray-600 dark:text-slate-300">
+                        {config.weatherEnabled ? "当前状态：已启用" : "当前状态：已禁用"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => updateConfig({ weatherEnabled: !config.weatherEnabled })}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                          config.weatherEnabled
+                            ? "bg-[#00C776] text-white"
+                            : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
+                        }`}
+                      >
+                        {config.weatherEnabled ? "已启用" : "已禁用"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
+                    <label
+                      htmlFor="admin-weather-api-key"
+                      className="block text-xs font-bold text-gray-800 dark:text-slate-200"
+                    >
+                      心知天气 API Key
+                    </label>
+                    <input
+                      id="admin-weather-api-key"
+                      name="weatherApiKey"
+                      type="password"
+                      value={config.weatherApiKey ?? ""}
+                      onChange={(e) => updateConfig({ weatherApiKey: e.target.value })}
+                      placeholder={config.weatherKeyConfigured ? "已配置 - 留空则保持不变" : "心知天气 Key"}
+                      className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
+                    />
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
+                    <label
+                      htmlFor="admin-weather-location"
+                      className="block text-xs font-bold text-gray-800 dark:text-slate-200"
+                    >
+                      城市 / 位置 (Location)
+                    </label>
+                    <input
+                      id="admin-weather-location"
+                      name="weatherLocation"
+                      type="text"
+                      value={config.weatherLocation || ""}
+                      onChange={(e) => updateConfig({ weatherLocation: e.target.value })}
+                      placeholder="例如 beijing 或 shanghai"
                       className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
                     />
                   </div>

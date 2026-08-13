@@ -4,6 +4,16 @@ import React, { useState, useMemo } from "react";
 import type { Category, SiteLink } from "@/types";
 import { recordLinkUsage } from "@/lib/link-usage";
 
+// Color palette for glowing orb nodes
+const ORB_COLORS = [
+  { dot: "bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.9)]", line: "rgba(34,211,238,0.4)" },
+  { dot: "bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]", line: "rgba(52,211,153,0.4)" },
+  { dot: "bg-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.9)]", line: "rgba(56,189,248,0.4)" },
+  { dot: "bg-purple-400 shadow-[0_0_12px_rgba(192,132,252,0.9)]", line: "rgba(192,132,252,0.4)" },
+  { dot: "bg-[#00C776] shadow-[0_0_12px_rgba(0,199,118,0.9)]", line: "rgba(0,199,118,0.4)" },
+  { dot: "bg-teal-300 shadow-[0_0_12px_rgba(45,212,191,0.9)]", line: "rgba(45,212,191,0.4)" },
+];
+
 interface KnowledgeGraphProps {
   categories: Category[];
   links: SiteLink[];
@@ -31,29 +41,19 @@ export default function KnowledgeGraph({
     return list.slice(0, 9);
   }, [links, activeCategory]);
 
-  // Color palette for glowing orb nodes
-  const orbColors = [
-    { dot: "bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.9)]", line: "rgba(34,211,238,0.4)" },
-    { dot: "bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]", line: "rgba(52,211,153,0.4)" },
-    { dot: "bg-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.9)]", line: "rgba(56,189,248,0.4)" },
-    { dot: "bg-purple-400 shadow-[0_0_12px_rgba(192,132,252,0.9)]", line: "rgba(192,132,252,0.4)" },
-    { dot: "bg-[#00C776] shadow-[0_0_12px_rgba(0,199,118,0.9)]", line: "rgba(0,199,118,0.4)" },
-    { dot: "bg-teal-300 shadow-[0_0_12px_rgba(45,212,191,0.9)]", line: "rgba(45,212,191,0.4)" },
-  ];
-
   // Calculate polar coordinates (x, y percentages) for constellation nodes
   const nodePositions = useMemo(() => {
     const total = graphLinks.length;
     if (total === 0) return [];
 
-    const radiusX = 36; // horizontal radius %
+    const radiusX = 38; // horizontal radius %
     const radiusY = 34; // vertical radius %
 
     return graphLinks.map((link, idx) => {
       const angle = (2 * Math.PI * idx) / total - Math.PI / 2;
       const x = 50 + radiusX * Math.cos(angle);
       const y = 50 + radiusY * Math.sin(angle);
-      const color = orbColors[idx % orbColors.length];
+      const color = ORB_COLORS[idx % ORB_COLORS.length];
       return { link, x, y, color };
     });
   }, [graphLinks]);

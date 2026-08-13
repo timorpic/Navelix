@@ -42,7 +42,9 @@ export default function CalendarView() {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    queueMicrotask(() => {
+      fetchData();
+    });
   }, [fetchData]);
 
   // Calendar math
@@ -275,7 +277,7 @@ export default function CalendarView() {
                 />
                 <select
                   value={newPriority}
-                  onChange={(e) => setNewPriority(e.target.value as any)}
+                  onChange={(e) => setNewPriority(e.target.value as TodoItem["priority"])}
                   className="px-2 py-2 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-700 dark:text-slate-300 cursor-pointer"
                 >
                   <option value="high">高优</option>

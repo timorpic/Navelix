@@ -34,7 +34,7 @@ export default function FocusStatsWidget() {
       <div className="flex items-baseline justify-between my-1">
         <div>
           <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">
-            专注总时长
+            本周专注总时长
           </span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">

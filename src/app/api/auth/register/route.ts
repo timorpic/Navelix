@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { db, SESSION_COOKIE } from "@/lib/db";
-import { createSession, hashPassword, sessionCookieOptions, toPublicUser } from "@/lib/auth";
+import { createSession, hashPassword, toPublicUser } from "@/lib/auth";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);

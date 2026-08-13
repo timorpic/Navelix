@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, SESSION_COOKIE } from "@/lib/db";
-import { createHash } from "node:crypto";
+import { db } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth";
 import type { TodoItem } from "@/types";
-
-function getUserIdFromSession(req: NextRequest): string | null {
-  const token = req.cookies.get(SESSION_COOKIE)?.value || "";
-  if (!token) return null;
-  const tokenHash = createHash("sha256").update(token).digest("hex");
-  const session = db
-    .prepare("SELECT user_id, expires_at FROM sessions WHERE token_hash = ?")
-    .get(tokenHash) as { user_id: string; expires_at: number } | undefined;
-  if (!session || session.expires_at < Date.now()) return null;
-  return session.user_id;
-}
 
 function rowToTodo(r: {
   id: string; title: string; priority: string; done: number;
@@ -29,9 +18,10 @@ function rowToTodo(r: {
   };
 }
 
-export async function GET(req: NextRequest) {
-  const userId = getUserIdFromSession(req);
-  if (!userId) return NextResponse.json({ error: "未登录" }, { status: 401 });
+export async function GET() {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  const userId = user.id;
   const rows = db
     .prepare("SELECT id, title, priority, done, due_date, project_id, created_at, sort_order FROM user_todos WHERE user_id = ? ORDER BY done ASC, sort_order ASC, created_at ASC")
     .all(userId) as Array<{
@@ -42,8 +32,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const userId = getUserIdFromSession(req);
-  if (!userId) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  const userId = user.id;
   try {
     const body = await req.json();
     const title = String(body.title || "").trim();

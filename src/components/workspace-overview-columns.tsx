@@ -1,10 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import BrandIcon from "./brand-icon";
-import KnowledgeGraph from "./knowledge-graph";
+import React, { useState, useEffect, useCallback } from "react";
 import type { Category, Project, SiteLink, TodoItem } from "@/types";
-import { recordLinkUsage } from "@/lib/link-usage";
 
 interface WorkspaceOverviewColumnsProps {
   categories: Category[];
@@ -13,8 +10,6 @@ interface WorkspaceOverviewColumnsProps {
 }
 
 export default function WorkspaceOverviewColumns({
-  categories,
-  links,
   onSelectCategory,
 }: WorkspaceOverviewColumnsProps) {
   // 1. Projects Data State
@@ -25,9 +20,6 @@ export default function WorkspaceOverviewColumns({
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [todosLoading, setTodosLoading] = useState(true);
   const [quickTodoTitle, setQuickTodoTitle] = useState("");
-
-  // 3. Knowledge Graph Active Node State
-  const [activeGraphCategory, setActiveGraphCategory] = useState<string | null>(null);
 
   // Load Projects
   const fetchProjects = useCallback(async () => {
@@ -60,8 +52,10 @@ export default function WorkspaceOverviewColumns({
   }, []);
 
   useEffect(() => {
-    fetchProjects();
-    fetchTodos();
+    queueMicrotask(() => {
+      fetchProjects();
+      fetchTodos();
+    });
   }, [fetchProjects, fetchTodos]);
 
   // Quick add todo right from the homepage schedule column
@@ -100,12 +94,6 @@ export default function WorkspaceOverviewColumns({
       // ignore
     }
   };
-
-  // Filter graph links by active category node or show all
-  const filteredGraphLinks = useMemo(() => {
-    if (!activeGraphCategory) return links;
-    return links.filter((l) => l.category === activeGraphCategory);
-  }, [links, activeGraphCategory]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 my-0">
@@ -228,9 +216,12 @@ export default function WorkspaceOverviewColumns({
         {/* Quick Add Form */}
         <form onSubmit={handleQuickAddTodo} className="flex gap-2 mb-3">
           <input
+            id="overview-quick-todo-input"
+            name="quickTodoTitle"
             type="text"
             value={quickTodoTitle}
             onChange={(e) => setQuickTodoTitle(e.target.value)}
+            aria-label="快捷添加日程事项"
             placeholder="快捷添加日程事项..."
             className="flex-1 px-3 py-1.5 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 text-gray-800 dark:text-slate-100"
           />
@@ -261,9 +252,12 @@ export default function WorkspaceOverviewColumns({
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <input
+                    id={`overview-todo-check-${item.id}`}
+                    name={`todo-done-${item.id}`}
                     type="checkbox"
                     checked={item.done}
                     onChange={() => handleToggleTodo(item.id, item.done)}
+                    aria-label={`标记待办事项 ${item.title}`}
                     className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776] border-gray-300 dark:border-slate-600 cursor-pointer"
                   />
                   <span

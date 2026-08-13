@@ -16,6 +16,13 @@ function getDayIndex(date: Date): number {
   return (date.getDay() + 6) % 7; // 0=Mon, 6=Sun
 }
 
+function getLocalDateStr(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function getMonday(date: Date): Date {
   const d = new Date(date);
   const day = d.getDay();
@@ -51,29 +58,30 @@ export function useFocusTracker() {
       const thisWeekData = [0, 0, 0, 0, 0, 0, 0];
       const lastWeekData = [0, 0, 0, 0, 0, 0, 0];
 
-      // Aggregate this week's seconds per day
+      // Aggregate this week's seconds per day using local date strings
       for (let i = 0; i < 7; i++) {
         const d = new Date(thisMonday);
         d.setDate(d.getDate() + i);
-        const dateStr = d.toISOString().split("T")[0];
+        const dateStr = getLocalDateStr(d);
         const sec = history[dateStr] || 0;
         thisWeekData[i] = parseFloat((sec / 3600).toFixed(1));
       }
 
-      // Aggregate last week's seconds per day
+      // Aggregate last week's seconds per day using local date strings
       for (let i = 0; i < 7; i++) {
         const d = new Date(lastMonday);
         d.setDate(d.getDate() + i);
-        const dateStr = d.toISOString().split("T")[0];
+        const dateStr = getLocalDateStr(d);
         const sec = history[dateStr] || 0;
         lastWeekData[i] = parseFloat((sec / 3600).toFixed(1));
       }
 
-      const thisWeekTotalSec = Object.values(thisWeekData).reduce((a, b) => a + b, 0) * 3600;
-      const lastWeekTotalSec = Object.values(lastWeekData).reduce((a, b) => a + b, 0) * 3600;
-
-      const totalHours = parseFloat((thisWeekTotalSec / 3600).toFixed(1));
-      const lastWeekTotalHours = parseFloat((lastWeekTotalSec / 3600).toFixed(1));
+      const totalHours = parseFloat(
+        thisWeekData.reduce((sum, h) => sum + h, 0).toFixed(1),
+      );
+      const lastWeekTotalHours = parseFloat(
+        lastWeekData.reduce((sum, h) => sum + h, 0).toFixed(1),
+      );
 
       let weeklyChange = 0;
       let isPositive = true;
@@ -108,7 +116,9 @@ export function useFocusTracker() {
   }, []);
 
   useEffect(() => {
-    recalculateStats();
+    queueMicrotask(() => {
+      recalculateStats();
+    });
 
     let isTabVisible = typeof document !== "undefined" ? !document.hidden : true;
 
@@ -122,7 +132,7 @@ export function useFocusTracker() {
     const interval = setInterval(() => {
       if (isTabVisible) {
         try {
-          const dateStr = new Date().toISOString().split("T")[0];
+          const dateStr = getLocalDateStr(new Date());
           const raw = localStorage.getItem(STORAGE_KEY);
           const history: Record<string, number> = raw ? JSON.parse(raw) : {};
 

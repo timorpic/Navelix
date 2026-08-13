@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
+import { safeFetch } from "@/lib/ssrf";
 
 interface ChatHistoryItem {
   sender?: string;
@@ -82,12 +83,9 @@ export async function POST(req: Request) {
       { role: "user", content: prompt },
     ];
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
     let response: Response;
     try {
-      response = await fetch(targetUrl, {
+      response = await safeFetch(targetUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -98,17 +96,18 @@ export async function POST(req: Request) {
           messages,
           temperature: 0.7,
         }),
-        signal: controller.signal,
+        timeoutMs: REQUEST_TIMEOUT_MS,
       });
     } catch (err) {
-      const timedOut = err instanceof Error && err.name === "AbortError";
+      const isSsrf = err instanceof Error && err.message.includes("SSRF_BLOCKED");
+      const timedOut = err instanceof Error && (err.name === "AbortError" || err.message.includes("TIMEOUT"));
       return NextResponse.json({
-        text: timedOut
-          ? "⚠️ API 请求超时，请检查 BaseURL 网络连接或稍后重试。"
-          : `⚠️ 网络异常：${err instanceof Error ? err.message : "无法连接到指定的 BaseURL 地址"}`,
+        text: isSsrf
+          ? "⚠️ 安全拦截：配置的 BaseURL 为内部/私有 IP 地址，禁止访问。"
+          : timedOut
+            ? "⚠️ API 请求超时，请检查 BaseURL 网络连接或稍后重试。"
+            : `⚠️ 网络异常：${err instanceof Error ? err.message : "无法连接到指定的 BaseURL 地址"}`,
       });
-    } finally {
-      clearTimeout(timer);
     }
 
     if (!response.ok) {

@@ -1,48 +1,20 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import LogoMark from "./logo-mark";
+import SearchBar from "./search-bar";
 
 interface HeroBannerProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
 }
 
-const SEARCH_ENGINE_URLS: Record<string, string> = {
-  google: "https://www.google.com/search?q=",
-  baidu: "https://www.baidu.com/s?wd=",
-  bing: "https://www.bing.com/search?q=",
-  perplexity: "https://www.perplexity.ai/search?q=",
-};
-
 export default function HeroBanner({
   searchQuery,
   onSearchChange,
 }: HeroBannerProps) {
   const { config } = useNavelixConfig();
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // ⌘K / Ctrl+K focuses the search input (matches the kbd hint in the UI).
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const query = searchQuery.trim();
-    if (!query) return;
-    const engineUrl =
-      SEARCH_ENGINE_URLS[config.searchEngine] || SEARCH_ENGINE_URLS.google;
-    window.open(engineUrl + encodeURIComponent(query), "_blank");
-  };
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#EBF9F9] via-[#E6F7F7] to-[#D5F3F3] dark:from-[#1c1920] dark:via-[#252028] dark:to-[#1c1920] p-6 sm:p-8 border border-[#D0F0F0]/60 dark:border-[#00c776]/30 shadow-sm transition-colors">
@@ -70,47 +42,10 @@ export default function HeroBanner({
 
           {/* Large Search Input (Conditionally rendered by showSearchBar config) */}
           {config.showSearchBar && (
-            <form
-              onSubmit={handleSearchSubmit}
-              className="group mb-4 flex items-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl border border-gray-200/80 dark:border-slate-700 shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#00C776]/40 focus-within:border-[#00C776]"
-            >
-              <div className="pl-4 pr-3 flex items-center text-[#00C776]">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
-              </div>
-              <input
-                id="hero-banner-search-input"
-                ref={inputRef}
-                name="hero-search"
-                type="text"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                aria-label="搜索任意内容"
-                placeholder="搜索任意内容..."
-                className="flex-1 py-3.5 bg-transparent text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none"
-              />
-              <div className="pr-3 flex items-center">
-                <kbd className="px-2 py-0.5 text-xs font-semibold text-gray-400 dark:text-slate-400 bg-gray-100/80 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md">
-                  ⌘ K
-                </kbd>
-              </div>
-            </form>
+            <div className="mb-4">
+              <SearchBar value={searchQuery} onChange={onSearchChange} />
+            </div>
           )}
-
-
         </div>
 
         {/* Right Column 3D Glass Cube Artwork */}

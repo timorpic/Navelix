@@ -24,7 +24,9 @@ export default function TodoWidget() {
   }, []);
 
   useEffect(() => {
-    loadTodos();
+    queueMicrotask(() => {
+      loadTodos();
+    });
   }, [loadTodos]);
 
   const addTodo = async () => {

@@ -141,7 +141,7 @@ export function NavelixProvider({
           setConfig({ ...defaultConfig, ...cfg });
           if (cfg.theme) applyThemeToDom(cfg.theme);
         } else if (localTheme) {
-          setConfig((prev) => ({ ...prev, theme: localTheme as any }));
+          setConfig((prev) => ({ ...prev, theme: localTheme as SystemConfig["theme"] }));
           applyThemeToDom(localTheme);
         }
         setHydrated(true);
@@ -151,14 +151,18 @@ export function NavelixProvider({
   // 5. 挂载加载与跨标签页 Storage 同步
   useEffect(() => {
     if (!initialData) {
-      loadData();
+      queueMicrotask(() => {
+        loadData();
+      });
     } else {
       const localTheme = localStorage.getItem("navelix_theme");
       const activeTheme = localTheme || config.theme;
-      if (localTheme && localTheme !== config.theme) {
-        setConfig((prev) => ({ ...prev, theme: localTheme as any }));
-      }
-      applyThemeToDom(activeTheme);
+      queueMicrotask(() => {
+        if (localTheme && localTheme !== config.theme) {
+          setConfig((prev) => ({ ...prev, theme: localTheme as SystemConfig["theme"] }));
+        }
+        applyThemeToDom(activeTheme);
+      });
     }
 
     const storageHandler = (e: StorageEvent) => {
@@ -181,7 +185,7 @@ export function NavelixProvider({
 
     window.addEventListener("storage", storageHandler);
     return () => window.removeEventListener("storage", storageHandler);
-  }, [loadData, initialData, applyThemeToDom]);
+  }, [loadData, initialData, applyThemeToDom, config.theme]);
 
   // 6. 系统主题变动监听器（当 config.theme === 'system' 时响应系统级浅色/深色切换）
   useEffect(() => {

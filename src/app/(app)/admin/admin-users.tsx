@@ -49,7 +49,9 @@ export default function AdminUsersPanel() {
   };
 
   useEffect(() => {
-    fetchUsers();
+    queueMicrotask(() => {
+      fetchUsers();
+    });
   }, []);
 
   const handleAddUser = async () => {

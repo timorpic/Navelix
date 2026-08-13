@@ -35,7 +35,9 @@ export default function Sidebar({
 
   // 首次渲染后立即设置真实时间（避免 hydration mismatch：SSR 和客户端初始值一致）
   useEffect(() => {
-    setNow(new Date());
+    queueMicrotask(() => {
+      setNow(new Date());
+    });
   }, []);
 
   // 时钟 / 天气 切换 Widget State
@@ -85,21 +87,7 @@ export default function Sidebar({
     return () => clearInterval(timer);
   }, []);
 
-  // 天气中文描述 → emoji 图标映射（高德天气无图标）
-  const weatherTextToIcon = (text: string): string => {
-    const map: Record<string, string> = {
-      "晴": "☀️", "晴间多云": "🌤️", "多云": "⛅", "阴": "☁️",
-      "小雨": "🌦️", "中雨": "🌧️", "大雨": "🌧️", "暴雨": "🌧️",
-      "阵雨": "🌦️", "雷阵雨": "⛈️", "雷阵雨伴有冰雹": "⛈️",
-      "小雪": "❄️", "中雪": "❄️", "大雪": "❄️", "暴雪": "❄️",
-      "雾": "🌫️", "霾": "🌫️", "浮尘": "🌫️", "扬沙": "🌫️",
-      "强沙尘暴": "🌫️", "大风": "💨",
-    };
-    for (const [key, icon] of Object.entries(map)) {
-      if (text.includes(key)) return icon;
-    }
-    return "🌡️";
-  };
+
 
   // 获取天气数据（调后端代理 /api/weather，隐藏 API Key 和位置）
   const fetchWeather = useCallback(async () => {
@@ -110,15 +98,15 @@ export default function Sidebar({
         return;
       }
       const data = await res.json();
-      if (data.error) {
+      if (data.enabled === false || data.error) {
         setWeather(null);
         return;
       }
       setWeather({
-        temp: data.temp,
-        windSpeed: data.windSpeed,
-        desc: data.desc,
-        icon: weatherTextToIcon(data.desc || ""),
+        temp: data.temp || 24,
+        windSpeed: data.windSpeed || 12,
+        desc: data.desc || "晴",
+        icon: "☀️",
         isDay: true,
         location: data.location || "实时",
         updatedAt: data.updatedAt || "",
@@ -129,7 +117,9 @@ export default function Sidebar({
   }, []);
 
   useEffect(() => {
-    fetchWeather();
+    queueMicrotask(() => {
+      fetchWeather();
+    });
     const interval = setInterval(fetchWeather, 10 * 60 * 1000); // 每 10 分钟刷新
     return () => clearInterval(interval);
   }, [fetchWeather]);

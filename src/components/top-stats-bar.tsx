@@ -60,7 +60,9 @@ export default function TopStatsBar({
   }, []);
 
   useEffect(() => {
-    fetchMetrics();
+    queueMicrotask(() => {
+      fetchMetrics();
+    });
   }, [fetchMetrics]);
 
   // Derived metrics
@@ -346,10 +348,13 @@ export default function TopStatsBar({
               <span>新建待办任务</span>
             </h3>
             <input
+              id="stats-task-title-input"
+              name="taskTitle"
               type="text"
               required
               value={taskTitle}
               onChange={(e) => setTaskTitle(e.target.value)}
+              aria-label="输入任务名称"
               placeholder="输入任务名称..."
               className="w-full p-3 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 text-gray-800 dark:text-slate-100"
             />
@@ -398,10 +403,13 @@ export default function TopStatsBar({
 
             <div className="flex gap-2">
               <input
+                id="stats-ai-query-input"
+                name="aiQuery"
                 type="text"
                 required
                 value={aiQuery}
                 onChange={(e) => setAiQuery(e.target.value)}
+                aria-label="询问 AI 任何关于导航、软件或代码的问题"
                 placeholder="询问 AI 任何关于导航、软件或代码的问题..."
                 className="flex-1 p-3 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 text-gray-800 dark:text-slate-100"
               />

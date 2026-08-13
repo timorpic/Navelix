@@ -2,20 +2,21 @@ import {
   createHash,
   randomBytes,
 } from "node:crypto";
-import { cookies } from "next/headers";
+import { cookies } from "next/headers.js";
 import {
   db,
   SESSION_COOKIE,
   SESSION_TTL_MS,
   type PublicUser,
   type UserRow,
-} from "./db";
+} from "./db.ts";
 
 function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export { hashPassword, verifyPassword } from "./password";
+export { hashPassword, verifyPassword } from "./password.ts";
+export { checkCSRF } from "./csrf.ts";
 
 export function toPublicUser(row: UserRow): PublicUser {
   return {
@@ -80,39 +81,19 @@ export function clearSessionCookieOptions() {
   };
 }
 
-/**
- * CSRF 纵深防御：检查请求的 Origin/Referer 是否为同源。
- * 即使 SameSite=Lax 已拦截跨站 POST，此函数提供额外一层保护。
- * 同源检查通过返回 true；无 Origin/Referer（如 CLI 工具）默认放行。
- */
-export function checkCSRF(req: Request): boolean {
-  const origin = req.headers.get("origin");
-  const referer = req.headers.get("referer");
-  if (!origin && !referer) return true;
-  const hostHeader = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
-  const host = hostHeader.split(":")[0];
-  if (!host) return true;
-
-  if (origin) {
-    try {
-      const originHost = new URL(origin).hostname;
-      if (originHost === host || originHost === "localhost" || originHost === "127.0.0.1") return true;
-    } catch {
-      return false;
-    }
+// ── 登录速率限制 ──────────────────────────────────────
+export function getClientId(req: Request): string {
+  const trustProxy =
+    process.env.TRUST_PROXY === "true" || process.env.TRUST_PROXY === "1";
+  if (trustProxy) {
+    const fwd = req.headers.get("x-forwarded-for");
+    if (fwd) return fwd.split(",")[0].trim();
+    const realIp = req.headers.get("x-real-ip");
+    if (realIp) return realIp.trim();
   }
-  if (referer) {
-    try {
-      const refererHost = new URL(referer).hostname;
-      if (refererHost === host || refererHost === "localhost" || refererHost === "127.0.0.1") return true;
-    } catch {
-      return false;
-    }
-  }
-  return true;
+  return "direct-client";
 }
 
-// ── 登录速率限制 ──────────────────────────────────────
 // 内存级限流（Node.js 运行时跨请求持久），5 次失败锁定 15 分钟
 const LOGIN_THRESHOLD = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;

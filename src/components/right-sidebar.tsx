@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useNavelixData } from "@/hooks/use-navelix-data";
 import type { AIChatMessage } from "@/types";
@@ -218,7 +218,7 @@ export default function RightSidebar() {
       {/* Widget 4: Inspiration Quote Card */}
       <div className="flex flex-col bg-white dark:bg-slate-800/90 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 shadow-2xs transition-colors">
         <div className="text-lg text-[#00C776]/30 font-serif leading-none mb-1">
-          "
+          &quot;
         </div>
         <p className="text-xs font-semibold text-gray-800 dark:text-slate-100 leading-relaxed italic mb-2">
           持续构建，长期主义，让技术创造更多价值。
