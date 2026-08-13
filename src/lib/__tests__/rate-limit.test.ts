@@ -42,6 +42,8 @@ describe("Login Rate Limit & Proxy IP Trust Protection", () => {
 
     const blockedStatus = checkLoginRateLimit(testClientId);
     assert.equal(blockedStatus.allowed, false);
+    // 锁定时应返回正数剩余毫秒数
+    assert.ok(blockedStatus.lockRemainingMs > 0, "lockRemainingMs should be > 0 when locked");
 
     resetLoginRateLimit(testClientId);
   });

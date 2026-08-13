@@ -8,18 +8,13 @@ export interface UserDataResult {
   config: SystemConfig;
 }
 
-/** POST 保存后调用，使该用户的缓存失效 */
-export function invalidateUserData(): void {
-  // SQLite WAL 模式实时读写，无需内存缓存
-}
-
 /**
  * 服务端获取用户的完整数据（分类、链接、项目、配置）。
  * 用于 SSR 预取：在 Layout 中调用，数据通过 props 传给客户端 Provider。
  * 直接实时查询 SQLite（<0.2ms），确保新增、编辑、删除链接后刷新页面 100% 实时生效。
+ * 注：SQLite WAL 模式实时读写，commit 后即可读到，无需主动缓存失效。
  */
 export function getUserData(userId: string): UserDataResult {
-
   // Ensure user has starter seeded data
   seedUserData(userId);
 
@@ -139,4 +134,284 @@ export function getUserData(userId: string): UserDataResult {
   // SQLite 返回的行对象原型非标准（null 原型），
   // Next.js 要求传给客户端组件的数据必须是纯对象，深拷贝处理。
   return JSON.parse(JSON.stringify(result)) as UserDataResult;
+}
+
+// ── 实体保存（服务端 POST /api/user/data 调用，含 upsert 与 diff 删除语义）──
+
+/** 分类输入（宽松类型，运行期校验并安全转换） */
+interface CategoryInput {
+  id?: unknown;
+  name?: unknown;
+  label?: unknown;
+  icon?: unknown;
+  color?: unknown;
+}
+
+/** 链接输入 */
+interface LinkInput {
+  id?: unknown;
+  title?: unknown;
+  url?: unknown;
+  description?: unknown;
+  icon?: unknown;
+  category?: unknown;
+  isQuickAccess?: unknown;
+}
+
+/** 项目输入 */
+interface ProjectInput {
+  id?: unknown;
+  name?: unknown;
+  status?: unknown;
+  statusColor?: unknown;
+  color?: unknown;
+  url?: unknown;
+}
+
+/** 待办输入 */
+interface TodoInput {
+  id?: unknown;
+  title?: unknown;
+  priority?: unknown;
+  done?: unknown;
+  dueDate?: unknown;
+  projectId?: unknown;
+  createdAt?: unknown;
+  sortOrder?: unknown;
+}
+
+/** 保存分类：upsert 传入项，删除不在列表中的旧分类 */
+export function saveUserCategories(userId: string, items: CategoryInput[]): void {
+  const incomingIds: string[] = [];
+  const upsert = db.prepare(`
+    INSERT INTO user_categories (id, user_id, name, label, icon, color)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id, user_id) DO UPDATE SET
+      name = excluded.name,
+      label = excluded.label,
+      icon = excluded.icon,
+      color = excluded.color
+  `);
+  for (const c of items) {
+    if (!c || typeof c !== "object") continue;
+    const catId = String(c.id || crypto.randomUUID());
+    incomingIds.push(catId);
+    upsert.run(
+      catId,
+      userId,
+      String(c.name || ""),
+      String(c.label || c.name || ""),
+      String(c.icon || "📂"),
+      String(c.color || "#00C776"),
+    );
+  }
+  if (incomingIds.length > 0) {
+    const placeholders = incomingIds.map(() => "?").join(",");
+    db.prepare(
+      `DELETE FROM user_categories WHERE user_id = ? AND id NOT IN (${placeholders})`,
+    ).run(userId, ...incomingIds);
+  } else {
+    db.prepare("DELETE FROM user_categories WHERE user_id = ?").run(userId);
+  }
+}
+
+/** 保存链接：upsert 传入项，删除不在列表中的旧链接 */
+export function saveUserLinks(userId: string, items: LinkInput[]): void {
+  const incomingIds: string[] = [];
+  const upsert = db.prepare(`
+    INSERT INTO user_links (id, user_id, title, url, description, icon, category, is_quick_access)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id, user_id) DO UPDATE SET
+      title = excluded.title,
+      url = excluded.url,
+      description = excluded.description,
+      icon = excluded.icon,
+      category = excluded.category,
+      is_quick_access = excluded.is_quick_access
+  `);
+  for (const l of items) {
+    if (!l || typeof l !== "object") continue;
+    const linkId = String(l.id || crypto.randomUUID());
+    incomingIds.push(linkId);
+    upsert.run(
+      linkId,
+      userId,
+      String(l.title || "未命名链接"),
+      String(l.url || "https://example.com"),
+      String(l.description || ""),
+      String(l.icon || ""),
+      String(l.category || "uncategorized"),
+      l.isQuickAccess ? 1 : 0,
+    );
+  }
+  if (incomingIds.length > 0) {
+    const placeholders = incomingIds.map(() => "?").join(",");
+    db.prepare(
+      `DELETE FROM user_links WHERE user_id = ? AND id NOT IN (${placeholders})`,
+    ).run(userId, ...incomingIds);
+  } else {
+    db.prepare("DELETE FROM user_links WHERE user_id = ?").run(userId);
+  }
+}
+
+/** 保存项目：upsert 传入项，删除不在列表中的旧项目 */
+export function saveUserProjects(userId: string, items: ProjectInput[]): void {
+  const incomingIds: string[] = [];
+  const upsert = db.prepare(`
+    INSERT INTO projects (id, user_id, name, status, status_color, url, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id, user_id) DO UPDATE SET
+      name = excluded.name,
+      status = excluded.status,
+      status_color = excluded.status_color,
+      url = excluded.url,
+      sort_order = excluded.sort_order
+  `);
+  items.forEach((p, index) => {
+    if (!p || typeof p !== "object") return;
+    const projId = String(p.id || `proj-${Date.now()}-${index}`);
+    incomingIds.push(projId);
+    upsert.run(
+      projId,
+      userId,
+      String(p.name || "未命名项目"),
+      String(p.status || "进行中"),
+      String(p.statusColor || p.color || ""),
+      String(p.url || ""),
+      index,
+    );
+  });
+  if (incomingIds.length > 0) {
+    const placeholders = incomingIds.map(() => "?").join(",");
+    db.prepare(
+      `DELETE FROM projects WHERE user_id = ? AND id NOT IN (${placeholders})`,
+    ).run(userId, ...incomingIds);
+  } else {
+    db.prepare("DELETE FROM projects WHERE user_id = ?").run(userId);
+  }
+}
+
+/** 保存待办：upsert 传入项，删除不在列表中的旧待办 */
+export function saveUserTodos(userId: string, items: TodoInput[]): void {
+  const incomingIds: string[] = [];
+  const upsert = db.prepare(`
+    INSERT INTO user_todos (id, user_id, title, priority, done, due_date, project_id, created_at, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id, user_id) DO UPDATE SET
+      title = excluded.title,
+      priority = excluded.priority,
+      done = excluded.done,
+      due_date = excluded.due_date,
+      project_id = excluded.project_id,
+      sort_order = excluded.sort_order
+  `);
+  items.forEach((t, index) => {
+    if (!t || typeof t !== "object") return;
+    const todoId = String(t.id || `todo-${Date.now()}-${index}`);
+    incomingIds.push(todoId);
+    upsert.run(
+      todoId,
+      userId,
+      String(t.title || "未命名日程"),
+      String(t.priority || "medium"),
+      t.done ? 1 : 0,
+      String(t.dueDate || ""),
+      String(t.projectId || ""),
+      typeof t.createdAt === "number" ? t.createdAt : Date.now(),
+      typeof t.sortOrder === "number" ? t.sortOrder : index,
+    );
+  });
+  if (incomingIds.length > 0) {
+    const placeholders = incomingIds.map(() => "?").join(",");
+    db.prepare(
+      `DELETE FROM user_todos WHERE user_id = ? AND id NOT IN (${placeholders})`,
+    ).run(userId, ...incomingIds);
+  } else {
+    db.prepare("DELETE FROM user_todos WHERE user_id = ?").run(userId);
+  }
+}
+
+/** 配置输入（宽松对象，运行期逐字段校验；密钥字段留空 = 保持不变） */
+export type ConfigInput = Record<string, unknown>;
+
+/** 保存用户配置：仅更新传入字段，未传字段沿用当前库内值；密钥留空不覆盖 */
+export function saveUserConfigs(
+  userId: string,
+  cfg: ConfigInput,
+): void {
+  const currentRow = db
+    .prepare("SELECT * FROM user_configs WHERE user_id = ?")
+    .get(userId) as Record<string, unknown> | undefined;
+
+  const str =
+    (key: string, fallback: string) =>
+    (typeof cfg[key] === "string" ? (cfg[key] as string) : String(currentRow?.[key] ?? fallback));
+  const bool =
+    (key: string, fallback: number) =>
+    typeof cfg[key] === "boolean"
+      ? cfg[key]
+        ? 1
+        : 0
+      : Number(currentRow?.[key] ?? fallback);
+  const num =
+    (key: string, fallback: number) =>
+    typeof cfg[key] === "number"
+      ? (cfg[key] as number)
+      : Number(currentRow?.[key] ?? fallback);
+  /** API Key 类字段：传入非空字符串才更新，否则沿用旧值（实现"留空不变"） */
+  const secret =
+    (key: string) =>
+    typeof cfg[key] === "string" && (cfg[key] as string).trim() !== ""
+      ? (cfg[key] as string).trim()
+      : String(currentRow?.[key] || "");
+
+  const logoText = str("logoText", "Navelix");
+  const logoImage = str("logoImage", "");
+  const showSearchBar = bool("showSearchBar", 1);
+  const maxWidth = str("maxWidth", "1200px");
+  const customFooter = str("customFooter", "© 2026 Navelix. 保留所有权利。");
+  const theme = str("theme", "system");
+  const searchEngine = str("searchEngine", "google");
+  const aiBaseUrl = str("aiBaseUrl", "https://api.openai.com/v1");
+  const aiApiKey = secret("aiApiKey");
+  const aiModel = str("aiModel", "gpt-4o-mini");
+  const siteTitle = str("siteTitle", "Navelix · Personal Digital Hub");
+  const linkStatusEnabled = bool("linkStatusEnabled", 1);
+  const linkStatusInterval = num("linkStatusInterval", 60);
+  const socialGithub = str("socialGithub", "");
+  const socialX = str("socialX", "");
+  const socialLinkedin = str("socialLinkedin", "");
+  const socialEmail = str("socialEmail", "");
+  const weatherEnabled = bool("weatherEnabled", 0);
+  const weatherApiKey = secret("weatherApiKey");
+  const weatherLocation = str("weatherLocation", "");
+  const weatherApiBaseUrl = str("weatherApiBaseUrl", "https://api.seniverse.com");
+
+  db.prepare(`
+    INSERT OR REPLACE INTO user_configs (user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    userId,
+    logoText,
+    logoImage,
+    showSearchBar,
+    maxWidth,
+    customFooter,
+    theme,
+    searchEngine,
+    aiBaseUrl,
+    aiApiKey,
+    aiModel,
+    siteTitle,
+    linkStatusEnabled,
+    linkStatusInterval,
+    socialGithub,
+    socialX,
+    socialLinkedin,
+    socialEmail,
+    weatherEnabled,
+    weatherApiKey,
+    weatherLocation,
+    weatherApiBaseUrl,
+  );
 }

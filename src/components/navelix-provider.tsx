@@ -24,6 +24,18 @@ function readJson<T>(key: string): T | null {
   }
 }
 
+/** 退出登录时的客户端缓存清理：清除所有用户数据 localStorage 缓存 */
+export function clearCachedUserData(): void {
+  try {
+    localStorage.removeItem("navelix.user.categories");
+    localStorage.removeItem("navelix.user.links");
+    localStorage.removeItem("navelix.user.config");
+    localStorage.removeItem("navelix_theme");
+  } catch {
+    // localStorage 不可用时静默忽略
+  }
+}
+
 export function NavelixProvider({
   children,
   initialData,

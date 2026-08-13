@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   if (!adminUser) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
   }
-  if (!checkCSRF(req)) {
+  if (!checkCSRF(req).success) {
     return NextResponse.json({ error: "CSRF 验证失败" }, { status: 403 });
   }
 
@@ -106,11 +106,19 @@ export async function PATCH(req: Request) {
   if (!adminUser) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
   }
-  if (!checkCSRF(req)) {
+  // checkCSRF 返回对象，必须检查 .success（对象本身恒为 truthy）
+  if (!checkCSRF(req).success) {
     return NextResponse.json({ error: "CSRF 验证失败" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null);
+  const body = (await req.json().catch(() => null)) as {
+    id?: string;
+    role?: string;
+    username?: string;
+    displayName?: string;
+    password?: string;
+    avatar?: string;
+  } | null;
   const { id, role, username, displayName, password, avatar } = body || {};
 
   if (!id) {
@@ -212,7 +220,7 @@ export async function DELETE(req: Request) {
   if (!adminUser) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
   }
-  if (!checkCSRF(req)) {
+  if (!checkCSRF(req).success) {
     return NextResponse.json({ error: "CSRF 验证失败" }, { status: 403 });
   }
 

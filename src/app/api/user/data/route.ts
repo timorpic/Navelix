@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, seedUserData } from "@/lib/db";
-import { checkCSRF, getSessionUser } from "@/lib/auth";
-import { invalidateUserData } from "@/lib/user-data";
+import { getSessionUser } from "@/lib/auth";
+import { checkCSRF } from "@/lib/csrf";
+import {
+  saveUserCategories,
+  saveUserLinks,
+  saveUserProjects,
+  saveUserTodos,
+  saveUserConfigs,
+} from "@/lib/user-data";
 import type { SiteLink, SystemConfig } from "@/types";
+
 // GET /api/user/data - Fetch categories, links, and config for current logged-in user
 export async function GET() {
   const user = await getSessionUser();
@@ -190,15 +198,21 @@ export async function GET() {
   });
 }
 
-// POST /api/user/data - Save full categories, links, or config for current user
+// POST /api/user/data - Save full categories, links, projects, todos, or config for current user
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
   const userId = user.id;
-  if (!checkCSRF(req)) {
-    return NextResponse.json({ error: "CSRF 验证失败" }, { status: 403 });
+  // 注：middleware.ts 已对该路由统一执行 CSRF 校验，此处为纵深防御的第二道校验。
+  // checkCSRF 返回对象，必须检查 .success 属性（对象本身恒为 truthy）
+  const csrfResult = checkCSRF(req);
+  if (!csrfResult.success) {
+    return NextResponse.json(
+      { error: csrfResult.error || "CSRF 验证失败" },
+      { status: csrfResult.status || 403 },
+    );
   }
 
   try {
@@ -206,234 +220,22 @@ export async function POST(req: NextRequest) {
     db.exec("BEGIN IMMEDIATE");
 
     if (Array.isArray(body.categories)) {
-      const incomingIds: string[] = [];
-      const upsertCat = db.prepare(`
-        INSERT INTO user_categories (id, user_id, name, label, icon, color)
-        VALUES (?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id, user_id) DO UPDATE SET
-          name = excluded.name,
-          label = excluded.label,
-          icon = excluded.icon,
-          color = excluded.color
-      `);
-      for (const c of body.categories) {
-        if (!c || typeof c !== "object") continue;
-        const catId = String(c.id || crypto.randomUUID());
-        incomingIds.push(catId);
-        upsertCat.run(catId, userId, String(c.name || ""), String(c.label || c.name || ""), String(c.icon || "📂"), String(c.color || "#00C776"));
-      }
-      if (incomingIds.length > 0) {
-        const placeholders = incomingIds.map(() => "?").join(",");
-        db.prepare(`DELETE FROM user_categories WHERE user_id = ? AND id NOT IN (${placeholders})`).run(userId, ...incomingIds);
-      } else {
-        db.prepare("DELETE FROM user_categories WHERE user_id = ?").run(userId);
-      }
+      saveUserCategories(userId, body.categories);
     }
-
     if (Array.isArray(body.links)) {
-      const incomingIds: string[] = [];
-      const upsertLink = db.prepare(`
-        INSERT INTO user_links (id, user_id, title, url, description, icon, category, is_quick_access)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id, user_id) DO UPDATE SET
-          title = excluded.title,
-          url = excluded.url,
-          description = excluded.description,
-          icon = excluded.icon,
-          category = excluded.category,
-          is_quick_access = excluded.is_quick_access
-      `);
-      for (const l of body.links) {
-        if (!l || typeof l !== "object") continue;
-        const linkId = String(l.id || crypto.randomUUID());
-        incomingIds.push(linkId);
-        upsertLink.run(
-          linkId,
-          userId,
-          String(l.title || "未命名链接"),
-          String(l.url || "https://example.com"),
-          String(l.description || ""),
-          String(l.icon || ""),
-          String(l.category || "uncategorized"),
-          l.isQuickAccess ? 1 : 0,
-        );
-      }
-      if (incomingIds.length > 0) {
-        const placeholders = incomingIds.map(() => "?").join(",");
-        db.prepare(`DELETE FROM user_links WHERE user_id = ? AND id NOT IN (${placeholders})`).run(userId, ...incomingIds);
-      } else {
-        db.prepare("DELETE FROM user_links WHERE user_id = ?").run(userId);
-      }
+      saveUserLinks(userId, body.links);
     }
-
     if (Array.isArray(body.projects)) {
-      const incomingIds: string[] = [];
-      const upsertProject = db.prepare(`
-        INSERT INTO projects (id, user_id, name, status, status_color, url, sort_order)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id, user_id) DO UPDATE SET
-          name = excluded.name,
-          status = excluded.status,
-          status_color = excluded.status_color,
-          url = excluded.url,
-          sort_order = excluded.sort_order
-      `);
-      body.projects.forEach(
-        (p: { id?: string; name?: string; status?: string; statusColor?: string; url?: string }, index: number) => {
-          if (!p || typeof p !== "object") return;
-          const projId = String(p.id || `proj-${Date.now()}-${index}`);
-          incomingIds.push(projId);
-          upsertProject.run(
-            projId,
-            userId,
-            String(p.name || "未命名项目"),
-            String(p.status || "进行中"),
-            String(p.statusColor || ""),
-            String(p.url || ""),
-            index,
-          );
-        },
-      );
-      if (incomingIds.length > 0) {
-        const placeholders = incomingIds.map(() => "?").join(",");
-        db.prepare(`DELETE FROM projects WHERE user_id = ? AND id NOT IN (${placeholders})`).run(userId, ...incomingIds);
-      } else {
-        db.prepare("DELETE FROM projects WHERE user_id = ?").run(userId);
-      }
+      saveUserProjects(userId, body.projects);
     }
-
     if (Array.isArray(body.todos)) {
-      const incomingIds: string[] = [];
-      const upsertTodo = db.prepare(`
-        INSERT INTO user_todos (id, user_id, title, priority, done, due_date, project_id, created_at, sort_order)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id, user_id) DO UPDATE SET
-          title = excluded.title,
-          priority = excluded.priority,
-          done = excluded.done,
-          due_date = excluded.due_date,
-          project_id = excluded.project_id,
-          sort_order = excluded.sort_order
-      `);
-      body.todos.forEach(
-        (
-          t: {
-            id?: string;
-            title?: string;
-            priority?: string;
-            done?: boolean;
-            dueDate?: string;
-            projectId?: string;
-            createdAt?: number;
-            sortOrder?: number;
-          },
-          index: number,
-        ) => {
-          if (!t || typeof t !== "object") return;
-          const todoId = String(t.id || `todo-${Date.now()}-${index}`);
-          incomingIds.push(todoId);
-          upsertTodo.run(
-            todoId,
-            userId,
-            String(t.title || "未命名日程"),
-            String(t.priority || "medium"),
-            t.done ? 1 : 0,
-            String(t.dueDate || ""),
-            String(t.projectId || ""),
-            t.createdAt || Date.now(),
-            t.sortOrder ?? index,
-          );
-        },
-      );
-      if (incomingIds.length > 0) {
-        const placeholders = incomingIds.map(() => "?").join(",");
-        db.prepare(`DELETE FROM user_todos WHERE user_id = ? AND id NOT IN (${placeholders})`).run(userId, ...incomingIds);
-      } else {
-        db.prepare("DELETE FROM user_todos WHERE user_id = ?").run(userId);
-      }
+      saveUserTodos(userId, body.todos);
     }
-
     if (body.config) {
-      const cfg = body.config;
-      const currentRow = db
-        .prepare("SELECT * FROM user_configs WHERE user_id = ?")
-        .get(userId) as Record<string, unknown> | undefined;
-
-      const logoText = typeof cfg.logoText === "string" ? cfg.logoText : String(currentRow?.logo_text || "Navelix");
-      const logoImage = typeof cfg.logoImage === "string" ? cfg.logoImage : String(currentRow?.logo_image || "");
-      const showSearchBar =
-        typeof cfg.showSearchBar === "boolean"
-          ? cfg.showSearchBar
-            ? 1
-            : 0
-          : Number(currentRow?.show_search_bar ?? 1);
-      const maxWidth = typeof cfg.maxWidth === "string" ? cfg.maxWidth : String(currentRow?.max_width || "1200px");
-      const customFooter = typeof cfg.customFooter === "string" ? cfg.customFooter : String(currentRow?.custom_footer || "© 2026 Navelix. 保留所有权利。");
-      const theme = typeof cfg.theme === "string" ? cfg.theme : String(currentRow?.theme || "system");
-      const searchEngine = typeof cfg.searchEngine === "string" ? cfg.searchEngine : String(currentRow?.search_engine || "google");
-      const aiBaseUrl = typeof cfg.aiBaseUrl === "string" ? cfg.aiBaseUrl : String(currentRow?.ai_base_url || "https://api.openai.com/v1");
-      const aiApiKey =
-        typeof cfg.aiApiKey === "string" && cfg.aiApiKey.trim() !== ""
-          ? cfg.aiApiKey.trim()
-          : String(currentRow?.ai_api_key || "");
-      const aiModel = typeof cfg.aiModel === "string" ? cfg.aiModel : String(currentRow?.ai_model || "gpt-4o-mini");
-      const siteTitle = typeof cfg.siteTitle === "string" ? cfg.siteTitle : String(currentRow?.site_title || "Navelix · Personal Digital Hub");
-      const linkStatusEnabled =
-        typeof cfg.linkStatusEnabled === "boolean"
-          ? cfg.linkStatusEnabled
-            ? 1
-            : 0
-          : Number(currentRow?.link_status_enabled ?? 1);
-      const linkStatusInterval = typeof cfg.linkStatusInterval === "number" ? cfg.linkStatusInterval : Number(currentRow?.link_status_interval ?? 60);
-      const socialGithub = typeof cfg.socialGithub === "string" ? cfg.socialGithub : String(currentRow?.social_github || "");
-      const socialX = typeof cfg.socialX === "string" ? cfg.socialX : String(currentRow?.social_x || "");
-      const socialLinkedin = typeof cfg.socialLinkedin === "string" ? cfg.socialLinkedin : String(currentRow?.social_linkedin || "");
-      const socialEmail = typeof cfg.socialEmail === "string" ? cfg.socialEmail : String(currentRow?.social_email || "");
-
-      const weatherEnabled =
-        typeof cfg.weatherEnabled === "boolean"
-          ? cfg.weatherEnabled
-            ? 1
-            : 0
-          : Number(currentRow?.weather_enabled ?? 0);
-      const weatherApiKey =
-        typeof cfg.weatherApiKey === "string" && cfg.weatherApiKey.trim() !== ""
-          ? cfg.weatherApiKey.trim()
-          : String(currentRow?.weather_api_key || "");
-      const weatherLocation = typeof cfg.weatherLocation === "string" ? cfg.weatherLocation : String(currentRow?.weather_location || "");
-      const weatherApiBaseUrl = typeof cfg.weatherApiBaseUrl === "string" ? cfg.weatherApiBaseUrl : String(currentRow?.weather_api_base_url || "https://api.seniverse.com");
-
-      db.prepare(`
-        INSERT OR REPLACE INTO user_configs (user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        userId,
-        logoText,
-        logoImage,
-        showSearchBar,
-        maxWidth,
-        customFooter,
-        theme,
-        searchEngine,
-        aiBaseUrl,
-        aiApiKey,
-        aiModel,
-        siteTitle,
-        linkStatusEnabled,
-        linkStatusInterval,
-        socialGithub,
-        socialX,
-        socialLinkedin,
-        socialEmail,
-        weatherEnabled,
-        weatherApiKey,
-        weatherLocation,
-        weatherApiBaseUrl,
-      );
+      saveUserConfigs(userId, body.config);
     }
 
     db.exec("COMMIT");
-    invalidateUserData();
     return NextResponse.json({ success: true });
   } catch (err) {
     try {

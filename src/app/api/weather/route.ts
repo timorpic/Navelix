@@ -44,14 +44,16 @@ export async function GET() {
       }
     }
   } catch (err) {
-    console.warn("[Weather API] Fetch failed, falling back to default weather", err);
+    console.warn("[Weather API] Fetch failed, returning degraded status", err);
   }
 
-  // 优雅降级兜底数据，避免前端弹出 502/报错
+  // 优雅降级：明确标记 isFallback，前端展示"数据暂不可用"而非模拟数据
   return NextResponse.json({
-    temp: 24,
-    windSpeed: 12,
-    desc: "晴",
+    enabled: true,
+    isFallback: true,
+    temp: null,
+    windSpeed: null,
+    desc: "数据暂不可用",
     location: loc || "北京",
     updatedAt: "",
   });

@@ -15,10 +15,11 @@ import {
 
 export async function POST(req: Request) {
   const clientId = getClientId(req);
-  const { allowed, remaining } = checkLoginRateLimit(clientId);
+  const { allowed, lockRemainingMs } = checkLoginRateLimit(clientId);
   if (!allowed) {
+    const minutes = Math.max(1, Math.ceil(lockRemainingMs / 60000));
     return NextResponse.json(
-      { error: `尝试次数过多，请 ${Math.ceil(remaining)} 分钟后再试` },
+      { error: `尝试次数过多，请 ${minutes} 分钟后再试` },
       { status: 429 },
     );
   }
@@ -47,8 +48,9 @@ export async function POST(req: Request) {
 
   if (!row || !verifyPassword(password, row.password_hash)) {
     recordLoginFailure(clientId);
+    // 统一中文错误信息：避免通过语言差异泄露"用户是否存在"，同时兼容客户端提示
     return NextResponse.json(
-      { error: "Invalid username or password" },
+      { error: "用户名或密码错误" },
       { status: 401 },
     );
   }

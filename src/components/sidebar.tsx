@@ -7,6 +7,7 @@ import Modal from "./modal";
 import LogoMark from "./logo-mark";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { resolveAvatar } from "@/lib/avatars";
+import { clearCachedUserData } from "./navelix-provider";
 import {
   formatRelativeTime,
   type NotificationItem,
@@ -102,6 +103,19 @@ export default function Sidebar({
         setWeather(null);
         return;
       }
+      // 降级状态：API 返回 isFallback 时显示"数据更新中"而非模拟数据
+      if (data.isFallback) {
+        setWeather({
+          temp: NaN,
+          windSpeed: 0,
+          desc: "数据更新中",
+          icon: "🔄",
+          isDay: true,
+          location: data.location || "实时",
+          updatedAt: "",
+        });
+        return;
+      }
       setWeather({
         temp: data.temp || 24,
         windSpeed: data.windSpeed || 12,
@@ -176,6 +190,8 @@ export default function Sidebar({
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
+    // 清除上一个账号的 localStorage 用户数据缓存，防止下一位登录者看到旧数据
+    clearCachedUserData();
     router.push("/login");
     router.refresh();
   };
@@ -373,12 +389,11 @@ export default function Sidebar({
                   ) : (
                     <span>{weather.icon}</span>
                   )}
-                  <span>{weather.temp}°C</span>
+                  {/* 降级状态（temp 为 NaN 时）只显示状态文案，不显示温度 */}
+                  <span>{Number.isNaN(weather.temp) ? "" : `${weather.temp}°C`}</span>
                 </p>
                 <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5 flex items-center justify-center gap-1">
                   <span>{weather.desc}</span>
-                  <span>·</span>
-                  <span>🌬️ {weather.windSpeed}km/h</span>
                   <span>·</span>
                   <span>{weather.location}</span>
                 </p>

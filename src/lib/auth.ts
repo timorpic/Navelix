@@ -99,18 +99,31 @@ const LOGIN_THRESHOLD = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const loginAttempts = new Map<string, { count: number; firstFailure: number }>();
 
-export function checkLoginRateLimit(clientId: string): { allowed: boolean; remaining: number } {
+export interface LoginRateLimitStatus {
+  allowed: boolean;
+  /** 剩余允许尝试次数（未锁定时使用） */
+  remaining: number;
+  /** 剩余锁定毫秒数（被锁定时使用，未锁定为 0） */
+  lockRemainingMs: number;
+}
+
+export function checkLoginRateLimit(clientId: string): LoginRateLimitStatus {
   const now = Date.now();
   const entry = loginAttempts.get(clientId);
   if (!entry) {
-    return { allowed: true, remaining: LOGIN_THRESHOLD };
+    return { allowed: true, remaining: LOGIN_THRESHOLD, lockRemainingMs: 0 };
   }
   if (now - entry.firstFailure > LOGIN_WINDOW_MS) {
     loginAttempts.delete(clientId);
-    return { allowed: true, remaining: LOGIN_THRESHOLD };
+    return { allowed: true, remaining: LOGIN_THRESHOLD, lockRemainingMs: 0 };
   }
   const remaining = Math.max(0, LOGIN_THRESHOLD - entry.count);
-  return { allowed: entry.count < LOGIN_THRESHOLD, remaining };
+  // 实际剩余锁定时间：从首次失败时刻开始计算，窗口结束前均为锁定状态
+  const lockRemainingMs = Math.max(
+    0,
+    entry.firstFailure + LOGIN_WINDOW_MS - now,
+  );
+  return { allowed: entry.count < LOGIN_THRESHOLD, remaining, lockRemainingMs };
 }
 
 export function recordLoginFailure(clientId: string): void {
