@@ -6,12 +6,12 @@
 
 <table width="100%">
   <tr>
-    <td align="center"><img src="public/screenshots/screenshot-01.jpg" width="100%" alt="界面预览 1"></td>
-    <td align="center"><img src="public/screenshots/screenshot-02.jpg" width="100%" alt="界面预览 2"></td>
+    <td align="center"><img src="public/screenshots/light1.jpg" width="100%" alt="界面预览 1"></td>
+    <td align="center"><img src="public/screenshots/light2.jpg" width="100%" alt="界面预览 2"></td>
   </tr>
   <tr>
-    <td align="center"><img src="public/screenshots/20260810223637.jpg" width="100%" alt="界面预览 3"></td>
-    <td align="center"><img src="public/screenshots/20260810223622.jpg" width="100%" alt="界面预览 4"></td>
+    <td align="center"><img src="public/screenshots/dark1.jpg" width="100%" alt="界面预览 3"></td>
+    <td align="center"><img src="public/screenshots/dark2.jpg" width="100%" alt="界面预览 4"></td>
   </tr>
 </table>
 
