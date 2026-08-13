@@ -210,9 +210,9 @@ export function runMigrations(db: DatabaseSync): void {
       process.env.NAVELIX_ADMIN_PASSWORD || generateStrongPassword();
 
     db.prepare(`
-      INSERT OR IGNORE INTO users (id, username, password_hash, display_name, role, created_at)
+      INSERT OR IGNORE INTO users (id, username, password_hash, display_name, role, avatar, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run("admin-001", "admin", hashPassword(seedPassword), "Navelix Admin", "admin", Date.now());
+    `).run("admin-001", "admin", hashPassword(seedPassword), "Navelix Admin", "admin", "", Date.now());
 
     if (!process.env.NAVELIX_ADMIN_PASSWORD) {
       persistAdminPassword(seedPassword);
