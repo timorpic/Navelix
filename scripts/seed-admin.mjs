@@ -1,3 +1,7 @@
+/**
+ * ── Navelix Admin Seed Script ──
+ * 用于在构建或初始化时预置/重置管理员账号
+ */
 import { randomBytes, scryptSync } from "node:crypto";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
