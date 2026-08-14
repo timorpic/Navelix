@@ -7,6 +7,7 @@ interface NotificationRow {
   id: string;
   title: string;
   content: string;
+  source?: string;
   created_at: number;
   read: number;
 }
@@ -16,6 +17,7 @@ function toNotification(row: NotificationRow) {
     id: row.id,
     title: row.title,
     content: row.content,
+    source: row.source || "system",
     createdAt: row.created_at,
     read: row.read === 1,
   };
@@ -30,7 +32,7 @@ export async function GET(req: NextRequest) {
 
   const rows = db
     .prepare(
-      `SELECT id, title, content, created_at, read
+      `SELECT id, title, content, source, created_at, read
        FROM notifications
        WHERE user_id = ?
        ORDER BY created_at DESC
@@ -41,7 +43,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ notifications: rows.map(toNotification) });
 }
 
-// POST /api/notifications - 记录一条当前用户的操作通知
+// POST /api/notifications - 记录一条当前用户的操作通知，携带声明来源（source / tag）
 export async function POST(req: NextRequest) {
   const user = await getSessionUser(req);
   if (!user) {
@@ -51,15 +53,17 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const title = String(body?.title ?? "").trim();
   const content = String(body?.content ?? "").trim();
+  const source = String(body?.source || body?.tag || body?.category || "system").trim();
+
   if (!title) {
     return NextResponse.json({ error: "通知标题不能为空" }, { status: 400 });
   }
 
   const id = randomBytes(16).toString("hex");
   db.prepare(
-    `INSERT INTO notifications (id, user_id, title, content, created_at, read)
-     VALUES (?, ?, ?, ?, ?, 0)`,
-  ).run(id, user.id, title, content, Date.now());
+    `INSERT INTO notifications (id, user_id, title, content, source, created_at, read)
+     VALUES (?, ?, ?, ?, ?, ?, 0)`,
+  ).run(id, user.id, title, content, source, Date.now());
 
   return NextResponse.json(
     {
@@ -67,6 +71,7 @@ export async function POST(req: NextRequest) {
         id,
         title,
         content,
+        source,
         created_at: Date.now(),
         read: 0,
       }),

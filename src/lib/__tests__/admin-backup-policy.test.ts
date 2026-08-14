@@ -11,6 +11,14 @@ describe("Admin Backup & Access Policies", () => {
     assert.equal(fs.existsSync(backupPath), true);
     const stat = fs.statSync(backupPath);
     assert.ok(stat.size > 0);
+
+    if (backupPath && fs.existsSync(backupPath)) {
+      try {
+        fs.unlinkSync(backupPath);
+      } catch {
+        // ignore
+      }
+    }
   });
 
   it("should enforce allow_registration setting column in user_configs", () => {

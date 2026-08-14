@@ -67,35 +67,49 @@ export default function FocusStatsWidget() {
         </div>
       </div>
 
-      {/* Mini 7-Day Weekly Bar Chart */}
+      {/* 7-Day Weekly Bar Chart */}
       <div className="mt-2.5 mb-1 pt-2 px-1 border-t border-gray-100 dark:border-slate-700/60 flex flex-col gap-1">
-        <div className="flex items-end justify-between h-10 gap-1.5">
-          {weeklyData.map((val, idx) => {
-            const heightPercent = Math.round((val / maxHours) * 100);
-            const isToday = idx === currentDayIdx;
-            return (
-              <div key={idx} className="flex-1 flex flex-col items-center gap-1 group relative">
+        {/* 无数据时显示引导提示 */}
+        {maxHours <= 0.01 ? (
+          <div className="flex flex-col items-center justify-center h-16 gap-1">
+            <div className="flex items-end gap-1 h-10 opacity-20">
+              {[2, 4, 3, 6, 5, 7, 4].map((v, i) => (
                 <div
-                  className="w-full rounded-t-md transition-all duration-200"
-                  style={{ height: `${heightPercent}%` }}
-                >
+                  key={i}
+                  className="flex-1 bg-[#00C776]/40 rounded-t-sm"
+                  style={{ height: `${(v / 7) * 100}%` }}
+                />
+              ))}
+            </div>
+            <p className="text-[10px] text-gray-400 dark:text-slate-500 text-center">
+              保持页面开着，专注时长会自动累积
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-end justify-between gap-1.5" style={{ height: "56px" }}>
+            {weeklyData.map((val, idx) => {
+              const heightPercent = Math.max(Math.round((val / maxHours) * 100), val > 0 ? 6 : 0);
+              const isToday = idx === currentDayIdx;
+              return (
+                <div key={idx} className="flex-1 flex flex-col items-center justify-end group relative h-full">
                   <div
-                    className={`w-full h-full rounded-t-md transition-all ${
+                    className={`w-full rounded-t-md transition-all duration-500 ease-out ${
                       isToday
-                        ? "bg-[#00C776] shadow-[0_0_8px_rgba(0,199,118,0.7)]"
+                        ? "bg-[#00C776] shadow-[0_0_8px_rgba(0,199,118,0.5)]"
                         : "bg-[#00C776]/30 dark:bg-[#00C776]/25 group-hover:bg-[#00C776]/60"
                     }`}
+                    style={{ height: `${heightPercent}%` }}
                   />
+                  {/* Tooltip on hover */}
+                  <div className="absolute -top-6 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 dark:bg-slate-700 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none whitespace-nowrap z-20">
+                    {val}h
+                  </div>
                 </div>
-                {/* Tooltip on hover */}
-                <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 dark:bg-slate-700 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none whitespace-nowrap z-20">
-                  {val}h
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-slate-500 font-semibold px-0.5">
+              );
+            })}
+          </div>
+        )}
+        <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-slate-500 font-semibold px-0.5 mt-1">
           {dayNames.map((d, i) => (
             <span key={i} className={i === currentDayIdx ? "text-[#00C776] font-bold" : ""}>
               {d}

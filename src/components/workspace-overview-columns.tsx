@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import type { Category, Project, SiteLink, TodoItem } from "@/types";
+import { pushNotification } from "@/lib/notifications";
 
 interface WorkspaceOverviewColumnsProps {
   categories: Category[];
@@ -73,8 +74,11 @@ export default function WorkspaceOverviewColumns({
         }),
       });
       if (res.ok) {
+        const addedTitle = quickTodoTitle.trim();
         setQuickTodoTitle("");
         fetchTodos();
+        pushNotification("📅 新增日程事项", addedTitle, "calendar");
+        window.dispatchEvent(new CustomEvent("navelix-link-clicked"));
       }
     } catch {
       // ignore

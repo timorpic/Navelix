@@ -8,6 +8,7 @@ import TopStatsBar from "@/components/top-stats-bar";
 import RightSidebar from "@/components/right-sidebar";
 import CardGrid from "@/components/card-grid";
 import WorkspaceOverviewColumns from "@/components/workspace-overview-columns";
+import RecentActivitiesCard from "@/components/recent-activities-card";
 import CalendarView from "@/components/calendar-view";
 import ProjectsView from "@/components/projects-view";
 import DashboardView from "@/components/dashboard-view";
@@ -128,6 +129,8 @@ export default function Home() {
             <ProjectsView />
           ) : activeCategory === "feature-dashboard" ? (
             <DashboardView categories={categories} links={links} config={config} />
+          ) : activeCategory === "feature-activities" ? (
+            <RecentActivitiesCard links={links} />
           ) : isFiltering ? (
             /* Search / Category Filtered View */
             <div className="flex flex-col gap-4 mt-2">
@@ -163,7 +166,7 @@ export default function Home() {
               {/* Quick Access Section */}
               <QuickAccess links={quickAccessLinks} />
 
-              {/* 首页三栏：项目概览、日程概览、知识图谱 */}
+              {/* 首页工作空间概览：项目概览、日程概览 */}
               <WorkspaceOverviewColumns
                 categories={categories}
                 links={links}
@@ -175,7 +178,7 @@ export default function Home() {
       </main>
 
       {/* 3. Right Sidebar Dashboard */}
-      <RightSidebar />
+      <RightSidebar onSelectCategory={(id: string) => setActiveCategory(id)} />
 
       {/* 4. 自定义 CSS 与统计探针代码注入 */}
       {config.customCss && (

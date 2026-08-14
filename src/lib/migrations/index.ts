@@ -109,6 +109,7 @@ export function runMigrations(db: DatabaseSync): void {
   ensureColumn(db, "sessions", "user_agent", "user_agent TEXT NOT NULL DEFAULT ''");
   ensureColumn(db, "sessions", "ip_address", "ip_address TEXT NOT NULL DEFAULT ''");
   ensureColumn(db, "sessions", "last_active_at", "last_active_at INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(db, "notifications", "source", "source TEXT NOT NULL DEFAULT 'system'");
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS api_tokens (

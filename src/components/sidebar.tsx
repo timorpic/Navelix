@@ -171,6 +171,7 @@ export default function Sidebar({
     { id: "feature-calendar", name: "日历日程", icon: "📅" },
     { id: "feature-projects", name: "项目管理", icon: "🗂️" },
     { id: "feature-dashboard", name: "数据看板", icon: "📈" },
+    { id: "feature-activities", name: "消息通知", icon: "🔔" },
   ];
 
   return (
@@ -194,12 +195,33 @@ export default function Sidebar({
             </span>
           </div>
         </div>
-        <Link
-          href="/admin"
-          className="px-3 py-1.5 rounded-lg bg-[#00C776] text-white text-xs font-semibold transition-colors hover:bg-[#009a5a]"
-        >
-          ⚙️ 后台
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleToggleDarkMode}
+            className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            title={config.theme === "system" ? "跟随系统" : isDark ? "切换至浅色模式" : "切换至深色模式"}
+          >
+            {config.theme === "system" ? (
+              <svg className="w-4 h-4 text-[#00C776]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+              </svg>
+            ) : isDark ? (
+              <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            )}
+          </button>
+          <Link
+            href="/admin"
+            className="px-3 py-1.5 rounded-lg bg-[#00C776] text-white text-xs font-semibold transition-colors hover:bg-[#009a5a]"
+          >
+            ⚙️ 后台
+          </Link>
+        </div>
       </div>
 
       {/* Drawer Backdrop */}
@@ -221,12 +243,35 @@ export default function Sidebar({
       >
         {/* Top Section - 填满剩余空间，让底部抽屉固定在最低端 */}
         <div className="flex-1 min-h-0 flex flex-col gap-6">
-          {/* Brand Logo */}
-          <div className="flex items-center gap-3 px-2">
-            <LogoMark size="md" />
-            <span className="text-lg font-bold tracking-tight truncate text-gray-900 dark:text-white">
-              {config.logoText || "Navelix"}
-            </span>
+          {/* Brand Logo & Theme Toggle */}
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <LogoMark size="md" />
+              <span className="text-lg font-bold tracking-tight truncate text-gray-900 dark:text-white">
+                {config.logoText || "Navelix"}
+              </span>
+            </div>
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={handleToggleDarkMode}
+              className="p-1.5 rounded-xl transition-colors cursor-pointer hover:bg-gray-100 text-gray-600 dark:bg-slate-800/80 dark:text-amber-400 dark:hover:bg-slate-700 shrink-0 border border-transparent dark:border-slate-700/60"
+              title={config.theme === "system" ? "跟随系统" : isDark ? "切换至浅色模式" : "切换至深色模式"}
+            >
+              {config.theme === "system" ? (
+                <svg className="w-4 h-4 text-[#00C776]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                </svg>
+              ) : isDark ? (
+                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
           </div>
 
           {/* Main Navigation Menu - 在品牌与底部抽屉之间滚动 */}
@@ -417,30 +462,6 @@ export default function Sidebar({
                 </p>
               </>
             )}
-          </div>
-
-          {/* Quick Settings Bar */}
-          <div className="flex items-center justify-around px-2 py-1 text-gray-500">
-            {/* 1. Theme Toggle */}
-            <button
-              onClick={handleToggleDarkMode}
-              className="p-2 rounded-xl transition-colors cursor-pointer hover:bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-amber-400 dark:hover:bg-slate-700"
-              title={config.theme === "system" ? "跟随系统" : isDark ? "切换至浅色模式" : "切换至深色模式"}
-            >
-              {config.theme === "system" ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
-                </svg>
-              ) : isDark ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-              )}
-            </button>
           </div>
 
           {/* User Profile Card */}

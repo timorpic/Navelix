@@ -117,6 +117,7 @@ db.exec(`
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     content TEXT NOT NULL DEFAULT '',
+    source TEXT NOT NULL DEFAULT 'system',
     created_at INTEGER NOT NULL,
     read INTEGER NOT NULL DEFAULT 0
   );

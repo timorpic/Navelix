@@ -19,7 +19,7 @@ export function performDatabaseBackup(): string | null {
     const timestamp = now
       .toISOString()
       .replace(/[:.]/g, "-")
-      .slice(0, 19);
+      .replace("Z", "");
     const backupFileName = `nexus-backup-${timestamp}.db`;
     const backupPath = path.join(BACKUP_DIR, backupFileName);
 

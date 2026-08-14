@@ -7,7 +7,11 @@ import type { AIChatMessage } from "@/types";
 import FocusStatsWidget from "./focus-stats-widget";
 import ActivityFeed from "./activity-feed";
 
-export default function RightSidebar() {
+export default function RightSidebar({
+  onSelectCategory,
+}: {
+  onSelectCategory?: (id: string) => void;
+}) {
   const { config } = useNavelixConfig();
   const { links } = useNavelixData();
 
@@ -213,7 +217,7 @@ export default function RightSidebar() {
       <FocusStatsWidget />
 
       {/* Widget 2: Activity Feed */}
-      <ActivityFeed links={links} />
+      <ActivityFeed links={links} onSelectCategory={onSelectCategory} />
 
       {/* Widget 4: Inspiration Quote Card */}
       <div className="flex flex-col bg-white dark:bg-slate-800/90 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 shadow-2xs transition-colors">

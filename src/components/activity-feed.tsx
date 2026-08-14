@@ -13,7 +13,9 @@ interface ActivityItem {
 
 function formatAgo(ts: number): string {
   const diff = Date.now() - ts;
-  const min = 60_000, hour = 60 * min, day = 24 * hour;
+  const min = 60_000,
+    hour = 60 * min,
+    day = 24 * hour;
   if (diff < min) return "刚刚";
   if (diff < hour) return `${Math.floor(diff / min)}m`;
   if (diff < day) return `${Math.floor(diff / hour)}h`;
@@ -21,28 +23,47 @@ function formatAgo(ts: number): string {
   return new Date(ts).toLocaleDateString("zh-CN");
 }
 
-export default function ActivityFeed({ links }: { links: SiteLink[] }) {
+export default function ActivityFeed({
+  links,
+  onSelectCategory,
+}: {
+  links: SiteLink[];
+  onSelectCategory?: (id: string) => void;
+}) {
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     try {
-      // 1. 后台通知
+      // 1. 后台通知与系统操作记录
       const notifRes = await fetch("/api/notifications");
       const notifData = await notifRes.json();
-      const notifs: ActivityItem[] = (notifData.notifications || []).map((n: { id: string; title: string; content: string; createdAt: number }) => ({
-        id: `n-${n.id}`,
-        type: "system" as const,
-        text: n.content || n.title,
-        icon: "🔔",
-        ts: n.createdAt,
-      }));
+      const notifs: ActivityItem[] = (notifData.notifications || []).map(
+        (n: {
+          id: string;
+          title: string;
+          content: string;
+          createdAt: number;
+        }) => ({
+          id: `n-${n.id}`,
+          type: "system" as const,
+          text: n.content || n.title,
+          icon: n.title.includes("🐳")
+            ? "🐳"
+            : n.title.includes("💾")
+            ? "💾"
+            : "🔔",
+          ts: n.createdAt,
+        }),
+      );
 
       // 2. 链接点击（localStorage）
       const linkActivities: ActivityItem[] = [];
       try {
         const raw = localStorage.getItem("navelix.link.usage");
-        const usage: Record<string, { count: number; lastUsed: number }> = raw ? JSON.parse(raw) : {};
+        const usage: Record<string, { count: number; lastUsed: number }> = raw
+          ? JSON.parse(raw)
+          : {};
         for (const [id, u] of Object.entries(usage)) {
           const link = links.find((l) => l.id === id);
           if (link) {
@@ -50,7 +71,7 @@ export default function ActivityFeed({ links }: { links: SiteLink[] }) {
               id: `l-${id}`,
               type: "link",
               text: `访问 ${link.title}`,
-              icon: "🔗",
+              icon: link.icon || "🔗",
               ts: u.lastUsed,
             });
           }
@@ -80,15 +101,40 @@ export default function ActivityFeed({ links }: { links: SiteLink[] }) {
     return () => window.removeEventListener("navelix-link-clicked", handle);
   }, [load]);
 
+  const handleNavigateToNotifications = () => {
+    if (onSelectCategory) {
+      onSelectCategory("feature-activities");
+    }
+    window.dispatchEvent(
+      new CustomEvent("navelix-navigate", { detail: "feature-activities" }),
+    );
+  };
+
   return (
     <div className="flex flex-col bg-white dark:bg-slate-800/90 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 shadow-2xs transition-colors">
-      <div className="flex items-center gap-1.5 mb-3">
-        <span className="text-sm">⚡</span>
-        <h3 className="text-sm font-bold text-gray-900 dark:text-white">最近活动</h3>
+      {/* 头部标题与查看所有链接 */}
+      <div className="flex items-center justify-between gap-1.5 mb-3">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-sm">⚡</span>
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+            最近活动快速预览
+          </h3>
+        </div>
+        <button
+          type="button"
+          onClick={handleNavigateToNotifications}
+          className="text-[11px] font-semibold text-[#00C776] hover:underline flex items-center gap-0.5 shrink-0 cursor-pointer"
+          title="跳转到消息通知与动态页面"
+        >
+          <span>查看所有</span>
+          <span>→</span>
+        </button>
       </div>
 
       {loading ? (
-        <p className="py-4 text-center text-[11px] text-gray-400 dark:text-slate-400">加载中…</p>
+        <p className="py-4 text-center text-[11px] text-gray-400 dark:text-slate-400">
+          加载中…
+        </p>
       ) : items.length === 0 ? (
         <p className="py-4 text-center text-[11px] text-gray-400 dark:text-slate-400">
           暂无活动记录
@@ -107,11 +153,7 @@ export default function ActivityFeed({ links }: { links: SiteLink[] }) {
               </span>
             </div>
           ))}
-          {items.length > 7 && (
-            <p className="text-[10px] text-gray-400 dark:text-slate-500 text-center pt-1">
-              还有 {items.length - 7} 条记录
-            </p>
-          )}
+
         </div>
       )}
     </div>

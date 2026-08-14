@@ -3,6 +3,14 @@
 import React, { useState, useEffect, useCallback } from "react";
 import type { TodoItem, Project } from "@/types";
 
+/** 以本地时区格式化为 YYYY-MM-DD，避免 toISOString() 的 UTC 偏移问题 */
+function toLocalDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export default function CalendarView() {
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
@@ -66,7 +74,7 @@ export default function CalendarView() {
     setSelectedDate(n);
   };
 
-  const selectedDateStr = selectedDate.toISOString().split("T")[0];
+  const selectedDateStr = toLocalDateStr(selectedDate);
 
   const handleAddTodo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,10 +223,9 @@ export default function CalendarView() {
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
               const dateObj = new Date(year, month, day);
-              const dateStr = dateObj.toISOString().split("T")[0];
+              const dateStr = toLocalDateStr(dateObj);
               const isSelected = dateStr === selectedDateStr;
-              const isToday =
-                new Date().toISOString().split("T")[0] === dateStr;
+              const isToday = toLocalDateStr(new Date()) === dateStr;
 
               const dayTodos = todos.filter((t) => t.dueDate === dateStr);
               const hasTodos = dayTodos.length > 0;
