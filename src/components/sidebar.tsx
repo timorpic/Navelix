@@ -526,77 +526,6 @@ export default function Sidebar({
 
           </div>
 
-          {/* Notifications Drawer */}
-          {showNotifications && (
-            <div
-              ref={notifRef}
-              className="absolute bottom-16 left-0 w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 p-3 z-50 animate-fadeIn"
-            >
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-100 dark:border-slate-700">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-gray-900 dark:text-white">
-                    消息通知
-                  </span>
-                  {unreadCount > 0 && (
-                    <span className="px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600 text-[10px] font-bold">
-                      {unreadCount}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={() => {
-                        handleMarkAllRead();
-                        setShowNotifications(false);
-                      }}
-                      className="text-[10px] text-[#00C776] hover:underline cursor-pointer"
-                    >
-                      全部已读
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setShowNotifications(false)}
-                    className="w-5 h-5 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors cursor-pointer text-xs"
-                    title="关闭消息"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 max-h-52 overflow-y-auto">
-                {notifications.length === 0 ? (
-                  <div className="py-6 text-center text-[11px] text-gray-400 dark:text-slate-400">
-                    暂无操作记录
-                  </div>
-                ) : (
-                  notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      className={`p-2 rounded-xl text-xs transition-colors ${
-                        !n.read
-                          ? "bg-teal-50/60 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900"
-                          : "bg-gray-50/60 dark:bg-slate-700/40"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="font-bold text-gray-900 dark:text-white truncate">
-                          {n.title}
-                        </span>
-                        <span className="text-[9px] text-gray-400 shrink-0 ml-2">
-                          {formatRelativeTime(n.createdAt)}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-gray-600 dark:text-slate-300 leading-snug break-all">
-                        {n.content}
-                      </p>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
           {/* User Profile Card */}
           <div className="relative" ref={userMenuRef}>
             {/* User Popover Drawer Menu */}
@@ -660,6 +589,77 @@ export default function Sidebar({
           </p>
             </div>
           </div>
+
+          {/* Notifications Drawer (移出 overflow-hidden，保证 100% 完整展示) */}
+          {showNotifications && (
+            <div
+              ref={notifRef}
+              className="absolute bottom-16 left-0 right-0 sm:w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 p-3.5 z-50 animate-fadeIn"
+            >
+              <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-gray-100 dark:border-slate-700">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-gray-900 dark:text-white">
+                    消息通知
+                  </span>
+                  {unreadCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600 text-[10px] font-bold">
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={() => {
+                        handleMarkAllRead();
+                        setShowNotifications(false);
+                      }}
+                      className="text-[10px] text-[#00C776] hover:underline cursor-pointer font-medium"
+                    >
+                      全部已读
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowNotifications(false)}
+                    className="w-5 h-5 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors cursor-pointer text-xs"
+                    title="关闭消息"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-0.5">
+                {notifications.length === 0 ? (
+                  <div className="py-6 text-center text-[11px] text-gray-400 dark:text-slate-400">
+                    暂无操作记录
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className={`p-2.5 rounded-xl text-xs transition-colors ${
+                        !n.read
+                          ? "bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/60 dark:border-teal-900/80"
+                          : "bg-gray-50 dark:bg-slate-700/40 border border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <span className="font-bold text-gray-900 dark:text-white leading-tight break-words">
+                          {n.title}
+                        </span>
+                        <span className="text-[10px] text-gray-400 dark:text-slate-400 shrink-0 whitespace-nowrap">
+                          {formatRelativeTime(n.createdAt)}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-600 dark:text-slate-300 leading-relaxed break-words">
+                        {n.content}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </aside>
 
