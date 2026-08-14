@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Modal from "./modal";
-import BrandIcon from "./brand-icon";
+import Modal from "@/components/modal";
+import BrandIcon from "@/components/brand-icon";
 import type { Category, SiteLink } from "@/types";
 
 interface AddLinkModalProps {
   open: boolean;
-  categories: Category[];
-  defaultCategory?: string;
   link?: SiteLink | null;
+  defaultCategory?: string;
+  categories: Category[];
   onClose: () => void;
-  onAdd: (link: {
+  onAdd: (linkData: {
     title: string;
     url: string;
     description: string;
@@ -20,71 +20,79 @@ interface AddLinkModalProps {
   }) => void;
 }
 
-const ICONIFY_SEARCH_API = "https://api.iconify.design/search?limit=60&query=";
-
+// 常用流行图标备选（Iconify 在线模式未搜索时的默认推荐，包含 Tabler / Material / Iconoir 等经典库）
 const CURATED_ICONS = [
-  "mdi:home",
-  "mdi:github",
-  "mdi:web",
-  "mdi:cloud",
-  "mdi:server",
-  "mdi:database",
-  "mdi:rocket",
-  "mdi:code-tags",
-  "mdi:book-open-variant",
-  "mdi:video",
-  "mdi:music",
-  "mdi:weather-sunny",
-  "mdi:account",
-  "mdi:cog",
-  "mdi:star",
-  "mdi:email",
-  "mdi:chart-box",
-  "mdi:palette",
+  "simple-icons:github",
+  "simple-icons:google",
+  "tabler:palette",
+  "tabler:sparkles",
+  "tabler:app-window",
+  "tabler:server",
+  "tabler:device-desktop",
+  "material-symbols:home-outline",
+  "material-symbols:settings-outline",
+  "material-symbols:dashboard-outline",
+  "iconoir:design-nib",
+  "iconoir:server",
+  "simple-icons:bilibili",
+  "simple-icons:youtube",
+  "simple-icons:docker",
+  "simple-icons:linux",
+  "simple-icons:apple",
+  "simple-icons:windows",
+  "simple-icons:chatgpt",
+  "simple-icons:openai",
+  "simple-icons:baidu",
+  "simple-icons:wechat",
+  "simple-icons:qq",
+  "simple-icons:telegram",
 ];
 
+const ICONIFY_SEARCH_API = "https://api.iconify.design/search?limit=30&query=";
+
 function iconifyUrl(name: string): string {
+  const [prefix, iconName] = name.split(":");
+  if (prefix && iconName) {
+    return `https://api.iconify.design/${prefix}/${iconName}.svg`;
+  }
   return `https://api.iconify.design/${name}.svg`;
 }
 
-// 本地图片压缩为 96x96 的 data URL，避免把大图直接塞进数据库
+// 图片文件自动缩放转 Data URL，并限制尺寸最高 96x96
 function fileToIconDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error("读取图片失败"));
+    reader.onerror = () => reject(new Error("读取文件失败"));
     reader.onload = () => {
-      const dataUrl = String(reader.result || "");
-      if (file.type === "image/svg+xml") {
-        resolve(dataUrl);
-        return;
-      }
       const img = new Image();
-      img.onerror = () => resolve(dataUrl);
+      img.onerror = () => reject(new Error("解析图片失败"));
       img.onload = () => {
-        try {
-          const size = 96;
-          const canvas = document.createElement("canvas");
-          canvas.width = size;
-          canvas.height = size;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
-            resolve(dataUrl);
-            return;
+        const maxSize = 96;
+        let w = img.width;
+        let h = img.height;
+
+        if (w > maxSize || h > maxSize) {
+          if (w > h) {
+            h = Math.round((h * maxSize) / w);
+            w = maxSize;
+          } else {
+            w = Math.round((w * maxSize) / h);
+            h = maxSize;
           }
-          const scale = Math.min(size / img.width, size / img.height, 1);
-          const w = Math.max(1, Math.round(img.width * scale));
-          const h = Math.max(1, Math.round(img.height * scale));
-          const x = Math.round((size - w) / 2);
-          const y = Math.round((size - h) / 2);
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, size, size);
-          ctx.drawImage(img, x, y, w, h);
-          resolve(canvas.toDataURL("image/png"));
-        } catch {
-          resolve(dataUrl);
         }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, w);
+        canvas.height = Math.max(1, h);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(reader.result as string);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/png"));
       };
-      img.src = dataUrl;
+      img.src = reader.result as string;
     };
     reader.readAsDataURL(file);
   });
@@ -92,9 +100,9 @@ function fileToIconDataUrl(file: File): Promise<string> {
 
 export default function AddLinkModal({
   open,
-  categories,
-  defaultCategory,
   link,
+  defaultCategory,
+  categories,
   onClose,
   onAdd,
 }: AddLinkModalProps) {
@@ -114,6 +122,7 @@ export default function AddLinkModal({
   const [iconifyIcons, setIconifyIcons] = useState<string[]>(CURATED_ICONS);
   const [iconifyLoading, setIconifyLoading] = useState(false);
   const [iconifyError, setIconifyError] = useState("");
+  const [customSiteUrl, setCustomSiteUrl] = useState("");
   const [siteLoading, setSiteLoading] = useState(false);
   const [siteError, setSiteError] = useState("");
   const [error, setError] = useState("");
@@ -179,14 +188,18 @@ export default function AddLinkModal({
   };
 
   const handleFetchSiteIcon = async () => {
-    let targetUrl = url.trim() || link?.url || "";
+    let targetUrl = (customSiteUrl.trim() || url.trim() || link?.url || "").trim();
+    if (!targetUrl) {
+      setSiteError("请先在上方填写网址或在下方输入官网链接");
+      return;
+    }
     if (!/^https?:\/\//i.test(targetUrl)) {
       targetUrl = `https://${targetUrl}`;
     }
     try {
       new URL(targetUrl);
     } catch {
-      setSiteError("请先在上方填写正确的网址");
+      setSiteError("请输入正确的网址（如 portainer.io）");
       return;
     }
 
@@ -462,20 +475,32 @@ export default function AddLinkModal({
               </p>
             </div>
           ) : (
-            <div key="icon-site">
-              <button
-                type="button"
-                onClick={handleFetchSiteIcon}
-                disabled={siteLoading}
-                className="h-9 w-full rounded-lg bg-[#00C776]/10 text-xs font-semibold text-[#009a5a] transition-colors hover:bg-[#00C776]/20 disabled:opacity-60 cursor-pointer"
-              >
-                {siteLoading ? "正在获取…" : "从网站标签栏获取图标"}
-              </button>
-              <p className="mt-1 text-[10px] text-gray-400 dark:text-slate-400">
-                自动读取上方 URL 对应网站的 favicon（支持内网地址），获取后保存为图片
+            <div key="icon-site" className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  id="custom-site-icon-url"
+                  name="custom-site-icon-url"
+                  type="text"
+                  value={customSiteUrl}
+                  onChange={(e) => setCustomSiteUrl(e.target.value)}
+                  placeholder="输入官网或图标网址（留空则从上方 URL 抓取）"
+                  aria-label="输入官网或自定义网址抓取图标"
+                  className="h-9 flex-1 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 bg-white dark:bg-slate-900/60 focus:border-[#00C776] focus:outline-none focus:ring-2 focus:ring-[#00C776]/20"
+                />
+                <button
+                  type="button"
+                  onClick={handleFetchSiteIcon}
+                  disabled={siteLoading}
+                  className="h-9 shrink-0 rounded-lg bg-[#00C776] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#009a5a] disabled:opacity-60 cursor-pointer"
+                >
+                  {siteLoading ? "获取中…" : "抓取图标"}
+                </button>
+              </div>
+              <p className="text-[10px] text-gray-400 dark:text-slate-400">
+                默认从上方 URL 自动获取 favicon；若为内网 IP，可在此输入其官网（如 portainer.io）提取官方图标
               </p>
               {siteError && (
-                <p className="mt-1 text-[11px] text-red-400">{siteError}</p>
+                <p className="text-[11px] text-red-400">{siteError}</p>
               )}
             </div>
           )}
