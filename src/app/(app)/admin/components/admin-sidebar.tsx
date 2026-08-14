@@ -22,7 +22,6 @@ export interface AdminNavItem {
 }
 
 interface AdminSidebarProps {
-  logoText: string;
   activeTab: AdminTab;
   setActiveTab: (tab: AdminTab) => void;
   systemSubMenuOpen: boolean;
@@ -40,7 +39,6 @@ interface AdminSidebarProps {
 }
 
 export default function AdminSidebar({
-  logoText,
   activeTab,
   setActiveTab,
   systemSubMenuOpen,

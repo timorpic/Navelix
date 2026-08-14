@@ -2152,7 +2152,7 @@ export default function AdminPage() {
                     className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-800 px-3 text-xs bg-gray-100 dark:bg-slate-950 text-gray-400 dark:text-slate-500 cursor-not-allowed"
                   />
                   <p className="text-[10px] text-amber-600/90 dark:text-amber-400/90 font-medium">
-                    🔒 自定义品牌 LOGO 文本属于 PRO 版高级功能，标准版固定显示系统品牌 "Navelix"
+                    🔒 自定义品牌 LOGO 文本属于 PRO 版高级功能，标准版固定显示系统品牌 &quot;Navelix&quot;
                   </p>
                 </div>
 

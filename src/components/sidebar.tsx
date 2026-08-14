@@ -393,6 +393,7 @@ export default function Sidebar({
               <>
                 <p className="text-lg font-bold leading-tight flex items-center justify-center gap-1.5">
                   {weather.icon.startsWith("http") ? (
+                    /* eslint-disable-next-line @next/next/no-img-element -- 动态天气图标地址 */
                     <img src={weather.icon} alt={weather.desc} className="w-7 h-7" />
                   ) : (
                     <span>{weather.icon}</span>
