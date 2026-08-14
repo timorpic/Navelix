@@ -38,9 +38,19 @@ export default function SearchBar({ value, onChange, className = "" }: SearchBar
     e.preventDefault();
     const query = value.trim();
     if (!query) return;
+
+    if (config.searchEngine === "custom" && config.customSearchUrl) {
+      const template = config.customSearchUrl.trim();
+      const targetUrl = template.includes("%s")
+        ? template.replace("%s", encodeURIComponent(query))
+        : template + encodeURIComponent(query);
+      window.open(targetUrl, config.linkOpenTarget || "_blank");
+      return;
+    }
+
     const engineUrl =
       SEARCH_ENGINE_URLS[config.searchEngine] || SEARCH_ENGINE_URLS.google;
-    window.open(engineUrl + encodeURIComponent(query), "_blank");
+    window.open(engineUrl + encodeURIComponent(query), config.linkOpenTarget || "_blank");
   };
 
   return (

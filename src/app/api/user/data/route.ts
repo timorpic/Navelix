@@ -144,6 +144,12 @@ export async function GET() {
         glassmorphism: number;
         sidebar_default_state: "expanded" | "collapsed";
         clock_widget_mode: "time" | "weather" | "analog";
+        allow_public_access: number;
+        allow_registration: number;
+        custom_search_name: string;
+        custom_search_url: string;
+        custom_head_scripts: string;
+        custom_css: string;
       }
     | undefined;
 
@@ -155,7 +161,13 @@ export async function GET() {
         maxWidth: configRow.max_width,
         customFooter: configRow.custom_footer,
         theme: configRow.theme,
-        searchEngine: configRow.search_engine,
+        searchEngine: (configRow.search_engine as SystemConfig["searchEngine"]) || "google",
+        customSearchName: configRow.custom_search_name || "",
+        customSearchUrl: configRow.custom_search_url || "",
+        allowPublicAccess: configRow.allow_public_access !== 0,
+        allowRegistration: configRow.allow_registration !== 0,
+        customHeadScripts: configRow.custom_head_scripts || "",
+        customCss: configRow.custom_css || "",
         aiBaseUrl: configRow.ai_base_url,
         aiKeyConfigured: Boolean(configRow.ai_api_key),
         aiModel: configRow.ai_model,

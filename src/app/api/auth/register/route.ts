@@ -37,6 +37,20 @@ export async function POST(req: Request) {
   const count = (
     db.prepare("SELECT COUNT(*) AS c FROM users").get() as { c: number }
   ).c;
+
+  if (count > 0) {
+    // 检查系统全局配置是否允许新用户注册
+    const adminConfig = db
+      .prepare("SELECT allow_registration FROM user_configs LIMIT 1")
+      .get() as { allow_registration?: number } | undefined;
+    if (adminConfig && adminConfig.allow_registration === 0) {
+      return NextResponse.json(
+        { error: "系统当前已关闭新用户注册，请联系管理员" },
+        { status: 403 },
+      );
+    }
+  }
+
   const role = count === 0 ? "admin" : "user";
   const id = randomBytes(16).toString("hex");
 

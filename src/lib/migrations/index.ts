@@ -187,6 +187,42 @@ export function runMigrations(db: DatabaseSync): void {
     "clock_widget_mode",
     "clock_widget_mode TEXT NOT NULL DEFAULT 'time'",
   );
+  ensureColumn(
+    db,
+    "user_configs",
+    "allow_public_access",
+    "allow_public_access INTEGER NOT NULL DEFAULT 1",
+  );
+  ensureColumn(
+    db,
+    "user_configs",
+    "allow_registration",
+    "allow_registration INTEGER NOT NULL DEFAULT 1",
+  );
+  ensureColumn(
+    db,
+    "user_configs",
+    "custom_search_name",
+    "custom_search_name TEXT NOT NULL DEFAULT ''",
+  );
+  ensureColumn(
+    db,
+    "user_configs",
+    "custom_search_url",
+    "custom_search_url TEXT NOT NULL DEFAULT ''",
+  );
+  ensureColumn(
+    db,
+    "user_configs",
+    "custom_head_scripts",
+    "custom_head_scripts TEXT NOT NULL DEFAULT ''",
+  );
+  ensureColumn(
+    db,
+    "user_configs",
+    "custom_css",
+    "custom_css TEXT NOT NULL DEFAULT ''",
+  );
 
   // ── v1：一次性迁移：为旧库中已有的用户配置补上社交链接默认值（仅在首次升级时执行，
   //     之后用户在后台清空字段即为"隐藏"语义，不会被再次覆盖）
@@ -551,8 +587,11 @@ export function runMigrations(db: DatabaseSync): void {
     migrateIcon.run(to, from);
   }
 
-  // 自动清理单元测试留在 sqlite 数据库里的临时测试账号（以 tokuser_ 或 test-开头的测试用户）
-  db.prepare("DELETE FROM users WHERE username LIKE 'tokuser_%' OR username LIKE 'test-%' OR id LIKE 'user_token_test_%' OR id LIKE 'test-%'").run();
+  // ── v9：一次性自动清理历史遗留测试账号
+  if (user_version < 9) {
+    db.prepare("DELETE FROM users WHERE username LIKE 'tokuser_%' OR username LIKE 'test-%' OR id LIKE 'user_token_test_%' OR id LIKE 'test-%'").run();
+    db.exec("PRAGMA user_version = 9");
+  }
 
   // 通知数据自动清理：保留 30 天内的操作记录，避免数据库无限制膨胀
   db.prepare(

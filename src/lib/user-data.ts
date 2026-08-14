@@ -395,10 +395,24 @@ export function saveUserConfigs(
   const glassmorphism = bool("glassmorphism", "glassmorphism", 0);
   const sidebarDefaultState = str("sidebarDefaultState", "sidebar_default_state", "expanded");
   const clockWidgetMode = str("clockWidgetMode", "clock_widget_mode", "time");
+  const allowPublicAccess = bool("allowPublicAccess", "allow_public_access", 1);
+  const allowRegistration = bool("allowRegistration", "allow_registration", 1);
+  const customSearchName = str("customSearchName", "custom_search_name", "");
+  const customSearchUrl = str("customSearchUrl", "custom_search_url", "");
+  const customHeadScripts = str("customHeadScripts", "custom_head_scripts", "");
+  const customCss = str("customCss", "custom_css", "");
 
   db.prepare(`
-    INSERT OR REPLACE INTO user_configs (user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, is_pro, link_open_target, wallpaper_mode, custom_wallpaper_url, glassmorphism, sidebar_default_state, clock_widget_mode)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT OR REPLACE INTO user_configs (
+      user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme,
+      search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled,
+      link_status_interval, social_github, social_x, social_linkedin, social_email,
+      weather_enabled, weather_api_key, weather_location, weather_api_base_url, is_pro,
+      link_open_target, wallpaper_mode, custom_wallpaper_url, glassmorphism,
+      sidebar_default_state, clock_widget_mode, allow_public_access, allow_registration,
+      custom_search_name, custom_search_url, custom_head_scripts, custom_css
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     userId,
     logoText,
@@ -429,5 +443,11 @@ export function saveUserConfigs(
     glassmorphism,
     sidebarDefaultState,
     clockWidgetMode,
+    allowPublicAccess,
+    allowRegistration,
+    customSearchName,
+    customSearchUrl,
+    customHeadScripts,
+    customCss,
   );
 }

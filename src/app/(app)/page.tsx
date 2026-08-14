@@ -176,6 +176,17 @@ export default function Home() {
 
       {/* 3. Right Sidebar Dashboard */}
       <RightSidebar />
+
+      {/* 4. 自定义 CSS 与统计探针代码注入 */}
+      {config.customCss && (
+        <style dangerouslySetInnerHTML={{ __html: config.customCss }} />
+      )}
+      {config.customHeadScripts && (
+        <div
+          style={{ display: "none" }}
+          dangerouslySetInnerHTML={{ __html: config.customHeadScripts }}
+        />
+      )}
     </div>
   );
 }

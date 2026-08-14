@@ -1,0 +1,125 @@
+import fs from "node:fs";
+import path from "node:path";
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth";
+import { performDatabaseBackup } from "@/lib/db-backup";
+import { runMigrations } from "@/lib/migrations";
+
+async function requireAdmin(req?: NextRequest) {
+  const user = await getSessionUser(req);
+  if (!user || user.role !== "admin") {
+    return null;
+  }
+  return user;
+}
+
+// GET: 下载当前 SQLite 数据库的物理快照备份文件 (.db)
+export async function GET(req: NextRequest) {
+  const adminUser = await requireAdmin(req);
+  if (!adminUser) {
+    return NextResponse.json({ error: "无权访问，仅管理员可下载数据库备份" }, { status: 403 });
+  }
+
+  const backupFilePath = performDatabaseBackup();
+  if (!backupFilePath || !fs.existsSync(backupFilePath)) {
+    return NextResponse.json({ error: "创建数据库快照失败" }, { status: 500 });
+  }
+
+  const fileBuffer = fs.readFileSync(backupFilePath);
+  const nowStr = new Date().toISOString().slice(0, 10);
+  const fileName = `navelix-backup-${nowStr}.db`;
+
+  return new NextResponse(fileBuffer, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/x-sqlite3",
+      "Content-Disposition": `attachment; filename="${fileName}"`,
+      "Content-Length": String(fileBuffer.length),
+    },
+  });
+}
+
+// POST: 上传 .db 备份文件并恢复还原数据库
+export async function POST(req: NextRequest) {
+  const adminUser = await requireAdmin(req);
+  if (!adminUser) {
+    return NextResponse.json({ error: "无权访问，仅管理员可恢复数据库" }, { status: 403 });
+  }
+
+  try {
+    const formData = await req.formData();
+    const file = formData.get("file") as File | null;
+    if (!file) {
+      return NextResponse.json({ error: "请上传有效的 .db 备份文件" }, { status: 400 });
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // 校验 SQLite 魔数 Header: "SQLite format 3\0"
+    const SQLITE_HEADER = "SQLite format 3\0";
+    const headerString = buffer.subarray(0, 16).toString("utf-8");
+    if (!headerString.startsWith(SQLITE_HEADER)) {
+      return NextResponse.json({ error: "上传的文件并非合法的 SQLite 数据库文件" }, { status: 400 });
+    }
+
+    // 1. 先将当前数据库在线备份一份以防万一
+    performDatabaseBackup();
+
+    // 2. 写入临时恢复文件
+    const tempRestorePath = path.join(process.cwd(), "data", `restore-temp-${Date.now()}.db`);
+    fs.writeFileSync(tempRestorePath, buffer);
+
+    // 3. 将上传的数据库中的数据无缝同步还原至当前库
+    const attachDbName = `restore_${Date.now()}`;
+    const sanitizedPath = tempRestorePath.replace(/'/g, "''");
+    db.exec(`ATTACH DATABASE '${sanitizedPath}' AS ${attachDbName};`);
+
+    try {
+      db.exec("BEGIN TRANSACTION;");
+      // 还原全量业务与设置数据表
+      const tables = [
+        "users",
+        "user_categories",
+        "user_links",
+        "user_configs",
+        "projects",
+        "user_todos",
+        "api_tokens",
+        "notifications",
+      ];
+      for (const t of tables) {
+        try {
+          db.exec(`DELETE FROM ${t};`);
+          db.exec(`INSERT OR REPLACE INTO ${t} SELECT * FROM ${attachDbName}.${t};`);
+        } catch {
+          // 如果旧版本库中不存在某些表，安全跳过
+        }
+      }
+      db.exec("COMMIT;");
+    } catch (txErr) {
+      db.exec("ROLLBACK;");
+      throw txErr;
+    } finally {
+      try {
+        db.exec(`DETACH DATABASE ${attachDbName};`);
+      } catch {}
+      try {
+        fs.unlinkSync(tempRestorePath);
+      } catch {}
+    }
+
+    // 4. 再次执行自动迁移确保结构最新
+    runMigrations(db);
+
+    return NextResponse.json({
+      success: true,
+      message: "数据库已成功还原恢复！",
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "恢复数据库失败";
+    console.error("[Database Restore Error]:", err);
+    return NextResponse.json({ error: `数据库恢复失败: ${msg}` }, { status: 500 });
+  }
+}
