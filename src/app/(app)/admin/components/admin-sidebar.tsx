@@ -14,6 +14,7 @@ export type AdminTab =
   | "schedules"
   | "users"
   | "analytics"
+  | "models"
   | "system"
   | "personalization"
   | "profile";

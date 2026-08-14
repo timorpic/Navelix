@@ -138,6 +138,11 @@ export async function GET() {
         weather_api_key: string;
         weather_location: string;
         weather_api_base_url: string;
+        sensenova_enabled: number;
+        sensenova_username: string;
+        sensenova_password: string;
+        sensenova_account_id: string;
+        sensenova_token_key: string;
         link_open_target: "_blank" | "_self";
         wallpaper_mode: "none" | "bing" | "custom";
         custom_wallpaper_url: string;
@@ -182,6 +187,8 @@ export async function GET() {
         weatherKeyConfigured: Boolean(configRow.weather_api_key),
         weatherLocation: configRow.weather_location,
         weatherApiBaseUrl: configRow.weather_api_base_url,
+        sensenovaEnabled: configRow.sensenova_enabled === 1,
+        sensenovaConfigured: Boolean(configRow.sensenova_username && configRow.sensenova_password),
         linkOpenTarget: configRow.link_open_target || "_blank",
         wallpaperMode: configRow.wallpaper_mode || "none",
         customWallpaperUrl: configRow.custom_wallpaper_url || "",
@@ -211,6 +218,8 @@ export async function GET() {
         weatherKeyConfigured: false,
         weatherLocation: "",
         weatherApiBaseUrl: "https://api.seniverse.com",
+        sensenovaEnabled: false,
+        sensenovaConfigured: false,
         linkOpenTarget: "_blank",
         wallpaperMode: "none",
         customWallpaperUrl: "",

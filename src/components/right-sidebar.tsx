@@ -2,18 +2,15 @@
 
 import React, { useState } from "react";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
-import { useNavelixData } from "@/hooks/use-navelix-data";
 import type { AIChatMessage } from "@/types";
 import FocusStatsWidget from "./focus-stats-widget";
-import ActivityFeed from "./activity-feed";
+import SenseNovaUsage from "./sensenova-usage";
 
 export default function RightSidebar({
-  onSelectCategory,
 }: {
   onSelectCategory?: (id: string) => void;
 }) {
   const { config } = useNavelixConfig();
-  const { links } = useNavelixData();
 
   // Interactive AI Chat State
   const [chatMessages, setChatMessages] = useState<AIChatMessage[]>([
@@ -193,19 +190,25 @@ export default function RightSidebar({
         {/* Quick Action Prompt Chips */}
         <div className="flex flex-wrap gap-1.5">
           <button
+            onClick={() => handleSendChat("请帮我梳理一下我现在都有哪些已完成的项目和进行中的项目？")}
+            className="px-2.5 py-1 bg-white/80 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 text-[11px] font-medium text-gray-600 dark:text-slate-300 hover:text-[#00C776] rounded-lg border border-gray-200/60 dark:border-slate-700 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+          >
+            <span>📌</span> 项目进度
+          </button>
+          <button
+            onClick={() => handleSendChat("我当前待办清单里还有哪些高优先级和未完成的任务？")}
+            className="px-2.5 py-1 bg-white/80 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 text-[11px] font-medium text-gray-600 dark:text-slate-300 hover:text-[#00C776] rounded-lg border border-gray-200/60 dark:border-slate-700 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+          >
+            <span>✅</span> 待办清单
+          </button>
+          <button
             onClick={() => handleSendChat("请帮我总结网页内容")}
             className="px-2.5 py-1 bg-white/80 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 text-[11px] font-medium text-gray-600 dark:text-slate-300 hover:text-[#00C776] rounded-lg border border-gray-200/60 dark:border-slate-700 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
           >
-            <span>💡</span> 总结网页内容
+            <span>💡</span> 网页总结
           </button>
           <button
-            onClick={() => handleSendChat("请帮我生成一段文案")}
-            className="px-2.5 py-1 bg-white/80 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 text-[11px] font-medium text-gray-600 dark:text-slate-300 hover:text-[#00C776] rounded-lg border border-gray-200/60 dark:border-slate-700 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
-          >
-            <span>🎨</span> 生成文案
-          </button>
-          <button
-            onClick={() => handleSendChat("请帮我进行代码优化")}
+            onClick={() => handleSendChat("请帮我进行代码优化与技术梳理")}
             className="px-2.5 py-1 bg-white/80 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 text-[11px] font-medium text-gray-600 dark:text-slate-300 hover:text-[#00C776] rounded-lg border border-gray-200/60 dark:border-slate-700 shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
           >
             <span>⚡</span> 代码优化
@@ -216,8 +219,8 @@ export default function RightSidebar({
       {/* Widget 1.4: Focus Stats */}
       <FocusStatsWidget />
 
-      {/* Widget 2: Activity Feed */}
-      <ActivityFeed links={links} onSelectCategory={onSelectCategory} />
+      {/* Widget 2: 商汤模型调用余量（后台开关控制显隐） */}
+      {config.sensenovaEnabled ? <SenseNovaUsage /> : null}
 
       {/* Widget 4: Inspiration Quote Card */}
       <div className="flex flex-col bg-white dark:bg-slate-800/90 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 shadow-2xs transition-colors">

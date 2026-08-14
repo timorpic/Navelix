@@ -109,7 +109,15 @@ db.exec(`
     social_github TEXT NOT NULL DEFAULT '',
     social_x TEXT NOT NULL DEFAULT '',
     social_linkedin TEXT NOT NULL DEFAULT '',
-    social_email TEXT NOT NULL DEFAULT ''
+    social_email TEXT NOT NULL DEFAULT '',
+    sensenova_enabled INTEGER NOT NULL DEFAULT 0,
+    sensenova_username TEXT NOT NULL DEFAULT '',
+    sensenova_password TEXT NOT NULL DEFAULT '',
+    sensenova_account_id TEXT NOT NULL DEFAULT '',
+    sensenova_token_key TEXT NOT NULL DEFAULT '',
+    cliproxy_enabled INTEGER NOT NULL DEFAULT 1,
+    cliproxy_url TEXT NOT NULL DEFAULT 'http://127.0.0.1:8317',
+    cliproxy_key TEXT NOT NULL DEFAULT ''
   );
 
   CREATE TABLE IF NOT EXISTS notifications (

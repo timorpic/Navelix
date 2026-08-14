@@ -105,6 +105,8 @@ export function getUserData(userId: string): UserDataResult {
         weatherKeyConfigured: Boolean(configRow.weather_api_key),
         weatherLocation: String(configRow.weather_location || ""),
         weatherApiBaseUrl: String(configRow.weather_api_base_url || "https://api.seniverse.com"),
+        sensenovaEnabled: configRow.sensenova_enabled === 1,
+        sensenovaConfigured: Boolean(configRow.sensenova_username && configRow.sensenova_password),
         isPro: configRow.is_pro === 1 || configRow.is_pro === true || configRow.is_pro === "1",
       }
     : {
@@ -130,6 +132,8 @@ export function getUserData(userId: string): UserDataResult {
         weatherKeyConfigured: false,
         weatherLocation: "",
         weatherApiBaseUrl: "https://api.seniverse.com",
+        sensenovaEnabled: false,
+        sensenovaConfigured: false,
       };
 
   const result: UserDataResult = { categories: categoryRows as Category[], links, projects, config };
@@ -401,6 +405,11 @@ export function saveUserConfigs(
   const customSearchUrl = str("customSearchUrl", "custom_search_url", "");
   const customHeadScripts = str("customHeadScripts", "custom_head_scripts", "");
   const customCss = str("customCss", "custom_css", "");
+  const sensenovaEnabled = bool("sensenovaEnabled", "sensenova_enabled", 0);
+  const sensenovaUsername = secret("sensenovaUsername", "sensenova_username");
+  const sensenovaPassword = secret("sensenovaPassword", "sensenova_password");
+  const sensenovaAccountId = str("sensenovaAccountId", "sensenova_account_id", "");
+  const sensenovaTokenKey = secret("sensenovaTokenKey", "sensenova_token_key");
 
   // 安全告警：自定义脚本/CSS 会绕过 CSP 直接注入到所有访客页面。
   // 此处仅记录日志供运维审计；写入权限已由 POST /api/user/data 的 admin 角色门禁收口。
@@ -423,9 +432,10 @@ export function saveUserConfigs(
       weather_enabled, weather_api_key, weather_location, weather_api_base_url, is_pro,
       link_open_target, wallpaper_mode, custom_wallpaper_url, glassmorphism,
       sidebar_default_state, clock_widget_mode, allow_public_access, allow_registration,
-      custom_search_name, custom_search_url, custom_head_scripts, custom_css
+      custom_search_name, custom_search_url, custom_head_scripts, custom_css,
+      sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     userId,
     logoText,
@@ -462,5 +472,10 @@ export function saveUserConfigs(
     customSearchUrl,
     customHeadScripts,
     customCss,
+    sensenovaEnabled,
+    sensenovaUsername,
+    sensenovaPassword,
+    sensenovaAccountId,
+    sensenovaTokenKey,
   );
 }

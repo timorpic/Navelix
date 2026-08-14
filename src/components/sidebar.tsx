@@ -462,28 +462,30 @@ export default function Sidebar({
                 </p>
               </>
             )}
+            </div>
+            </div>
           </div>
 
-          {/* User Profile Card */}
-          <div className="relative" ref={userMenuRef}>
+          {/* User Profile Card (始终置底，菜单向上浮出不被截断) */}
+          <div className="relative mt-3" ref={userMenuRef}>
             {/* User Popover Drawer Menu */}
             {showUserMenu && (
-              <div className="absolute bottom-16 left-0 right-0 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 z-50 animate-fadeIn flex flex-col gap-1 text-xs font-semibold text-gray-700 dark:text-slate-200">
+              <div className="absolute bottom-full mb-2 left-0 right-0 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 z-50 animate-fadeIn flex flex-col gap-1 text-xs font-semibold text-gray-700 dark:text-slate-200">
                 <Link
                   href="/admin"
                   onClick={() => setShowUserMenu(false)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   <span>⚙️</span>
                   <span>后台管理</span>
                 </Link>
-                <div className="my-1 border-t border-gray-100 dark:border-slate-700" />
+                <div className="my-0.5 border-t border-gray-100 dark:border-slate-700" />
                 <button
                   onClick={() => {
                     setShowUserMenu(false);
                     handleLogout();
                   }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-left transition-colors cursor-pointer"
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-left transition-colors cursor-pointer w-full"
                 >
                   <span>🚪</span>
                   <span>退出当前登录</span>
@@ -522,11 +524,9 @@ export default function Sidebar({
           </div>
 
           {/* Custom Footer Copyright */}
-          <p className="text-[10px] text-gray-400 dark:text-slate-400 text-center px-1 truncate">
+          <p className="text-[10px] text-gray-400 dark:text-slate-400 text-center px-1 truncate mt-2">
             {config.customFooter || "© 2026 Navelix. 保留所有权利。"}
           </p>
-            </div>
-          </div>
         </div>
       </aside>
 
