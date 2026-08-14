@@ -39,11 +39,21 @@ describe("SSRF Security Protection", () => {
     assert.equal(isPrivateIPv6("2001:4860:4860::8888"), false);
   });
 
-  it("should reject private IPs in validateHostIPs", async () => {
+  it("should reject private IPs in validateHostIPs by default", async () => {
     await assert.rejects(() => validateHostIPs("127.0.0.1"), /SSRF_BLOCKED/);
     await assert.rejects(() => validateHostIPs("localhost"), /SSRF_BLOCKED/);
     await assert.rejects(() => validateHostIPs("169.254.169.254"), /SSRF_BLOCKED/);
     await assert.rejects(() => validateHostIPs("10.0.0.1"), /SSRF_BLOCKED/);
+  });
+
+  it("should allow private IPs when allowPrivateIPs is true, but block cloud metadata IP", async () => {
+    const ips = await validateHostIPs("192.168.1.1", { allowPrivateIPs: true });
+    assert.deepEqual(ips, ["192.168.1.1"]);
+
+    await assert.rejects(
+      () => validateHostIPs("169.254.169.254", { allowPrivateIPs: true }),
+      /SSRF_BLOCKED/,
+    );
   });
 
   it("should reject unsafe protocols in safeFetch", async () => {

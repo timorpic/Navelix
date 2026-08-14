@@ -4,12 +4,22 @@ import { safeFetch } from "@/lib/ssrf";
 
 const FETCH_TIMEOUT_MS = 8_000;
 const MAX_ICON_BYTES = 1_000_000;
+const REALISTIC_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 async function fetchWithTimeout(
   url: string,
   init?: RequestInit,
 ): Promise<Response> {
-  return await safeFetch(url, { ...init, timeoutMs: FETCH_TIMEOUT_MS });
+  return await safeFetch(url, {
+    ...init,
+    timeoutMs: FETCH_TIMEOUT_MS,
+    allowPrivateIPs: true, // 允许抓取用户配置的内网设备/NAS/路由器/开发服务图标
+    headers: {
+      "User-Agent": REALISTIC_USER_AGENT,
+      ...(init?.headers || {}),
+    },
+  });
 }
 
 // 从 HTML 中提取 <link rel="icon"> 等图标声明
@@ -75,18 +85,29 @@ export async function GET(req: Request) {
   }
 
   try {
-    const pageRes = await fetchWithTimeout(pageUrl.toString(), {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Navelix favicon fetcher)",
-      },
-      redirect: "follow",
-    });
-    const html = pageRes.ok
-      ? (await pageRes.text()).slice(0, 512 * 1024)
-      : "";
+    let html = "";
+    try {
+      const pageRes = await fetchWithTimeout(pageUrl.toString(), {
+        redirect: "follow",
+      });
+      if (pageRes.ok) {
+        html = (await pageRes.text()).slice(0, 512 * 1024);
+      }
+    } catch {
+      // 访问主页解析 HTML 失败时继续尝试直接获取 /favicon.ico
+    }
+
     const iconUrl =
       resolveIconHref(html, pageUrl) || `${pageUrl.origin}/favicon.ico`;
-    return NextResponse.json(await resolveIcon(iconUrl));
+    const resolved = await resolveIcon(iconUrl);
+
+    // 如果首选图标解析无 dataUrl 且不是默认 /favicon.ico，回退尝试默认 /favicon.ico
+    if (!resolved.dataUrl && iconUrl !== `${pageUrl.origin}/favicon.ico`) {
+      const fallback = await resolveIcon(`${pageUrl.origin}/favicon.ico`);
+      if (fallback.dataUrl) return NextResponse.json(fallback);
+    }
+
+    return NextResponse.json(resolved);
   } catch {
     return NextResponse.json(
       { error: "无法访问该网站，请检查网址是否可达" },

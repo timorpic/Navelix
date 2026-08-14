@@ -95,6 +95,15 @@ export function isPrivateIPv6(ip: string): boolean {
 }
 
 /**
+ * 校验任意 IP 是否为云服务器元数据 IP (169.254.0.0/16)，任何模式下均绝对封禁
+ */
+export function isCloudMetadataIP(ip: string): boolean {
+  if (!net.isIPv4(ip)) return false;
+  const parts = ip.split(".").map((p) => parseInt(p, 10));
+  return parts[0] === 169 && parts[1] === 254;
+}
+
+/**
  * 校验任意 IP（IPv4 或 IPv6）是否为受限的内部/保留 IP
  */
 export function isPrivateOrReservedIP(ip: string): boolean {
@@ -104,13 +113,48 @@ export function isPrivateOrReservedIP(ip: string): boolean {
   return true;
 }
 
+export interface ValidateHostOptions {
+  allowPrivateIPs?: boolean;
+}
+
 /**
- * 检查域名解析出的所有 IP，确保不包含内网/保留 IP
+ * 检查域名解析出的所有 IP，确保不包含受限 IP（可选项：allowPrivateIPs 用于允许导航站内网设备抓取图标/探测状态）
  */
-export async function validateHostIPs(hostname: string): Promise<string[]> {
+export async function validateHostIPs(hostname: string, options: ValidateHostOptions = {}): Promise<string[]> {
+  const { allowPrivateIPs = false } = options;
   const cleanHost = hostname.trim().toLowerCase();
 
-  // 快捷检测已知回环/内部域名
+  // 1. 如果配置了允许内网 IP（导航站抓取内网 NAS/路由器/开发服务）
+  if (allowPrivateIPs) {
+    // 始终严格禁止 Cloud Metadata IP (169.254.169.254) 凭证窃取攻击
+    if (net.isIP(cleanHost) && isCloudMetadataIP(cleanHost)) {
+      throw new Error(`SSRF_BLOCKED: Cloud metadata IP '${cleanHost}' is forbidden`);
+    }
+
+    if (net.isIP(cleanHost)) {
+      return [cleanHost];
+    }
+
+    let addresses: { address: string; family: number }[] = [];
+    try {
+      addresses = await dns.lookup(cleanHost, { all: true });
+    } catch (err) {
+      throw new Error(`DNS_LOOKUP_FAILED: Failed to resolve hostname '${hostname}': ${err instanceof Error ? err.message : String(err)}`);
+    }
+
+    if (!addresses || addresses.length === 0) {
+      throw new Error(`DNS_LOOKUP_FAILED: No IP addresses found for hostname '${hostname}'`);
+    }
+
+    for (const { address } of addresses) {
+      if (isCloudMetadataIP(address)) {
+        throw new Error(`SSRF_BLOCKED: Hostname '${hostname}' resolved to cloud metadata IP '${address}'`);
+      }
+    }
+    return addresses.map((a) => a.address);
+  }
+
+  // 2. 默认模式：严格禁止一切内网、回环及私有 IP
   if (
     cleanHost === "localhost" ||
     cleanHost.endsWith(".localhost") ||
@@ -163,6 +207,7 @@ export async function validateHostIPs(hostname: string): Promise<string[]> {
 export interface SafeFetchOptions extends RequestInit {
   maxRedirects?: number;
   timeoutMs?: number;
+  allowPrivateIPs?: boolean;
 }
 
 /**
@@ -173,7 +218,7 @@ export interface SafeFetchOptions extends RequestInit {
  * 4. 防御 DNS Rebinding
  */
 export async function safeFetch(urlInput: string, options: SafeFetchOptions = {}): Promise<Response> {
-  const { maxRedirects = 5, timeoutMs = 10_000, ...fetchInit } = options;
+  const { maxRedirects = 5, timeoutMs = 10_000, allowPrivateIPs = false, ...fetchInit } = options;
 
   let currentUrl = urlInput;
   let redirectCount = 0;
@@ -191,7 +236,7 @@ export async function safeFetch(urlInput: string, options: SafeFetchOptions = {}
     }
 
     // SSRF & DNS 校验：解析 Host 名下所有 IP 并检查私有地址
-    await validateHostIPs(parsedUrl.hostname);
+    await validateHostIPs(parsedUrl.hostname, { allowPrivateIPs });
 
     const controller = new AbortController();
     const timeoutTimer = setTimeout(() => controller.abort(), timeoutMs);
