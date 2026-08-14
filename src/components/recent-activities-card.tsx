@@ -27,6 +27,26 @@ interface ActivityItem {
   ts: number;
 }
 
+function renderActivityIcon(icon: string, className = "w-4 h-4") {
+  if (!icon) return <span className="text-sm shrink-0">📌</span>;
+  if (
+    icon.startsWith("data:image/") ||
+    icon.startsWith("http://") ||
+    icon.startsWith("https://") ||
+    icon.startsWith("/")
+  ) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={icon}
+        alt=""
+        className={`${className} rounded object-contain shrink-0`}
+      />
+    );
+  }
+  return <span className="text-sm shrink-0 mt-0.5">{icon}</span>;
+}
+
 // 统一解析来源类型与徽标样式
 function resolveActivitySource(
   rawSource?: string,
@@ -809,7 +829,7 @@ export default function RecentActivitiesCard({ links }: { links: SiteLink[] }) {
                     {/* 内容 */}
                     <td className="py-3 px-3">
                       <div className="flex items-start gap-2.5">
-                        <span className="text-sm shrink-0 mt-0.5">{item.icon}</span>
+                        {renderActivityIcon(item.icon, "w-4 h-4 mt-0.5")}
                         <div className="min-w-0 flex-1">
                           <p className="font-bold text-gray-900 dark:text-slate-100 truncate">
                             {item.title}
@@ -913,7 +933,7 @@ export default function RecentActivitiesCard({ links }: { links: SiteLink[] }) {
         {selectedDetailItem && (
           <div className="space-y-4 text-xs">
             <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-slate-800">
-              <span className="text-xl">{selectedDetailItem.icon}</span>
+              {renderActivityIcon(selectedDetailItem.icon, "w-7 h-7")}
               <div>
                 <h4 className="font-bold text-gray-900 dark:text-white text-sm">
                   {selectedDetailItem.title}

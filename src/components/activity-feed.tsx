@@ -144,7 +144,20 @@ export default function ActivityFeed({
           {items.slice(0, 7).map((item) => (
             <div key={item.id} className="flex items-center gap-2.5 py-1.5 relative">
               <span className="w-2 h-2 rounded-full bg-gray-200 dark:bg-slate-600 shrink-0 -ml-[5px] ring-2 ring-white dark:ring-slate-800 z-10" />
-              <span className="text-[10px]">{item.icon}</span>
+              {item.icon &&
+              (item.icon.startsWith("data:") ||
+                item.icon.startsWith("http://") ||
+                item.icon.startsWith("https://") ||
+                item.icon.startsWith("/")) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.icon}
+                  alt=""
+                  className="w-3.5 h-3.5 object-contain rounded shrink-0"
+                />
+              ) : (
+                <span className="text-[10px] shrink-0">{item.icon || "📌"}</span>
+              )}
               <span className="flex-1 text-[11px] text-gray-600 dark:text-slate-300 truncate">
                 {item.text}
               </span>
