@@ -41,8 +41,16 @@ export default function Sidebar({
     });
   }, []);
 
-  // 时钟 / 天气 切换 Widget State
-  const [clockTab, setClockTab] = useState<"time" | "weather">("time");
+  // 时钟 / 天气 / 模拟指针 切换 Widget State
+  const [clockTab, setClockTab] = useState<"time" | "weather" | "analog">("time");
+
+  useEffect(() => {
+    if (config.clockWidgetMode) {
+      queueMicrotask(() => {
+        setClockTab(config.clockWidgetMode as "time" | "weather" | "analog");
+      });
+    }
+  }, [config.clockWidgetMode]);
   const [weather, setWeather] = useState<{
     temp: number;
     windSpeed: number;
@@ -266,7 +274,11 @@ export default function Sidebar({
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-60 shrink-0 flex flex-col justify-between border-r p-5 select-none transition-all duration-200 lg:static lg:z-auto lg:translate-x-0 lg:h-screen lg:sticky lg:top-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
-        } bg-white border-gray-100 text-gray-900 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-100`}
+        } text-gray-900 dark:text-slate-100 ${
+          config.glassmorphism
+            ? "backdrop-blur-xl bg-white/75 dark:bg-slate-900/80 border-white/40 dark:border-slate-700/60 shadow-xl"
+            : "bg-white border-gray-100 dark:bg-slate-900 dark:border-slate-800"
+        }`}
       >
         {/* Top Section - 填满剩余空间，让底部抽屉固定在最低端 */}
         <div className="flex-1 min-h-0 flex flex-col gap-6">
@@ -365,15 +377,11 @@ export default function Sidebar({
               <button
                 onClick={() => setClockTab("time")}
                 className={`flex-1 py-0.5 px-1.5 rounded-md text-[10px] font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                  clockTab === "time"
+                  (config.clockWidgetMode || clockTab) === "time" || clockTab === "time"
                     ? "bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm"
                     : "text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300"
                 }`}
               >
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="9" />
-                  <polyline points="12 7 12 12 15 15" />
-                </svg>
                 <span>时钟</span>
               </button>
               <button
@@ -384,11 +392,17 @@ export default function Sidebar({
                     : "text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300"
                 }`}
               >
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                  <circle cx="12" cy="12" r="5" />
-                </svg>
                 <span>天气</span>
+              </button>
+              <button
+                onClick={() => setClockTab("analog")}
+                className={`flex-1 py-0.5 px-1.5 rounded-md text-[10px] font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                  clockTab === "analog"
+                    ? "bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300"
+                }`}
+              >
+                <span>指针</span>
               </button>
             </div>
 
@@ -403,6 +417,42 @@ export default function Sidebar({
                   {["周日", "周一", "周二", "周三", "周四", "周五", "周六"][now.getDay()]}
                 </p>
               </>
+            ) : clockTab === "analog" ? (
+              <div className="flex flex-col items-center justify-center py-1">
+                <svg className="w-12 h-12" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="44" className="fill-none stroke-teal-500/40 dark:stroke-teal-400/40" strokeWidth="3" />
+                  {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg) => (
+                    <line
+                      key={deg}
+                      x1="50" y1="10" x2="50" y2="14"
+                      className="stroke-gray-400 dark:stroke-slate-500" strokeWidth="2"
+                      transform={`rotate(${deg} 50 50)`}
+                    />
+                  ))}
+                  {/* 时针 */}
+                  <line
+                    x1="50" y1="50" x2="50" y2="28"
+                    className="stroke-gray-800 dark:stroke-white" strokeWidth="3.5" strokeLinecap="round"
+                    transform={`rotate(${(now.getHours() % 12) * 30 + now.getMinutes() * 0.5} 50 50)`}
+                  />
+                  {/* 分针 */}
+                  <line
+                    x1="50" y1="50" x2="50" y2="20"
+                    className="stroke-teal-500 dark:stroke-teal-400" strokeWidth="2.5" strokeLinecap="round"
+                    transform={`rotate(${now.getMinutes() * 6} 50 50)`}
+                  />
+                  {/* 秒针 */}
+                  <line
+                    x1="50" y1="55" x2="50" y2="16"
+                    className="stroke-rose-500" strokeWidth="1.5" strokeLinecap="round"
+                    transform={`rotate(${now.getSeconds() * 6} 50 50)`}
+                  />
+                  <circle cx="50" cy="50" r="3" className="fill-rose-500" />
+                </svg>
+                <p suppressHydrationWarning className="text-[10px] text-gray-400 dark:text-slate-400 mt-1 font-mono">
+                  {now.toLocaleTimeString("zh-CN", { hour12: false })}
+                </p>
+              </div>
             ) : weather ? (
               <>
                 <p className="text-lg font-bold leading-tight flex items-center justify-center gap-1.5">
@@ -412,7 +462,6 @@ export default function Sidebar({
                   ) : (
                     <span>{weather.icon}</span>
                   )}
-                  {/* 降级状态（temp 为 NaN 时）只显示状态文案，不显示温度 */}
                   <span>{Number.isNaN(weather.temp) ? "" : `${weather.temp}°C`}</span>
                 </p>
                 <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5 flex items-center justify-center gap-1">

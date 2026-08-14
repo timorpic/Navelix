@@ -49,6 +49,16 @@ export default function Home() {
     return links.filter((l) => l.isQuickAccess);
   }, [links]);
 
+  const effectiveWallpaperUrl = useMemo(() => {
+    if (config.wallpaperMode === "bing") {
+      return "https://bing.biturl.top/?resolution=1920&format=image&index=0";
+    }
+    if (config.wallpaperMode === "custom" && config.customWallpaperUrl) {
+      return config.customWallpaperUrl;
+    }
+    return null;
+  }, [config.wallpaperMode, config.customWallpaperUrl]);
+
   if (!hydrated) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F6F8FA] dark:bg-[#151218] text-sm text-gray-400">
@@ -70,7 +80,17 @@ export default function Home() {
       : "max-w-[1200px]";
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F6F8FA] dark:bg-[#151218] text-gray-900 dark:text-slate-100 font-sans antialiased lg:flex-row">
+    <div className="relative flex min-h-screen flex-col bg-[#F6F8FA] dark:bg-[#151218] text-gray-900 dark:text-slate-100 font-sans antialiased lg:flex-row">
+      {/* 动态全屏背景壁纸 */}
+      {effectiveWallpaperUrl && (
+        <div
+          className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat transition-all duration-700 opacity-85"
+          style={{ backgroundImage: `url(${effectiveWallpaperUrl})` }}
+        >
+          <div className="absolute inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-[2px]" />
+        </div>
+      )}
+
       {/* 1. Left Sidebar */}
       <Sidebar
         categories={categories}
@@ -79,7 +99,7 @@ export default function Home() {
       />
 
       {/* 2. Center Workspace Main Area */}
-      <main className="flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-8">
+      <main className="relative z-10 flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-8">
         <div className={`${maxWidthClass} mx-auto flex flex-col gap-3.5 transition-all duration-300`}>
           {notice && (
             <div className="flex items-center justify-between p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs font-semibold text-amber-800 animate-fadeIn shadow-2xs">

@@ -138,6 +138,12 @@ export async function GET() {
         weather_api_key: string;
         weather_location: string;
         weather_api_base_url: string;
+        link_open_target: "_blank" | "_self";
+        wallpaper_mode: "none" | "bing" | "custom";
+        custom_wallpaper_url: string;
+        glassmorphism: number;
+        sidebar_default_state: "expanded" | "collapsed";
+        clock_widget_mode: "time" | "weather" | "analog";
       }
     | undefined;
 
@@ -164,6 +170,12 @@ export async function GET() {
         weatherKeyConfigured: Boolean(configRow.weather_api_key),
         weatherLocation: configRow.weather_location,
         weatherApiBaseUrl: configRow.weather_api_base_url,
+        linkOpenTarget: configRow.link_open_target || "_blank",
+        wallpaperMode: configRow.wallpaper_mode || "none",
+        customWallpaperUrl: configRow.custom_wallpaper_url || "",
+        glassmorphism: configRow.glassmorphism === 1,
+        sidebarDefaultState: configRow.sidebar_default_state || "expanded",
+        clockWidgetMode: configRow.clock_widget_mode || "time",
       }
     : {
         logoText: "Navelix",
@@ -187,6 +199,12 @@ export async function GET() {
         weatherKeyConfigured: false,
         weatherLocation: "",
         weatherApiBaseUrl: "https://api.seniverse.com",
+        linkOpenTarget: "_blank",
+        wallpaperMode: "none",
+        customWallpaperUrl: "",
+        glassmorphism: false,
+        sidebarDefaultState: "expanded",
+        clockWidgetMode: "time",
       };
 
   return NextResponse.json({

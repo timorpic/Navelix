@@ -151,6 +151,42 @@ export function runMigrations(db: DatabaseSync): void {
     "weather_api_base_url TEXT NOT NULL DEFAULT 'https://api.seniverse.com'",
   );
   ensureColumn(db, "user_configs", "is_pro", "is_pro INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(
+    db,
+    "user_configs",
+    "link_open_target",
+    "link_open_target TEXT NOT NULL DEFAULT '_blank'",
+  );
+  ensureColumn(
+    db,
+    "user_configs",
+    "wallpaper_mode",
+    "wallpaper_mode TEXT NOT NULL DEFAULT 'none'",
+  );
+  ensureColumn(
+    db,
+    "user_configs",
+    "custom_wallpaper_url",
+    "custom_wallpaper_url TEXT NOT NULL DEFAULT ''",
+  );
+  ensureColumn(
+    db,
+    "user_configs",
+    "glassmorphism",
+    "glassmorphism INTEGER NOT NULL DEFAULT 0",
+  );
+  ensureColumn(
+    db,
+    "user_configs",
+    "sidebar_default_state",
+    "sidebar_default_state TEXT NOT NULL DEFAULT 'expanded'",
+  );
+  ensureColumn(
+    db,
+    "user_configs",
+    "clock_widget_mode",
+    "clock_widget_mode TEXT NOT NULL DEFAULT 'time'",
+  );
 
   // ── v1：一次性迁移：为旧库中已有的用户配置补上社交链接默认值（仅在首次升级时执行，
   //     之后用户在后台清空字段即为"隐藏"语义，不会被再次覆盖）
@@ -438,6 +474,60 @@ export function runMigrations(db: DatabaseSync): void {
     db.exec("PRAGMA user_version = 6");
   }
 
+  // ── v7：一次性自动迁移：为所有用户自动补齐“🖼️ 矢量插画库”分类与 8 大经典插画资源链接
+  if (user_version < 7) {
+    const userRows = db.prepare("SELECT id FROM users").all() as { id: string }[];
+    const insertCat = db.prepare(`
+      INSERT OR IGNORE INTO user_categories (id, user_id, name, label, icon, color)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    const insertLink = db.prepare(`
+      INSERT OR IGNORE INTO user_links (id, user_id, title, url, description, icon, category, is_quick_access)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const newCategory = { id: "illustrations", name: "矢量插画库", label: "插画", icon: "🖼️", color: "#00C776" };
+    const newLinks = [
+      { id: "undraw-link", title: "unDraw", url: "https://undraw.co/illustrations", description: "全球 UI 常用扁平矢量插画，在线实时一键换色", icon: "undraw", category: "illustrations", isQuickAccess: 1 },
+      { id: "storyset-link", title: "Storyset", url: "https://storyset.com", description: "Freepik 旗下，支持在线编辑图层与制作动效", icon: "storyset", category: "illustrations", isQuickAccess: 1 },
+      { id: "humaaans", title: "humaaans", url: "https://www.humaaans.com", description: "Pablo Stanley 打造的人形模块拼装插画库", icon: "humaaans", category: "illustrations", isQuickAccess: 0 },
+      { id: "blush", title: "Blush", url: "https://blush.design", description: "全球多画师组件化拼装插画引擎，支持 Figma 插件", icon: "blush", category: "illustrations", isQuickAccess: 0 },
+      { id: "ouch", title: "Icons8 Ouch!", url: "https://icons8.com/illustrations", description: "Icons8 出品，涵盖 3D/扁平/黏土/等距多风格插画", icon: "ouch", category: "illustrations", isQuickAccess: 0 },
+      { id: "drawkit", title: "DrawKit", url: "https://drawkit.com", description: "矢量插画与 2D/3D 手绘素材资源包", icon: "drawkit", category: "illustrations", isQuickAccess: 0 },
+      { id: "opendoodles", title: "Open Doodles", url: "https://www.opendoodles.com", description: "极简手绘涂鸦风插画库，带色彩生成器", icon: "opendoodles", category: "illustrations", isQuickAccess: 0 },
+      { id: "isoflat", title: "IsoFlat", url: "https://isoflat.com", description: "2.5D 等距轴测矢量插画，适合科技与架构可视化", icon: "isoflat", category: "illustrations", isQuickAccess: 0 },
+    ];
+
+    for (const u of userRows) {
+      try {
+        insertCat.run(newCategory.id, u.id, newCategory.name, newCategory.label, newCategory.icon, newCategory.color);
+        for (const l of newLinks) {
+          insertLink.run(l.id, u.id, l.title, l.url, l.description, l.icon, l.category, l.isQuickAccess);
+        }
+      } catch {
+        // Skip orphan users if deleted concurrently
+      }
+    }
+    db.exec("PRAGMA user_version = 7");
+  }
+
+  // ── v8：更新 UI 设计图标库的描述说明，包含中文友好/商用授权提示
+  if (user_version < 8) {
+    const iconUpdates: Array<{ id: string; desc: string }> = [
+      { id: "iconpark-cat", desc: "字节开源图标库，完全免费商用，线性/面性/双色，可调描边圆角" },
+      { id: "iconfont", desc: "阿里矢量图标库，海量资源、支持改色与团队库（需注意筛选免费商用标签）" },
+      { id: "qingicon", desc: "国产 B 端开源图标库，适合后台管理系统，提供 Figma 插件" },
+      { id: "material-symbols", desc: "Google 官方可变矢量图标库，开源免费商用，跨端项目友好" },
+      { id: "tabler-icons", desc: "5000+ 干净线性图标，B 端与 SaaS 后台首选，开源免费商用" },
+      { id: "iconoir", desc: "圆润柔和开源图标库，年轻化风格，适合消费类 App" },
+    ];
+    const updateStmt = db.prepare("UPDATE user_links SET description = ? WHERE id = ?");
+    for (const u of iconUpdates) {
+      updateStmt.run(u.desc, u.id);
+    }
+    db.exec("PRAGMA user_version = 8");
+  }
+
   // 将旧版本默认品牌文案迁移到 Navelix（用户自定义过的值不受影响）
   db.prepare("UPDATE user_configs SET logo_text = 'Navelix' WHERE logo_text = 'Nexus'").run();
   db.prepare(
@@ -460,6 +550,9 @@ export function runMigrations(db: DatabaseSync): void {
   for (const [from, to] of Object.entries(ICON_MIGRATIONS)) {
     migrateIcon.run(to, from);
   }
+
+  // 自动清理单元测试留在 sqlite 数据库里的临时测试账号（以 tokuser_ 或 test-开头的测试用户）
+  db.prepare("DELETE FROM users WHERE username LIKE 'tokuser_%' OR username LIKE 'test-%' OR id LIKE 'user_token_test_%' OR id LIKE 'test-%'").run();
 
   // 通知数据自动清理：保留 30 天内的操作记录，避免数据库无限制膨胀
   db.prepare(

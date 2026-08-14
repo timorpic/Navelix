@@ -568,11 +568,18 @@ export default function AdminPage() {
       id: "system",
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          <line x1="4" y1="21" x2="4" y2="14" />
+          <line x1="4" y1="10" x2="4" y2="3" />
+          <line x1="12" y1="21" x2="12" y2="12" />
+          <line x1="12" y1="8" x2="12" y2="3" />
+          <line x1="20" y1="21" x2="20" y2="16" />
+          <line x1="20" y1="12" x2="20" y2="3" />
+          <line x1="1" y1="14" x2="7" y2="14" />
+          <line x1="9" y1="8" x2="15" y2="8" />
+          <line x1="17" y1="16" x2="23" y2="16" />
         </svg>
       ),
-      label: "全局与数据",
+      label: "系统与数据管理",
     },
     {
       id: "personalization",
@@ -585,17 +592,17 @@ export default function AdminPage() {
           <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.92 0 1.7-.75 1.7-1.67 0-.42-.16-.81-.43-1.11-.27-.3-.43-.69-.43-1.11 0-.92.75-1.67 1.67-1.67H17c2.76 0 5-2.24 5-5 0-5.52-4.48-9.5-10-9.5z" />
         </svg>
       ),
-      label: "个性化外观",
+      label: "界面与功能偏好",
     },
     {
       id: "profile",
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="m9 12 2 2 4-4" />
         </svg>
       ),
-      label: "个人中心",
+      label: "个人账号与安全",
     },
   ];
 
@@ -2254,13 +2261,13 @@ export default function AdminPage() {
           </div>
         )}
 
-          {/* TAB 8: 🎨 个性化与外观配置 */}
+          {/* TAB 8: 🎨 界面与功能偏好 */}
           {activeTab === "personalization" && (
             <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100/90 dark:border-slate-700 shadow-2xs space-y-6 transition-colors">
               <div>
-                <h2 className="text-base font-bold text-gray-900 dark:text-white">个性化参数设置</h2>
+                <h2 className="text-base font-bold text-gray-900 dark:text-white">界面与功能偏好</h2>
                 <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-                  AI智能助手、天气预报组件与社交媒体联系方式配置
+                  AI智能助手、天气预报组件、全屏背景壁纸与侧边栏指针表盘配置
                 </p>
               </div>
 
@@ -2414,70 +2421,255 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Social Links Config */}
+              {/* 🔗 链接打开方式与交互体验 */}
               <div className="pt-5 border-t border-gray-100 dark:border-slate-700">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="text-lg">🔗</span>
                   <div>
                     <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                      社交链接
+                      链接跳转与打开偏好
                     </h3>
                     <p className="text-xs text-gray-400 dark:text-slate-400">
-                      配置首页右下角的 GitHub / X / LinkedIn / 邮箱入口，留空则隐藏该图标
+                      设置点击前台导航书签时的浏览器窗口跳转行为
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-800 dark:text-slate-200">
+                      书签链接打开方式
+                    </h4>
+                    <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-0.5">
+                      选择在新标签页 (`target=&quot;_blank&quot;`) 打开，还是在当前窗口直接跳转 (`target=&quot;_self&quot;`)
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => updateConfig({ linkOpenTarget: "_blank" })}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        (config.linkOpenTarget || "_blank") === "_blank"
+                          ? "bg-[#00C776] text-white shadow-2xs"
+                          : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                      }`}
+                    >
+                      ↗️ 在新标签页打开
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateConfig({ linkOpenTarget: "_self" })}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        config.linkOpenTarget === "_self"
+                          ? "bg-[#00C776] text-white shadow-2xs"
+                          : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                      }`}
+                    >
+                      ↩️ 在当前页打开
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 🖼️ 背景壁纸与毛玻璃特效 */}
+              <div className="pt-5 border-t border-gray-100 dark:border-slate-700">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-lg">🖼️</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                      背景壁纸与冰晶毛玻璃特效
+                    </h3>
+                    <p className="text-xs text-gray-400 dark:text-slate-400">
+                      开启 Bing 每日高清壁纸、自定义壁纸链接以及半透明水凝膜毛玻璃悬浮质感
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
-                    <label
-                      htmlFor="admin-social-github"
-                      className="block text-xs font-bold text-gray-800 dark:text-slate-200"
-                    >
-                      GitHub 链接
+                  {/* 壁纸模式 */}
+                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-3">
+                    <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
+                      背景壁纸模式
                     </label>
-                    <input
-                      id="admin-social-github"
-                      name="socialGithub"
-                      type="text"
-                      value={config.socialGithub || ""}
-                      onChange={(e) =>
-                        updateConfig({ socialGithub: e.target.value })
-                      }
-                      placeholder="https://github.com/你的账号"
-                      className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
-                    />
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updateConfig({ wallpaperMode: "none" })}
+                        className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          (config.wallpaperMode || "none") === "none"
+                            ? "bg-[#00C776] text-white"
+                            : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                        }`}
+                      >
+                        无壁纸
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateConfig({ wallpaperMode: "bing" })}
+                        className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          config.wallpaperMode === "bing"
+                            ? "bg-[#00C776] text-white"
+                            : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                        }`}
+                      >
+                        Bing 每日壁纸
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateConfig({ wallpaperMode: "custom" })}
+                        className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          config.wallpaperMode === "custom"
+                            ? "bg-[#00C776] text-white"
+                            : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                        }`}
+                      >
+                        自定义 URL
+                      </button>
+                    </div>
+
+                    {config.wallpaperMode === "custom" && (
+                      <input
+                        type="text"
+                        value={config.customWallpaperUrl || ""}
+                        onChange={(e) => updateConfig({ customWallpaperUrl: e.target.value })}
+                        placeholder="https://example.com/wallpaper.jpg"
+                        className="w-full h-8.5 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono mt-2"
+                      />
+                    )}
                   </div>
 
+                  {/* 毛玻璃开关 */}
+                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2 flex flex-col justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-800 dark:text-slate-200">
+                        冰晶毛玻璃质感 (Backdrop Blur)
+                      </h4>
+                      <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-1">
+                        开启后卡片与侧边栏呈现水凝膜半透明高斯模糊背景
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-xs text-gray-600 dark:text-slate-300 font-semibold">
+                        {config.glassmorphism ? "当前状态：已启用毛玻璃" : "当前状态：经典纯色背景"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => updateConfig({ glassmorphism: !config.glassmorphism })}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          config.glassmorphism
+                            ? "bg-[#00C776] text-white shadow-2xs"
+                            : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
+                        }`}
+                      >
+                        {config.glassmorphism ? "已开启" : "已禁用"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 📌 侧边栏与小组件样式 */}
+              <div className="pt-5 border-t border-gray-100 dark:border-slate-700">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-lg">📌</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                      侧边栏形态与顶部小组件模式
+                    </h3>
+                    <p className="text-xs text-gray-400 dark:text-slate-400">
+                      设置桌面端侧边栏初始展开/折叠状态，以及顶部组件模式（数字时钟 / 天气 / 模拟指针时钟）
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* 侧边栏默认状态 */}
                   <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
-                    <label
-                      htmlFor="admin-social-x"
-                      className="block text-xs font-bold text-gray-800 dark:text-slate-200"
-                    >
-                      X (Twitter) 链接
+                    <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
+                      侧边栏默认显示状态
                     </label>
-                    <input
-                      id="admin-social-x"
-                      name="socialX"
-                      type="text"
-                      value={config.socialX || ""}
-                      onChange={(e) => updateConfig({ socialX: e.target.value })}
-                      placeholder="https://x.com/你的账号"
-                      className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
-                    />
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => updateConfig({ sidebarDefaultState: "expanded" })}
+                        className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          (config.sidebarDefaultState || "expanded") === "expanded"
+                            ? "bg-[#00C776] text-white"
+                            : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                        }`}
+                      >
+                        📖 默认展开
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateConfig({ sidebarDefaultState: "collapsed" })}
+                        className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          config.sidebarDefaultState === "collapsed"
+                            ? "bg-[#00C776] text-white"
+                            : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                        }`}
+                      >
+                        📁 默认收起/折叠
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 小组件模式 */}
+                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
+                    <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
+                      顶部小组件样式模式
+                    </label>
+                    <div className="grid grid-cols-3 gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => updateConfig({ clockWidgetMode: "time" })}
+                        className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          (config.clockWidgetMode || "time") === "time"
+                            ? "bg-[#00C776] text-white"
+                            : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                        }`}
+                      >
+                        ⏰ 数字时钟
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateConfig({ clockWidgetMode: "weather" })}
+                        className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          config.clockWidgetMode === "weather"
+                            ? "bg-[#00C776] text-white"
+                            : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                        }`}
+                      >
+                        🌤️ 天气面板
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateConfig({ clockWidgetMode: "analog" })}
+                        className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          config.clockWidgetMode === "analog"
+                            ? "bg-[#00C776] text-white"
+                            : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                        }`}
+                      >
+                        🕰️ 指针表盘
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 9: 👤 个人中心与账号安全控制 */}
+          {/* TAB 9: 👤 个人账号与安全 */}
           {activeTab === "profile" && (
             <div className="max-w-5xl space-y-6">
               <div>
                 <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <span>👤</span>
-                  <span>个人账号与安全中心</span>
+                  <svg className="w-5 h-5 text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+                  <span>个人账号与安全</span>
                 </h2>
                 <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
                   管理您的个人基本资料、座右铭签名、社交网络主页、活跃设备会话与 API Access Token

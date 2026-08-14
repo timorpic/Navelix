@@ -72,10 +72,18 @@ export interface SystemConfig {
   socialX?: string;
   socialLinkedin?: string;
   socialEmail?: string;
-  // 天气模块（和风天气）
+  // 天气模块（和风/心知天气）
   weatherEnabled?: boolean;
   weatherApiKey?: string;
-  weatherLocation?: string; // 和风天气 LocationID 或 "经度,纬度" 坐标
-  weatherApiBaseUrl?: string; // 可选，默认 devapi.qweather.com
+  weatherLocation?: string; // LocationID 或城市名称
+  weatherApiBaseUrl?: string; // 默认 devapi.qweather.com
   weatherKeyConfigured?: boolean;
+
+  // 更多个性化外观配置
+  linkOpenTarget?: "_blank" | "_self";
+  wallpaperMode?: "none" | "bing" | "custom";
+  customWallpaperUrl?: string;
+  glassmorphism?: boolean;
+  sidebarDefaultState?: "expanded" | "collapsed";
+  clockWidgetMode?: "time" | "weather" | "analog";
 }

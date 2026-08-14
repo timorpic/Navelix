@@ -389,10 +389,16 @@ export function saveUserConfigs(
   const weatherLocation = str("weatherLocation", "weather_location", "");
   const weatherApiBaseUrl = str("weatherApiBaseUrl", "weather_api_base_url", "https://api.seniverse.com");
   const isPro = bool("isPro", "is_pro", 0);
+  const linkOpenTarget = str("linkOpenTarget", "link_open_target", "_blank");
+  const wallpaperMode = str("wallpaperMode", "wallpaper_mode", "none");
+  const customWallpaperUrl = str("customWallpaperUrl", "custom_wallpaper_url", "");
+  const glassmorphism = bool("glassmorphism", "glassmorphism", 0);
+  const sidebarDefaultState = str("sidebarDefaultState", "sidebar_default_state", "expanded");
+  const clockWidgetMode = str("clockWidgetMode", "clock_widget_mode", "time");
 
   db.prepare(`
-    INSERT OR REPLACE INTO user_configs (user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, is_pro)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT OR REPLACE INTO user_configs (user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, is_pro, link_open_target, wallpaper_mode, custom_wallpaper_url, glassmorphism, sidebar_default_state, clock_widget_mode)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     userId,
     logoText,
@@ -417,5 +423,11 @@ export function saveUserConfigs(
     weatherLocation,
     weatherApiBaseUrl,
     isPro,
+    linkOpenTarget,
+    wallpaperMode,
+    customWallpaperUrl,
+    glassmorphism,
+    sidebarDefaultState,
+    clockWidgetMode,
   );
 }

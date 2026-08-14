@@ -46,4 +46,14 @@ describe("CSRF Protection", () => {
     });
     assert.equal(checkCSRF(req).success, true);
   });
+
+  it("should allow request with Bearer authorization header without origin", () => {
+    const req = new Request("http://example.com/api/notifications", {
+      method: "POST",
+      headers: {
+        authorization: "Bearer nvx_live_123456",
+      },
+    });
+    assert.equal(checkCSRF(req).success, true);
+  });
 });

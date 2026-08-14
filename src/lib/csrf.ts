@@ -13,6 +13,12 @@ export function checkCSRF(req: Request): CSRFCheckResult {
     return { success: true };
   }
 
+  // API Token (Authorization: Bearer nvx_live_...) 请求免除浏览器 CSRF 检查
+  const authHeader = req.headers.get("authorization");
+  if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
+    return { success: true };
+  }
+
   const origin = req.headers.get("origin");
   const referer = req.headers.get("referer");
   const hostHeader = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";

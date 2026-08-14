@@ -5,6 +5,8 @@ import type { LinkStatus } from "@/hooks/use-link-status";
 import type { SiteLink } from "@/types";
 import { recordLinkUsage } from "@/lib/link-usage";
 
+import { useNavelixConfig } from "@/hooks/use-navelix-config";
+
 interface LinkCardProps {
   link: SiteLink;
   status?: LinkStatus;
@@ -18,6 +20,9 @@ const statusDotClass: Record<LinkStatus, string> = {
 };
 
 export default function LinkCard({ link, status }: LinkCardProps) {
+  const { config } = useNavelixConfig();
+  const target = config.linkOpenTarget === "_self" ? "_self" : "_blank";
+
   let domain = link.url;
   try {
     domain = new URL(link.url).hostname.replace(/^www\./, "");
@@ -29,13 +34,17 @@ export default function LinkCard({ link, status }: LinkCardProps) {
       ? link.icon
       : null;
 
+  const cardStyle = config.glassmorphism
+    ? "backdrop-blur-md bg-white/70 dark:bg-slate-800/70 border-white/40 dark:border-slate-700/60 shadow-xs hover:shadow-lg hover:border-[#00C776]/50"
+    : "bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700 hover:shadow-md hover:border-[#00C776]/40";
+
   return (
     <a
       href={link.url}
-      target="_blank"
+      target={target}
       rel="noopener noreferrer"
       onClick={() => recordLinkUsage(link.id)}
-      className="group flex items-center gap-3 rounded-xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 transition-all duration-200 hover:border-[#00C776]/40 hover:shadow-md cursor-pointer"
+      className={`group flex items-center gap-3 rounded-xl border p-3 transition-all duration-200 cursor-pointer ${cardStyle}`}
     >
       <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 text-lg">
         {customIcon ? (

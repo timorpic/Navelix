@@ -4,15 +4,23 @@ import React from "react";
 import BrandIcon from "./brand-icon";
 import type { SiteLink } from "@/types";
 import { recordLinkUsage } from "@/lib/link-usage";
+import { useNavelixConfig } from "@/hooks/use-navelix-config";
 
 interface QuickAccessProps {
   links: SiteLink[];
 }
 
 export default function QuickAccess({ links }: QuickAccessProps) {
+  const { config } = useNavelixConfig();
+  const target = config.linkOpenTarget === "_self" ? "_self" : "_blank";
+
   if (!links || links.length === 0) {
     return null;
   }
+
+  const cardStyle = config.glassmorphism
+    ? "backdrop-blur-md bg-white/70 dark:bg-slate-800/70 border-white/40 dark:border-slate-700/60 shadow-xs hover:shadow-lg"
+    : "bg-white dark:bg-slate-800/90 border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-md";
 
   return (
     <div className="my-3 sm:my-4">
@@ -35,10 +43,10 @@ export default function QuickAccess({ links }: QuickAccessProps) {
           <a
             key={item.id}
             href={item.url}
-            target="_blank"
+            target={target}
             rel="noopener noreferrer"
             onClick={() => recordLinkUsage(item.id)}
-            className="group flex flex-col items-center justify-center p-3.5 bg-white dark:bg-slate-800/90 rounded-xl border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-md hover:border-[#00C776]/30 transition-all duration-200 cursor-pointer"
+            className={`group flex flex-col items-center justify-center p-3.5 rounded-xl border hover:border-[#00C776]/30 transition-all duration-200 cursor-pointer ${cardStyle}`}
           >
             <div className="relative mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 dark:bg-slate-900 group-hover:scale-110 transition-transform">
               <BrandIcon name={item.icon || item.title} className="w-6 h-6" />

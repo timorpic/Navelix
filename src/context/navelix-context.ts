@@ -27,6 +27,12 @@ export const defaultConfig: SystemConfig = {
   weatherLocation: "",
   weatherApiBaseUrl: "https://api.seniverse.com",
   weatherKeyConfigured: false,
+  linkOpenTarget: "_blank",
+  wallpaperMode: "none",
+  customWallpaperUrl: "",
+  glassmorphism: false,
+  sidebarDefaultState: "expanded",
+  clockWidgetMode: "time",
 };
 
 export interface NavelixDataApi {
