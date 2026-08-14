@@ -41,6 +41,8 @@ db.exec(`
     username TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     display_name TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT '',
+    bio TEXT NOT NULL DEFAULT '',
     role TEXT NOT NULL DEFAULT 'user',
     avatar TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL
@@ -49,8 +51,21 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS sessions (
     token_hash TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_agent TEXT NOT NULL DEFAULT '',
+    ip_address TEXT NOT NULL DEFAULT '',
+    last_active_at INTEGER NOT NULL DEFAULT 0,
     expires_at INTEGER NOT NULL,
     created_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS api_tokens (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    token_hash TEXT NOT NULL,
+    token_prefix TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    last_used_at INTEGER
   );
 
   CREATE TABLE IF NOT EXISTS user_categories (
@@ -246,6 +261,8 @@ export interface UserRow {
   username: string;
   password_hash: string;
   display_name: string;
+  email?: string;
+  bio?: string;
   role: string;
   avatar: string;
   created_at: number;
@@ -255,6 +272,8 @@ export interface PublicUser {
   id: string;
   username: string;
   displayName: string;
+  email: string;
+  bio: string;
   role: "admin" | "user";
   avatar: string;
 }

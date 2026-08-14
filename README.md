@@ -22,7 +22,8 @@
 - **高可用与自动备份**：SQLite 级联删除 (CASCADE)、外键约束校验、`VACUUM INTO` 零锁定热备份（自动循环保留最近 7 份备份）
 - **AI 智能助手**：集成标准 OpenAI 兼容 API（DeepSeek、ChatGPT、Ollama、Qwen 等），服务端代理请求，Key 不暴露前端
 - **个性化工作台**：浅色/深色/跟随系统主题、自定义 LOGO 与网站文案、自定义头像、专注统计、侧边栏天气与时钟、项目看板
-- **管理后台**（`/admin`）：链接/分组/项目/用户管理、个性化外观设置、配置导入导出、访问统计、实时版本更新自检
+- **管理后台**（`/admin`）：链接/分组/项目/用户管理、个人 API Access Token 密钥管理、活跃会话踢出、个性化外观设置、配置导入导出、访问统计、实时版本更新自检
+- **开放 API & 自动化**：支持 Personal Access Token (`nvx_live_...`) 鉴权，提供完整 [API Wiki 开发文档](file:///C:/Users/timorpic-legion/Documents/Navelix/API_WIKI.md)，轻松集成 iOS 快捷指令、Docker CI/CD 消息推送、Python 自动化脚本与 AI 智能体
 - **消息通知**：后台关键操作自动记录，前后台独立通知中心查看与一键标已读
 
 ## 技术栈

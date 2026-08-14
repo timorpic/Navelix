@@ -199,16 +199,6 @@ export default function AdminSidebar({
               <span>🏠</span>
               <span>返回前台主页</span>
             </Link>
-            <button
-              onClick={() => {
-                setShowUserMenu(false);
-                setActiveTab("profile");
-              }}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 text-left transition-colors cursor-pointer"
-            >
-              <span>👤</span>
-              <span>个人中心</span>
-            </button>
             <div className="my-1 border-t border-gray-100 dark:border-slate-700" />
             <button
               onClick={async () => {

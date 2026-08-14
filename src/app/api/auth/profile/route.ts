@@ -20,6 +20,8 @@ export async function PATCH(req: Request) {
   const body = await req.json().catch(() => null);
   const avatar = body?.avatar !== undefined ? String(body.avatar).trim() : undefined;
   const displayName = body?.displayName !== undefined ? String(body.displayName).trim() : undefined;
+  const email = body?.email !== undefined ? String(body.email).trim() : undefined;
+  const bio = body?.bio !== undefined ? String(body.bio).trim() : undefined;
   const oldPassword = body?.oldPassword ? String(body.oldPassword) : undefined;
   const newPassword = body?.newPassword ? String(body.newPassword) : undefined;
 
@@ -49,17 +51,23 @@ export async function PATCH(req: Request) {
     db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(newHash, user.id);
   }
 
-  // 3. 更新头像与显示名称
+  // 3. 更新头像、显示名称、邮箱与座右铭
   if (avatar !== undefined) {
     db.prepare("UPDATE users SET avatar = ? WHERE id = ?").run(avatar, user.id);
   }
   if (displayName !== undefined && displayName !== "") {
     db.prepare("UPDATE users SET display_name = ? WHERE id = ?").run(displayName, user.id);
   }
+  if (email !== undefined) {
+    db.prepare("UPDATE users SET email = ? WHERE id = ?").run(email, user.id);
+  }
+  if (bio !== undefined) {
+    db.prepare("UPDATE users SET bio = ? WHERE id = ?").run(bio, user.id);
+  }
 
   const updatedRow = db
     .prepare(
-      `SELECT id, username, password_hash, display_name, role, avatar, created_at
+      `SELECT id, username, password_hash, display_name, email, bio, role, avatar, created_at
        FROM users WHERE id = ?`,
     )
     .get(user.id) as unknown as UserRow;

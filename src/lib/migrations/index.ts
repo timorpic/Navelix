@@ -104,6 +104,23 @@ export function runMigrations(db: DatabaseSync): void {
     "social_email TEXT NOT NULL DEFAULT ''",
   );
   ensureColumn(db, "users", "avatar", "avatar TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, "users", "email", "email TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, "users", "bio", "bio TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, "sessions", "user_agent", "user_agent TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, "sessions", "ip_address", "ip_address TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, "sessions", "last_active_at", "last_active_at INTEGER NOT NULL DEFAULT 0");
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS api_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      token_hash TEXT NOT NULL,
+      token_prefix TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      last_used_at INTEGER
+    );
+  `);
   ensureColumn(db, "user_todos", "project_id", "project_id TEXT NOT NULL DEFAULT ''");
   ensureColumn(db, "user_configs", "logo_image", "logo_image TEXT NOT NULL DEFAULT ''");
   ensureColumn(

@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     }
   }
 
-  const token = await createSession(row.id);
+  const token = await createSession(row.id, req);
   const user = toPublicUser(row);
   const res = NextResponse.json({ user });
   res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());

@@ -22,8 +22,8 @@ function toNotification(row: NotificationRow) {
 }
 
 // GET /api/notifications - 当前用户的操作记录（最新在前）
-export async function GET() {
-  const user = await getSessionUser();
+export async function GET(req: NextRequest) {
+  const user = await getSessionUser(req);
   if (!user) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
@@ -43,7 +43,7 @@ export async function GET() {
 
 // POST /api/notifications - 记录一条当前用户的操作通知
 export async function POST(req: NextRequest) {
-  const user = await getSessionUser();
+  const user = await getSessionUser(req);
   if (!user) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }

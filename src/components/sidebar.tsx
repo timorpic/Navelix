@@ -74,6 +74,8 @@ export default function Sidebar({
     displayName: string;
     role: string;
     avatar?: string;
+    email?: string;
+    bio?: string;
   } | null>(null);
 
   useEffect(() => {
@@ -591,9 +593,9 @@ export default function Sidebar({
                     {currentUser?.displayName || "用户"}
                   </span>
                   <span className="text-[10px] text-gray-400 dark:text-slate-400 truncate">
-                    {currentUser?.role === "admin"
+                    {currentUser?.bio || (currentUser?.role === "admin"
                       ? "👑 管理员"
-                      : "构建 · 设计 · AI · 技术"}
+                      : "构建 · 设计 · AI · 技术")}
                   </span>
                 </div>
               </div>

@@ -200,3 +200,27 @@ jobs:
           echo "All smoke tests passed successfully!"
           docker stop smoke-test-app
           docker rm smoke-test-app
+
+      - name: Send Notification to Navelix Instance (https://hei.timor.eu.org:2096)
+        if: always()
+        env:
+          NAVELIX_TOKEN: ${{ secrets['NAVELIX_NOTIFICATION_TOKEN'] }}
+          NAVELIX_SERVER_URL: ${{ secrets['NAVELIX_SERVER_URL'] }}
+        run: |
+          TOKEN="$NAVELIX_TOKEN"
+          SERVER_URL="${NAVELIX_SERVER_URL:-https://hei.timor.eu.org:2096}"
+          if [ -n "$TOKEN" ]; then
+            SHORT_SHA="${{ github.sha }}"
+            SHORT_SHA="${SHORT_SHA:0:7}"
+            STATUS="${{ job.status }}"
+            TITLE="🐳 Docker 镜像构建完成 [${STATUS}]"
+            CONTENT="Navelix Docker 镜像版本 (sha-${SHORT_SHA}) 在 GitHub Actions 集中构建与冒烟测试已完成。触发分支: ${{ github.ref_name }}，状态: ${STATUS}。"
+
+            curl -s -k -X POST "${SERVER_URL}/api/notifications" \
+              -H "Authorization: Bearer ${TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "{\"title\":\"${TITLE}\",\"content\":\"${CONTENT}\"}" || true
+            echo "Notification sent to ${SERVER_URL}!"
+          else
+            echo "Notice: NAVELIX_NOTIFICATION_TOKEN secret is not configured in repository settings."
+          fi
