@@ -130,7 +130,10 @@ export default function TodoAdminPanel() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="md:col-span-2">
             <input
+              id="todo-admin-title"
+              name="todoTitle"
               type="text"
+              aria-label="待办内容"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && submit()}
@@ -139,6 +142,9 @@ export default function TodoAdminPanel() {
             />
           </div>
           <select
+            id="todo-admin-priority"
+            name="todoPriority"
+            aria-label="选择优先级"
             value={priority}
             onChange={(e) => setPriority(e.target.value as TodoItem["priority"])}
             className="h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-2 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
@@ -148,7 +154,10 @@ export default function TodoAdminPanel() {
             <option value="low">🟢 低优先级</option>
           </select>
           <input
+            id="todo-admin-due-date"
+            name="todoDueDate"
             type="date"
+            aria-label="截止时间"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
             className="h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-2 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"

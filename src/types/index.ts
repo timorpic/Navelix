@@ -52,6 +52,8 @@ export interface Project {
 export interface SystemConfig {
   logoText: string;
   logoImage?: string;
+  isPro?: boolean;
+  proKey?: string;
   showSearchBar: boolean;
   maxWidth: "1000px" | "1200px" | "1400px" | "full";
   customFooter: string;

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { resolveAvatar } from "@/lib/avatars";
 import { formatRelativeTime, type NotificationItem } from "@/lib/notifications";
-import type { SystemConfig } from "@/types";
 
 interface AdminHeaderProps {
   currentUser: {
@@ -14,8 +13,8 @@ interface AdminHeaderProps {
     role: "admin" | "user";
     avatar?: string;
   } | null;
-  config: SystemConfig;
-  updateConfig: (patch: Partial<SystemConfig>) => void;
+  config: { theme?: string; logoText?: string };
+  updateConfig: (cfg: Partial<{ theme: string; logoText: string }>) => void;
   showAdminNotifications: boolean;
   setShowAdminNotifications: (show: boolean) => void;
   adminNotifications: NotificationItem[];
@@ -25,6 +24,7 @@ interface AdminHeaderProps {
   setShowProfileModal: (show: boolean) => void;
   adminNotifRef: React.RefObject<HTMLDivElement | null>;
   handleOpenAdminNotifications: () => void;
+  onNavigateToProfile?: () => void;
 }
 
 export default function AdminHeader({
@@ -40,6 +40,7 @@ export default function AdminHeader({
   setShowProfileModal,
   adminNotifRef,
   handleOpenAdminNotifications,
+  onNavigateToProfile,
 }: AdminHeaderProps) {
   const router = useRouter();
   const adminUnread = adminNotifications.some((n) => !n.read);
@@ -67,7 +68,8 @@ export default function AdminHeader({
         <button
           onClick={() => {
             const order: Array<"light" | "dark" | "system"> = ["light", "dark", "system"];
-            const idx = order.indexOf(config.theme);
+            const currentTheme = (config.theme as "light" | "dark" | "system") || "system";
+            const idx = order.indexOf(currentTheme);
             updateConfig({ theme: order[(idx + 1) % order.length] });
           }}
           className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-gray-100 dark:border-slate-700 transition-all cursor-pointer shadow-2xs"
@@ -218,7 +220,11 @@ export default function AdminHeader({
             <button
               onClick={() => {
                 setShowAdminUserMenu(false);
-                setShowProfileModal(true);
+                if (onNavigateToProfile) {
+                  onNavigateToProfile();
+                } else {
+                  setShowProfileModal(true);
+                }
               }}
               className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 text-left transition-colors cursor-pointer"
             >

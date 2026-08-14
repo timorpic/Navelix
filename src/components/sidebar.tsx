@@ -53,8 +53,20 @@ export default function Sidebar({
     updatedAt: string;
   } | null>(null);
 
-  // 2. Modals State
+  // 2. Modals & Menu State
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Current User details state
   const [currentUser, setCurrentUser] = useState<{
@@ -229,7 +241,7 @@ export default function Sidebar({
           <div className="flex items-center gap-2">
             <LogoMark size="sm" />
             <span className="text-sm font-bold tracking-tight text-gray-900 dark:text-white truncate">
-              Navelix
+              {config.logoText || "Navelix"}
             </span>
           </div>
         </div>
@@ -260,7 +272,7 @@ export default function Sidebar({
           <div className="flex items-center gap-3 px-2">
             <LogoMark size="md" />
             <span className="text-lg font-bold tracking-tight truncate text-gray-900 dark:text-white">
-              Navelix
+              {config.logoText || "Navelix"}
             </span>
           </div>
 
@@ -535,33 +547,60 @@ export default function Sidebar({
           )}
 
           {/* User Profile Card */}
-          <div
-            onClick={() => setShowProfileModal(true)}
-            className={`flex items-center justify-between p-2.5 rounded-xl border transition-colors cursor-pointer group bg-gray-50/80 hover:bg-gray-50 border-gray-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:border-slate-700`}
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00C776] to-[#009a5a] flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden shadow-2xs">
-                {/* eslint-disable-next-line @next/next/no-img-element -- 头像可能是任意图片地址或 data URL */}
-                <img
-                  src={resolveAvatar(currentUser?.avatar, currentUser?.username)}
-                  alt={currentUser?.displayName || "用户"}
-                  className="w-full h-full object-cover"
-                />
+          <div className="relative" ref={userMenuRef}>
+            {/* User Popover Drawer Menu */}
+            {showUserMenu && (
+              <div className="absolute bottom-16 left-0 right-0 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 z-50 animate-fadeIn flex flex-col gap-1 text-xs font-semibold text-gray-700 dark:text-slate-200">
+                <Link
+                  href="/admin"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <span>⚙️</span>
+                  <span>后台管理</span>
+                </Link>
+                <div className="my-1 border-t border-gray-100 dark:border-slate-700" />
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    handleLogout();
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-left transition-colors cursor-pointer"
+                >
+                  <span>🚪</span>
+                  <span>退出当前登录</span>
+                </button>
               </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold truncate text-gray-900 dark:text-white">
-                  {currentUser?.displayName || "用户"}
-                </span>
-                <span className="text-[10px] text-gray-400 dark:text-slate-400 truncate">
-                  {currentUser?.role === "admin"
-                    ? "👑 管理员"
-                    : "构建 · 设计 · AI · 技术"}
-                </span>
+            )}
+
+            <div
+              onClick={() => setShowUserMenu((prev) => !prev)}
+              className="flex items-center justify-between p-2.5 rounded-xl border transition-colors cursor-pointer group bg-gray-50/80 hover:bg-gray-50 border-gray-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:border-slate-700 select-none"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00C776] to-[#009a5a] flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden shadow-2xs">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- 头像可能是任意图片地址或 data URL */}
+                  <img
+                    src={resolveAvatar(currentUser?.avatar, currentUser?.username)}
+                    alt={currentUser?.displayName || "用户"}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-bold truncate text-gray-900 dark:text-white">
+                    {currentUser?.displayName || "用户"}
+                  </span>
+                  <span className="text-[10px] text-gray-400 dark:text-slate-400 truncate">
+                    {currentUser?.role === "admin"
+                      ? "👑 管理员"
+                      : "构建 · 设计 · AI · 技术"}
+                  </span>
+                </div>
               </div>
+              <svg className={`w-3.5 h-3.5 text-gray-400 dark:text-slate-500 group-hover:text-gray-700 dark:group-hover:text-slate-300 transition-transform duration-200 shrink-0 ${showUserMenu ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+              </svg>
             </div>
-            <svg className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500 group-hover:text-gray-700 dark:group-hover:text-slate-300 transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-            </svg>
           </div>
 
           {/* Custom Footer Copyright */}
@@ -638,7 +677,7 @@ export default function Sidebar({
 
             <button
               onClick={handleLogout}
-              className="w-full h-9 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              className="w-full h-9 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-100 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               🚪 退出当前账号登录
             </button>

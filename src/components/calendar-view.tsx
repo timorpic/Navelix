@@ -269,13 +269,19 @@ export default function CalendarView() {
             <form onSubmit={handleAddTodo} className="flex flex-col gap-2 mb-4">
               <div className="flex gap-2">
                 <input
+                  id="calendar-quick-title"
+                  name="quickTitle"
                   type="text"
+                  aria-label="新增日程标题"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="新增该日期的日程待办..."
                   className="flex-1 px-3 py-2 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 text-gray-800 dark:text-slate-100"
                 />
                 <select
+                  id="calendar-quick-priority"
+                  name="quickPriority"
+                  aria-label="选择优先级"
                   value={newPriority}
                   onChange={(e) => setNewPriority(e.target.value as TodoItem["priority"])}
                   className="px-2 py-2 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-700 dark:text-slate-300 cursor-pointer"
@@ -295,8 +301,12 @@ export default function CalendarView() {
               {/* Project selector option for quick add */}
               {projects.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-gray-400">绑定项目:</span>
+                  <label htmlFor="calendar-quick-project" className="text-[10px] text-gray-400">
+                    绑定项目:
+                  </label>
                   <select
+                    id="calendar-quick-project"
+                    name="quickProjectId"
                     value={newProjectId}
                     onChange={(e) => setNewProjectId(e.target.value)}
                     className="flex-1 px-2 py-1 text-[11px] bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-gray-600 dark:text-slate-300 cursor-pointer"
@@ -332,6 +342,9 @@ export default function CalendarView() {
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <input
+                          id={`calendar-todo-check-${item.id}`}
+                          name={`todo-check-${item.id}`}
+                          aria-label={`标记 "${item.title}" 完成状态`}
                           type="checkbox"
                           checked={item.done}
                           onChange={() => handleToggleTodo(item.id, item.done)}
@@ -414,10 +427,15 @@ export default function CalendarView() {
 
             <form onSubmit={handleSaveModal} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                <label
+                  htmlFor="calendar-modal-form-title"
+                  className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
+                >
                   日程标题 *
                 </label>
                 <input
+                  id="calendar-modal-form-title"
+                  name="formTitle"
                   type="text"
                   required
                   value={formTitle}
@@ -429,10 +447,15 @@ export default function CalendarView() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                  <label
+                    htmlFor="calendar-modal-form-due-date"
+                    className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
+                  >
                     计划日期
                   </label>
                   <input
+                    id="calendar-modal-form-due-date"
+                    name="formDueDate"
                     type="date"
                     value={formDueDate}
                     onChange={(e) => setFormDueDate(e.target.value)}
@@ -441,10 +464,15 @@ export default function CalendarView() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                  <label
+                    htmlFor="calendar-modal-form-priority"
+                    className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
+                  >
                     优先级
                   </label>
                   <select
+                    id="calendar-modal-form-priority"
+                    name="formPriority"
                     value={formPriority}
                     onChange={(e) =>
                       setFormPriority(e.target.value as "high" | "medium" | "low")
@@ -459,10 +487,15 @@ export default function CalendarView() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                <label
+                  htmlFor="calendar-modal-form-project-id"
+                  className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
+                >
                   归属项目（选填）
                 </label>
                 <select
+                  id="calendar-modal-form-project-id"
+                  name="formProjectId"
                   value={formProjectId}
                   onChange={(e) => setFormProjectId(e.target.value)}
                   className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"

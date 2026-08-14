@@ -398,6 +398,7 @@ export default function AddLinkModal({
           {iconMode === "upload" ? (
             <div key="icon-upload">
               <input
+                id="link-upload-file"
                 ref={fileInputRef}
                 type="file"
                 name="link-icon-file"

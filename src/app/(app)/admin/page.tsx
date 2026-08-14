@@ -29,6 +29,7 @@ import type { Category, SiteLink } from "@/types";
 import AdminUsersPanel from "./admin-users";
 import ScheduleAdminPanel from "@/components/schedule-admin-panel";
 import ProjectAdminPanel from "@/components/project-admin-panel";
+import AdminSidebar from "./components/admin-sidebar";
 
 
 type AdminTab =
@@ -39,7 +40,9 @@ type AdminTab =
   | "schedules"
   | "users"
   | "analytics"
-  | "system";
+  | "system"
+  | "personalization"
+  | "profile";
 
 interface AdminNavItem {
   id: AdminTab;
@@ -106,8 +109,6 @@ export default function AdminPage() {
 
   // Active Admin Tab
   const [activeTab, setActiveTab] = useState<AdminTab>("links");
-  const [systemSubTab, setSystemSubTab] = useState<"global" | "personalization">("global");
-  const [systemSubMenuOpen, setSystemSubMenuOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
 
@@ -194,6 +195,85 @@ export default function AdminPage() {
     role: "admin" | "user";
     avatar?: string;
   } | null>(null);
+
+  const [profileDisplayNameInput, setProfileDisplayNameInput] = useState("");
+  const [profilePasswordNotice, setProfilePasswordNotice] = useState("");
+
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [modalOldPassword, setModalOldPassword] = useState("");
+  const [modalNewPassword, setModalNewPassword] = useState("");
+  const [modalPasswordNotice, setModalPasswordNotice] = useState("");
+
+  useEffect(() => {
+    if ((showProfileModal || activeTab === "profile") && currentUser) {
+      queueMicrotask(() => {
+        setProfileDisplayNameInput(currentUser.displayName || currentUser.username || "");
+        setProfilePasswordNotice("");
+      });
+    }
+  }, [showProfileModal, activeTab, currentUser]);
+
+  const handleProfileSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfilePasswordNotice("");
+    try {
+      const res = await fetch("/api/auth/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: profileDisplayNameInput,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        setCurrentUser(data.user);
+        setProfilePasswordNotice(`🎉 ${data.message || "昵称更新成功"}`);
+      } else {
+        setProfilePasswordNotice(`❌ ${data.error || "修改失败"}`);
+      }
+    } catch {
+      setProfilePasswordNotice("❌ 更新个人资料失败");
+    }
+  };
+
+  const handleModalPasswordSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setModalPasswordNotice("");
+    if (!modalOldPassword) {
+      setModalPasswordNotice("❌ 请输入当前原密码");
+      return;
+    }
+    if (!modalNewPassword || modalNewPassword.length < 6) {
+      setModalPasswordNotice("❌ 新密码长度至少需 6 位");
+      return;
+    }
+    try {
+      const res = await fetch("/api/auth/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          oldPassword: modalOldPassword,
+          newPassword: modalNewPassword,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        setCurrentUser(data.user);
+        setModalPasswordNotice("🎉 密码修改成功！");
+        notify("个人账号", "登录密码已成功重置");
+        setTimeout(() => {
+          setShowChangePasswordModal(false);
+          setModalOldPassword("");
+          setModalNewPassword("");
+          setModalPasswordNotice("");
+        }, 1000);
+      } else {
+        setModalPasswordNotice(`❌ ${data.error || "密码修改失败"}`);
+      }
+    } catch {
+      setModalPasswordNotice("❌ 网络或服务器错误，修改失败");
+    }
+  };
   const [avatarDraft, setAvatarDraft] = useState("");
   const [avatarDraftSource, setAvatarDraftSource] = useState("");
   const [showAvatarModal, setShowAvatarModal] = useState(false);
@@ -249,10 +329,8 @@ export default function AdminPage() {
       .catch(() => {});
   }, []);
 
-  // 打开个性化设置时同步当前头像草稿（渲染期同步，避免 effect 重置用户正在编辑的草稿）
   if (
-    activeTab === "system" &&
-    systemSubTab === "personalization" &&
+    activeTab === "personalization" &&
     currentUser &&
     avatarDraftSource !== (currentUser.avatar || "")
   ) {
@@ -357,42 +435,32 @@ export default function AdminPage() {
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
       ),
-      label: "系统设置",
+      label: "全局与数据",
+    },
+    {
+      id: "personalization",
+      icon: (
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+          <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+          <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+          <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.92 0 1.7-.75 1.7-1.67 0-.42-.16-.81-.43-1.11-.27-.3-.43-.69-.43-1.11 0-.92.75-1.67 1.67-1.67H17c2.76 0 5-2.24 5-5 0-5.52-4.48-9.5-10-9.5z" />
+        </svg>
+      ),
+      label: "个性化外观",
+    },
+    {
+      id: "profile",
+      icon: (
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      ),
+      label: "个人中心",
     },
   ];
-
-  const renderNavButton = (item: AdminNavItem) => {
-    const isActive = activeTab === item.id;
-    return (
-      <button
-        key={item.id}
-        onClick={() => setActiveTab(item.id)}
-        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap ${
-          isActive
-            ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
-            : "text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white"
-        }`}
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="text-sm">{item.icon}</span>
-          <span className="truncate">{item.label}</span>
-        </div>
-        {typeof item.badge !== "undefined" && (
-          <span
-            className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-              isActive
-                ? "bg-white/20 text-white"
-                : item.id === "links" || item.id === "quickAccess"
-                  ? "bg-teal-50 dark:bg-teal-950/60 text-[#00C776]"
-                  : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
-            }`}
-          >
-            {item.badge}
-          </span>
-        )}
-      </button>
-    );
-  };
 
   // Filtered links
   const filteredLinks = useMemo(() => {
@@ -713,7 +781,8 @@ export default function AdminPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `navelix-full-backup-${Date.now()}.json`;
+      const timestamp = Math.floor(new Date().getTime());
+      a.download = `navelix-full-backup-${timestamp}.json`;
       a.click();
       URL.revokeObjectURL(url);
 
@@ -856,127 +925,13 @@ export default function AdminPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#F6F8FA] dark:bg-[#151218] text-gray-900 dark:text-slate-100 font-sans antialiased transition-colors duration-200 lg:flex-row">
-      {/* 1. Left Admin Sidebar Matching Reference Image */}
-      <aside className="hidden lg:flex w-60 shrink-0 flex-col justify-between h-screen sticky top-0 border-r border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 select-none z-30 transition-colors">
-        <div className="flex flex-col gap-6">
-          {/* Brand Logo Header */}
-          <div className="flex items-center gap-3 px-1">
-            <LogoMark size="md" />
-            <div className="flex flex-col min-w-0">
-              <span className="text-base font-bold tracking-tight text-gray-900 dark:text-white truncate">
-                Navelix
-              </span>
-              <span className="text-[10px] font-medium text-gray-400 dark:text-slate-400">
-                后台管理控制台
-              </span>
-            </div>
-          </div>
-
-          {/* Admin Navigation Menu Items with Badge Counters */}
-          <nav className="flex flex-col gap-1.5">
-            {adminNavItems.map((item) => {
-              if (item.id === "system") {
-                const isSystemActive = activeTab === "system";
-                return (
-                  <div key="system-menu" className="flex flex-col gap-1">
-                    <button
-                      onClick={() => {
-                        setActiveTab("system");
-                        setSystemSubMenuOpen((prev) => (isSystemActive ? !prev : true));
-                      }}
-                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap ${
-                        isSystemActive
-                          ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
-                          : "text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="text-sm">⚙️</span>
-                        <span className="truncate">系统设置</span>
-                      </div>
-                      <svg
-                        className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                          systemSubMenuOpen || isSystemActive ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-
-                    {/* Sub-menu Items */}
-                    {(systemSubMenuOpen || isSystemActive) && (
-                      <div className="pl-4 pr-1 py-1 flex flex-col gap-1 border-l-2 border-gray-200 dark:border-slate-700/60 ml-4 my-0.5 animate-fadeIn">
-                        <button
-                          onClick={() => {
-                            setActiveTab("system");
-                            setSystemSubTab("global");
-                          }}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                            isSystemActive && systemSubTab === "global"
-                              ? "bg-teal-50 dark:bg-teal-950/60 text-[#00C776] font-bold"
-                              : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800/60"
-                          }`}
-                        >
-                          <span className="text-xs">⚙️</span>
-                          <span>全局与数据</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setActiveTab("system");
-                            setSystemSubTab("personalization");
-                          }}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                            isSystemActive && systemSubTab === "personalization"
-                              ? "bg-teal-50 dark:bg-teal-950/60 text-[#00C776] font-bold"
-                              : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800/60"
-                          }`}
-                        >
-                          <span className="text-xs">🎨</span>
-                          <span>个性化外观</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-              return renderNavButton(item);
-            })}
-          </nav>
-        </div>
-
-        {/* Bottom Profile Card */}
-        <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
-          <div
-            onClick={() => setShowProfileModal(true)}
-            className="flex items-center justify-between p-2.5 bg-gray-50/80 dark:bg-slate-800/80 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 transition-colors cursor-pointer group select-none"
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00C776] to-[#009a5a] flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden shadow-2xs">
-                {/* eslint-disable-next-line @next/next/no-img-element -- 头像可能是任意图片地址或 data URL */}
-                <img
-                  src={resolveAvatar(currentUser?.avatar, currentUser?.username)}
-                  alt={currentUser?.displayName || "Admin"}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-gray-900 dark:text-white truncate">
-                  {currentUser?.displayName || currentUser?.username || "Admin"}
-                </span>
-                <span className="text-[10px] text-gray-400 dark:text-slate-400 truncate">
-                  {currentUser?.role === "admin" ? "超级管理员" : "普通用户"}
-                </span>
-              </div>
-            </div>
-            <svg className="w-3.5 h-3.5 text-gray-400 dark:text-slate-400 group-hover:text-gray-700 dark:group-hover:text-white transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
-      </aside>
+      {/* 1. Left Admin Sidebar */}
+      <AdminSidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        adminNavItems={adminNavItems}
+        currentUser={currentUser}
+      />
 
       {/* 2. Main Right Admin Workspace Container */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -1154,12 +1109,12 @@ export default function AdminPage() {
                 <button
                   onClick={() => {
                     setShowAdminUserMenu(false);
-                    setShowProfileModal(true);
+                    setActiveTab("profile");
                   }}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 text-left transition-colors cursor-pointer"
                 >
                   <span>👤</span>
-                  <span>个人账号中心</span>
+                  <span>个人中心</span>
                 </button>
                 <div className="my-1 border-t border-gray-100 dark:border-slate-700" />
                 <button
@@ -1735,38 +1690,9 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* TAB 7: ⚙️ 系统设置 */}
+          {/* TAB 7: ⚙️ 全局与数据管理 */}
           {activeTab === "system" && (
-            <div className="space-y-5">
-              {/* 二级子菜单 Tab 选项卡 */}
-              <div className="flex items-center gap-2 border-b border-gray-200 dark:border-slate-700/80 pb-3">
-                <button
-                  onClick={() => setSystemSubTab("global")}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    systemSubTab === "global"
-                      ? "bg-[#00C776] text-white shadow-xs"
-                      : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200/80 dark:border-slate-700"
-                  }`}
-                >
-                  <span>⚙️</span>
-                  <span>全局与数据管理</span>
-                </button>
-                <button
-                  onClick={() => setSystemSubTab("personalization")}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    systemSubTab === "personalization"
-                      ? "bg-[#00C776] text-white shadow-xs"
-                      : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200/80 dark:border-slate-700"
-                  }`}
-                >
-                  <span>🎨</span>
-                  <span>个性化与外观配置</span>
-                </button>
-              </div>
-
-              {/* 子菜单 1：全局与数据管理 */}
-              {systemSubTab === "global" && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                   {/* 左栏：系统全局参数设置 (5 cols) */}
               <div className="lg:col-span-5 bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
                 <div>
@@ -1878,7 +1804,7 @@ export default function AdminPage() {
                     </button>
                     <button
                       onClick={() => setShowReset(true)}
-                      className="px-3.5 py-1.5 border border-rose-200 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl text-xs font-semibold cursor-pointer"
+                      className="px-3.5 py-1.5 border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/60 rounded-xl text-xs font-semibold cursor-pointer"
                     >
                       重置默认状态
                     </button>
@@ -2085,84 +2011,49 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* 子菜单 2：个性化与外观配置 */}
-          {systemSubTab === "personalization" && (
+          {/* TAB 8: 🎨 个性化与外观配置 */}
+          {activeTab === "personalization" && (
             <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100/90 dark:border-slate-700 shadow-2xs space-y-6 transition-colors">
               <div>
                 <h2 className="text-base font-bold text-gray-900 dark:text-white">个性化参数设置</h2>
                 <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-                  自定义头像、LOGO 文本、搜索栏显示/隐藏、内容宽度、页脚与社交链接
+                  自定义 LOGO 文本、搜索栏显示/隐藏、内容宽度、页脚与社交链接
                 </p>
               </div>
 
-              {/* Avatar Config */}
-              <div className="pt-5 border-t border-gray-100 dark:border-slate-700">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-lg">🖼️</span>
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                      头像设置
-                    </h3>
-                    <p className="text-xs text-gray-400 dark:text-slate-400">
-                      选择系统内置头像或上传本地图片，保存后全局生效
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 rounded-xl border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/60 p-4">
-                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- 头像可能是任意图片地址或 data URL */}
-                    <img
-                      src={resolveAvatar(avatarDraft, currentUser?.username)}
-                      alt="当前头像"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-bold text-gray-900 dark:text-white">
-                      {currentUser?.displayName || currentUser?.username || "用户"}
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-gray-400 dark:text-slate-400">
-                      系统内置头像 / 上传图片，保存后全局生效
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowAvatarModal(true)}
-                    className="shrink-0 h-9 px-4 rounded-lg bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-semibold transition-colors cursor-pointer"
-                  >
-                    🖼️ 修改头像
-                  </button>
-                </div>
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 rounded-xl bg-gray-50/80 dark:bg-slate-900/40 border border-dashed border-amber-300 dark:border-amber-700/50 space-y-2 relative overflow-hidden">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-gray-500 dark:text-slate-400">
-                      LOGO 显示文本内容
-                    </label>
-                    <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 text-[10px] font-extrabold tracking-wider border border-amber-300/60 dark:border-amber-700/60">
-                      PRO 专属
-                    </span>
-                  </div>
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
+                  <label
+                    htmlFor="admin-logo"
+                    className="block text-xs font-bold text-gray-800 dark:text-slate-200"
+                  >
+                    LOGO 显示文本内容
+                  </label>
                   <input
+                    id="admin-logo"
+                    name="logoText"
                     type="text"
-                    disabled
-                    value="Navelix"
-                    className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-800 px-3 text-xs bg-gray-100 dark:bg-slate-950 text-gray-400 dark:text-slate-500 cursor-not-allowed"
+                    value={config.logoText}
+                    onChange={(e) => updateConfig({ logoText: e.target.value })}
+                    placeholder="例如 Navelix"
+                    className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-medium"
                   />
-                  <p className="text-[10px] text-amber-600/90 dark:text-amber-400/90 font-medium">
-                    🔒 自定义品牌 LOGO 文本属于 PRO 版高级功能，标准版固定显示系统品牌 &quot;Navelix&quot;
+                  <p className="text-[10px] text-gray-400 dark:text-slate-400">
+                    自定义侧边栏与头部等位置显示的品牌名称文本
                   </p>
                 </div>
 
                 <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
-                  <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
+                  <label
+                    htmlFor="admin-logo-upload"
+                    className="block text-xs font-bold text-gray-800 dark:text-slate-200"
+                  >
                     LOGO 图标（可选）
                   </label>
                   <div className="flex items-center gap-3">
                     <LogoMark size="md" />
                     <input
+                      id="admin-logo-upload"
                       type="file"
                       name="logo-upload"
                       accept="image/*"
@@ -2186,7 +2077,10 @@ export default function AdminPage() {
                 </div>
 
                 <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
-                  <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
+                  <label
+                    htmlFor="admin-searchbar-toggle"
+                    className="block text-xs font-bold text-gray-800 dark:text-slate-200"
+                  >
                     搜索栏组件显示状态
                   </label>
                   <div className="flex items-center justify-between pt-1">
@@ -2194,6 +2088,8 @@ export default function AdminPage() {
                       {config.showSearchBar ? "当前状态：已显示搜索栏" : "当前状态：已隐藏搜索栏"}
                     </span>
                     <button
+                      id="admin-searchbar-toggle"
+                      type="button"
                       onClick={() => updateConfig({ showSearchBar: !config.showSearchBar })}
                       className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                         config.showSearchBar ? "bg-[#00C776] text-white" : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
@@ -2335,7 +2231,10 @@ export default function AdminPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
-                    <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
+                    <label
+                      htmlFor="admin-weather-toggle"
+                      className="block text-xs font-bold text-gray-800 dark:text-slate-200"
+                    >
                       天气组件开关
                     </label>
                     <div className="flex items-center justify-between pt-1">
@@ -2343,6 +2242,7 @@ export default function AdminPage() {
                         {config.weatherEnabled ? "当前状态：已启用" : "当前状态：已禁用"}
                       </span>
                       <button
+                        id="admin-weather-toggle"
                         type="button"
                         onClick={() => updateConfig({ weatherEnabled: !config.weatherEnabled })}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
@@ -2450,8 +2350,123 @@ export default function AdminPage() {
               </div>
             </div>
           )}
-            </div>
-          )}
+
+          {/* TAB 9: 👤 个人中心与密码修改 */}
+          {activeTab === "profile" && (
+                <div className="max-w-3xl space-y-6">
+                  <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-6 transition-colors">
+                    <div>
+                      <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <span>👤</span>
+                        <span>个人账号中心</span>
+                      </h2>
+                      <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
+                        管理您的个人显示名称、头像以及登录访问密码
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700/80">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div
+                          className="relative group cursor-pointer shrink-0"
+                          onClick={() => {
+                            setAvatarDraft(currentUser?.avatar || "");
+                            setShowAvatarModal(true);
+                          }}
+                          title="点击修改头像"
+                        >
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#3B82F6] via-[#00C776] to-[#8B5CF6] flex items-center justify-center text-white text-2xl font-bold shadow-md overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={resolveAvatar(currentUser?.avatar, currentUser?.username)}
+                              alt={currentUser?.displayName || "User"}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-semibold transition-opacity">
+                            修改
+                          </div>
+                        </div>
+
+                        <div className="space-y-1 min-w-0">
+                          <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                            {currentUser?.displayName || currentUser?.username || "Admin"}
+                          </h3>
+                          <p className="text-xs text-gray-400 font-mono">
+                            账号: @{currentUser?.username || "admin"}
+                          </p>
+                          <div className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 border border-teal-200 dark:border-teal-900">
+                            {currentUser?.role === "admin" ? "👑 超级系统管理员" : "👤 普通注册用户"}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 快捷独立弹窗按钮组 */}
+                      <div className="flex items-center gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-200/60 dark:border-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAvatarDraft(currentUser?.avatar || "");
+                            setShowAvatarModal(true);
+                          }}
+                          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 shadow-2xs transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          <span>🖼️</span>
+                          <span>修改头像</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModalOldPassword("");
+                            setModalNewPassword("");
+                            setModalPasswordNotice("");
+                            setShowChangePasswordModal(true);
+                          }}
+                          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 shadow-2xs transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          <span>🔐</span>
+                          <span>修改密码</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 修改显示名称 (昵称) */}
+                    <form onSubmit={handleProfileSave} className="space-y-4 pt-2 border-t border-gray-100 dark:border-slate-700/80">
+                      <div className="space-y-1.5">
+                        <label htmlFor="admin-tab-display-name" className="block text-xs font-bold text-gray-700 dark:text-slate-200">
+                          显示名称 (昵称)
+                        </label>
+                        <input
+                          id="admin-tab-display-name"
+                          name="displayName"
+                          type="text"
+                          autoComplete="name"
+                          value={profileDisplayNameInput}
+                          onChange={(e) => setProfileDisplayNameInput(e.target.value)}
+                          placeholder="例如 亚历克斯"
+                          className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#00C776]/40 focus:outline-none"
+                        />
+                      </div>
+
+                      {profilePasswordNotice && (
+                        <p className="text-xs font-semibold pt-1" style={{ color: profilePasswordNotice.startsWith("🎉") ? "#00C776" : "#F43F5E" }}>
+                          {profilePasswordNotice}
+                        </p>
+                      )}
+
+                      <div className="pt-2 flex items-center justify-end">
+                        <button
+                          type="submit"
+                          className="h-9 px-6 bg-[#00C776] hover:bg-[#009a5a] text-white font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-xs"
+                        >
+                          💾 保存昵称设置
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
         </main>
       </div>
 
@@ -2514,6 +2529,71 @@ export default function AdminPage() {
         </div>
       </Modal>
 
+      {/* Dedicated Change Password Modal */}
+      <Modal
+        open={showChangePasswordModal}
+        title="🔐 修改登录密码"
+        onClose={() => setShowChangePasswordModal(false)}
+      >
+        <form onSubmit={handleModalPasswordSave} className="space-y-4">
+          <div>
+            <label htmlFor="modal-old-pwd" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
+              当前原密码 *
+            </label>
+            <input
+              id="modal-old-pwd"
+              name="oldPassword"
+              type="password"
+              autoComplete="current-password"
+              value={modalOldPassword}
+              onChange={(e) => setModalOldPassword(e.target.value)}
+              placeholder="请输入当前使用的登录密码"
+              required
+              className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#00C776]/40 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="modal-new-pwd" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
+              设置新密码 (至少 6 位) *
+            </label>
+            <input
+              id="modal-new-pwd"
+              name="newPassword"
+              type="password"
+              autoComplete="new-password"
+              value={modalNewPassword}
+              onChange={(e) => setModalNewPassword(e.target.value)}
+              placeholder="请输入新密码 (至少 6 位)"
+              required
+              className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#00C776]/40 focus:outline-none"
+            />
+          </div>
+
+          {modalPasswordNotice && (
+            <p className="text-xs font-semibold pt-1" style={{ color: modalPasswordNotice.startsWith("🎉") ? "#00C776" : "#F43F5E" }}>
+              {modalPasswordNotice}
+            </p>
+          )}
+
+          <div className="mt-6 flex justify-end gap-2 border-t border-gray-100 dark:border-slate-700 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowChangePasswordModal(false)}
+              className="h-9 rounded-lg px-4 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer"
+            >
+              取消
+            </button>
+            <button
+              type="submit"
+              className="h-9 rounded-lg bg-[#00C776] hover:bg-[#009a5a] px-5 text-xs font-bold text-white transition-colors cursor-pointer shadow-xs"
+            >
+              确认修改密码
+            </button>
+          </div>
+        </form>
+      </Modal>
+
       {/* Confirm Delete All Links Modal */}
       <Modal
         open={showDeleteAllLinksConfirm}
@@ -2566,6 +2646,8 @@ export default function AdminPage() {
             <input
               id="user-username"
               name="username"
+              type="text"
+              autoComplete="username"
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
               placeholder="例如 alex"
@@ -2583,6 +2665,8 @@ export default function AdminPage() {
             <input
               id="user-display-name"
               name="displayName"
+              type="text"
+              autoComplete="name"
               value={newDisplayName}
               onChange={(e) => setNewDisplayName(e.target.value)}
               placeholder="例如 亚历克斯"
@@ -2590,9 +2674,9 @@ export default function AdminPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">
+            <span className="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">
               头像
-            </label>
+            </span>
             <AvatarPicker
               value={newAvatar}
               username={editingUser?.username || newUsername}
@@ -2610,6 +2694,7 @@ export default function AdminPage() {
               id="user-password"
               name="password"
               type="password"
+              autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder={editingUser ? "留空保持原密码" : "至少 6 位字符"}
@@ -2738,20 +2823,66 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="w-full text-left space-y-2.5 p-3 rounded-xl bg-gray-50 dark:bg-slate-700/50 border border-gray-100 dark:border-slate-700 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">当前账号</span>
-              <span className="font-bold text-gray-800 dark:text-white">@{currentUser?.username || "admin"}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">权限角色</span>
-              <span className="font-bold text-teal-600 dark:text-teal-400">
-                {currentUser?.role === "admin" ? "超级管理员 (Admin)" : "普通用户 (User)"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">登录状态</span>
-              <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">Active (已认证)</span>
+          {/* Self Profile Form & Action Buttons */}
+          <div className="w-full text-left space-y-3 p-3.5 rounded-xl bg-gray-50 dark:bg-slate-700/50 border border-gray-100 dark:border-slate-700 text-xs">
+            <form onSubmit={handleProfileSave} className="space-y-2.5">
+              <label htmlFor="self-display-name" className="block text-[11px] font-bold text-gray-700 dark:text-slate-200 mb-1">
+                修改显示名称 (昵称)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="self-display-name"
+                  name="displayName"
+                  type="text"
+                  autoComplete="name"
+                  value={profileDisplayNameInput}
+                  onChange={(e) => setProfileDisplayNameInput(e.target.value)}
+                  placeholder="设置你的显示昵称..."
+                  className="flex-1 h-9 rounded-lg border border-gray-200 dark:border-slate-600 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#00C776]/40 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="h-9 px-3 bg-[#00C776] hover:bg-[#009a5a] text-white font-bold rounded-lg text-xs transition-colors cursor-pointer shrink-0"
+                >
+                  保存
+                </button>
+              </div>
+            </form>
+
+            {profilePasswordNotice && (
+              <p className="text-[11px] font-semibold transition-all" style={{ color: profilePasswordNotice.startsWith("🎉") ? "#00C776" : "#F43F5E" }}>
+                {profilePasswordNotice}
+              </p>
+            )}
+
+            <div className="pt-2 border-t border-gray-200/70 dark:border-slate-600/60 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowProfileModal(false);
+                  setAvatarDraft(currentUser?.avatar || "");
+                  setShowAvatarModal(true);
+                }}
+                className="flex-1 h-8 rounded-lg bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-600 text-xs font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+              >
+                <span>🖼️</span>
+                <span>修改头像</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowProfileModal(false);
+                  setModalOldPassword("");
+                  setModalNewPassword("");
+                  setModalPasswordNotice("");
+                  setShowChangePasswordModal(true);
+                }}
+                className="flex-1 h-8 rounded-lg bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-600 text-xs font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+              >
+                <span>🔐</span>
+                <span>修改密码</span>
+              </button>
             </div>
           </div>
 

@@ -123,10 +123,15 @@ export default function ProjectAdminPanel() {
 
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
           <div className="sm:col-span-5">
-            <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1">
+            <label
+              htmlFor="project-admin-name"
+              className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1"
+            >
               项目名称
             </label>
             <input
+              id="project-admin-name"
+              name="projectName"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -137,10 +142,15 @@ export default function ProjectAdminPanel() {
           </div>
 
           <div className="sm:col-span-4">
-            <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1">
+            <label
+              htmlFor="project-admin-url"
+              className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1"
+            >
               项目 URL（选填）
             </label>
             <input
+              id="project-admin-url"
+              name="projectUrl"
               type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
@@ -151,10 +161,15 @@ export default function ProjectAdminPanel() {
 
           <div className="sm:col-span-3 flex items-end gap-2">
             <div className="flex-1">
-              <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1">
+              <label
+                htmlFor="project-admin-status"
+                className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1"
+              >
                 状态标记
               </label>
               <select
+                id="project-admin-status"
+                name="projectStatus"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-2 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white cursor-pointer"
@@ -167,11 +182,17 @@ export default function ProjectAdminPanel() {
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1">
+              <label
+                htmlFor="project-admin-color"
+                className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1"
+              >
                 主题色
               </label>
               <input
+                id="project-admin-color"
+                name="projectColor"
                 type="color"
+                aria-label="选择项目主题颜色"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
                 className="h-9 w-10 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 cursor-pointer p-0.5"

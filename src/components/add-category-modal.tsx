@@ -77,9 +77,9 @@ export default function AddCategoryModal({
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-gray-500">
+          <span className="mb-1.5 block text-xs font-medium text-gray-500">
             Icon
-          </label>
+          </span>
           <div className="flex flex-wrap gap-2">
             {EMOJI_OPTIONS.map((emoji) => (
               <button

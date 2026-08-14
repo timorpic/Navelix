@@ -133,6 +133,7 @@ export function runMigrations(db: DatabaseSync): void {
     "weather_api_base_url",
     "weather_api_base_url TEXT NOT NULL DEFAULT 'https://api.seniverse.com'",
   );
+  ensureColumn(db, "user_configs", "is_pro", "is_pro INTEGER NOT NULL DEFAULT 0");
 
   // ── v1：一次性迁移：为旧库中已有的用户配置补上社交链接默认值（仅在首次升级时执行，
   //     之后用户在后台清空字段即为"隐藏"语义，不会被再次覆盖）

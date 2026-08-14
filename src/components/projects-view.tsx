@@ -145,10 +145,15 @@ export default function ProjectsView() {
 
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
             <div className="sm:col-span-5">
-              <label className="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">
+              <label
+                htmlFor="projects-view-name"
+                className="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1"
+              >
                 项目名称 *
               </label>
               <input
+                id="projects-view-name"
+                name="projectName"
                 type="text"
                 required
                 value={name}
@@ -159,10 +164,15 @@ export default function ProjectsView() {
             </div>
 
             <div className="sm:col-span-4">
-              <label className="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">
+              <label
+                htmlFor="projects-view-url"
+                className="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1"
+              >
                 项目 URL（选填）
               </label>
               <input
+                id="projects-view-url"
+                name="projectUrl"
                 type="text"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -173,10 +183,15 @@ export default function ProjectsView() {
 
             <div className="sm:col-span-3 flex items-end gap-2">
               <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">
+                <label
+                  htmlFor="projects-view-status"
+                  className="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1"
+                >
                   状态标记
                 </label>
                 <select
+                  id="projects-view-status"
+                  name="projectStatus"
                   value={status}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -195,11 +210,17 @@ export default function ProjectsView() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1">
+                <label
+                  htmlFor="projects-view-color"
+                  className="block text-xs font-medium text-gray-700 dark:text-slate-300 mb-1"
+                >
                   主题色
                 </label>
                 <input
+                  id="projects-view-color"
+                  name="projectColor"
                   type="color"
+                  aria-label="选择项目主题颜色"
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
                   className="h-9 w-10 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 cursor-pointer p-0.5"

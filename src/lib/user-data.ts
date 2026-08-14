@@ -105,10 +105,12 @@ export function getUserData(userId: string): UserDataResult {
         weatherKeyConfigured: Boolean(configRow.weather_api_key),
         weatherLocation: String(configRow.weather_location || ""),
         weatherApiBaseUrl: String(configRow.weather_api_base_url || "https://api.seniverse.com"),
+        isPro: configRow.is_pro === 1 || configRow.is_pro === true || configRow.is_pro === "1",
       }
     : {
         logoText: "Navelix",
         logoImage: "",
+        isPro: false,
         showSearchBar: true,
         maxWidth: "1200px",
         customFooter: "© 2026 Navelix. 保留所有权利。",
@@ -386,10 +388,11 @@ export function saveUserConfigs(
   const weatherApiKey = secret("weatherApiKey", "weather_api_key");
   const weatherLocation = str("weatherLocation", "weather_location", "");
   const weatherApiBaseUrl = str("weatherApiBaseUrl", "weather_api_base_url", "https://api.seniverse.com");
+  const isPro = bool("isPro", "is_pro", 0);
 
   db.prepare(`
-    INSERT OR REPLACE INTO user_configs (user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT OR REPLACE INTO user_configs (user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, is_pro)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     userId,
     logoText,
@@ -413,5 +416,6 @@ export function saveUserConfigs(
     weatherApiKey,
     weatherLocation,
     weatherApiBaseUrl,
+    isPro,
   );
 }

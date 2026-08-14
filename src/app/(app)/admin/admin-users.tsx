@@ -193,9 +193,14 @@ export default function AdminUsersPanel() {
       >
         <div className="flex flex-col gap-3 p-2">
           <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">用户名</label>
+            <label htmlFor="admin-user-name-input" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
+              用户名
+            </label>
             <input
+              id="admin-user-name-input"
+              name="username"
               type="text"
+              autoComplete="username"
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
               placeholder="用户名 (3-20 位字母数字下划线)"
@@ -203,9 +208,14 @@ export default function AdminUsersPanel() {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">显示名称</label>
+            <label htmlFor="admin-user-displayname-input" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
+              显示名称
+            </label>
             <input
+              id="admin-user-displayname-input"
+              name="displayName"
               type="text"
+              autoComplete="name"
               value={newDisplayName}
               onChange={(e) => setNewDisplayName(e.target.value)}
               placeholder="可选，默认与用户名相同"
@@ -213,9 +223,14 @@ export default function AdminUsersPanel() {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">密码</label>
+            <label htmlFor="admin-user-password-input" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
+              密码
+            </label>
             <input
+              id="admin-user-password-input"
+              name="password"
               type="password"
+              autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder={editingUser ? "留空则不修改密码" : "至少 6 位"}
@@ -223,8 +238,12 @@ export default function AdminUsersPanel() {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">权限角色</label>
+            <label htmlFor="admin-user-role-select" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
+              权限角色
+            </label>
             <select
+              id="admin-user-role-select"
+              name="role"
               value={newRole}
               onChange={(e) => setNewRole(e.target.value as "admin" | "user")}
               className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"

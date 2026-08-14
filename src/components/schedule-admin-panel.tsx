@@ -207,7 +207,10 @@ export default function ScheduleAdminPanel() {
         {/* Search */}
         <div className="relative">
           <input
+            id="schedule-panel-search"
+            name="searchQuery"
             type="text"
+            aria-label="搜索日程标题"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="搜索日程标题..."
@@ -220,6 +223,9 @@ export default function ScheduleAdminPanel() {
 
         {/* Priority Filter */}
         <select
+          id="schedule-panel-priority-filter"
+          name="priorityFilter"
+          aria-label="按优先级筛选日程"
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
           className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"
@@ -232,6 +238,9 @@ export default function ScheduleAdminPanel() {
 
         {/* Status Filter */}
         <select
+          id="schedule-panel-status-filter"
+          name="statusFilter"
+          aria-label="按状态筛选日程"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"
@@ -274,6 +283,9 @@ export default function ScheduleAdminPanel() {
                     {/* Status Checkbox */}
                     <td className="p-3 text-center">
                       <input
+                        id={`schedule-item-check-${item.id}`}
+                        name={`schedule-item-check-${item.id}`}
+                        aria-label={`标记 "${item.title}" 完成状态`}
                         type="checkbox"
                         checked={item.done}
                         onChange={() => handleToggleDone(item)}
@@ -385,10 +397,15 @@ export default function ScheduleAdminPanel() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Title */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                <label
+                  htmlFor="schedule-panel-form-title"
+                  className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
+                >
                   日程标题 *
                 </label>
                 <input
+                  id="schedule-panel-form-title"
+                  name="formTitle"
                   type="text"
                   required
                   value={formTitle}
@@ -401,10 +418,15 @@ export default function ScheduleAdminPanel() {
               {/* Due Date & Priority Grid */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                  <label
+                    htmlFor="schedule-panel-form-due-date"
+                    className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
+                  >
                     计划日期
                   </label>
                   <input
+                    id="schedule-panel-form-due-date"
+                    name="formDueDate"
                     type="date"
                     value={formDueDate}
                     onChange={(e) => setFormDueDate(e.target.value)}
@@ -413,10 +435,15 @@ export default function ScheduleAdminPanel() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                  <label
+                    htmlFor="schedule-panel-form-priority"
+                    className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
+                  >
                     优先级
                   </label>
                   <select
+                    id="schedule-panel-form-priority"
+                    name="formPriority"
                     value={formPriority}
                     onChange={(e) =>
                       setFormPriority(e.target.value as "high" | "medium" | "low")
@@ -432,10 +459,15 @@ export default function ScheduleAdminPanel() {
 
               {/* Associated Project */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                <label
+                  htmlFor="schedule-panel-form-project-id"
+                  className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
+                >
                   归属项目（选填）
                 </label>
                 <select
+                  id="schedule-panel-form-project-id"
+                  name="formProjectId"
                   value={formProjectId}
                   onChange={(e) => setFormProjectId(e.target.value)}
                   className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"
