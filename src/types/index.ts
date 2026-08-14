@@ -67,8 +67,11 @@ export interface SystemConfig {
   allowRegistration?: boolean; // 是否开放新用户注册（默认 true）
 
   // 自定义脚本与样式注入
-  customHeadScripts?: string; // 统计代码/第三方探针
-  customCss?: string; // 自定义 CSS 样式
+  // ⚠️ 安全警告：以下两项会以 dangerouslySetInnerHTML / <style> 直接注入到所有访客页面，
+  // 相当于绕过 CSP 的 unsafe-inline。仅限管理员配置（服务端已用角色门禁收口）。
+  // 切勿用于不可信来源的内容，否则将形成存储型 XSS / 数据外泄风险。
+  customHeadScripts?: string; // 统计代码/第三方探针（仅管理员，绕过 CSP 注入）
+  customCss?: string; // 自定义 CSS 样式（仅管理员，绕过 CSP style-src 注入）
 
   aiBaseUrl?: string;
   // 明文密钥永不下发前端；仅用于提交（留空=保持不变），及本地占位。

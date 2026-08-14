@@ -1,9 +1,26 @@
 import crypto from "node:crypto";
 
 /**
- * 默认授权签名秘钥（生产环境建议通过 .env 中的 LICENSE_SECRET_KEY 覆盖）
+ * PRO 授权 HMAC 签名密钥。
+ *
+ * ⚠️ 安全约束：HMAC 签名必须依赖服务端私钥，绝不可使用可被反编译获取的默认值。
+ * 生产环境必须通过环境变量 LICENSE_SECRET_KEY 显式配置（建议 ≥ 32 字节高熵随机值）。
+ *
+ * 未配置时：
+ * - 无法"伪造"出可被校验通过的签名授权码（因为任何人都能拿到默认密钥并重放）；
+ * - 故 HMAC 校验/生成被禁用，仅以下方式仍可激活 PRO：
+ *   1) .env 设置 ENABLE_COMMUNITY_PRO=true（开源社区自托管无缝启用）
+ *   2) .env 设置 PRO_LICENSE_KEY 固定 Key
+ *   3) 开源通用激活码 NAV-PRO-2026 / PRO-COMMUNITY（有意设计的社区码）
  */
-const LICENSE_SECRET = process.env.LICENSE_SECRET_KEY || "navelix-open-source-pro-license-secret-2026";
+const LICENSE_SECRET = process.env.LICENSE_SECRET_KEY?.trim() || "";
+
+/**
+ * 获取签名密钥；未配置返回 null（调用方据此禁用 HMAC 路径，而非回退到已知默认值）。
+ */
+function getLicenseSecret(): string | null {
+  return LICENSE_SECRET || null;
+}
 
 /**
  * 校验 PRO 授权码（开源合规模式）
@@ -34,12 +51,20 @@ export function verifyProLicenseKey(licenseKey: string): { valid: boolean; messa
 
   // 4. HMAC-SHA256 密码学签名校验 (格式: NAVPRO-<USER>-<8位或16位签名>)
   if (/^NAVPRO-[A-Z0-9_-]+-[A-F0-9]{8,64}$/i.test(key)) {
+    const secret = getLicenseSecret();
+    if (!secret) {
+      return {
+        valid: false,
+        message:
+          "服务端未配置 LICENSE_SECRET_KEY，无法校验签名授权码。请在 .env 中设置强随机 LICENSE_SECRET_KEY，或使用 ENABLE_COMMUNITY_PRO=true 社区模式。",
+      };
+    }
     const parts = key.split("-");
     const identifier = parts[1];
     const signature = parts[2].toUpperCase();
 
     const expectedHash = crypto
-      .createHmac("sha256", LICENSE_SECRET)
+      .createHmac("sha256", secret)
       .update(identifier.toUpperCase())
       .digest("hex")
       .substring(0, signature.length)
@@ -57,12 +82,20 @@ export function verifyProLicenseKey(licenseKey: string): { valid: boolean; messa
 }
 
 /**
- * 为指定标识生成合法 HMAC 授权码（方便管理员/开发者分发密钥）
+ * 为指定标识生成合法 HMAC 授权码（方便管理员/开发者分发密钥）。
+ *
+ * ⚠️ 必须已配置 LICENSE_SECRET_KEY，否则抛错——避免基于"已知默认密钥"生成可被任何人重放的授权码。
  */
 export function generateProLicenseKey(identifier: string): string {
+  const secret = getLicenseSecret();
+  if (!secret) {
+    throw new Error(
+      "生成 PRO 授权码失败：未配置 LICENSE_SECRET_KEY。请先在 .env 中设置强随机 LICENSE_SECRET_KEY，或使用 ENABLE_COMMUNITY_PRO=true 社区模式。",
+    );
+  }
   const cleanId = identifier.trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_") || "USER";
   const signature = crypto
-    .createHmac("sha256", LICENSE_SECRET)
+    .createHmac("sha256", secret)
     .update(cleanId)
     .digest("hex")
     .substring(0, 16)

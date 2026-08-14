@@ -249,6 +249,25 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     db.exec("BEGIN IMMEDIATE");
 
+    // 安全门禁：自定义 Head 脚本 / 自定义 CSS 属于"可注入任意 HTML/JS/CSS"的高危能力，
+    // 仅管理员可配置（任意登录用户若可写入，将形成存储型 XSS / 数据外泄面）。
+    // 当前 CSP 放行 unsafe-inline，故必须在服务端用角色收口，而非依赖前端隐藏。
+    const cfg = body.config;
+    if (cfg && user.role !== "admin") {
+      const hasCustomScript =
+        typeof cfg.customHeadScripts === "string" &&
+        cfg.customHeadScripts.trim() !== "";
+      const hasCustomCss =
+        typeof cfg.customCss === "string" && cfg.customCss.trim() !== "";
+      if (hasCustomScript || hasCustomCss) {
+        db.exec("ROLLBACK");
+        return NextResponse.json(
+          { error: "仅管理员可配置自定义 Head 脚本 / 自定义 CSS" },
+          { status: 403 },
+        );
+      }
+    }
+
     if (Array.isArray(body.categories)) {
       saveUserCategories(userId, body.categories);
     }

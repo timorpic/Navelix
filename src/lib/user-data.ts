@@ -402,6 +402,19 @@ export function saveUserConfigs(
   const customHeadScripts = str("customHeadScripts", "custom_head_scripts", "");
   const customCss = str("customCss", "custom_css", "");
 
+  // 安全告警：自定义脚本/CSS 会绕过 CSP 直接注入到所有访客页面。
+  // 此处仅记录日志供运维审计；写入权限已由 POST /api/user/data 的 admin 角色门禁收口。
+  if (customHeadScripts.trim() !== "") {
+    console.warn(
+      "[Security] user_configs.custom_head_scripts 已写入非空内容，将以 dangerouslySetInnerHTML 注入页面（绕过 CSP），请确保来源可信且仅管理员可配置。",
+    );
+  }
+  if (customCss.trim() !== "") {
+    console.warn(
+      "[Security] user_configs.custom_css 已写入非空内容，将以 <style> 注入页面（绕过 CSP style-src），请确保来源可信且仅管理员可配置。",
+    );
+  }
+
   db.prepare(`
     INSERT OR REPLACE INTO user_configs (
       user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme,

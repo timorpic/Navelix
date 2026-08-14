@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser, verifyPassword } from "@/lib/auth";
 import { performDatabaseBackup } from "@/lib/db-backup";
 import { runMigrations } from "@/lib/migrations";
 
@@ -52,6 +52,19 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file") as File | null;
     if (!file) {
       return NextResponse.json({ error: "请上传有效的 .db 备份文件" }, { status: 400 });
+    }
+
+    // 二次确认：恢复操作会整体覆盖数据库，必须验证当前管理员密码，
+    // 防止管理员会话被盗后（但密码未泄露）被攻击者直接覆写数据库。
+    const confirmPassword = String(formData.get("confirmPassword") || "");
+    const adminRow = db
+      .prepare("SELECT password_hash FROM users WHERE id = ?")
+      .get(adminUser.id) as { password_hash: string } | undefined;
+    if (!adminRow || !verifyPassword(confirmPassword, adminRow.password_hash)) {
+      return NextResponse.json(
+        { error: "恢复数据库需输入当前管理员密码进行二次确认" },
+        { status: 403 },
+      );
     }
 
     const arrayBuffer = await file.arrayBuffer();

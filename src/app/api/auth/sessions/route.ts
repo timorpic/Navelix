@@ -3,6 +3,7 @@ import { cookies } from "next/headers.js";
 import { db, SESSION_COOKIE } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { createHash } from "node:crypto";
+import { simpleRateLimit } from "@/lib/rate-limit";
 
 function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
@@ -60,6 +61,15 @@ export async function DELETE(req: Request) {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
+  }
+
+  // 速率限制：防止会话 ID 暴力枚举或大规模注销（按用户维度 30 次/分钟）
+  const rl = simpleRateLimit(`session-revoke:${user.id}`, 30, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "操作过于频繁，请稍后再试", retryAfterMs: rl.retryAfterMs },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) } },
+    );
   }
 
   const cookieStore = await cookies();
