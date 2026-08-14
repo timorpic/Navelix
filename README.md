@@ -17,13 +17,24 @@
 
 ## 功能特性
 
-- **网址导航**：链接管理、分类筛选、快捷访问、多搜索引擎支持、全局 `⌘ K` / `Ctrl+K` 快速聚焦搜索、图标自定义（上传 / Iconify / favicon）、在线状态检测、书签导入导出（Sun-Panel / Chrome / HTML）
-- **安全与防护**：内置 SSRF 防护（SafeFetch 校验）、全局 CSRF 校验、登录 Rate Limit 防伪造、HttpOnly Cookie 会话控制、密钥安全不下发
-- **高可用与自动备份**：SQLite 级联删除 (CASCADE)、外键约束校验、`VACUUM INTO` 零锁定热备份（自动循环保留最近 7 份备份）
+- **网址导航**：链接管理、分类筛选、快捷访问、多搜索引擎支持、全局 `⌘ K` / `Ctrl+K` 快速聚焦搜索、图标自定义（上传 / Iconify / favicon）、在线状态巡检、书签导入导出（Sun-Panel / Chrome / HTML）
+- **矢量插画与图标资源**：内置 unDraw、Storyset、DrawKit 等常用矢量插画库与 Iconfont、IconPark、Tabler、Iconoir 等图标库及商用授权指引
+- **安全与访问控制**：
+  - 支持**公开访客模式**（免登录浏览首页）与**私有模式**（未登录强制跳转登录）
+  - 支持**开放/关闭公网注册**，杜绝公网部署被任意注册
+  - 内置 SSRF 防护（SafeFetch 校验）、全局 CSRF 校验、登录 Rate Limit 防暴破、HttpOnly Cookie 会话控制
+- **高可用与物理备份还原**：
+  - SQLite 级联删除 (CASCADE)、外键约束校验、`VACUUM INTO` 零锁定热备份
+  - **一键下载 `.db` 物理快照**，支持上传 `.db` 备份文件一键还原全量数据与所有系统配置
+  - **一键全量 JSON 导出与恢复**，包含全部系统偏好、外观设置与离线数据
+- **系统运维与代码注入**：
+  - **自定义搜索引擎**：支持配置私有搜索引擎（如 SearXNG、内网知识库）与 `%s` URL 模板
+  - **自定义代码与统计探针**：无需修改源码，后台直接注入 Umami / Google Analytics / 百度统计等 `<script>` 探针与全局自定义 CSS
+  - **存储整理与清理**：一键清理历史操作通知，执行 SQLite `VACUUM` 深度碎片整理
 - **AI 智能助手**：集成标准 OpenAI 兼容 API（DeepSeek、ChatGPT、Ollama、Qwen 等），服务端代理请求，Key 不暴露前端
-- **个性化工作台**：浅色/深色/跟随系统主题、自定义 LOGO 与网站文案、自定义头像、专注统计、侧边栏天气与时钟、项目看板
+- **个性化工作台**：浅色/深色/跟随系统主题、自定义 LOGO、全屏背景壁纸、毛玻璃特效、专注番茄钟、侧边栏天气与指针表盘、项目看板、日程待办
 - **管理后台**（`/admin`）：链接/分组/项目/用户管理、个人 API Access Token 密钥管理、活跃会话踢出、个性化外观设置、配置导入导出、访问统计、实时版本更新自检
-- **开放 API & 自动化**：支持 Personal Access Token (`nvx_live_...`) 鉴权，提供完整 [API Wiki 开发文档](file:///C:/Users/timorpic-legion/Documents/Navelix/API_WIKI.md)，轻松集成 iOS 快捷指令、Docker CI/CD 消息推送、Python 自动化脚本与 AI 智能体
+- **开放 API & 自动化**：支持 Personal Access Token (`nvx_live_...`) 鉴权，提供完整 [API Wiki 开发文档](API_WIKI.md)，轻松集成 iOS 快捷指令、Docker CI/CD 消息推送、Python 自动化脚本与 AI 智能体
 - **消息通知**：后台关键操作自动记录，前后台独立通知中心查看与一键标已读
 
 ## 技术栈
