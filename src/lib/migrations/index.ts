@@ -123,6 +123,12 @@ export function runMigrations(db: DatabaseSync): void {
     );
   `);
   ensureColumn(db, "user_todos", "project_id", "project_id TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, "user_todos", "assignee_id", "assignee_id TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, "user_todos", "assignee_name", "assignee_name TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, "user_todos", "updated_at", "updated_at INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(db, "projects", "description", "description TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, "projects", "created_at", "created_at INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(db, "projects", "updated_at", "updated_at INTEGER NOT NULL DEFAULT 0");
   ensureColumn(db, "user_configs", "logo_image", "logo_image TEXT NOT NULL DEFAULT ''");
   ensureColumn(
     db,

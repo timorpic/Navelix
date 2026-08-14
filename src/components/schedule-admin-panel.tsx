@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { TodoItem, Project } from "@/types";
+import { toLocalDateStr } from "@/lib/date-utils";
 import ConfirmDialog from "./confirm-dialog";
 
 export default function ScheduleAdminPanel() {
@@ -55,13 +56,13 @@ export default function ScheduleAdminPanel() {
     if (item) {
       setEditingSchedule(item);
       setFormTitle(item.title);
-      setFormDueDate(item.dueDate || new Date().toISOString().split("T")[0]);
+      setFormDueDate(item.dueDate || toLocalDateStr());
       setFormPriority(item.priority || "medium");
       setFormProjectId(item.projectId || "");
     } else {
       setEditingSchedule(null);
       setFormTitle("");
-      setFormDueDate(new Date().toISOString().split("T")[0]);
+      setFormDueDate(toLocalDateStr());
       setFormPriority("medium");
       setFormProjectId("");
     }

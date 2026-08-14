@@ -4,15 +4,26 @@ import { getSessionUser } from "@/lib/auth";
 import type { TodoItem } from "@/types";
 
 function rowToTodo(r: {
-  id: string; title: string; priority: string; done: number;
-  due_date: string; project_id: string; created_at: number; sort_order: number;
+  id: string;
+  title: string;
+  priority: string;
+  done: number;
+  due_date: string;
+  project_id: string;
+  assignee_id?: string;
+  assignee_name?: string;
+  created_at: number;
+  sort_order: number;
 }): TodoItem {
   return {
-    id: r.id, title: r.title,
+    id: r.id,
+    title: r.title,
     priority: (r.priority as TodoItem["priority"]) || "medium",
     done: r.done === 1,
     dueDate: r.due_date || undefined,
     projectId: r.project_id || undefined,
+    assigneeId: r.assignee_id || undefined,
+    assigneeName: r.assignee_name || undefined,
     createdAt: r.created_at,
     sortOrder: r.sort_order,
   };
@@ -23,10 +34,23 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
   const userId = user.id;
   const rows = db
-    .prepare("SELECT id, title, priority, done, due_date, project_id, created_at, sort_order FROM user_todos WHERE user_id = ? ORDER BY done ASC, sort_order ASC, created_at ASC")
+    .prepare(
+      `SELECT id, title, priority, done, due_date, project_id, assignee_id, assignee_name, created_at, sort_order
+       FROM user_todos
+       WHERE user_id = ?
+       ORDER BY done ASC, sort_order ASC, created_at ASC`,
+    )
     .all(userId) as Array<{
-    id: string; title: string; priority: string; done: number;
-    due_date: string; project_id: string; created_at: number; sort_order: number;
+    id: string;
+    title: string;
+    priority: string;
+    done: number;
+    due_date: string;
+    project_id: string;
+    assignee_id?: string;
+    assignee_name?: string;
+    created_at: number;
+    sort_order: number;
   }>;
   return NextResponse.json({ todos: rows.map(rowToTodo) });
 }
@@ -38,19 +62,52 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const title = String(body.title || "").trim();
-    if (!title) return NextResponse.json({ error: "待办内容不能为空" }, { status: 400 });
+    if (!title)
+      return NextResponse.json({ error: "待办内容不能为空" }, { status: 400 });
     const id = `todo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const priority: TodoItem["priority"] = body.priority === "high" || body.priority === "low" ? body.priority : "medium";
+    const priority: TodoItem["priority"] =
+      body.priority === "high" || body.priority === "low"
+        ? body.priority
+        : "medium";
     const dueDate = body.dueDate ? String(body.dueDate).slice(0, 10) : "";
     const projectId = body.projectId ? String(body.projectId).trim() : "";
+    const assigneeId = body.assigneeId ? String(body.assigneeId).trim() : "";
+    const assigneeName = body.assigneeName
+      ? String(body.assigneeName).trim()
+      : "";
+
     const maxSort = db
-      .prepare("SELECT COALESCE(MAX(sort_order), -1) AS m FROM user_todos WHERE user_id = ? AND done = 0")
+      .prepare(
+        "SELECT COALESCE(MAX(sort_order), -1) AS m FROM user_todos WHERE user_id = ? AND done = 0",
+      )
       .get(userId) as { m: number };
+
     db.prepare(
-      "INSERT INTO user_todos (id, user_id, title, priority, done, due_date, project_id, created_at, sort_order) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?)",
-    ).run(id, userId, title, priority, dueDate, projectId, Date.now(), maxSort.m + 1);
+      `INSERT INTO user_todos (
+        id, user_id, title, priority, done, due_date, project_id, assignee_id, assignee_name, created_at, sort_order
+      ) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      id,
+      userId,
+      title,
+      priority,
+      dueDate,
+      projectId,
+      assigneeId,
+      assigneeName,
+      Date.now(),
+      maxSort.m + 1,
+    );
+
+    if (projectId) {
+      db.prepare("UPDATE projects SET updated_at = ? WHERE id = ?").run(Date.now(), projectId);
+    }
+
     return NextResponse.json({ success: true, todo: { id } });
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "创建失败" }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "创建失败" },
+      { status: 500 },
+    );
   }
 }

@@ -484,7 +484,7 @@ export default function RecentActivitiesCard({ links }: { links: SiteLink[] }) {
   ];
 
   return (
-    <div className="flex flex-col bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-colors mt-5">
+    <div className="flex flex-col bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-colors">
       {/* 1. 头部标题栏与全局操作 */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-slate-700/60">
         <div className="flex items-center gap-2.5">

@@ -100,7 +100,7 @@ export default function Home() {
       />
 
       {/* 2. Center Workspace Main Area */}
-      <main className="relative z-10 flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-8">
+      <main className="relative z-10 flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-6">
         <div className={`${maxWidthClass} mx-auto flex flex-col gap-3.5 transition-all duration-300`}>
           {notice && (
             <div className="flex items-center justify-between p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs font-semibold text-amber-800 animate-fadeIn shadow-2xs">
@@ -117,12 +117,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* Top Hero Banner */}
-          <HeroBanner
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-          />
-
+          {/* Feature Pages (日历日程、项目管理、数据看板、消息通知等独立全景页面不展示 HeroBanner) */}
           {activeCategory === "feature-calendar" ? (
             <CalendarView />
           ) : activeCategory === "feature-projects" ? (
@@ -131,47 +126,58 @@ export default function Home() {
             <DashboardView categories={categories} links={links} config={config} />
           ) : activeCategory === "feature-activities" ? (
             <RecentActivitiesCard links={links} />
-          ) : isFiltering ? (
-            /* Search / Category Filtered View */
-            <div className="flex flex-col gap-4 mt-2">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-gray-900 dark:text-white">
-                  {activeCategory === "all"
-                    ? `搜索结果 ("${searchQuery}")`
-                    : categories.find((c) => c.id === activeCategory)?.name ||
-                      "分类书签"}
-                </h2>
-                <button
-                  onClick={() => {
-                    setActiveCategory("all");
-                    setSearchQuery("");
-                  }}
-                  className="text-xs text-[#00C776] hover:underline cursor-pointer"
-                >
-                  清除筛选
-                </button>
-              </div>
-              <CardGrid links={filteredLinks} statuses={statuses} />
-            </div>
           ) : (
-            /* Standard Dashboard View */
             <>
-              {/* 顶部五卡片：今日专注、待办任务、知识笔记、项目进度、快速操作 */}
-              <TopStatsBar
-                categories={categories}
-                links={links}
-                onSelectCategory={(id: string) => setActiveCategory(id)}
+              {/* Top Hero Banner 仅在主工作台与书签视图展示 */}
+              <HeroBanner
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                onSelectCategory={setActiveCategory}
               />
 
-              {/* Quick Access Section */}
-              <QuickAccess links={quickAccessLinks} />
+              {isFiltering ? (
+                /* Search / Category Filtered View */
+                <div className="flex flex-col gap-4 mt-2">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-base font-bold text-gray-900 dark:text-white">
+                      {activeCategory === "all"
+                        ? `搜索结果 ("${searchQuery}")`
+                        : categories.find((c) => c.id === activeCategory)?.name ||
+                          "分类书签"}
+                    </h2>
+                    <button
+                      onClick={() => {
+                        setActiveCategory("all");
+                        setSearchQuery("");
+                      }}
+                      className="text-xs text-[#00C776] hover:underline cursor-pointer"
+                    >
+                      清除筛选
+                    </button>
+                  </div>
+                  <CardGrid links={filteredLinks} statuses={statuses} />
+                </div>
+              ) : (
+                /* Standard Dashboard View */
+                <>
+                  {/* 顶部五卡片：今日专注、待办任务、知识笔记、项目进度、快速操作 */}
+                  <TopStatsBar
+                    categories={categories}
+                    links={links}
+                    onSelectCategory={(id: string) => setActiveCategory(id)}
+                  />
 
-              {/* 首页工作空间概览：项目概览、日程概览 */}
-              <WorkspaceOverviewColumns
-                categories={categories}
-                links={links}
-                onSelectCategory={(id: string) => setActiveCategory(id)}
-              />
+                  {/* Quick Access Section */}
+                  <QuickAccess links={quickAccessLinks} />
+
+                  {/* 首页工作空间概览：项目概览、日程概览 */}
+                  <WorkspaceOverviewColumns
+                    categories={categories}
+                    links={links}
+                    onSelectCategory={(id: string) => setActiveCategory(id)}
+                  />
+                </>
+              )}
             </>
           )}
         </div>

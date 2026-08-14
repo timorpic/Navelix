@@ -35,18 +35,31 @@ export interface TodoItem {
   done: boolean;
   dueDate?: string; // ISO 8601 date string
   projectId?: string; // 关联项目
+  assigneeId?: string; // 责任人ID
+  assigneeName?: string; // 责任人显示名称
   createdAt: number;
   sortOrder: number;
+}
+
+export interface WorkspaceMember {
+  id: string;
+  username: string;
+  displayName?: string;
+  avatar?: string;
+  role?: string;
 }
 
 export interface Project {
   id: string;
   name: string;
+  description?: string;
   status?: string;
   statusColor?: string;
   url?: string;
   color?: string;
   sortOrder?: number;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface SystemConfig {
