@@ -161,18 +161,18 @@ export default function DashboardView({
     const total = projects.length || 1;
     const inProgress = projects.filter(
       (p) =>
-        p.status.includes("进行") ||
-        p.status.includes("开发") ||
-        p.status.toLowerCase().includes("progress"),
+        (p.status || "").includes("进行") ||
+        (p.status || "").includes("开发") ||
+        (p.status || "").toLowerCase().includes("progress"),
     ).length;
     const completed = projects.filter(
-      (p) => p.status === "已完成" || p.status.includes("完成"),
+      (p) => p.status === "已完成" || (p.status || "").includes("完成"),
     ).length;
     const research = projects.filter(
-      (p) => p.status === "研究中" || p.status.includes("研究"),
+      (p) => p.status === "研究中" || (p.status || "").includes("研究"),
     ).length;
     const maintenance = projects.filter(
-      (p) => p.status === "维护中" || p.status.includes("维护"),
+      (p) => p.status === "维护中" || (p.status || "").includes("维护"),
     ).length;
 
     const deliveryRate = Math.round((completed / total) * 100);

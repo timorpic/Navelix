@@ -125,32 +125,25 @@ export async function POST(req: Request) {
 已有未完成待办：${pendingTodos.map((t) => t.title).join("、") || "暂无未完成待办"}`;
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
     try {
-      const response = await safeFetch(
-        targetUrl,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: modelName,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: contextSummary },
-            ],
-            temperature: 0.3,
-            max_tokens: 800,
-          }),
-          signal: controller.signal,
+      const response = await safeFetch(targetUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
         },
-        { allowPrivateIPs: true },
-      );
-
-      clearTimeout(timer);
+        body: JSON.stringify({
+          model: modelName,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: contextSummary },
+          ],
+          temperature: 0.3,
+          max_tokens: 800,
+        }),
+        timeoutMs: REQUEST_TIMEOUT_MS,
+        allowPrivateIPs: true,
+      });
 
       if (!response.ok) {
         throw new Error(`AI Gateway error ${response.status}`);

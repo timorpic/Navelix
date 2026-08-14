@@ -148,27 +148,24 @@ export async function POST(req: Request) {
     const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     try {
-      const response = await safeFetch(
-        targetUrl,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: modelName,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt },
-            ],
-            temperature: 0.3,
-            max_tokens: 800,
-          }),
-          signal: controller.signal,
+      const response = await safeFetch(targetUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
         },
-        { allowPrivateIPs: true },
-      );
+        body: JSON.stringify({
+          model: modelName,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.3,
+          max_tokens: 800,
+        }),
+        timeoutMs: REQUEST_TIMEOUT_MS,
+        allowPrivateIPs: true,
+      });
 
       clearTimeout(timer);
 
@@ -197,7 +194,7 @@ export async function POST(req: Request) {
         const validatedTasks: BreakdownTask[] = parsed.tasks.map((t: { title?: string; priority?: string; dueDate?: string; assigneeId?: string; assigneeName?: string }, idx: number) => ({
           title: String(t.title || `阶段任务 ${idx + 1}`).trim(),
           priority: t.priority === "high" || t.priority === "low" ? t.priority : "medium",
-          dueDate: t.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(t.dueDate) ? t.dueDate : addDays(startDate, (idx + 1) * 3),
+          dueDate: t.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(t.dueDate) ? t.dueDate : addDaysLocal(startDate, (idx + 1) * 3),
           assigneeId: t.assigneeId ? String(t.assigneeId).trim() : defaultAssignee.id,
           assigneeName: t.assigneeName ? String(t.assigneeName).trim() : defaultAssignee.name,
         }));

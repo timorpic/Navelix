@@ -158,7 +158,7 @@ let _memCache: TokenCache | null = null
 let _diskCacheEnabled = true
 
 function ensureCacheDir(): void {
-  if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR, { recursive: true })
+  if (!existsSync(/*turbopackIgnore: true*/ CACHE_DIR)) mkdirSync(CACHE_DIR, { recursive: true })
 }
 
 function loadToken(): string | null {
@@ -167,7 +167,7 @@ function loadToken(): string | null {
   _memCache = null
 
   // 2) 磁盘缓存
-  if (!_diskCacheEnabled || !existsSync(CACHE_FILE)) return null
+  if (!_diskCacheEnabled || !existsSync(/*turbopackIgnore: true*/ CACHE_FILE)) return null
   try {
     const obj = JSON.parse(readFileSync(CACHE_FILE, 'utf-8')) as Record<string, unknown>
     if (typeof obj.expiresAt !== 'number' || obj.expiresAt <= Date.now()) return null

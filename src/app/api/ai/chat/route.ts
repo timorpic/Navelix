@@ -42,7 +42,7 @@ function buildWorkspaceContext(userId: string): string {
     // 1. 读取分类映射表
     const categoryRows = db
       .prepare(`SELECT name, label FROM user_categories WHERE user_id = ?`)
-      .all(userId) as CategoryRow[];
+      .all(userId) as unknown as CategoryRow[];
     const categoryMap: Record<string, string> = {};
     for (const c of categoryRows) {
       categoryMap[c.name] = c.label || c.name;
@@ -57,7 +57,7 @@ function buildWorkspaceContext(userId: string): string {
          ORDER BY sort_order ASC
          LIMIT 50`,
       )
-      .all(userId) as ProjectRow[];
+      .all(userId) as unknown as ProjectRow[];
 
     // 3. 读取待办 (user_todos)
     const todos = db
@@ -70,7 +70,7 @@ function buildWorkspaceContext(userId: string): string {
                   sort_order ASC
          LIMIT 50`,
       )
-      .all(userId) as TodoRow[];
+      .all(userId) as unknown as TodoRow[];
 
     // 4. 读取常用书签与快捷导航 (user_links)
     const links = db
@@ -81,7 +81,7 @@ function buildWorkspaceContext(userId: string): string {
          ORDER BY is_quick_access DESC
          LIMIT 60`,
       )
-      .all(userId) as LinkRow[];
+      .all(userId) as unknown as LinkRow[];
 
     const projectLines = projects.length > 0
       ? projects.map((p) => {

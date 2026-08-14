@@ -86,10 +86,10 @@ export default function TopStatsBar({
   const inProgressProjectsCount = useMemo(() => {
     const inProg = projects.filter(
       (p) =>
-        p.status.includes("进行") ||
-        p.status.includes("开发") ||
-        p.status.includes("研究") ||
-        p.status.toLowerCase().includes("progress"),
+        (p.status || "").includes("进行") ||
+        (p.status || "").includes("开发") ||
+        (p.status || "").includes("研究") ||
+        (p.status || "").toLowerCase().includes("progress"),
     ).length;
     return inProg || (projects.length > 0 ? 1 : 0);
   }, [projects]);
@@ -104,7 +104,7 @@ export default function TopStatsBar({
   const weeklyCompletedCount = useMemo(() => {
     const completedTodos = todos.filter((t) => t.done).length;
     const completedProjects = projects.filter(
-      (p) => p.status === "已完成" || p.status.includes("完成"),
+      (p) => p.status === "已完成" || (p.status || "").includes("完成"),
     ).length;
     return completedTodos + completedProjects;
   }, [todos, projects]);

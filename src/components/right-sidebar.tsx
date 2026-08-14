@@ -73,10 +73,10 @@ export default function RightSidebar({
 
     const inProgressProjects = projects.filter(
       (p) =>
-        p.status.includes("进行") ||
-        p.status.includes("开发") ||
-        p.status.includes("研究") ||
-        p.status.toLowerCase().includes("progress"),
+        (p.status || "").includes("进行") ||
+        (p.status || "").includes("开发") ||
+        (p.status || "").includes("研究") ||
+        (p.status || "").toLowerCase().includes("progress"),
     );
 
     const pendingTodos = todos.filter((t) => !t.done);
