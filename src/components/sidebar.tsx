@@ -8,10 +8,6 @@ import LogoMark from "./logo-mark";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { resolveAvatar } from "@/lib/avatars";
 import { clearCachedUserData } from "./navelix-provider";
-import {
-  formatRelativeTime,
-  type NotificationItem,
-} from "@/lib/notifications";
 import type { Category } from "@/types";
 
 interface SidebarProps {
@@ -28,10 +24,7 @@ export default function Sidebar({
   const router = useRouter();
   const { config, updateConfig, isDark } = useNavelixConfig();
 
-  // 1. Notifications State（读取后台操作记录）
-  const [showNotifications, setShowNotifications] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [now, setNow] = useState<Date>(() => new Date(0));
 
   // 首次渲染后立即设置真实时间（避免 hydration mismatch：SSR 和客户端初始值一致）
@@ -93,24 +86,11 @@ export default function Sidebar({
       .catch(() => setCurrentUser(null));
   }, []);
 
-  useEffect(() => {
-    fetch("/api/notifications")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data && Array.isArray(data.notifications)) {
-          setNotifications(data.notifications);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
   // 实时时钟
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-
-
 
   // 获取天气数据（调后端代理 /api/weather，隐藏 API Key 和位置）
   const fetchWeather = useCallback(async () => {
@@ -162,52 +142,11 @@ export default function Sidebar({
 
   const [bottomOpen, setBottomOpen] = useState(true);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const notifRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
-        setShowNotifications(false);
-      }
-    }
-    if (showNotifications) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showNotifications]);
-
   const handleToggleDarkMode = () => {
     const order: Array<"light" | "dark" | "system"> = ["light", "dark", "system"];
     const idx = order.indexOf(config.theme);
     const next = order[(idx + 1) % order.length];
     updateConfig({ theme: next });
-  };
-
-  const handleToggleNotifications = async () => {
-    const nextState = !showNotifications;
-    setShowNotifications(nextState);
-    if (nextState) {
-      try {
-        const res = await fetch("/api/notifications");
-        const data = await res.json();
-        if (Array.isArray(data.notifications)) {
-          setNotifications(data.notifications);
-        }
-      } catch {
-        // ignore
-      }
-      fetch("/api/notifications/read", { method: "POST" }).catch(() => {});
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    }
-  };
-
-  const handleMarkAllRead = () => {
-    fetch("/api/notifications/read", { method: "POST" }).catch(() => {});
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
   const handleLogout = async () => {
@@ -502,28 +441,6 @@ export default function Sidebar({
                 </svg>
               )}
             </button>
-
-            {/* 2. Notifications Bell */}
-            <button
-              onClick={handleToggleNotifications}
-              className={`relative p-2 rounded-xl transition-colors cursor-pointer ${
-                showNotifications
-                  ? "bg-[#00C776]/10 text-[#00C776]"
-                  : "hover:bg-gray-100 text-gray-600 dark:hover:bg-slate-800 dark:text-slate-300"
-              }`}
-              title="消息通知"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 animate-ping" />
-              )}
-              {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500" />
-              )}
-            </button>
-
           </div>
 
           {/* User Profile Card */}
@@ -589,77 +506,6 @@ export default function Sidebar({
           </p>
             </div>
           </div>
-
-          {/* Notifications Drawer (移出 overflow-hidden，保证 100% 完整展示) */}
-          {showNotifications && (
-            <div
-              ref={notifRef}
-              className="absolute bottom-16 left-0 right-0 sm:w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 p-3.5 z-50 animate-fadeIn"
-            >
-              <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-gray-100 dark:border-slate-700">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-gray-900 dark:text-white">
-                    消息通知
-                  </span>
-                  {unreadCount > 0 && (
-                    <span className="px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600 text-[10px] font-bold">
-                      {unreadCount}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={() => {
-                        handleMarkAllRead();
-                        setShowNotifications(false);
-                      }}
-                      className="text-[10px] text-[#00C776] hover:underline cursor-pointer font-medium"
-                    >
-                      全部已读
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setShowNotifications(false)}
-                    className="w-5 h-5 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors cursor-pointer text-xs"
-                    title="关闭消息"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-0.5">
-                {notifications.length === 0 ? (
-                  <div className="py-6 text-center text-[11px] text-gray-400 dark:text-slate-400">
-                    暂无操作记录
-                  </div>
-                ) : (
-                  notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      className={`p-2.5 rounded-xl text-xs transition-colors ${
-                        !n.read
-                          ? "bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/60 dark:border-teal-900/80"
-                          : "bg-gray-50 dark:bg-slate-700/40 border border-transparent"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <span className="font-bold text-gray-900 dark:text-white leading-tight break-words">
-                          {n.title}
-                        </span>
-                        <span className="text-[10px] text-gray-400 dark:text-slate-400 shrink-0 whitespace-nowrap">
-                          {formatRelativeTime(n.createdAt)}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-gray-600 dark:text-slate-300 leading-relaxed break-words">
-                        {n.content}
-                      </p>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </aside>
 
