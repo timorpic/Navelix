@@ -71,6 +71,64 @@ export default function BrandIcon({ name, className = "w-5 h-5" }: BrandIconProp
           </svg>
         </div>
       );
+    case "iconpark":
+    case "iconpark-cat":
+      return (
+        <div className={`flex items-center justify-center rounded-lg bg-gradient-to-tr from-sky-500 to-indigo-600 text-white p-1 ${className}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" />
+            <rect x="14" y="3" width="7" height="7" rx="1.5" />
+            <rect x="14" y="14" width="7" height="7" rx="1.5" />
+            <circle cx="6.5" cy="17.5" r="3.5" />
+          </svg>
+        </div>
+      );
+    case "iconfont":
+      return (
+        <div className={`flex items-center justify-center rounded-lg bg-[#1890FF] text-white p-1 ${className}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+        </div>
+      );
+    case "tabler":
+    case "tabler-icons":
+      return (
+        <div className={`flex items-center justify-center rounded-lg bg-[#0054A6] text-white p-1 ${className}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+            <path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+            <path d="M9 12l2 2l4 -4" />
+          </svg>
+        </div>
+      );
+    case "google":
+    case "material-symbols":
+      return (
+        <div className={`flex items-center justify-center rounded-lg bg-white border border-gray-100 shadow-xs p-1 ${className}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-blue-500">
+            <path d="M12 3v18M3 12h18M5.636 5.636l12.728 12.728M18.364 5.636L5.636 18.364" />
+          </svg>
+        </div>
+      );
+    case "iconoir":
+      return (
+        <div className={`flex items-center justify-center rounded-lg bg-slate-900 text-white p-1 ${className}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 3" />
+          </svg>
+        </div>
+      );
+    case "qingicon":
+      return (
+        <div className={`flex items-center justify-center rounded-lg bg-[#00C776] text-white p-1 ${className}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+            <polyline points="2 17 12 22 22 17" />
+            <polyline points="2 12 12 17 22 12" />
+          </svg>
+        </div>
+      );
     case "vercel":
     case "vercel-cat":
       return (
@@ -161,24 +219,6 @@ export default function BrandIcon({ name, className = "w-5 h-5" }: BrandIconProp
           <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
             <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
           </svg>
-        </div>
-      );
-    case "medium":
-      return (
-        <div className={`flex items-center justify-center rounded-lg bg-black text-white font-bold text-xs p-1 ${className}`}>
-          M
-        </div>
-      );
-    case "sspai":
-      return (
-        <div className={`flex items-center justify-center rounded-lg bg-[#D71920] text-white font-bold text-xs p-1 ${className}`}>
-          π
-        </div>
-      );
-    case "coursera":
-      return (
-        <div className={`flex items-center justify-center rounded-lg bg-[#0056D2] text-white font-bold text-xs p-1 ${className}`}>
-          C
         </div>
       );
     default:

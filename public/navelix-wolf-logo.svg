@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <!-- Theme Emerald Gradient -->
+    <linearGradient id="wolf-line-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3bf79e" />
+      <stop offset="50%" stop-color="#00C776" />
+      <stop offset="100%" stop-color="#008f53" />
+    </linearGradient>
+
+    <linearGradient id="bg-wolf-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#051c14" />
+      <stop offset="100%" stop-color="#0a2b1f" />
+    </linearGradient>
+
+    <!-- Neon Line Glow Filter -->
+    <filter id="line-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#00C776" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- Dark Slate Background Container -->
+  <rect width="256" height="256" rx="56" fill="url(#bg-wolf-grad)" stroke="#00C776" stroke-opacity="0.25" stroke-width="2" />
+
+  <!-- Single-Line Continuous Wolf Emblem (2D Minimalist Tattoo Style) -->
+  <g filter="url(#line-glow)">
+    <!-- Continuous Single Line Outline -->
+    <path
+      d="M 52,185 
+         C 50,170 54,152 64,138 
+         C 72,126 84,116 92,104 
+         C 96,98 94,90 92,82 
+         C 90,74 84,68 86,56 
+         C 88,44 100,32 112,34 
+         C 120,35 128,42 134,36 
+         C 140,30 144,22 154,24 
+         C 162,26 166,36 174,42 
+         C 182,48 196,50 200,60 
+         C 204,70 196,80 190,88 
+         C 182,98 174,104 168,114 
+         C 162,124 160,136 156,148 
+         C 152,160 148,172 144,185 
+         M 144,185
+         C 142,175 142,165 138,155 
+         C 134,145 124,138 116,132 
+         C 106,124 98,132 90,138 
+         C 82,144 76,155 74,166 
+         C 72,175 74,182 72,185
+         M 92,104
+         C 104,108 118,108 130,102
+         C 142,96 152,86 160,76
+         M 112,34
+         C 118,48 126,58 138,64
+         M 174,42
+         C 166,54 156,64 144,72"
+      stroke="url(#wolf-line-grad)"
+      stroke-width="5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+
+    <!-- Stylized Eye Accent -->
+    <circle cx="152" cy="52" r="3.5" fill="#3bf79e" />
+
+    <!-- Harmonic Ground Base Stroke -->
+    <path
+      d="M 40,192 H 216"
+      stroke="url(#wolf-line-grad)"
+      stroke-width="4"
+      stroke-linecap="round"
+      opacity="0.8"
+    />
+  </g>
+</svg>

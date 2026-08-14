@@ -87,7 +87,12 @@ export default function TodoWidget() {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
-          <span className="text-sm">✅</span>
+          <span className="p-1 rounded-md bg-[#00C776]/10 text-[#00C776] flex items-center justify-center">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 11l3 3l8 -8" />
+              <path d="M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9" />
+            </svg>
+          </span>
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">
             待办事项
           </h3>

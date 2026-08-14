@@ -155,7 +155,12 @@ export default function TopStatsBar({
         {/* 卡片 1：今日专注 */}
         <div className="lg:col-span-2 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-            <span className="p-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60">⏱️</span>
+            <span className="p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <polyline points="12 7 12 12 15 15" />
+              </svg>
+            </span>
             <span>今日专注</span>
           </div>
           <div className="my-1">
@@ -174,7 +179,12 @@ export default function TopStatsBar({
         {/* 卡片 2：待办任务 */}
         <div className="lg:col-span-2 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-sky-600 dark:text-sky-400">
-            <span className="p-0.5 rounded bg-sky-50 dark:bg-sky-950/60">📋</span>
+            <span className="p-1 rounded-md bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 11l3 3l8 -8" />
+                <path d="M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9" />
+              </svg>
+            </span>
             <span>待办任务</span>
           </div>
           <div className="my-1">
@@ -193,7 +203,11 @@ export default function TopStatsBar({
         {/* 卡片 3：知识笔记/书签 */}
         <div className="lg:col-span-2 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-purple-600 dark:text-purple-400">
-            <span className="p-0.5 rounded bg-purple-50 dark:bg-purple-950/60">📚</span>
+            <span className="p-1 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 7v14l-6 -4l-6 4v-14a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4z" />
+              </svg>
+            </span>
             <span>知识笔记</span>
           </div>
           <div className="my-1">
@@ -212,7 +226,13 @@ export default function TopStatsBar({
         {/* 卡片 4：项目进度 */}
         <div className="lg:col-span-2 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">
-            <span className="p-0.5 rounded bg-amber-50 dark:bg-amber-950/60">📊</span>
+            <span className="p-1 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                <path d="M12 8m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                <path d="M17 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+              </svg>
+            </span>
             <span>项目进度</span>
           </div>
           <div className="my-1">

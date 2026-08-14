@@ -11,6 +11,11 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "Navelix · Personal Digital Hub",
   description: "Your personal digital operating system - navigation, tools, and projects in one workspace.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 // 主题初始化脚本：在浏览器解析 <body> 前绝对同步执行，消除白屏/浅色闪烁 (FOUC)

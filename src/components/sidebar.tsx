@@ -229,7 +229,7 @@ export default function Sidebar({
           <div className="flex items-center gap-2">
             <LogoMark size="sm" />
             <span className="text-sm font-bold tracking-tight text-gray-900 dark:text-white truncate">
-              {config.logoText || "Navelix"}
+              Navelix
             </span>
           </div>
         </div>
@@ -256,11 +256,11 @@ export default function Sidebar({
       >
         {/* Top Section - 填满剩余空间，让底部抽屉固定在最低端 */}
         <div className="flex-1 min-h-0 flex flex-col gap-6">
-          {/* Brand Logo with Custom Logo Text */}
+          {/* Brand Logo */}
           <div className="flex items-center gap-3 px-2">
             <LogoMark size="md" />
             <span className="text-lg font-bold tracking-tight truncate text-gray-900 dark:text-white">
-              {config.logoText || "Navelix"}
+              Navelix
             </span>
           </div>
 
@@ -350,23 +350,31 @@ export default function Sidebar({
             <div className="flex items-center gap-0.5 mb-1.5 bg-black/5 dark:bg-white/5 rounded-lg p-0.5">
               <button
                 onClick={() => setClockTab("time")}
-                className={`flex-1 py-0.5 rounded-md text-[10px] font-semibold transition-all cursor-pointer ${
+                className={`flex-1 py-0.5 px-1.5 rounded-md text-[10px] font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
                   clockTab === "time"
                     ? "bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm"
                     : "text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300"
                 }`}
               >
-                🕐 时钟
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <polyline points="12 7 12 12 15 15" />
+                </svg>
+                <span>时钟</span>
               </button>
               <button
                 onClick={() => setClockTab("weather")}
-                className={`flex-1 py-0.5 rounded-md text-[10px] font-semibold transition-all cursor-pointer ${
+                className={`flex-1 py-0.5 px-1.5 rounded-md text-[10px] font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
                   clockTab === "weather"
                     ? "bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm"
                     : "text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300"
                 }`}
               >
-                🌤️ 天气
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3v2M12 19v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                  <circle cx="12" cy="12" r="5" />
+                </svg>
+                <span>天气</span>
               </button>
             </div>
 

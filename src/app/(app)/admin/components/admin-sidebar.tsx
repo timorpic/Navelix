@@ -92,7 +92,7 @@ export default function AdminSidebar({
           <LogoMark size="md" />
           <div className="flex flex-col min-w-0">
             <span className="text-base font-bold tracking-tight text-gray-900 dark:text-white truncate">
-              _{logoText.toLowerCase() || "navelix"} Navelix
+              Navelix
             </span>
             <span className="text-[10px] font-medium text-gray-400 dark:text-slate-400">
               后台管理控制台
