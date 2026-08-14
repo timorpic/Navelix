@@ -1,31 +1,31 @@
-# Dependencies
+# ── Dependencies ──
 node_modules
 .pnpm-store
 .pnpm-store-tmp
 
-# Next.js build output
+# ── Next.js Build Output ──
 .next
 out
 build
 tsconfig.tsbuildinfo
 
-# Runtime data (SQLite database, admin password)
+# ── Runtime Data (SQLite database, admin password) ──
 data
 *.db
 *.db-shm
 *.db-wal
 
-# Environment & secrets
+# ── Environment & Secrets ──
 .env
 .env*.local
 .env*.development
 .env*.production
 
-# Git
+# ── Git Repository ──
 .git
 .gitignore
 
-# Docs & metadata (not needed in build context)
+# ── Documentation & Metadata ──
 *.md
 AGENTS.md
 CLAUDE.md
@@ -34,17 +34,11 @@ review-report.md
 review-report-v2.md
 delivery-summary.md
 
-# Logs & temp
+# ── Logs & Temp ──
 *.log
 npm-debug.log*
 pnpm-debug.log*
-*.tsbuildinfo
-tmp
-temp
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Tests (not needed for production image)
-src/**/*.test.ts
+yarn-debug.log*
+yarn-error.log*
+.workbuddy
+.gemini

@@ -60,80 +60,28 @@ docker run -d \
   timorpic/navelix:latest
 ```
 
-启动后，在局域网内任意设备浏览器访问：`http://<主机IP>:3721`
-
 ---
 
-## 🔑 初始管理员账号与密码获取
-
-- **默认账号**：`admin`
-- **指定密码**：通过环境变量 `NAVELIX_ADMIN_PASSWORD` 指定。
-- **自动生成密码**：若未指定 `NAVELIX_ADMIN_PASSWORD`，系统**仅在数据库为空时**自动生成 16 位随机强密码（scrypt 加盐哈希存储）：
-  - 容器启动控制台日志：`docker logs navelix`，关键字 `[Navelix] 管理员 admin 的初始密码为:`
-  - 宿主机（卷挂载后）：`./data/navelix-admin-password.txt`
-  - 容器内：`/app/data/navelix-admin-password.txt`
-- **只生成一次**：如果 `data` 卷已有数据库，不会重新生成密码，沿用现有密码；如需重置，删除 `data` 卷重新初始化，或通过 `NAVELIX_ADMIN_PASSWORD` 指定新密码。
-- **旧库自动轮换**：若旧数据库管理员密码仍为遗留弱密码 `admin123`，升级启动时会自动轮换为随机强密码（同样写入日志与提示文件）。
-- 登录后请前往后台管理界面（`/admin`）尽快修改密码，并删除提示文本文件。
-
-> 💡 **http 局域网访问**：容器默认以 http 提供服务。如果登录后总是被弹回登录页，检查 `NAVELIX_COOKIE_SECURE` 是否误设为 `true`——局域网 http 部署应保持 `false`（默认）；只有使用 HTTPS 时才设为 `true`。
-
----
-
-## ⚙️ 环境变量说明
+## ⚙️ 环境变量与参数说明
 
 | 环境变量 | 默认值 | 说明 |
 | --- | --- | --- |
 | `PORT` | `3721` | 容器内服务监听端口 |
 | `HOSTNAME` | `0.0.0.0` | 绑定网络主机地址 |
-| `NAVELIX_ADMIN_PASSWORD` | *(留空)* | 初始管理员密码，留空则自动生成强密码 |
-| `NAVELIX_COOKIE_SECURE` | `false` | 会话 Cookie 是否带 Secure 属性；局域网 http 保持 `false`，HTTPS 时设为 `true` |
-| `NAVELIX_IMAGE_REPO` | `timorpic/navelix` | 版本更新检测使用的镜像仓库，可改为自己的仓库 |
+| `NAVELIX_ADMIN_PASSWORD` | *(留空)* | 初始管理员密码，留空则自动生成随机强密码并保存在 `data/` 目录下 |
+| `NAVELIX_COOKIE_SECURE` | `false` | Cookie Secure 属性；HTTP 保持 `false`，HTTPS 设为 `true` |
+| `TRUST_PROXY` | `false` | 是否信任反向代理 `X-Forwarded-For` 标头 |
+| `NAVELIX_IMAGE_REPO` | `timorpic/navelix` | 版本更新检测使用的镜像仓库 |
 | `TZ` | `Asia/Shanghai` | 容器运行时时区配置 |
 
 ---
 
-## 💾 数据持久化卷 (Volumes)
+## 💾 数据持久化与备份
 
-| 容器内路径 | 宿主机映射推荐 | 说明 |
-| --- | --- | --- |
-| `/app/data` | `./data` | 保存 SQLite 数据库（`nexus.db`）、初始密码文本及相关持久化配置 |
-
-> 💡 **权限提示**：如遇到宿主机挂载目录权限限制导致的 `ERR_SQLITE_ERROR 14: unable to open database file`，可以在宿主机运行 `sudo chown -R 1001:1001 ./data` 或 `sudo chmod 777 ./data` 赋权（新版镜像自带 entrypoint 脚本会自动修正底层目录权限）。
+所有业务数据、系统配置、用户信息均存储于挂载的 `/app/data` 目录（例如 `nexus.db`）。
+- 支持后台一键下载 `.db` 完整数据库物理快照；
+- 支持后台直接上传历史 `.db` 备份文件一键还原全量数据。
 
 ---
 
-## 🔄 版本更新检测（内置）
-
-Navelix 内置版本自检，**无需群晖更新检测或第三方工具**：
-
-- 每次 GitHub Actions 构建镜像时，自动打 `sha-<commit>` 标签（不可变锚点）+ 更新 `latest`（仅 main 分支）
-- 当你推送 Git 版本标签（如 `git tag v1.2.0 && git push --tags`）时，额外生成 `v1.2.0`、`v1.2` 语义化版本标签
-- 登录后台 →「系统设置 → 版本与更新」，应用会自动（也可手动点击"检查更新"）对比 Docker Hub 上的最新版本
-  - 日常构建（`sha-xxx`）：对比最新 `sha-*` 标签的时间戳
-  - 发布版本（`v1.2.0`）：对比语义化版本号
-- 有更新即提示升级：`docker compose pull && docker compose up -d`
-- 检测结果缓存 10 分钟；`NAVELIX_IMAGE_REPO` 环境变量可指定自己的镜像仓库
-- 部署建议：日常用 `latest` 跟随更新；发布/回滚时固定到 `sha-<commit>` 或 `v1.2.0` 精确标签
-
-## 🔄 升级与维护
-
-```bash
-# 拉取最新镜像
-docker compose pull
-
-# 重建并启动容器
-docker compose up -d
-
-# 清理旧镜像
-docker image prune -f
-```
-
----
-
-## ✨ 核心特性
-
-- 导航管理：支持内置 3 大分类、图标连通性检测、Sun-Panel / 浏览器书签导入导出
-- AI 智能助手：服务端代理请求，集成标准 OpenAI 兼容接口（DeepSeek / ChatGPT / Ollama 等）
-- 个人工作台：系统内置头像库、自定义 LOGO、时钟、每日数据概览、多设备同步项目看板
-- 安全高效：底层基于 Node 22 内置 `node:sqlite`（零原生 C 扩展依赖），非 root 权限运行
+**Navelix · Personal Digital Hub** — 让每一个常用入口，都在它该在的地方。

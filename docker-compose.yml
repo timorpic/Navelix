@@ -1,3 +1,4 @@
+# ── Navelix Production Docker Compose Deployment ──
 name: navelix
 
 services:

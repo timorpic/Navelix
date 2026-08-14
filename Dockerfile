@@ -1,3 +1,4 @@
+# ── Navelix Multi-Stage Production Dockerfile ──
 FROM node:22-alpine AS base
 
 # Stage 1: Dependencies
@@ -29,7 +30,7 @@ ENV HOSTNAME=0.0.0.0
 # 构建元数据：用于应用内自检更新（由 GitHub Actions 通过 build-args 注入）
 ARG SOURCE_SHA=unknown
 ARG BUILD_DATE=unknown
-ARG NAVELIX_VERSION=dev
+ARG NAVELIX_VERSION=1.0.4
 ENV NAVELIX_SOURCE_SHA=$SOURCE_SHA
 ENV NAVELIX_BUILD_DATE=$BUILD_DATE
 ENV NAVELIX_VERSION=$NAVELIX_VERSION
