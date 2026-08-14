@@ -1,2 +1,3 @@
+# ── PNPM Workspace Configuration ──
 allowBuilds:
   unrs-resolver: true
