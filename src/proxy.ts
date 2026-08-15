@@ -3,7 +3,7 @@ import { checkCSRF } from "@/lib/csrf";
 
 /**
  * 向 NextResponse 注入安全响应头。
- * 注意：此 middleware 仅覆盖 /api/* 路径（由 matcher 控制）。
+ * 注意：此 proxy 仅覆盖 /api/* 路径（由 matcher 控制）。
  * 页面级安全头已在 next.config.ts 的 headers() 中全局配置。
  */
 function applySecurityHeaders(res: NextResponse): NextResponse {
@@ -30,7 +30,7 @@ function applySecurityHeaders(res: NextResponse): NextResponse {
   return res;
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const method = req.method.toUpperCase();
 
   // 对所有 API 的写操作（POST / PUT / PATCH / DELETE）强制进行 CSRF / Origin 校验

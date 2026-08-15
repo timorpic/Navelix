@@ -124,7 +124,6 @@ export async function POST(req: Request) {
 当前进行中的项目：${activeProjects.map((p) => p.name).join("、") || "暂无特定项目"}
 已有未完成待办：${pendingTodos.map((t) => t.title).join("、") || "暂无未完成待办"}`;
 
-    const controller = new AbortController();
     try {
       const response = await safeFetch(targetUrl, {
         method: "POST",

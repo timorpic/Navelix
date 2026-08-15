@@ -90,13 +90,15 @@ export default function Sidebar({
 
   useEffect(() => {
     if (user) {
-      setCurrentUser({
-        username: user.username,
-        displayName: user.displayName,
-        role: user.role,
-        avatar: user.avatar,
-        email: user.email,
-        bio: user.bio,
+      queueMicrotask(() => {
+        setCurrentUser({
+          username: user.username,
+          displayName: user.displayName,
+          role: user.role,
+          avatar: user.avatar,
+          email: user.email,
+          bio: user.bio,
+        });
       });
     }
   }, [user]);

@@ -42,9 +42,11 @@ export default function ModelMonitorPanel() {
 
   // 跨设备与加载时同步最新已存配置
   useEffect(() => {
-    if (config.sensenovaUsername !== undefined) setSnUsername(config.sensenovaUsername || "");
-    if (config.sensenovaAccountId !== undefined) setSnAccountId(config.sensenovaAccountId || "");
-    if (config.sensenovaEnabled !== undefined) setSnEnabled(Boolean(config.sensenovaEnabled));
+    queueMicrotask(() => {
+      if (config.sensenovaUsername !== undefined) setSnUsername(config.sensenovaUsername || "");
+      if (config.sensenovaAccountId !== undefined) setSnAccountId(config.sensenovaAccountId || "");
+      if (config.sensenovaEnabled !== undefined) setSnEnabled(Boolean(config.sensenovaEnabled));
+    });
   }, [config.sensenovaUsername, config.sensenovaAccountId, config.sensenovaEnabled]);
 
   // 拉取商汤用量数据
