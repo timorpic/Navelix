@@ -42,6 +42,15 @@ export const defaultConfig: SystemConfig = {
 };
 
 export interface NavelixDataApi {
+  user?: {
+    id: string;
+    username: string;
+    displayName: string;
+    email: string;
+    bio: string;
+    role: "admin" | "user";
+    avatar: string;
+  } | null;
   categories: Category[];
   links: SiteLink[];
   projects: Project[];

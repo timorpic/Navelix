@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Modal from "./modal";
 import LogoMark from "./logo-mark";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
+import { useNavelixData } from "@/hooks/use-navelix-data";
 import { resolveAvatar } from "@/lib/avatars";
 import { clearCachedUserData } from "./navelix-provider";
 import type { Category } from "@/types";
@@ -23,6 +24,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const router = useRouter();
   const { config, updateConfig, isDark } = useNavelixConfig();
+  const { user } = useNavelixData();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [now, setNow] = useState<Date>(() => new Date(0));
@@ -77,14 +79,27 @@ export default function Sidebar({
     avatar?: string;
     email?: string;
     bio?: string;
-  } | null>(null);
+  } | null>(() => (user ? {
+    username: user.username,
+    displayName: user.displayName,
+    role: user.role,
+    avatar: user.avatar,
+    email: user.email,
+    bio: user.bio,
+  } : null));
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((data) => setCurrentUser(data.user ?? null))
-      .catch(() => setCurrentUser(null));
-  }, []);
+    if (user) {
+      setCurrentUser({
+        username: user.username,
+        displayName: user.displayName,
+        role: user.role,
+        avatar: user.avatar,
+        email: user.email,
+        bio: user.bio,
+      });
+    }
+  }, [user]);
 
   // 实时时钟
   useEffect(() => {

@@ -388,9 +388,29 @@ async function login(config: UsageConfig): Promise<string> {
       is_encrypt: isEncrypt,
     }),
   })
-  const loginVerifier = _extractLoginVerifier(r5.text)
+  const loginVerifier = _extractLoginVerifier(r5.text, r5.location)
   if (!loginVerifier) {
-    throw new Error('登录失败：未获取到 login_verifier（凭据错误或登录接口变更）')
+    clearTokenCache()
+    let detail = ''
+    try {
+      const j = JSON.parse(r5.text)
+      detail =
+        j.msg ||
+        j.message ||
+        j.error_description ||
+        j.error_msg ||
+        j.error ||
+        (j.code !== undefined ? `错误码 ${j.code}` : '')
+    } catch {
+      detail = r5.text ? r5.text.slice(0, 200) : r5.status ? `HTTP ${r5.status}` : ''
+    }
+    throw new Error(
+      `登录失败：${
+        detail
+          ? `商汤平台返回「${detail}」`
+          : '未获取到 login_verifier（请检查后台商汤账号密码是否正确）'
+      }`,
+    )
   }
 
   // 6) 带 login_verifier 回到 oauth2/auth → 直接拿到 code（已授权）或 consent_challenge
@@ -435,12 +455,16 @@ async function login(config: UsageConfig): Promise<string> {
   return accessToken
 }
 
-/** 从 nova/login 响应抽取 login_verifier（兼容 redirect 字段 / 直接字段 / 文本） */
-function _extractLoginVerifier(text: string): string | null {
+/** 从 nova/login 响应抽取 login_verifier（兼容 redirect 字段 / 直接字段 / location / 文本） */
+function _extractLoginVerifier(text: string, location?: string | null): string | null {
+  if (location) {
+    const fromLoc = _extractParam(location, 'login_verifier')
+    if (fromLoc) return fromLoc
+  }
   let fromRedirect: string | null = null
   try {
     const j = JSON.parse(text)
-    const redirect: string | undefined = j.redirect ?? j.data?.redirect
+    const redirect: string | undefined = j.redirect ?? j.data?.redirect ?? j.url ?? j.data?.url
     if (redirect) fromRedirect = _extractParam(redirect, 'login_verifier')
     if (!fromRedirect) {
       const direct = j.login_verifier ?? j.data?.login_verifier

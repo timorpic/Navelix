@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useNavelixConfig } from "@/hooks/use-navelix-config";
 
 interface ModelUsage {
   name: string;
@@ -38,6 +39,7 @@ function formatTime(d: Date | null): string {
 }
 
 export default function SenseNovaUsage() {
+  const { config } = useNavelixConfig();
   const [data, setData] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -45,6 +47,10 @@ export default function SenseNovaUsage() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchData = useCallback(async (isManual = false) => {
+    if (!config.sensenovaEnabled) {
+      setLoading(false);
+      return;
+    }
     if (isManual) setRefreshing(true);
     else setLoading(true);
     try {
@@ -85,9 +91,10 @@ export default function SenseNovaUsage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [config.sensenovaEnabled]);
 
   useEffect(() => {
+    if (!config.sensenovaEnabled) return;
     queueMicrotask(() => {
       fetchData();
     });
@@ -95,7 +102,12 @@ export default function SenseNovaUsage() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [fetchData]);
+  }, [config.sensenovaEnabled, fetchData]);
+
+  // 前台开关为隐藏时，完全不渲染该卡片 DOM（整个块彻底隐藏）
+  if (!config.sensenovaEnabled || (data && data.enabled === false)) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col bg-white dark:bg-slate-800/90 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 shadow-2xs transition-colors">

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useMemo } from "react";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
+import { useNavelixData } from "@/hooks/use-navelix-data";
 import SearchBar from "./search-bar";
 import LogoMark from "./logo-mark";
 
@@ -16,30 +17,10 @@ export default function HeroBanner({
   onSearchChange,
 }: HeroBannerProps) {
   const { config } = useNavelixConfig();
+  const { user } = useNavelixData();
 
-  // 1. 用户信息
-  const [userName, setUserName] = useState<string>("亚历克斯");
-
-  // 2. 获取当前用户数据
-  const loadData = useCallback(async () => {
-    try {
-      const userRes = await fetch("/api/auth/me").catch(() => null);
-      if (userRes && userRes.ok) {
-        const uData = await userRes.json();
-        if (uData?.user) {
-          setUserName(uData.user.displayName || uData.user.username || "亚历克斯");
-        }
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      loadData();
-    });
-  }, [loadData]);
+  // 1. 直接同步使用 SSR / 响应式注入的用户昵称，杜绝任何假名或旧名一闪而过
+  const userName = user?.displayName || user?.username || config.logoText || "朋友";
 
   // 3. 计算时间与动态问候语
   const { greeting, dateString } = useMemo(() => {

@@ -33,13 +33,19 @@ export default function ModelMonitorPanel() {
   const [sensenovaLoading, setSensenovaLoading] = useState(true);
   const [sensenovaRefreshing, setSensenovaRefreshing] = useState(false);
   const [sensenovaLastUpdated, setSensenovaLastUpdated] = useState<Date | null>(null);
-
   const [snUsername, setSnUsername] = useState(config.sensenovaUsername || "");
-  const [snPassword, setSnPassword] = useState(config.sensenovaPassword || "");
+  const [snPassword, setSnPassword] = useState("");
   const [snAccountId, setSnAccountId] = useState(config.sensenovaAccountId || "");
-  const [snTokenKey, setSnTokenKey] = useState(config.sensenovaTokenKey || "");
+  const [snTokenKey, setSnTokenKey] = useState("");
   const [snEnabled, setSnEnabled] = useState(Boolean(config.sensenovaEnabled));
   const [snSavedNotice, setSnSavedNotice] = useState("");
+
+  // 跨设备与加载时同步最新已存配置
+  useEffect(() => {
+    if (config.sensenovaUsername !== undefined) setSnUsername(config.sensenovaUsername || "");
+    if (config.sensenovaAccountId !== undefined) setSnAccountId(config.sensenovaAccountId || "");
+    if (config.sensenovaEnabled !== undefined) setSnEnabled(Boolean(config.sensenovaEnabled));
+  }, [config.sensenovaUsername, config.sensenovaAccountId, config.sensenovaEnabled]);
 
   // 拉取商汤用量数据
   const fetchSenseNovaData = useCallback(async (isManual = false) => {
@@ -233,13 +239,18 @@ export default function ModelMonitorPanel() {
 
               <div>
                 <label className="block text-[11px] font-bold text-gray-600 dark:text-slate-300 mb-1">
-                  商汤密码 (Password)
+                  <span>商汤密码 (Password)</span>
+                  {config.sensenovaConfigured && (
+                    <span className="ml-1 text-[10px] text-[#00C776] font-normal">
+                      (✓ 服务端已保存)
+                    </span>
+                  )}
                 </label>
                 <input
                   type="password"
                   value={snPassword}
                   onChange={(e) => setSnPassword(e.target.value)}
-                  placeholder={config.sensenovaConfigured ? "已配置 - 留空保持不变" : "商汤登录密码"}
+                  placeholder={config.sensenovaConfigured ? "已安全保存 · 留空保持不变" : "商汤登录密码"}
                   className="w-full h-9 px-2.5 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white font-mono"
                 />
               </div>

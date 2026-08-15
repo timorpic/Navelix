@@ -43,6 +43,7 @@ export function NavelixProvider({
   children: React.ReactNode;
   initialData?: UserDataResult;
 }) {
+  const [user, setUser] = useState(initialData?.user ?? null);
   const [categories, setCategories] = useState<Category[]>(
     initialData?.categories ?? seedCategories,
   );
@@ -130,6 +131,7 @@ export function NavelixProvider({
         throw new Error("Not logged in");
       })
       .then((data) => {
+        if (data.user) setUser(data.user);
         if (Array.isArray(data.categories)) setCategories(data.categories);
         if (Array.isArray(data.links)) setLinks(data.links);
         if (Array.isArray(data.projects)) setProjects(data.projects);
@@ -402,6 +404,7 @@ export function NavelixProvider({
   }, []);
 
   const dataApi: NavelixDataApi = {
+    user,
     categories,
     links,
     projects,

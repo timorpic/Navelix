@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { getSessionUser } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "node:crypto";
+import { db, type UserRow } from "@/lib/db";
+import { getSessionUser, toPublicUser } from "@/lib/auth";
 
 function formatDateToIcs(dateStr: string): string {
   // input: YYYY-MM-DD -> output: YYYYMMDD
@@ -16,10 +17,31 @@ function getNextDayIcs(dateStr: string): string {
   return `${y}${m}${day}`;
 }
 
-export async function GET() {
-  const user = await getSessionUser();
+export async function GET(req: NextRequest) {
+  let user = await getSessionUser(req);
+
+  // 若未通过 Header / Session 鉴权，尝试从 URL Query 中提取 Token (兼容 iOS / Apple Calendar / Outlook 日历订阅链接)
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    const url = new URL(req.url);
+    const queryToken = url.searchParams.get("token") || url.searchParams.get("key");
+    if (queryToken && queryToken.startsWith("nvx_live_")) {
+      const tokenHash = createHash("sha256").update(queryToken).digest("hex");
+      const tokenRow = db
+        .prepare(
+          `SELECT u.id, u.username, u.password_hash, u.display_name, u.email, u.bio, u.role, u.avatar, u.created_at
+           FROM api_tokens t
+           JOIN users u ON u.id = t.user_id
+           WHERE t.token_hash = ?`,
+        )
+        .get(tokenHash) as UserRow | undefined;
+      if (tokenRow) {
+        user = toPublicUser(tokenRow);
+      }
+    }
+  }
+
+  if (!user) {
+    return NextResponse.json({ error: "未登录或日历订阅密钥无效" }, { status: 401 });
   }
 
   try {

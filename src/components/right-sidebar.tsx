@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
+import { useNavelixData } from "@/hooks/use-navelix-data";
 import type { AIChatMessage, Project, TodoItem } from "@/types";
 import FocusStatsWidget from "./focus-stats-widget";
 import SenseNovaUsage from "./sensenova-usage";
@@ -11,9 +12,10 @@ export default function RightSidebar({
   onSelectCategory?: (id: string) => void;
 }) {
   const { config } = useNavelixConfig();
+  const { user } = useNavelixData();
 
   // 1. 用户与工作区实时数据
-  const [userName, setUserName] = useState<string>("亚历克斯");
+  const userName = user?.displayName || user?.username || config.logoText || "朋友";
   const [projects, setProjects] = useState<Project[]>([]);
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -21,18 +23,10 @@ export default function RightSidebar({
   // 2. 加载工作区上下文
   const loadWorkspaceData = useCallback(async () => {
     try {
-      const [uRes, pRes, tRes] = await Promise.all([
-        fetch("/api/auth/me").catch(() => null),
+      const [pRes, tRes] = await Promise.all([
         fetch("/api/projects").catch(() => null),
         fetch("/api/todos").catch(() => null),
       ]);
-
-      if (uRes && uRes.ok) {
-        const u = await uRes.json();
-        if (u?.user) {
-          setUserName(u.user.displayName || u.user.username || "亚历克斯");
-        }
-      }
       if (pRes && pRes.ok) {
         const p = await pRes.json();
         if (Array.isArray(p.projects)) setProjects(p.projects);
@@ -368,7 +362,7 @@ export default function RightSidebar({
         <FocusStatsWidget />
 
         {/* ── Widget 1.5: SenseNova Model Usage Panel ── */}
-        <SenseNovaUsage />
+        {config.sensenovaEnabled && <SenseNovaUsage />}
 
         {/* ── Widget 3: Social Profile Links ── */}
         {socialLinks.length > 0 && (
