@@ -7,6 +7,7 @@ import AddLinkModal from "@/components/add-link-modal";
 import ConfirmDialog from "@/components/confirm-dialog";
 import Modal from "@/components/modal";
 import { useNavelixData } from "@/hooks/use-navelix-data";
+import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import {
   useLinkStatus,
   type LinkStatus,
@@ -52,9 +53,11 @@ export default function AdminLinksTab({ activeTab }: AdminLinksTabProps) {
     toggleQuickAccess,
   } = useNavelixData();
 
+  const { config } = useNavelixConfig();
+
   const { statuses, refresh: refreshStatuses } = useLinkStatus(
-    links,
-    60000,
+    config.linkStatusEnabled ? links : [],
+    (config.linkStatusInterval || 60) * 1000,
   );
 
   // UI State

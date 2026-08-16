@@ -26,9 +26,11 @@ export default function AdminUsersPanel() {
   const [newAvatar, setNewAvatar] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "user">("user");
 
+  const [notice, setNotice] = useState("");
+
   const flash = (msg: string) => {
-    // 用简单通知替代 flash
-    console.log("[Admin] %s", msg);
+    setNotice(msg);
+    window.setTimeout(() => setNotice(""), 2800);
   };
 
   const notify = (title: string, msg: string) => {
@@ -101,6 +103,11 @@ export default function AdminUsersPanel() {
 
   return (
     <>
+      {notice && (
+        <div className="fixed top-4 right-4 z-50 bg-gray-900 dark:bg-slate-700 text-white text-xs px-4 py-2 rounded-xl shadow-lg">
+          {notice}
+        </div>
+      )}
       <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100/90 dark:border-slate-700 shadow-2xs transition-colors">
         <div className="mb-5 flex items-center justify-between">
           <div>

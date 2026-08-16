@@ -5,6 +5,7 @@ import LogoMark from "@/components/logo-mark";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useNavelixData } from "@/hooks/use-navelix-data";
 import { fileToDataUrl } from "@/lib/image-utils";
+import { pushNotification } from "@/lib/notifications";
 import { parseBookmarksHTML } from "@/lib/bookmarks";
 import { parseSunPanelJSON } from "@/lib/sun-panel";
 import type { Category, SiteLink } from "@/types";
@@ -42,14 +43,15 @@ export default function AdminSystemTab() {
   const autoCheckedUpdateRef = useRef(false);
 
   // ── notify / flash helpers ──
-  const notify = (title: string, message: string) => {
-    // Simple console-based notification (matching parent's pattern)
-    console.log(`[${title}] ${message}`);
-  };
-
-  const flash = (message: string) => {
-    console.log(`[flash] ${message}`);
-  };
+    const [notice, setNotice] = useState("");
+    const flash = (msg: string) => {
+      setNotice(msg);
+      window.setTimeout(() => setNotice(""), 2800);
+    };
+    const notify = (title: string, message: string) => {
+      flash(message);
+      pushNotification(title, message);
+    };
 
   // ── Handler: Logo upload ──
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -385,8 +387,13 @@ export default function AdminSystemTab() {
   //  RENDER
   // ═══════════════════════════════════════════════════════════════
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-      {/* 左栏：站点品牌、搜索引擎、访问控制策略、自定义脚本与样式 (6 cols) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {notice && (
+          <div className="lg:col-span-12 mb-4 rounded-xl border border-[#00C776]/30 bg-[#00C776]/10 px-4 py-2.5 text-xs font-semibold text-[#009a5a] shadow-2xs">
+            {notice}
+          </div>
+        )}
+        {/* 左栏：站点品牌、搜索引擎、访问控制策略、自定义脚本与样式 (6 cols) */}
       <div className="lg:col-span-6 space-y-6">
         {/* 块 1：站点标题、LOGO 显示文本内容与图标 */}
         <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
