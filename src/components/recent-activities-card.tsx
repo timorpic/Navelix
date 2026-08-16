@@ -549,6 +549,7 @@ export default function RecentActivitiesCard({ links }: { links: SiteLink[] }) {
           <div className="md:col-span-5 relative">
             <input
               type="text"
+              name="activitySearch"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -571,6 +572,7 @@ export default function RecentActivitiesCard({ links }: { links: SiteLink[] }) {
           {/* 2. 来源下拉选择 */}
           <div className="md:col-span-3">
             <select
+              name="activityFilterSource"
               value={filterSource}
               onChange={(e) => {
                 setFilterSource(e.target.value as ActivitySource);
@@ -625,6 +627,7 @@ export default function RecentActivitiesCard({ links }: { links: SiteLink[] }) {
               </span>
               <input
                 type="date"
+                name="activityStartDate"
                 value={customStartDate}
                 onChange={(e) => {
                   setCustomStartDate(e.target.value);
@@ -636,6 +639,7 @@ export default function RecentActivitiesCard({ links }: { links: SiteLink[] }) {
               <span className="text-gray-400">至</span>
               <input
                 type="date"
+                name="activityEndDate"
                 value={customEndDate}
                 onChange={(e) => {
                   setCustomEndDate(e.target.value);
@@ -650,6 +654,7 @@ export default function RecentActivitiesCard({ links }: { links: SiteLink[] }) {
             <div className="flex items-center gap-2">
               <span className="text-gray-500 dark:text-slate-400">每页条数：</span>
               <select
+                name="activityPageSize"
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));

@@ -40,14 +40,7 @@ export default function ModelMonitorPanel() {
   const [snEnabled, setSnEnabled] = useState(Boolean(config.sensenovaEnabled));
   const [snSavedNotice, setSnSavedNotice] = useState("");
 
-  // 跨设备与加载时同步最新已存配置
-  useEffect(() => {
-    queueMicrotask(() => {
-      if (config.sensenovaUsername !== undefined) setSnUsername(config.sensenovaUsername || "");
-      if (config.sensenovaAccountId !== undefined) setSnAccountId(config.sensenovaAccountId || "");
-      if (config.sensenovaEnabled !== undefined) setSnEnabled(Boolean(config.sensenovaEnabled));
-    });
-  }, [config.sensenovaUsername, config.sensenovaAccountId, config.sensenovaEnabled]);
+  // 跨设备同步：useState 初始化器已捕获最新配置值，无需在 effect 中二次 setState
 
   // 拉取商汤用量数据
   const fetchSenseNovaData = useCallback(async (isManual = false) => {
@@ -94,6 +87,7 @@ export default function ModelMonitorPanel() {
   }, []);
 
   useEffect(() => {
+    // 挂载后拉取一次用量数据（异步 setState，规避级联渲染）
     queueMicrotask(() => {
       fetchSenseNovaData();
     });
@@ -231,9 +225,10 @@ export default function ModelMonitorPanel() {
                   商汤账号 (Username)
                 </label>
                 <input
-                  type="text"
-                  value={snUsername}
-                  onChange={(e) => setSnUsername(e.target.value)}
+                                  type="text"
+                                  name="snUsername"
+                                  value={snUsername}
+                                  onChange={(e) => setSnUsername(e.target.value)}
                   placeholder="商汤用户名 / 手机号"
                   className="w-full h-9 px-2.5 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white font-mono"
                 />
@@ -249,9 +244,10 @@ export default function ModelMonitorPanel() {
                   )}
                 </label>
                 <input
-                  type="password"
-                  value={snPassword}
-                  onChange={(e) => setSnPassword(e.target.value)}
+                                  type="password"
+                                  name="snPassword"
+                                  value={snPassword}
+                                  onChange={(e) => setSnPassword(e.target.value)}
                   placeholder={config.sensenovaConfigured ? "已安全保存 · 留空保持不变" : "商汤登录密码"}
                   className="w-full h-9 px-2.5 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white font-mono"
                 />
@@ -262,9 +258,10 @@ export default function ModelMonitorPanel() {
                   账号 ID (Account ID)
                 </label>
                 <input
-                  type="text"
-                  value={snAccountId}
-                  onChange={(e) => setSnAccountId(e.target.value)}
+                                  type="text"
+                                  name="snAccountId"
+                                  value={snAccountId}
+                                  onChange={(e) => setSnAccountId(e.target.value)}
                   placeholder="留空则用默认账号 ID"
                   className="w-full h-9 px-2.5 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white font-mono"
                 />
@@ -275,9 +272,10 @@ export default function ModelMonitorPanel() {
                   Token 密钥 (可选)
                 </label>
                 <input
-                  type="password"
-                  value={snTokenKey}
-                  onChange={(e) => setSnTokenKey(e.target.value)}
+                                  type="password"
+                                  name="snTokenKey"
+                                  value={snTokenKey}
+                                  onChange={(e) => setSnTokenKey(e.target.value)}
                   placeholder="留空使用默认密钥"
                   className="w-full h-9 px-2.5 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-gray-900 dark:text-white font-mono"
                 />

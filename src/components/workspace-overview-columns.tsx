@@ -332,6 +332,7 @@ export default function WorkspaceOverviewColumns({
             {/* 多项目轻量切换器 */}
             {projects.length > 1 && (
               <select
+                name="active-project"
                 value={currentActiveProject?.id || ""}
                 onChange={(e) => setActiveProjectId(e.target.value)}
                 className="px-2 py-0.5 text-xs font-bold bg-gray-100 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-gray-800 dark:text-slate-200 cursor-pointer max-w-[130px] truncate"
@@ -789,6 +790,7 @@ export default function WorkspaceOverviewColumns({
             className="flex-1 px-3 py-1.5 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 text-gray-800 dark:text-slate-100"
           />
           <select
+            name="quickTodoPriority"
             value={quickTodoPriority}
             onChange={(e) =>
               setQuickTodoPriority(e.target.value as "high" | "medium" | "low")

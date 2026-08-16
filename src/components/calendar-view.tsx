@@ -844,12 +844,14 @@ export default function CalendarView() {
               <div className="flex gap-2">
                 <input
                   type="text"
+                  name="newTodoTitle"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder={`添加 ${selectedDate.getMonth() + 1}/${selectedDate.getDate()} 新日程...`}
                   className="flex-1 px-3 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
                 />
                 <select
+                  name="newTodoPriority"
                   value={newPriority}
                   onChange={(e) =>
                     setNewPriority(e.target.value as "high" | "medium" | "low")
@@ -1247,6 +1249,7 @@ export default function CalendarView() {
                         {/* 任务名称 */}
                         <input
                           type="text"
+                          name="aiTaskTitle"
                           value={task.title}
                           onChange={(e) =>
                             handleUpdateAiTaskTitle(idx, e.target.value)
@@ -1256,6 +1259,7 @@ export default function CalendarView() {
 
                         {/* 优先级 */}
                         <select
+                          name="aiTaskPriority"
                           value={task.priority}
                           onChange={(e) =>
                             handleUpdateAiTaskPriority(
@@ -1336,6 +1340,7 @@ export default function CalendarView() {
                 <input
                   type="text"
                   required
+                  name="formTitle"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
@@ -1349,6 +1354,7 @@ export default function CalendarView() {
                   </label>
                   <input
                     type="date"
+                    name="formDueDate"
                     value={formDueDate}
                     onChange={(e) => setFormDueDate(e.target.value)}
                     className="w-full px-2 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white"
@@ -1360,6 +1366,7 @@ export default function CalendarView() {
                     精力与优先级
                   </label>
                   <select
+                    name="formPriority"
                     value={formPriority}
                     onChange={(e) =>
                       setFormPriority(e.target.value as "high" | "medium" | "low")
@@ -1379,6 +1386,7 @@ export default function CalendarView() {
                     关联项目
                   </label>
                   <select
+                    name="formProjectId"
                     value={formProjectId}
                     onChange={(e) => setFormProjectId(e.target.value)}
                     className="w-full px-2 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white"
@@ -1397,6 +1405,7 @@ export default function CalendarView() {
                     指派责任人
                   </label>
                   <select
+                    name="formAssigneeId"
                     value={formAssigneeId}
                     onChange={(e) => setFormAssigneeId(e.target.value)}
                     className="w-full px-2 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-gray-800 dark:text-white"

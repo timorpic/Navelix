@@ -633,6 +633,7 @@ export default function ProjectsView() {
                     {/* 任务名称输入 */}
                     <input
                       type="text"
+                      name="projectTaskTitle"
                       value={task.title}
                       onChange={(e) => handleUpdateTaskTitle(idx, e.target.value)}
                       placeholder="任务名称..."
@@ -642,6 +643,7 @@ export default function ProjectsView() {
                     {/* 指派责任人 */}
                     {members.length > 0 && (
                       <select
+                        name="projectTaskAssignee"
                         value={task.assigneeId || ""}
                         onChange={(e) =>
                           handleUpdateTaskAssignee(idx, e.target.value)
@@ -659,6 +661,7 @@ export default function ProjectsView() {
 
                     {/* 优先级选择 */}
                     <select
+                      name="projectTaskPriority"
                       value={task.priority}
                       onChange={(e) =>
                         handleUpdateTaskPriority(
@@ -686,6 +689,7 @@ export default function ProjectsView() {
                       </span>
                       <input
                         type="date"
+                        name="projectTaskDueDate"
                         value={task.dueDate}
                         onChange={(e) =>
                           handleUpdateTaskDueDate(idx, e.target.value)

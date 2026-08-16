@@ -221,6 +221,7 @@ export default function AvatarPicker({
                 生成风格：
               </label>
               <select
+                name="avatarStyle"
                 value={generatorStyle}
                 onChange={(e) => setGeneratorStyle(e.target.value)}
                 className="h-8 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-xs font-medium text-gray-800 dark:text-slate-200"

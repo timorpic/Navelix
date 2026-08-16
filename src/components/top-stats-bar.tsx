@@ -374,6 +374,7 @@ export default function TopStatsBar({
             </h3>
             <form onSubmit={handleSaveQuickNote} className="space-y-3">
               <textarea
+                name="quickNote"
                 value={quickNote}
                 onChange={(e) => setQuickNote(e.target.value)}
                 placeholder="在此快速记录随想、灵感或临时备忘..."
@@ -413,6 +414,7 @@ export default function TopStatsBar({
             <form onSubmit={handleCreateTask} className="space-y-3">
               <input
                 type="text"
+                name="taskTitle"
                 value={taskTitle}
                 onChange={(e) => setTaskTitle(e.target.value)}
                 placeholder="输入待办事项标题..."
@@ -451,6 +453,7 @@ export default function TopStatsBar({
             <form onSubmit={handleAiAsk} className="space-y-3">
               <input
                 type="text"
+                name="aiQuery"
                 value={aiQuery}
                 onChange={(e) => setAiQuery(e.target.value)}
                 placeholder="输入你想咨询或分析的内容..."

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Modal from "./modal";
@@ -36,16 +36,10 @@ export default function Sidebar({
     });
   }, []);
 
-  // 时钟 / 天气 / 模拟指针 切换 Widget State
-  const [clockTab, setClockTab] = useState<"time" | "weather" | "analog">("time");
-
-  useEffect(() => {
-    if (config.clockWidgetMode) {
-      queueMicrotask(() => {
-        setClockTab(config.clockWidgetMode as "time" | "weather" | "analog");
-      });
-    }
-  }, [config.clockWidgetMode]);
+  // 时钟 / 天气 / 模拟指针 切换 Widget State（初始值直接取自配置，无需 effect 同步）
+  const [clockTab, setClockTab] = useState<"time" | "weather" | "analog">(
+    () => config.clockWidgetMode || "time",
+  );
   const [weather, setWeather] = useState<{
     temp: number;
     windSpeed: number;
@@ -71,37 +65,15 @@ export default function Sidebar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Current User details state
-  const [currentUser, setCurrentUser] = useState<{
-    username: string;
-    displayName: string;
-    role: string;
-    avatar?: string;
-    email?: string;
-    bio?: string;
-  } | null>(() => (user ? {
+  // Current User details state — 从 user prop 派生，无需额外 effect
+  const currentUser = useMemo(() => user ? {
     username: user.username,
     displayName: user.displayName,
     role: user.role,
     avatar: user.avatar,
     email: user.email,
     bio: user.bio,
-  } : null));
-
-  useEffect(() => {
-    if (user) {
-      queueMicrotask(() => {
-        setCurrentUser({
-          username: user.username,
-          displayName: user.displayName,
-          role: user.role,
-          avatar: user.avatar,
-          email: user.email,
-          bio: user.bio,
-        });
-      });
-    }
-  }, [user]);
+  } : null, [user]);
 
   // 实时时钟
   useEffect(() => {
