@@ -220,6 +220,7 @@ export default function AdminPage() {
 
             <div onClick={() => { setShowAdminUserMenu(!showAdminUserMenu); setShowAdminNotifications(false); }} className="flex items-center gap-2 px-2.5 py-1 bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-gray-100 dark:border-slate-700 rounded-xl cursor-pointer select-none transition-colors">
               <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#3B82F6] to-[#00C776] text-white text-[10px] font-bold flex items-center justify-center overflow-hidden shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element -- 头像可能是任意图片地址或 data URL */}
                 <img src={resolveAvatar(currentUser?.avatar, currentUser?.username)} alt={currentUser?.displayName || "User"} className="w-full h-full object-cover" />
               </div>
               <span className="text-xs font-bold text-gray-800 dark:text-white truncate max-w-[100px]">{currentUser?.displayName || currentUser?.username || "Admin"}</span>
