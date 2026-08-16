@@ -1,17 +1,60 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 
 export default function AdminPersonalizationTab() {
   const { config, updateConfig } = useNavelixConfig();
 
+  // ── Draft state for text inputs (save on button click, not on keystroke) ──
+  const [draftBaseUrl, setDraftBaseUrl] = useState("");
+  const [draftApiKey, setDraftApiKey] = useState("");
+  const [draftModel, setDraftModel] = useState("");
+  const [draftWeatherKey, setDraftWeatherKey] = useState("");
+  const [draftWeatherLocation, setDraftWeatherLocation] = useState("");
+  const [draftWallpaperUrl, setDraftWallpaperUrl] = useState("");
+  const [notice, setNotice] = useState("");
+
+  // Sync drafts from config when hydrated
+  useEffect(() => {
+    if (config.aiBaseUrl !== undefined) {
+      setDraftBaseUrl(config.aiBaseUrl);
+      setDraftApiKey(config.aiApiKey ?? "");
+      setDraftModel(config.aiModel ?? "");
+      setDraftWeatherKey(config.weatherApiKey ?? "");
+      setDraftWeatherLocation(config.weatherLocation ?? "");
+      setDraftWallpaperUrl(config.customWallpaperUrl ?? "");
+    }
+  }, [config.aiBaseUrl, config.aiApiKey, config.aiModel, config.weatherApiKey, config.weatherLocation, config.customWallpaperUrl]);
+
+  // ── Save all text fields at once ──
+  const handleSave = () => {
+    updateConfig({
+      aiBaseUrl: draftBaseUrl,
+      aiApiKey: draftApiKey,
+      aiModel: draftModel,
+      weatherApiKey: draftWeatherKey,
+      weatherLocation: draftWeatherLocation,
+      customWallpaperUrl: draftWallpaperUrl,
+    });
+    setNotice("✅ 配置已保存");
+    window.setTimeout(() => setNotice(""), 2800);
+  };
+
   return (
     <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100/90 dark:border-slate-700 shadow-2xs space-y-6 transition-colors">
-      <div>
-        <h2 className="text-base font-bold text-gray-900 dark:text-white">界面与功能偏好</h2>
-        <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-          AI智能助手、天气预报组件、全屏背景壁纸与侧边栏指针表盘配置
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">界面与功能偏好</h2>
+          <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
+            AI智能助手、天气预报组件、全屏背景壁纸与侧边栏指针表盘配置
+          </p>
+        </div>
+        {notice && (
+          <div className="px-3 py-1.5 rounded-lg bg-[#00C776]/10 border border-[#00C776]/30 text-xs font-semibold text-[#00C776] animate-fadeIn whitespace-nowrap">
+            {notice}
+          </div>
+        )}
       </div>
 
       {/* AI Assistant API Config Section */}
@@ -40,8 +83,8 @@ export default function AdminPersonalizationTab() {
               id="admin-ai-base-url"
               name="aiBaseUrl"
               type="text"
-              value={config.aiBaseUrl || ""}
-              onChange={(e) => updateConfig({ aiBaseUrl: e.target.value })}
+              value={draftBaseUrl}
+              onChange={(e) => setDraftBaseUrl(e.target.value)}
               placeholder="https://api.openai.com/v1"
               className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
             />
@@ -58,8 +101,8 @@ export default function AdminPersonalizationTab() {
               id="admin-ai-api-key"
               name="aiApiKey"
               type="password"
-              value={config.aiApiKey ?? ""}
-              onChange={(e) => updateConfig({ aiApiKey: e.target.value })}
+              value={draftApiKey}
+              onChange={(e) => setDraftApiKey(e.target.value)}
               placeholder={config.aiKeyConfigured ? "已配置 - 留空则保持不变" : "sk-...（未配置）"}
               className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
             />
@@ -76,8 +119,8 @@ export default function AdminPersonalizationTab() {
               id="admin-ai-model"
               name="aiModel"
               type="text"
-              value={config.aiModel || ""}
-              onChange={(e) => updateConfig({ aiModel: e.target.value })}
+              value={draftModel}
+              onChange={(e) => setDraftModel(e.target.value)}
               placeholder="gpt-4o-mini 或 deepseek-chat"
               className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
             />
@@ -137,8 +180,8 @@ export default function AdminPersonalizationTab() {
               id="admin-weather-api-key"
               name="weatherApiKey"
               type="password"
-              value={config.weatherApiKey ?? ""}
-              onChange={(e) => updateConfig({ weatherApiKey: e.target.value })}
+              value={draftWeatherKey}
+              onChange={(e) => setDraftWeatherKey(e.target.value)}
               placeholder={config.weatherKeyConfigured ? "已配置 - 留空则保持不变" : "心知天气 Key"}
               className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
             />
@@ -155,8 +198,8 @@ export default function AdminPersonalizationTab() {
               id="admin-weather-location"
               name="weatherLocation"
               type="text"
-              value={config.weatherLocation || ""}
-              onChange={(e) => updateConfig({ weatherLocation: e.target.value })}
+              value={draftWeatherLocation}
+              onChange={(e) => setDraftWeatherLocation(e.target.value)}
               placeholder="例如 beijing 或 shanghai"
               className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
             />
@@ -184,7 +227,7 @@ export default function AdminPersonalizationTab() {
               书签链接打开方式
             </h4>
             <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-0.5">
-              选择在新标签页 (`target=&quot;_blank&quot;`) 打开，还是在当前窗口直接跳转 (`target=&quot;_self&quot;`)
+              选择在新标签页 (`target="_blank"`) 打开，还是在当前窗口直接跳转 (`target="_self"`)
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -272,10 +315,10 @@ export default function AdminPersonalizationTab() {
 
             {config.wallpaperMode === "custom" && (
               <input
-                              type="text"
-                              name="customWallpaperUrl"
-                              value={config.customWallpaperUrl || ""}
-                              onChange={(e) => updateConfig({ customWallpaperUrl: e.target.value })}
+                type="text"
+                name="customWallpaperUrl"
+                value={draftWallpaperUrl}
+                onChange={(e) => setDraftWallpaperUrl(e.target.value)}
                 placeholder="https://example.com/wallpaper.jpg"
                 className="w-full h-8.5 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono mt-2"
               />
@@ -400,6 +443,21 @@ export default function AdminPersonalizationTab() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Save Button Bar ── */}
+      <div className="pt-5 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between">
+        <p className="text-xs text-gray-400 dark:text-slate-400">
+          修改字符输入内容后需点击「保存更改」才会生效；开关和按钮选项即时生效
+        </p>
+        <button
+          type="button"
+          onClick={handleSave}
+          className="px-5 py-2 bg-[#00C776] hover:bg-[#00B368] text-white text-xs font-bold rounded-xl transition-all active:scale-[0.98] flex items-center gap-1.5 cursor-pointer"
+        >
+          <span>💾</span>
+          <span>保存更改</span>
+        </button>
       </div>
     </div>
   );
