@@ -332,8 +332,8 @@ Content-Type: application/json
 - **请求方式**: `GET /api/notifications`
 
 ### 7.3 标记通知已读 / 全部已读
-- **请求方式**: `PATCH /api/notifications/read`
-- **请求体**: `{ "all": true }` 或 `{ "id": "notif_123" }`
+- **请求方式**: `POST /api/notifications/read`
+- **请求体**: `{ "all": true }` 或 `{ "id": "notif_123" }`（当前实现为全部标记已读，无需请求体）
 
 ### 7.4 删除通知
 - **请求方式**: `DELETE /api/notifications/{id}`

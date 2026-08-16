@@ -58,7 +58,7 @@
 
 - **开放 API & 自动化 (Personal Access Token)**：
   - 支持 Personal Access Token (`nvx_live_...`) Bearer 鉴权。
-  - 提供完整 [API Wiki 开发文档](API_WIKI.md)，轻松集成 iOS 快捷指令、Docker CI/CD 消息推送、Python 自动化脚本与 AI 智能体。
+  - 提供完整 [API Wiki 开发文档](wiki/REST-API-开放接口文档.md)，轻松集成 iOS 快捷指令、Docker CI/CD 消息推送、Python 自动化脚本与 AI 智能体。
 
 - **管理后台**（`/admin`）：
   - 链接/分组/项目/用户管理、个人 API Token 管理、活跃会话踢出、个性化外观定制、访问统计、实时版本更新自检。
