@@ -124,27 +124,6 @@ docker compose up -d
 
 ---
 
-## 项目结构
-
-```text
-navelix/
-├── src/
-│   ├── app/          # Next.js App Router 页面与 API 路由
-│   ├── components/   # UI 组件库（甘特图、日历、管理面板等）
-│   ├── context/      # 全局状态 NavelixProvider
-│   ├── hooks/        # 自定义 React Hooks
-│   ├── lib/          # 安全/数据库/备份/SSRF/CSRF/日期时间工具
-│   └── types/        # TypeScript 类型定义
-├── data/             # SQLite 数据库持久化目录（运行时生成）
-├── .github/workflows/ # GitHub Actions CI/CD Pipeline
-├── Dockerfile
-├── docker-compose.yml
-├── API_WIKI.md       # 开放 API 接口文档
-└── README.md
-```
-
----
-
 ## 数据与隐私
 
 所有数据存储在本地 SQLite（`data/nexus.db`）。AI API Key / 天气 Key 仅保存在本地数据库且由服务端安全代理，导出配置时不会泄露。系统具备内置物理热备份与快速数据恢复。
