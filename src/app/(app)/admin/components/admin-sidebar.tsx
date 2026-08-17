@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import LogoMark from "@/components/logo-mark";
+import BrandLogoText from "@/components/brand-logo-text";
 import { resolveAvatar } from "@/lib/avatars";
 
 export type AdminTab =
@@ -103,7 +104,7 @@ export default function AdminSidebar({
           <LogoMark size="md" />
           <div className="flex flex-col min-w-0">
             <span className="text-base font-bold tracking-tight text-gray-900 dark:text-white truncate">
-              Navelix
+              <BrandLogoText />
             </span>
             <span className="text-[10px] font-medium text-gray-400 dark:text-slate-400">
               后台管理控制台

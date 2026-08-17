@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import HeroBanner from "@/components/hero-banner";
 import QuickAccess from "@/components/quick-access";
@@ -16,13 +17,98 @@ import { useNavelixData } from "@/hooks/use-navelix-data";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useLinkStatus } from "@/hooks/use-link-status";
 
-export default function Home() {
+function HomeContent() {
   const { categories, links, hydrated } = useNavelixData();
-  const { config } = useNavelixConfig();
+  const { config, updateConfig } = useNavelixConfig();
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get("tab") || searchParams.get("category");
 
-  const [activeCategory, setActiveCategory] = useState("all");
+  // 优先级：用户会话交互点击 > URL 查询参数（SSR 首帧直出） > 默认 "all"
+  const [internalCategory, setInternalCategory] = useState<string | null>(null);
+  const activeCategory = internalCategory ?? tabFromUrl ?? "all";
+
   const [searchQuery, setSearchQuery] = useState("");
   const [notice, setNotice] = useState("");
+
+  // 左右侧边栏收起状态：初始均由服务端 SSR Cookie/配置注入，确保首帧 100% 零闪烁与零跳动
+  const [leftCollapsed, setLeftCollapsed] = useState<boolean>(
+    () => config.sidebarDefaultState === "collapsed",
+  );
+  const [rightCollapsed, setRightCollapsed] = useState<boolean>(
+    () => config.sidebarRightDefaultState === "collapsed",
+  );
+
+  // 挂载后同步本地设备持久化记忆
+  useEffect(() => {
+    try {
+      const left = localStorage.getItem("navelix_sidebar_left");
+      if (left !== null) {
+        setLeftCollapsed(left === "true");
+      }
+      const right = localStorage.getItem("navelix_sidebar_right");
+      if (right !== null) {
+        setRightCollapsed(right === "true");
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // 监听浏览器前进/后退
+  useEffect(() => {
+    const handlePopState = () => {
+      try {
+        const url = new URL(window.location.href);
+        const tab = url.searchParams.get("tab") || url.searchParams.get("category") || "all";
+        setInternalCategory(tab);
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const handleSelectCategory = (id: string) => {
+    setInternalCategory(id);
+    try {
+      localStorage.setItem("navelix_active_category", id);
+      const url = new URL(window.location.href);
+      if (id === "all") {
+        url.searchParams.delete("tab");
+        url.searchParams.delete("category");
+      } else {
+        url.searchParams.set("tab", id);
+      }
+      window.history.pushState(null, "", url.toString());
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleLeftToggle = () => {
+    const next = !leftCollapsed;
+    setLeftCollapsed(next);
+    try {
+      localStorage.setItem("navelix_sidebar_left", String(next));
+      document.cookie = `navelix_sidebar_left=${next ? "1" : "0"};path=/;max-age=31536000;SameSite=Lax`;
+    } catch {
+      /* ignore */
+    }
+    updateConfig({ sidebarDefaultState: next ? "collapsed" : "expanded" });
+  };
+
+  const handleRightToggle = () => {
+    const next = !rightCollapsed;
+    setRightCollapsed(next);
+    try {
+      localStorage.setItem("navelix_sidebar_right", String(next));
+      document.cookie = `navelix_sidebar_right=${next ? "1" : "0"};path=/;max-age=31536000;SameSite=Lax`;
+    } catch {
+      /* ignore */
+    }
+    updateConfig({ sidebarRightDefaultState: next ? "collapsed" : "expanded" });
+  };
 
   const filteredLinks = useMemo(() => {
     let result = links;
@@ -96,12 +182,14 @@ export default function Home() {
       <Sidebar
         categories={categories}
         activeCategory={activeCategory}
-        onSelectCategory={setActiveCategory}
+        onSelectCategory={handleSelectCategory}
+        collapsed={leftCollapsed}
+        onToggle={handleLeftToggle}
       />
 
       {/* 2. Center Workspace Main Area */}
       <main className="relative z-10 flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-6">
-        <div className={`${maxWidthClass} mx-auto flex flex-col gap-3.5 transition-all duration-300`}>
+        <div className={`${maxWidthClass} mx-auto flex flex-col gap-3.5`}>
           {notice && (
             <div className="flex items-center justify-between p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs font-semibold text-amber-800 animate-fadeIn shadow-2xs">
               <div className="flex items-center gap-2">
@@ -132,7 +220,7 @@ export default function Home() {
               <HeroBanner
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
-                onSelectCategory={setActiveCategory}
+                onSelectCategory={handleSelectCategory}
               />
 
               {isFiltering ? (
@@ -147,7 +235,7 @@ export default function Home() {
                     </h2>
                     <button
                       onClick={() => {
-                        setActiveCategory("all");
+                        handleSelectCategory("all");
                         setSearchQuery("");
                       }}
                       className="text-xs text-[#00C776] hover:underline cursor-pointer"
@@ -164,7 +252,7 @@ export default function Home() {
                   <TopStatsBar
                     categories={categories}
                     links={links}
-                    onSelectCategory={(id: string) => setActiveCategory(id)}
+                    onSelectCategory={handleSelectCategory}
                   />
 
                   {/* Quick Access Section */}
@@ -174,7 +262,7 @@ export default function Home() {
                   <WorkspaceOverviewColumns
                     categories={categories}
                     links={links}
-                    onSelectCategory={(id: string) => setActiveCategory(id)}
+                    onSelectCategory={handleSelectCategory}
                   />
                 </>
               )}
@@ -184,7 +272,10 @@ export default function Home() {
       </main>
 
       {/* 3. Right Sidebar Dashboard */}
-      <RightSidebar onSelectCategory={(id: string) => setActiveCategory(id)} />
+      <RightSidebar
+        collapsed={rightCollapsed}
+        onToggle={handleRightToggle}
+      />
 
       {/* 4. 自定义 CSS 与统计探针代码注入 */}
       {config.customCss && (
@@ -197,5 +288,13 @@ export default function Home() {
         />
       )}
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }

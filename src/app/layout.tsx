@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 // 主题初始化脚本：在浏览器解析 <body> 前绝对同步执行，消除白屏/浅色闪烁 (FOUC)
-const themeInitScript = `(function(){try{var d=document.documentElement;var t=localStorage.getItem("navelix_theme");if(!t){var e=localStorage.getItem("navelix.user.config");if(e){try{var n=JSON.parse(e);if(n&&n.theme)t=n.theme;}catch(err){}}}var isDark=t==="dark"||((!t||t==="system")&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(isDark){d.classList.add("dark");}else{d.classList.remove("dark");}}catch(err){}})();`;
+const themeInitScript = `(function(){try{var d=document.documentElement;var t=localStorage.getItem("navelix_theme");if(!t){var m=document.cookie.match(/(?:^|; )navelix_theme=([^;]*)/);if(m)t=decodeURIComponent(m[1]);}if(!t){var e=localStorage.getItem("navelix.user.config");if(e){try{var n=JSON.parse(e);if(n&&n.theme)t=n.theme;}catch(err){}}}if(!t)t="system";var isDark=t==="dark"||((!t||t==="system")&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(isDark){d.classList.add("dark");}else{d.classList.remove("dark");}}catch(err){}})();`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
@@ -34,11 +34,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       className={`${geistSans.variable} h-full antialiased ${isDarkInitial ? "dark" : ""}`}
       suppressHydrationWarning
     >
-      <head />
-      <body className="min-h-full flex flex-col">
+      <head>
         <script
+          id="theme-init"
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
         />
+      </head>
+      <body className="min-h-full flex flex-col">
         {children}
       </body>
     </html>

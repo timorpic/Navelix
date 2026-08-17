@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
 import { toLocalDateStr, addDaysLocal } from "@/lib/date-utils";
+import { decryptSecret } from "@/lib/secret";
 
 const REQUEST_TIMEOUT_MS = 25_000;
 
@@ -103,7 +104,7 @@ export async function POST(req: Request) {
         }
       | undefined;
 
-    const apiKey = configRow?.ai_api_key?.trim() || "";
+    const apiKey = decryptSecret(configRow?.ai_api_key?.trim() || "");
     const baseUrl = configRow?.ai_base_url?.trim() || "https://api.openai.com/v1";
     const modelName = configRow?.ai_model?.trim() || "gpt-4o-mini";
 

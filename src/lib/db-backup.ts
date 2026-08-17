@@ -1,18 +1,24 @@
 import fs from "node:fs";
 import path from "node:path";
 import { db } from "./db.ts";
+import { recordAuditLog } from "./audit.ts";
 
 const BACKUP_DIR = path.join(process.cwd(), "data", "backups");
 const MAX_BACKUPS = 7;
 const BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 /**
- * 执行 SQLite 在线无锁备份 (VACUUM INTO)
+ * 执行 SQLite 在线无锁物理热备份 (VACUUM INTO)
+ * 并自动对备份目录与文件设置严格系统权限 (0700 / 0600)
  */
-export function performDatabaseBackup(): string | null {
+export function performDatabaseBackup(operatorUserId = "system"): string | null {
   try {
     if (!fs.existsSync(BACKUP_DIR)) {
-      fs.mkdirSync(BACKUP_DIR, { recursive: true });
+      fs.mkdirSync(BACKUP_DIR, { recursive: true, mode: 0o700 });
+    } else {
+      try {
+        fs.chmodSync(BACKUP_DIR, 0o700);
+      } catch {}
     }
 
     const now = new Date();
@@ -28,6 +34,20 @@ export function performDatabaseBackup(): string | null {
 
     // 执行 SQLite 原生无锁在线备份
     db.exec(`VACUUM INTO '${backupPath.replace(/'/g, "''")}'`);
+
+    try {
+      if (fs.existsSync(backupPath)) {
+        fs.chmodSync(backupPath, 0o600);
+      }
+    } catch {}
+
+    // 记录安全审计日志
+    recordAuditLog({
+      userId: operatorUserId,
+      action: "database.backup.created",
+      target: backupFileName,
+      details: `成功创建物理数据库热快照: ${backupFileName}`,
+    });
 
     // 保留最近 MAX_BACKUPS 个备份文件，清理旧备份
     cleanOldBackups();

@@ -2,6 +2,14 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+/* ── 彻底消除主题切换/首屏载入时的过渡闪烁 (Zero-Flash Theme Switching) ── */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: none !important;
+}
+
 :root {
   --background: #f6f8fa;
   --foreground: #111827;
@@ -44,11 +52,19 @@ body.dark {
   --color-teal-950: #072d1a;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
   min-height: 100vh;
+}
+
+main {
+  scrollbar-gutter: stable;
 }
 
 @keyframes fadeIn {

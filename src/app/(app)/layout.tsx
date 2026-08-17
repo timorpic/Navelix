@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { getSessionUser } from "@/lib/auth";
 import { getUserData } from "@/lib/user-data";
 import { db } from "@/lib/db";
@@ -9,7 +10,14 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getSessionUser();
+  const [user, cookieStore] = await Promise.all([
+    getSessionUser(),
+    cookies(),
+  ]);
+
+  const leftCookie = cookieStore.get("navelix_sidebar_left")?.value;
+  const rightCookie = cookieStore.get("navelix_sidebar_right")?.value;
+  const themeCookie = cookieStore.get("navelix_theme")?.value;
 
   if (!user) {
     // 检查库内是否有用户存在
@@ -31,6 +39,17 @@ export default async function AppLayout({
     }
 
     const initialData = getUserData(primaryUser.id);
+    if (themeCookie === "light" || themeCookie === "dark" || themeCookie === "system") {
+      initialData.config.theme = themeCookie;
+    }
+    if (leftCookie !== undefined) {
+      initialData.config.sidebarDefaultState =
+        leftCookie === "1" || leftCookie === "true" ? "collapsed" : "expanded";
+    }
+    if (rightCookie !== undefined) {
+      initialData.config.sidebarRightDefaultState =
+        rightCookie === "1" || rightCookie === "true" ? "collapsed" : "expanded";
+    }
     return (
       <NavelixProvider initialData={initialData}>
         {children}
@@ -41,6 +60,17 @@ export default async function AppLayout({
   // SSR 预取：在服务端获取用户数据，直接注入客户端 Provider，
   // 避免首屏白屏等待（由 useEffect 触发）
   const initialData = getUserData(user.id);
+  if (themeCookie === "light" || themeCookie === "dark" || themeCookie === "system") {
+    initialData.config.theme = themeCookie;
+  }
+  if (leftCookie !== undefined) {
+    initialData.config.sidebarDefaultState =
+      leftCookie === "1" || leftCookie === "true" ? "collapsed" : "expanded";
+  }
+  if (rightCookie !== undefined) {
+    initialData.config.sidebarRightDefaultState =
+      rightCookie === "1" || rightCookie === "true" ? "collapsed" : "expanded";
+  }
 
   return (
     <NavelixProvider initialData={initialData}>

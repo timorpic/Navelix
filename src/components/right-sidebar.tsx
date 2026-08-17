@@ -8,8 +8,11 @@ import FocusStatsWidget from "./focus-stats-widget";
 import SenseNovaUsage from "./sensenova-usage";
 
 export default function RightSidebar({
+  collapsed = false,
+  onToggle,
 }: {
-  onSelectCategory?: (id: string) => void;
+  collapsed?: boolean;
+  onToggle?: () => void;
 }) {
   const { config } = useNavelixConfig();
   const { user } = useNavelixData();
@@ -19,6 +22,11 @@ export default function RightSidebar({
   const [projects, setProjects] = useState<Project[]>([]);
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 2. 加载工作区上下文
   const loadWorkspaceData = useCallback(async () => {
@@ -225,7 +233,56 @@ export default function RightSidebar({
   ].filter((s) => s.href?.trim());
 
   return (
-    <aside className="w-full lg:w-80 shrink-0 flex flex-col bg-white/50 dark:bg-slate-900/90 backdrop-blur-sm border-t border-gray-100 dark:border-slate-800 lg:border-t-0 lg:border-l lg:sticky lg:top-0 lg:h-screen transition-colors duration-200">
+    <aside className={`${
+      collapsed
+        ? "w-10 lg:w-10"
+        : "w-full lg:w-80"
+    } shrink-0 flex flex-col bg-white/50 dark:bg-slate-900/90 backdrop-blur-sm border-t border-gray-100 dark:border-slate-800 lg:border-t-0 lg:border-l lg:sticky lg:top-0 lg:h-screen ${
+      mounted ? "transition-all duration-300 ease-in-out" : "transition-none"
+    }`}
+    >
+      {/* 收起时显示的切换按钮 */}
+      {collapsed ? (
+        <div className="flex flex-col items-center justify-start pt-4 gap-4">
+          <button
+            onClick={onToggle}
+            className="p-2 rounded-xl transition-colors cursor-pointer hover:bg-gray-100 text-gray-400 hover:text-gray-600 dark:hover:bg-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+            title="展开侧边栏"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5l-7 7 7 7M19 5l-7 7 7 7" />
+            </svg>
+          </button>
+          <span className="text-xs text-gray-300 dark:text-slate-600 font-medium" style={{ writingMode: "vertical-rl" }}>
+            AI 助手
+          </span>
+        </div>
+      ) : (
+        <>
+          {/* 展开时顶部的收起按钮 + 品牌标语 */}
+          <div className="flex items-center justify-between px-3 pt-2 lg:pt-3">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00C776] animate-pulse shrink-0" />
+              <span className="text-[10px] text-gray-400 dark:text-slate-500 font-black tracking-wider truncate">
+                Powered By ibin_timorpic
+              </span>
+            </div>
+            <button
+              onClick={onToggle}
+              className="p-1.5 rounded-xl transition-colors cursor-pointer hover:bg-gray-100 text-gray-400 hover:text-gray-600 dark:hover:bg-slate-800 dark:text-slate-400 dark:hover:text-slate-200 shrink-0"
+              title="收起侧边栏"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
       {/* 可滚动内容区 */}
       <div className="flex-1 overflow-y-auto flex flex-col gap-5 p-4 lg:p-6">
         {/* ── Widget 1: AI Copilot 数字副驾驶 ── */}
@@ -392,18 +449,8 @@ export default function RightSidebar({
         )}
 
         {/* ── Widget 4: Footer Slogan & Branding Card Block ── */}
-        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-gray-50/90 via-emerald-500/5 to-transparent dark:from-slate-800/80 dark:via-slate-800/40 dark:to-transparent border border-gray-200/70 dark:border-slate-700/60 shadow-2xs text-center space-y-1.5 transition-colors">
-          <p className="text-[11px] text-gray-600 dark:text-slate-300 font-medium leading-relaxed">
-            持续构建，长期主义，让技术创造更多价值。
-          </p>
-          <div className="flex items-center justify-center gap-1.5 pt-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00C776] animate-pulse" />
-            <span className="text-[10px] text-gray-400 dark:text-slate-500 font-black tracking-wider">
-              Powered By ibin_timorpic
-            </span>
-          </div>
-        </div>
-      </div>
+              </div>
+        </>)}
     </aside>
   );
 }

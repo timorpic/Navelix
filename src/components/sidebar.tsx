@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Modal from "./modal";
 import LogoMark from "./logo-mark";
+import BrandLogoText from "./brand-logo-text";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useNavelixData } from "@/hooks/use-navelix-data";
 import { resolveAvatar } from "@/lib/avatars";
@@ -15,25 +16,31 @@ interface SidebarProps {
   categories: Category[];
   activeCategory: string;
   onSelectCategory: (id: string) => void;
+  collapsed?: boolean;
+  onToggle?: () => void;
 }
 
 export default function Sidebar({
   categories,
   activeCategory,
   onSelectCategory,
+  collapsed = false,
+  onToggle,
 }: SidebarProps) {
   const router = useRouter();
   const { config, updateConfig, isDark } = useNavelixConfig();
   const { user } = useNavelixData();
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [now, setNow] = useState<Date>(() => new Date(0));
+  const [now, setNow] = useState<Date>(() => new Date());
+  const [mounted, setMounted] = useState(false);
 
-  // 首次渲染后立即设置真实时间（避免 hydration mismatch：SSR 和客户端初始值一致）
   useEffect(() => {
-    queueMicrotask(() => {
+    setMounted(true);
+    const timer = setInterval(() => {
       setNow(new Date());
-    });
+    }, 1000);
+    return () => clearInterval(timer);
   }, []);
 
   // 时钟 / 天气 / 模拟指针 切换 Widget State（初始值直接取自配置，无需 effect 同步）
@@ -180,7 +187,7 @@ export default function Sidebar({
           <div className="flex items-center gap-2">
             <LogoMark size="sm" />
             <span className="text-sm font-bold tracking-tight text-gray-900 dark:text-white truncate">
-              {config.logoText || "Navelix"}
+              <BrandLogoText text={config.logoText} />
             </span>
           </div>
         </div>
@@ -222,7 +229,13 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-60 shrink-0 flex flex-col justify-between border-r p-5 select-none transition-all duration-200 lg:static lg:z-auto lg:translate-x-0 lg:h-screen lg:sticky lg:top-0 ${
+        className={`fixed inset-y-0 left-0 z-50 ${
+          collapsed ? "w-14" : "w-60"
+        } shrink-0 flex flex-col justify-between border-r ${
+          collapsed ? "p-1.5" : "p-5"
+        } select-none ${
+          mounted ? "transition-all duration-300 ease-in-out" : "transition-none"
+        } lg:static lg:z-auto lg:translate-x-0 lg:h-screen lg:sticky lg:top-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         } text-gray-900 dark:text-slate-100 ${
           config.glassmorphism
@@ -235,39 +248,47 @@ export default function Sidebar({
           {/* Brand Logo & Theme Toggle */}
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-3 min-w-0">
-              <LogoMark size="md" />
-              <span className="text-lg font-bold tracking-tight truncate text-gray-900 dark:text-white">
-                {config.logoText || "Navelix"}
-              </span>
+              <LogoMark size={collapsed ? "sm" : "md"} />
+              {!collapsed && (
+                <span className="text-lg font-bold tracking-tight truncate text-gray-900 dark:text-white">
+                  <BrandLogoText text={config.logoText} />
+                </span>
+              )}
             </div>
 
-            {/* Theme Toggle Button */}
-            <button
-              onClick={handleToggleDarkMode}
-              className="p-1.5 rounded-xl transition-colors cursor-pointer hover:bg-gray-100 text-gray-600 dark:bg-slate-800/80 dark:text-amber-400 dark:hover:bg-slate-700 shrink-0 border border-transparent dark:border-slate-700/60"
-              title={config.theme === "system" ? "跟随系统" : isDark ? "切换至浅色模式" : "切换至深色模式"}
-            >
-              {config.theme === "system" ? (
-                <svg className="w-4 h-4 text-[#00C776]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
-                </svg>
-              ) : isDark ? (
-                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-              )}
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+                          {/* Theme Toggle Button */}
+                          {!collapsed && (
+                            <button
+                              onClick={handleToggleDarkMode}
+                              className="p-1.5 rounded-xl transition-colors cursor-pointer hover:bg-gray-100 text-gray-600 dark:bg-slate-800/80 dark:text-amber-400 dark:hover:bg-slate-700 shrink-0 border border-transparent dark:border-slate-700/60"
+                              title={config.theme === "system" ? "跟随系统" : isDark ? "切换至浅色模式" : "切换至深色模式"}
+                            >
+                              {config.theme === "system" ? (
+                                <svg className="w-4 h-4 text-[#00C776]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                                </svg>
+                              ) : isDark ? (
+                                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                </svg>
+                              )}
+                            </button>
+                          )}
+                        </div>
           </div>
 
           {/* Main Navigation Menu - 在品牌与底部抽屉之间滚动 */}
           <nav className="flex-1 min-h-0 flex flex-col gap-1.5 overflow-y-auto pr-1 scrollbar-thin">
-            <div className="px-3.5 mb-1 text-[10px] font-bold tracking-wider text-gray-400 dark:text-slate-500 uppercase">
-              分类书签
-            </div>
+            {!collapsed && (
+              <div className="px-3.5 mb-1 text-[10px] font-bold tracking-wider text-gray-400 dark:text-slate-500 uppercase">
+                分类书签
+              </div>
+            )}
             {dynamicNavItems.map((item) => {
               const isSelected = activeCategory === item.id;
 
@@ -282,18 +303,20 @@ export default function Sidebar({
                     isSelected
                       ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                  }`}
+                  } ${collapsed ? "justify-center px-2 py-2.5" : ""}`}
                 >
                   <span className="text-sm">{item.icon}</span>
-                  <span className="truncate">{item.name}</span>
+                  {!collapsed && <span className="truncate">{item.name}</span>}
                 </button>
               );
             })}
 
             {/* 工作空间应用扩展：日历日程、项目管理、数据看板 */}
-            <div className="px-3.5 mt-4 mb-1 text-[10px] font-bold tracking-wider text-gray-400 dark:text-slate-500 uppercase">
-              工作空间
-            </div>
+            {!collapsed && (
+              <div className="px-3.5 mt-4 mb-1 text-[10px] font-bold tracking-wider text-gray-400 dark:text-slate-500 uppercase">
+                工作空间
+              </div>
+            )}
             {workspaceTools.map((tool) => {
               const isSelected = activeCategory === tool.id;
 
@@ -308,10 +331,10 @@ export default function Sidebar({
                     isSelected
                       ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                  }`}
+                  } ${collapsed ? "justify-center px-2 py-2.5" : ""}`}
                 >
                   <span className="text-sm">{tool.icon}</span>
-                  <span className="truncate">{tool.name}</span>
+                  {!collapsed && <span className="truncate">{tool.name}</span>}
                 </button>
               );
             })}
@@ -319,6 +342,7 @@ export default function Sidebar({
         </div>
 
         {/* Bottom Section 抽屉 */}
+        {!collapsed && (
         <div className="relative flex flex-col pt-4 border-t border-gray-100 dark:border-slate-800">
           {/* 抽屉切换按钮 */}
           <button
@@ -512,11 +536,43 @@ export default function Sidebar({
             </div>
           </div>
 
-          {/* Custom Footer Copyright */}
-          <p className="text-[10px] text-gray-400 dark:text-slate-400 text-center px-1 truncate mt-2">
-            {config.customFooter || "© 2026 Navelix. 保留所有权利。"}
-          </p>
+          {/* Custom Footer Copyright + 收起按钮 */}
+          <div className="flex items-center justify-between px-1 mt-2">
+            <p className="text-[10px] text-gray-400 dark:text-slate-400 truncate">
+              {config.customFooter || "© 2026 Navelix. 保留所有权利。"}
+            </p>
+            <button
+              onClick={onToggle}
+              className="p-1 rounded-md transition-colors cursor-pointer text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 shrink-0"
+              title={collapsed ? "展开侧边栏" : "收起侧边栏"}
+            >
+              <svg
+                className="w-3.5 h-3.5 transition-transform duration-300"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+            </button>
+          </div>
         </div>
+        )}
+        {/* 收起时底部展开按钮 */}
+        {collapsed && (
+          <div className="flex items-center justify-center py-3 border-t border-gray-100 dark:border-slate-800">
+            <button
+              onClick={onToggle}
+              className="p-1.5 rounded-lg transition-colors cursor-pointer text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
+              title="展开侧边栏"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* Profile Center Modal (我的信息) */}

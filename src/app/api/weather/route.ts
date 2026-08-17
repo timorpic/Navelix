@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
+import { decryptSecret } from "@/lib/secret";
 
 // GET /api/weather - 后端代理心知天气，隐藏 API Key 与位置
 export async function GET() {
@@ -23,7 +24,8 @@ export async function GET() {
     return NextResponse.json({ enabled: false, message: "天气未启用" });
   }
 
-  const key = row?.weather_api_key?.trim() || "SrnuFIBmt5hQtLK6Z";
+  const rawKey = row?.weather_api_key?.trim() || "";
+  const key = decryptSecret(rawKey) || "SrnuFIBmt5hQtLK6Z";
   const loc = row?.weather_location?.trim() || "beijing";
 
   try {

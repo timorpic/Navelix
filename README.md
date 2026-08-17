@@ -1,4 +1,24 @@
-# Navelix · Personal Digital Hub
+<p align="center">
+  <img src="public/logo.svg" width="108" height="108" alt="Navelix Logo" style="border-radius: 24px;">
+</p>
+
+<p align="center">
+  <img src="public/navelix-title.svg" width="520" alt="Navelix · Personal Digital Hub">
+</p>
+
+<p align="center">
+  <strong>现代化全栈个人与团队数字工作空间</strong><br>
+  网址导航 · AI 智能助手 · 21天甘特图 · 多用户协同 · 日历日程 · 本地优先 SQLite
+</p>
+
+<p align="center">
+  <a href="https://github.com/timorpic/Navelix/releases"><img src="https://img.shields.io/github/v/release/timorpic/Navelix?color=00C776&label=Version" alt="Release"></a>
+  <a href="https://github.com/timorpic/Navelix/pkgs/container/navelix"><img src="https://img.shields.io/badge/Docker-3721:3721-00C776?logo=docker" alt="Docker"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Custom-00C776" alt="License"></a>
+  <a href="https://github.com/timorpic/Navelix/wiki"><img src="https://img.shields.io/badge/Wiki-Documentation-00C776?logo=gitbook" alt="Wiki"></a>
+</p>
+
+---
 
 你的个人与团队数字工作空间——网址导航、AI 智能助手、项目管理看板、交互式甘特图、多用户协同、日历日程与效率工具，收进同一个首页。零外部数据库依赖，单容器轻量高效运行。
 

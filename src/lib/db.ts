@@ -12,10 +12,21 @@ import { runMigrations } from "./migrations/index.ts";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
+} else {
+  try {
+    fs.chmodSync(DATA_DIR, 0o700);
+  } catch {}
 }
 
-export const db = new DatabaseSync(path.join(DATA_DIR, "nexus.db"));
+const DB_FILE = path.join(DATA_DIR, "nexus.db");
+export const db = new DatabaseSync(DB_FILE);
+
+try {
+  if (fs.existsSync(DB_FILE)) {
+    fs.chmodSync(DB_FILE, 0o600);
+  }
+} catch {}
 
 // The module runs inside multiple Next.js build workers.
 // 1) Set busy_timeout FIRST (it's a per-connection setting, no write lock needed),
@@ -155,6 +166,19 @@ db.exec(`
     sort_order INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (id, user_id)
   );
+
+  CREATE TABLE IF NOT EXISTS audit_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    target TEXT NOT NULL DEFAULT '',
+    ip TEXT NOT NULL DEFAULT '',
+    details TEXT NOT NULL DEFAULT '',
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_audit_logs_user
+    ON audit_logs(user_id, created_at DESC);
 `);
 
 // 迁移逻辑已抽离至 src/lib/migrations/index.ts（Schema 版本 v1~v6 + 数据修复）

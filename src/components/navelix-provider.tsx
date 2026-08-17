@@ -31,6 +31,8 @@ export function clearCachedUserData(): void {
     localStorage.removeItem("navelix.user.links");
     localStorage.removeItem("navelix.user.config");
     localStorage.removeItem("navelix_theme");
+    localStorage.removeItem("navelix.antigravity.auth.accounts");
+    localStorage.removeItem("navelix.antigravity.auth.info");
   } catch {
     // localStorage 不可用时静默忽略
   }
@@ -71,16 +73,27 @@ export function NavelixProvider({
     configRef.current = config;
   });
 
-  // 1. 核心 DOM 主题应用逻辑（必须在任何 useEffect / updateConfig 之前定义）
+  // 1. 核心 DOM 主题应用逻辑（防闪烁 + 禁用过渡动画 + 双 Cookie 与 DOM 同步）
   const applyThemeToDom = useCallback((theme: string) => {
     if (typeof window === "undefined") return;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const isDark = theme === "dark" || (theme === "system" && media.matches);
 
-    document.documentElement.classList.toggle("dark", isDark);
+    const docEl = document.documentElement;
+    if (docEl.classList.contains("dark") !== isDark) {
+      docEl.classList.add("theme-transitioning");
+      docEl.classList.toggle("dark", isDark);
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          docEl.classList.remove("theme-transitioning");
+        });
+      });
+    }
+
     setResolvedDark(media.matches);
 
     try {
+      document.cookie = `navelix_theme=${theme};path=/;max-age=31536000;SameSite=Lax`;
       document.cookie = `navelix_theme_dark=${isDark ? "1" : "0"};path=/;max-age=31536000;SameSite=Lax`;
     } catch {
       /* ignore */
@@ -113,6 +126,9 @@ export function NavelixProvider({
 
       if (patch.theme) {
         applyThemeToDom(patch.theme);
+        try {
+          localStorage.setItem("navelix_theme", patch.theme);
+        } catch {}
       }
       saveConfigToServer(next);
     },
@@ -136,9 +152,14 @@ export function NavelixProvider({
         if (Array.isArray(data.links)) setLinks(data.links);
         if (Array.isArray(data.projects)) setProjects(data.projects);
         if (data.config) {
-          setConfig({ ...defaultConfig, ...data.config });
-          if (data.config.theme) {
-            applyThemeToDom(data.config.theme);
+          const localTheme = localStorage.getItem("navelix_theme");
+          const activeTheme =
+            localTheme === "light" || localTheme === "dark" || localTheme === "system"
+              ? localTheme
+              : data.config.theme;
+          setConfig({ ...defaultConfig, ...data.config, theme: activeTheme });
+          if (activeTheme) {
+            applyThemeToDom(activeTheme);
           }
         }
         setHydrated(true);
@@ -152,8 +173,12 @@ export function NavelixProvider({
         if (cats) setCategories(cats);
         if (lnks) setLinks(lnks);
         if (cfg) {
-          setConfig({ ...defaultConfig, ...cfg });
-          if (cfg.theme) applyThemeToDom(cfg.theme);
+          const activeTheme =
+            localTheme === "light" || localTheme === "dark" || localTheme === "system"
+              ? (localTheme as SystemConfig["theme"])
+              : cfg.theme || "system";
+          setConfig({ ...defaultConfig, ...cfg, theme: activeTheme });
+          applyThemeToDom(activeTheme);
         } else if (localTheme) {
           setConfig((prev) => ({ ...prev, theme: localTheme as SystemConfig["theme"] }));
           applyThemeToDom(localTheme);
@@ -164,19 +189,27 @@ export function NavelixProvider({
 
   // 5. 挂载加载与跨标签页 Storage 同步
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const media = window.matchMedia("(prefers-color-scheme: dark)");
+      setResolvedDark(media.matches);
+      try {
+        localStorage.removeItem("navelix.antigravity.auth.accounts");
+        localStorage.removeItem("navelix.antigravity.auth.info");
+      } catch {}
+    }
+
     if (!initialData) {
-      queueMicrotask(() => {
-        loadData();
-      });
+      loadData();
     } else {
       const localTheme = localStorage.getItem("navelix_theme");
-      const activeTheme = localTheme || config.theme;
-      queueMicrotask(() => {
-        if (localTheme && localTheme !== config.theme) {
+      if (localTheme && (localTheme === "light" || localTheme === "dark" || localTheme === "system")) {
+        if (localTheme !== config.theme) {
           setConfig((prev) => ({ ...prev, theme: localTheme as SystemConfig["theme"] }));
         }
-        applyThemeToDom(activeTheme);
-      });
+        applyThemeToDom(localTheme);
+      } else {
+        applyThemeToDom(config.theme);
+      }
     }
 
     const storageHandler = (e: StorageEvent) => {
@@ -199,7 +232,7 @@ export function NavelixProvider({
 
     window.addEventListener("storage", storageHandler);
     return () => window.removeEventListener("storage", storageHandler);
-  }, [loadData, initialData, applyThemeToDom, config.theme]);
+  }, [loadData, initialData, applyThemeToDom]);
 
   // 6. 系统主题变动监听器（当 config.theme === 'system' 时响应系统级浅色/深色切换）
   useEffect(() => {

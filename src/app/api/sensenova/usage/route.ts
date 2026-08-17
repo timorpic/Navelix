@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getUsage, type UsageResponse } from "@/lib/sensenova";
+import { decryptSecret } from "@/lib/secret";
 
 // 仅在 Node.js 运行时执行（依赖 fs / crypto / 原生 fetch，且需写入 token 缓存）
 export const runtime = "nodejs";
@@ -37,9 +38,9 @@ export async function GET() {
 
   const enabled = row?.sensenova_enabled === 1;
   const username = row?.sensenova_username?.trim();
-  const password = row?.sensenova_password?.trim();
+  const password = decryptSecret(row?.sensenova_password?.trim() || "");
   const accountId = row?.sensenova_account_id?.trim() || undefined;
-  const tokenKey = row?.sensenova_token_key?.trim() || undefined;
+  const tokenKey = decryptSecret(row?.sensenova_token_key?.trim() || "") || undefined;
 
   if (!enabled) {
     return NextResponse.json({

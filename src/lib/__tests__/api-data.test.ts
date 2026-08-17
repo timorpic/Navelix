@@ -8,6 +8,7 @@ import {
   saveUserTodos,
   saveUserConfigs,
 } from "../user-data.ts";
+import { decryptSecret } from "../secret.ts";
 import {
   checkLoginRateLimit,
   recordLoginFailure,
@@ -165,13 +166,14 @@ describe("saveUserConfigs (字段合并 + 密钥留空语义)", () => {
     assert.equal(row.search_engine, "bing");
   });
 
-  it("密钥字段传入空字符串时不清空已有密钥（留空=保持不变）", () => {
+  it("密钥字段传入空字符串时不清空已有密钥（留空=保持不变且落盘加密）", () => {
     saveUserConfigs(TEST_USER_ID, { aiApiKey: "sk-test-123" });
     saveUserConfigs(TEST_USER_ID, { aiApiKey: "" });
     const row = db
       .prepare("SELECT ai_api_key FROM user_configs WHERE user_id = ?")
       .get(TEST_USER_ID) as { ai_api_key: string };
-    assert.equal(row.ai_api_key, "sk-test-123");
+    assert.ok(row.ai_api_key.startsWith("enc:v1:"), "数据库落盘必须为 AES-256 加密密文");
+    assert.equal(decryptSecret(row.ai_api_key), "sk-test-123");
   });
 });
 

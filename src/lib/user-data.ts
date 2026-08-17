@@ -1,5 +1,7 @@
 import { db, seedUserData, type PublicUser } from "./db.ts";
 import type { Category, Project, SiteLink, SystemConfig } from "@/types";
+import { encryptSecret } from "./secret.ts";
+import { recordAuditLog } from "./audit.ts";
 
 export interface UserDataResult {
   user?: PublicUser | null;
@@ -485,6 +487,12 @@ export function saveUserConfigs(
   const sensenovaAccountId = str("sensenovaAccountId", "sensenova_account_id", "");
   const sensenovaTokenKey = secret("sensenovaTokenKey", "sensenova_token_key");
 
+  // 对敏感密钥字段应用 AES-256-GCM 静态落盘加密
+  const encryptedAiApiKey = encryptSecret(aiApiKey);
+  const encryptedWeatherApiKey = encryptSecret(weatherApiKey);
+  const encryptedSensenovaPassword = encryptSecret(sensenovaPassword);
+  const encryptedSensenovaTokenKey = encryptSecret(sensenovaTokenKey);
+
   // 安全告警：自定义脚本/CSS 会绕过 CSP 直接注入到所有访客页面。
   // 此处仅记录日志供运维审计；写入权限已由 POST /api/user/data 的 admin 角色门禁收口。
   if (customHeadScripts.trim() !== "") {
@@ -520,7 +528,7 @@ export function saveUserConfigs(
     theme,
     searchEngine,
     aiBaseUrl,
-    aiApiKey,
+    encryptedAiApiKey,
     aiModel,
     siteTitle,
     linkStatusEnabled,
@@ -530,7 +538,7 @@ export function saveUserConfigs(
     socialLinkedin,
     socialEmail,
     weatherEnabled,
-    weatherApiKey,
+    encryptedWeatherApiKey,
     weatherLocation,
     weatherApiBaseUrl,
     isPro,
@@ -548,8 +556,18 @@ export function saveUserConfigs(
     customCss,
     sensenovaEnabled,
     sensenovaUsername,
-    sensenovaPassword,
+    encryptedSensenovaPassword,
     sensenovaAccountId,
-    sensenovaTokenKey,
+    encryptedSensenovaTokenKey,
   );
+
+  // 记录关键配置变更安全审计日志
+  if (aiApiKey && aiApiKey !== String(currentRow?.ai_api_key || "")) {
+    recordAuditLog({
+      userId,
+      action: "config.ai_key.update",
+      target: "user_configs",
+      details: "更新了 AI API Key",
+    });
+  }
 }

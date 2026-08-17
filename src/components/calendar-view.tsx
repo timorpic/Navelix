@@ -18,6 +18,24 @@ export default function CalendarView() {
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
 
+  useEffect(() => {
+    try {
+      const savedMode = localStorage.getItem("navelix_calendar_view_mode");
+      if (savedMode === "month" || savedMode === "week" || savedMode === "today") {
+        setViewMode(savedMode);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleViewModeChange = (mode: CalendarViewMode) => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem("navelix_calendar_view_mode", mode);
+    } catch {}
+  };
+
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
@@ -451,7 +469,7 @@ export default function CalendarView() {
           <div className="flex items-center p-1 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-200/80 dark:border-slate-700">
             <button
               type="button"
-              onClick={() => setViewMode("month")}
+              onClick={() => handleViewModeChange("month")}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 viewMode === "month"
                   ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
@@ -462,7 +480,7 @@ export default function CalendarView() {
             </button>
             <button
               type="button"
-              onClick={() => setViewMode("week")}
+              onClick={() => handleViewModeChange("week")}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 viewMode === "week"
                   ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
@@ -475,7 +493,7 @@ export default function CalendarView() {
               type="button"
               onClick={() => {
                 setSelectedDate(new Date());
-                setViewMode("today");
+                handleViewModeChange("today");
               }}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 viewMode === "today"

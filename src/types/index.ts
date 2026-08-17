@@ -122,5 +122,6 @@ export interface SystemConfig {
   customWallpaperUrl?: string;
   glassmorphism?: boolean;
   sidebarDefaultState?: "expanded" | "collapsed";
+  sidebarRightDefaultState?: "expanded" | "collapsed";
   clockWidgetMode?: "time" | "weather" | "analog";
 }

@@ -16,16 +16,19 @@ export default function AdminPersonalizationTab() {
   const [notice, setNotice] = useState("");
 
   // Sync drafts from config when hydrated
-  useEffect(() => {
-    if (config.aiBaseUrl !== undefined) {
-      setDraftBaseUrl(config.aiBaseUrl);
-      setDraftApiKey(config.aiApiKey ?? "");
-      setDraftModel(config.aiModel ?? "");
-      setDraftWeatherKey(config.weatherApiKey ?? "");
-      setDraftWeatherLocation(config.weatherLocation ?? "");
-      setDraftWallpaperUrl(config.customWallpaperUrl ?? "");
-    }
-  }, [config.aiBaseUrl, config.aiApiKey, config.aiModel, config.weatherApiKey, config.weatherLocation, config.customWallpaperUrl]);
+    useEffect(() => {
+      const baseUrl = config.aiBaseUrl;
+      if (baseUrl !== undefined) {
+        queueMicrotask(() => {
+          setDraftBaseUrl(baseUrl);
+          setDraftApiKey(config.aiApiKey ?? "");
+          setDraftModel(config.aiModel ?? "");
+          setDraftWeatherKey(config.weatherApiKey ?? "");
+          setDraftWeatherLocation(config.weatherLocation ?? "");
+          setDraftWallpaperUrl(config.customWallpaperUrl ?? "");
+        });
+      }
+    }, [config.aiBaseUrl, config.aiApiKey, config.aiModel, config.weatherApiKey, config.weatherLocation, config.customWallpaperUrl]);
 
   // ── Save all text fields at once ──
   const handleSave = () => {
@@ -227,7 +230,7 @@ export default function AdminPersonalizationTab() {
               书签链接打开方式
             </h4>
             <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-0.5">
-              选择在新标签页 (`target="_blank"`) 打开，还是在当前窗口直接跳转 (`target="_self"`)
+              选择在新标签页（`target=&quot;_blank&quot;`）打开，还是在当前窗口直接跳转（`target=&quot;_self&quot;`）
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">

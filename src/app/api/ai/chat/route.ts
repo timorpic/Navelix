@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
+import { decryptSecret } from "@/lib/secret";
 
 interface ChatHistoryItem {
   sender?: string;
@@ -156,7 +157,7 @@ export async function POST(req: Request) {
         }
       | undefined;
 
-    const apiKey = configRow?.ai_api_key?.trim() || "";
+    const apiKey = decryptSecret(configRow?.ai_api_key?.trim() || "");
     if (!apiKey) {
       return NextResponse.json({
         text: "💡 提示：您尚未在后台配置 AI API Key。\n请前往「后台管理控制台 -> 🎨 界面与功能偏好」填入您的 BaseURL、API Key 与模型名称，即可开启真实大语言模型对话功能！",

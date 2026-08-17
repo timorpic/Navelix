@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 80" fill="none" width="100%" height="80">
+  <style>
+    .brand-text {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 46px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+    .main-char {
+      fill: #111827;
+    }
+    .accent-char {
+      fill: #00C776;
+    }
+    @media (prefers-color-scheme: dark) {
+      .main-char {
+        fill: #FFFFFF;
+      }
+    }
+  </style>
+
+  <!-- Centered Navelix Wordmark -->
+  <g transform="translate(10, 56)">
+    <!-- "Navel" in primary foreground -->
+    <text x="0" y="0" class="brand-text main-char">Navel</text>
+    
+    <!-- "ı" stem in primary foreground -->
+    <text x="131" y="0" class="brand-text main-char">ı</text>
+    
+    <!-- Emerald Green Dot of "i" -->
+    <circle cx="137" cy="-29" r="4.5" fill="#00C776" />
+    <circle cx="137" cy="-29" r="7" fill="#00C776" opacity="0.25" />
+    
+    <!-- Emerald Green "x" -->
+    <text x="145" y="0" class="brand-text accent-char">x</text>
+    
+    <!-- Subtitle Separator & Slogan -->
+    <text x="180" y="0" class="brand-text" font-size="32" font-weight="600" fill="#94A3B8">·</text>
+    <text x="198" y="0" class="brand-text main-char" font-size="32" font-weight="700">Personal Digital Hub</text>
+  </g>
+</svg>

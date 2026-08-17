@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getSessionUser, verifyPassword } from "@/lib/auth";
 import { performDatabaseBackup } from "@/lib/db-backup";
 import { runMigrations } from "@/lib/migrations";
+import { recordAuditLog } from "@/lib/audit";
 
 async function requireAdmin(req?: NextRequest) {
   const user = await getSessionUser(req);
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "无权访问，仅管理员可下载数据库备份" }, { status: 403 });
   }
 
-  const backupFilePath = performDatabaseBackup();
+  const backupFilePath = performDatabaseBackup(adminUser.id);
   if (!backupFilePath || !fs.existsSync(backupFilePath)) {
     return NextResponse.json({ error: "创建数据库快照失败" }, { status: 500 });
   }
@@ -125,6 +126,13 @@ export async function POST(req: NextRequest) {
 
     // 4. 再次执行自动迁移确保结构最新
     runMigrations(db);
+
+    recordAuditLog({
+      userId: adminUser.id,
+      action: "database.restore.executed",
+      target: "nexus.db",
+      details: "管理员执行了数据库物理还原覆盖操作",
+    });
 
     return NextResponse.json({
       success: true,

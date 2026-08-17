@@ -96,18 +96,24 @@ export default function DashboardView({
   }, [links, statuses, config.linkStatusEnabled]);
 
   // 4. 书签点击使用统计 (Usage Analytics)
-  const analytics = useMemo(() => {
-    let usageMap: Record<string, { count: number; lastUsed: number }> = {};
-    if (typeof window !== "undefined") {
-      try {
-        const raw = localStorage.getItem("navelix.link.usage");
-        usageMap = raw ? JSON.parse(raw) : {};
-      } catch {
-        // ignore
-      }
-    }
+  const [mounted, setMounted] = useState(false);
+  const [usageMap, setUsageMap] = useState<Record<string, { count: number; lastUsed: number }>>({});
 
-    const totalClicks = Object.values(usageMap).reduce(
+  useEffect(() => {
+    setMounted(true);
+    try {
+      const raw = localStorage.getItem("navelix.link.usage");
+      if (raw) {
+        setUsageMap(JSON.parse(raw));
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const analytics = useMemo(() => {
+    const map = mounted ? usageMap : {};
+    const totalClicks = Object.values(map).reduce(
       (sum, u) => sum + u.count,
       0,
     );
@@ -115,8 +121,8 @@ export default function DashboardView({
     const rankedLinks = links
       .map((l) => ({
         link: l,
-        clicks: usageMap[l.id]?.count || 0,
-        lastUsed: usageMap[l.id]?.lastUsed || 0,
+        clicks: map[l.id]?.count || 0,
+        lastUsed: map[l.id]?.lastUsed || 0,
       }))
       .sort((a, b) => b.clicks - a.clicks);
 
@@ -127,7 +133,7 @@ export default function DashboardView({
       rankedLinks,
       quickAccessCount,
     };
-  }, [links]);
+  }, [links, mounted, usageMap]);
 
   // 5. 待办完成闭环率与即将到期预警 (Todos & Upcoming Deadlines)
   const todoMetrics = useMemo(() => {

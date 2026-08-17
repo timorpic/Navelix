@@ -41,6 +41,15 @@ interface GeneratedTask {
 }
 
 type ProjectViewTab = "cards" | "gantt";
+export type GanttScale = "day" | "month" | "year";
+
+interface GanttColumn {
+  key: string;
+  label: string;
+  subLabel: string;
+  isCurrent: boolean;
+  isWeekend?: boolean;
+}
 
 export default function ProjectsView() {
   const [viewTab, setViewTab] = useState<ProjectViewTab>("cards");
@@ -64,8 +73,77 @@ export default function ProjectsView() {
   const [brokenTasks, setBrokenTasks] = useState<GeneratedTask[]>([]);
   const [syncToCalendar, setSyncToCalendar] = useState(true);
 
-  // Expanded project tasks view
-  const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
+  // Expanded project tasks view (支持多项目同时展开)
+  const [expandedProjectIds, setExpandedProjectIds] = useState<string[]>([]);
+  // 甘特图折叠状态（默认全展开，单独记录折叠的项目）
+  const [ganttCollapsedIds, setGanttCollapsedIds] = useState<string[]>([]);
+
+  // 甘特图时间多尺度缩放（日视图 21天 / 月视图 12个月 / 年视图 3年12季度）
+  const [ganttScale, setGanttScale] = useState<GanttScale>("day");
+  const [ganttOffset, setGanttOffset] = useState(0);
+
+  // 挂载后同步本地设备状态记忆（卡片展开、甘特图折叠、视图模式、甘特图尺度）
+  useEffect(() => {
+    try {
+      const savedTab = localStorage.getItem("navelix_projects_view_tab");
+      if (savedTab === "cards" || savedTab === "gantt") {
+        setViewTab(savedTab);
+      }
+      const savedExpanded = localStorage.getItem("navelix_projects_expanded_ids");
+      if (savedExpanded) {
+        setExpandedProjectIds(JSON.parse(savedExpanded));
+      }
+      const savedGantt = localStorage.getItem("navelix_projects_gantt_collapsed_ids");
+      if (savedGantt) {
+        setGanttCollapsedIds(JSON.parse(savedGantt));
+      }
+      const savedScale = localStorage.getItem("navelix_projects_gantt_scale");
+      if (savedScale === "day" || savedScale === "month" || savedScale === "year") {
+        setGanttScale(savedScale);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleScaleChange = (scale: GanttScale) => {
+    setGanttScale(scale);
+    setGanttOffset(0);
+    try {
+      localStorage.setItem("navelix_projects_gantt_scale", scale);
+    } catch {}
+  };
+
+  const toggleExpandProject = (id: string) => {
+    setExpandedProjectIds((prev) => {
+      const next = prev.includes(id)
+        ? prev.filter((itemId) => itemId !== id)
+        : [...prev, id];
+      try {
+        localStorage.setItem("navelix_projects_expanded_ids", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const toggleGanttCollapse = (id: string) => {
+    setGanttCollapsedIds((prev) => {
+      const next = prev.includes(id)
+        ? prev.filter((itemId) => itemId !== id)
+        : [...prev, id];
+      try {
+        localStorage.setItem("navelix_projects_gantt_collapsed_ids", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const handleViewTabChange = (tab: ProjectViewTab) => {
+    setViewTab(tab);
+    try {
+      localStorage.setItem("navelix_projects_view_tab", tab);
+    } catch {}
+  };
 
   // Gantt Chart time window offset (days from today)
   const [ganttOffsetDays, setGanttOffsetDays] = useState(0);
@@ -355,59 +433,162 @@ export default function ProjectsView() {
     [todos],
   );
 
-  // ── 甘特图时间轴刻度计算 (Gantt Math: 21 Days Window) ──
+  // ── 甘特图多尺度时间轴计算 (Gantt Multi-Scale Engine) ──
   const todayStr = useMemo(() => toLocalDateStr(new Date()), []);
 
-  const ganttDays = useMemo(() => {
-    const days: Array<{
-      dateStr: string;
-      dayNum: number;
-      dayLabel: string;
-      isToday: boolean;
-      isWeekend: boolean;
-    }> = [];
-    const base = new Date();
-    base.setDate(base.getDate() - 3 + ganttOffsetDays);
-    const dayNames = ["日", "一", "二", "三", "四", "五", "六"];
+  const { ganttColumns, timelineLabel, prevLabel, nextLabel, stepAmount } = useMemo(() => {
+    const cols: GanttColumn[] = [];
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-11
+    const currentQuarter = Math.floor(currentMonth / 3) + 1; // 1-4
 
-    for (let i = 0; i < 21; i++) {
-      const d = new Date(base);
-      d.setDate(base.getDate() + i);
-      const dStr = toLocalDateStr(d);
-      const dayOfWeek = d.getDay();
-      days.push({
-        dateStr: dStr,
-        dayNum: d.getDate(),
-        dayLabel: dayNames[dayOfWeek],
-        isToday: dStr === todayStr,
-        isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
-      });
+    if (ganttScale === "day") {
+      // 21 天微观敏捷视窗
+      const base = new Date();
+      base.setDate(base.getDate() - 3 + ganttOffset);
+      const dayNames = ["日", "一", "二", "三", "四", "五", "六"];
+      for (let i = 0; i < 21; i++) {
+        const d = new Date(base);
+        d.setDate(base.getDate() + i);
+        const dStr = toLocalDateStr(d);
+        const dayOfWeek = d.getDay();
+        cols.push({
+          key: dStr,
+          label: String(d.getDate()),
+          subLabel: `周${dayNames[dayOfWeek]}`,
+          isCurrent: dStr === todayStr,
+          isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
+        });
+      }
+      return {
+        ganttColumns: cols,
+        timelineLabel: `日排期视界：${cols[0].key} ~ ${cols[cols.length - 1].key}`,
+        prevLabel: "◀ 前移 7 天",
+        nextLabel: "后移 7 天 ▶",
+        stepAmount: 7,
+      };
     }
-    return days;
-  }, [ganttOffsetDays, todayStr]);
 
-  const minGanttDate = ganttDays[0].dateStr;
-  const maxGanttDate = ganttDays[ganttDays.length - 1].dateStr;
+    if (ganttScale === "month") {
+      // 12 个月年度推进视窗 (当前月份前后推算 + offset)
+      const baseDate = new Date(currentYear, currentMonth - 2 + ganttOffset, 1);
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1);
+        const yr = d.getFullYear();
+        const mo = d.getMonth() + 1;
+        const key = `${yr}-${String(mo).padStart(2, "0")}`;
+        cols.push({
+          key,
+          label: `${mo}月`,
+          subLabel: `${yr}年`,
+          isCurrent: yr === currentYear && mo === currentMonth + 1,
+        });
+      }
+      return {
+        ganttColumns: cols,
+        timelineLabel: `月推进视界：${cols[0].subLabel}${cols[0].label} ~ ${cols[cols.length - 1].subLabel}${cols[cols.length - 1].label}`,
+        prevLabel: "◀ 前移 3 个月",
+        nextLabel: "后移 3 个月 ▶",
+        stepAmount: 3,
+      };
+    }
 
-  // 计算任务在甘特图 21 列中的起始列和跨度
+    // ganttScale === "year" (跨年战略路线图：3 年 = 12 个季度)
+    const baseYear = currentYear - 1 + ganttOffset;
+    for (let yr = baseYear; yr <= baseYear + 2; yr++) {
+      for (let q = 1; q <= 4; q++) {
+        const key = `${yr}-Q${q}`;
+        cols.push({
+          key,
+          label: `Q${q}`,
+          subLabel: `${yr}年`,
+          isCurrent: yr === currentYear && q === currentQuarter,
+        });
+      }
+    }
+    return {
+      ganttColumns: cols,
+      timelineLabel: `年路线图视界：${baseYear}年 ~ ${baseYear + 2}年 (12 个季度)`,
+      prevLabel: "◀ 前移 1 年",
+      nextLabel: "后移 1 年 ▶",
+      stepAmount: 1,
+    };
+  }, [ganttScale, ganttOffset, todayStr]);
+
+  // 计算任务在甘特图列中的位置
   const calculateGanttPosition = useCallback(
     (dueDate?: string) => {
-      if (!dueDate || !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
-        return { startIdx: 3, span: 3 }; // 默认占 3 格
+      const colCount = ganttColumns.length;
+      if (!dueDate || !/^\d{4}-\d{2}-\d{2}/.test(dueDate)) {
+        return { startIdx: 2, span: 2 };
       }
 
-      const dueIdx = ganttDays.findIndex((d) => d.dateStr === dueDate);
+      if (ganttScale === "day") {
+        const dueIdx = ganttColumns.findIndex((c) => c.key === dueDate);
+        if (dueIdx === -1) {
+          if (dueDate < ganttColumns[0].key) return { startIdx: 0, span: 1, outOfRange: "past" };
+          return { startIdx: colCount - 1, span: 1, outOfRange: "future" };
+        }
+        const startIdx = Math.max(0, dueIdx - 2);
+        const span = Math.max(1, dueIdx - startIdx + 1);
+        return { startIdx, span };
+      }
+
+      if (ganttScale === "month") {
+        const targetMonth = dueDate.slice(0, 7); // YYYY-MM
+        const dueIdx = ganttColumns.findIndex((c) => c.key === targetMonth);
+        if (dueIdx === -1) {
+          if (targetMonth < ganttColumns[0].key) return { startIdx: 0, span: 1, outOfRange: "past" };
+          return { startIdx: colCount - 1, span: 1, outOfRange: "future" };
+        }
+        return { startIdx: dueIdx, span: 1 };
+      }
+
+      // year
+      const yr = parseInt(dueDate.slice(0, 4), 10);
+      const mo = parseInt(dueDate.slice(5, 7), 10);
+      const q = Math.floor((mo - 1) / 3) + 1;
+      const targetQuarter = `${yr}-Q${q}`;
+      const dueIdx = ganttColumns.findIndex((c) => c.key === targetQuarter);
       if (dueIdx === -1) {
-        if (dueDate < minGanttDate) return { startIdx: 0, span: 1, outOfRange: "past" };
-        return { startIdx: 19, span: 2, outOfRange: "future" };
+        if (targetQuarter < ganttColumns[0].key) return { startIdx: 0, span: 1, outOfRange: "past" };
+        return { startIdx: colCount - 1, span: 1, outOfRange: "future" };
+      }
+      return { startIdx: dueIdx, span: 1 };
+    },
+    [ganttScale, ganttColumns],
+  );
+
+  // 计算父项目在甘特图上的整体跨度
+  const calculateProjectSpan = useCallback(
+    (projectTodos: TodoItem[]) => {
+      const colCount = ganttColumns.length;
+      if (projectTodos.length === 0) {
+        return { startIdx: 0, span: colCount };
       }
 
-      // 里程碑默认占据截止日期及前 2 天（共 3 天周期）
-      const startIdx = Math.max(0, dueIdx - 2);
-      const span = Math.max(1, dueIdx - startIdx + 1);
+      const validDates = projectTodos
+        .map((t) => t.dueDate)
+        .filter((d): d is string => typeof d === "string" && /^\d{4}-\d{2}-\d{2}/.test(d));
+
+      if (validDates.length === 0) {
+        return { startIdx: 0, span: colCount };
+      }
+
+      const minDate = validDates.reduce((min, d) => (d < min ? d : min), validDates[0]);
+      const maxDate = validDates.reduce((max, d) => (d > max ? d : max), validDates[0]);
+
+      const startPos = calculateGanttPosition(minDate);
+      const endPos = calculateGanttPosition(maxDate);
+
+      const startIdx = Math.min(startPos.startIdx, endPos.startIdx);
+      const endIdx = Math.max(startPos.startIdx + startPos.span - 1, endPos.startIdx + endPos.span - 1);
+      const span = Math.max(1, endIdx - startIdx + 1);
+
       return { startIdx, span };
     },
-    [ganttDays, minGanttDate],
+    [calculateGanttPosition, ganttColumns.length],
   );
 
   return (
@@ -432,7 +613,7 @@ export default function ProjectsView() {
           <div className="flex items-center p-1 rounded-xl bg-gray-100 dark:bg-slate-800 border border-gray-200/80 dark:border-slate-700">
             <button
               type="button"
-              onClick={() => setViewTab("cards")}
+              onClick={() => handleViewTabChange("cards")}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 viewTab === "cards"
                   ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
@@ -443,7 +624,7 @@ export default function ProjectsView() {
             </button>
             <button
               type="button"
-              onClick={() => setViewTab("gantt")}
+              onClick={() => handleViewTabChange("gantt")}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 viewTab === "gantt"
                   ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
@@ -792,7 +973,7 @@ export default function ProjectsView() {
             const total = projectTodos.length;
             const done = doneCount(p.id);
             const percent = total > 0 ? Math.round((done / total) * 100) : 0;
-            const isExpanded = expandedProjectId === p.id;
+            const isExpanded = expandedProjectIds.includes(p.id);
 
             return (
               <div
@@ -865,9 +1046,7 @@ export default function ProjectsView() {
                   <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-800">
                     <button
                       type="button"
-                      onClick={() =>
-                        setExpandedProjectId(isExpanded ? null : p.id)
-                      }
+                      onClick={() => toggleExpandProject(p.id)}
                       className="flex items-center gap-1.5 text-[11px] font-bold text-gray-600 dark:text-slate-300 hover:text-[#00C776] cursor-pointer"
                     >
                       <span>{isExpanded ? "▼" : "▶"}</span>
@@ -951,46 +1130,86 @@ export default function ProjectsView() {
         /* ════════════ 视图 2：项目甘特图视界 (Interactive Gantt Chart) ════════════ */
         <div className="bg-white dark:bg-slate-900/90 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-2xs overflow-hidden flex flex-col">
           {/* 甘特图工具栏 (Gantt Toolbar) */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50">
+            <div className="flex items-center gap-3 flex-wrap">
               <span className="text-xs font-bold text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
                 <span>🗓️</span>
-                <span>
-                  排期时间轴：{minGanttDate} ~ {maxGanttDate}
-                </span>
+                <span>{timelineLabel}</span>
               </span>
               <button
                 type="button"
-                onClick={() => setGanttOffsetDays(0)}
-                className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-700 dark:text-slate-300 hover:text-[#00C776] cursor-pointer"
+                onClick={() => setGanttOffset(0)}
+                className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-700 dark:text-slate-300 hover:text-[#00C776] cursor-pointer shadow-2xs transition-colors"
               >
-                定位今天
+                {ganttScale === "day" ? "定位今天" : ganttScale === "month" ? "定位本月" : "定位今年"}
               </button>
             </div>
 
-            {/* 左右翻页与缩放 */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setGanttOffsetDays((d) => d - 7)}
-                className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-600 dark:text-slate-300 hover:bg-gray-100 cursor-pointer"
-              >
-                ◀ 前移 7 天
-              </button>
-              <button
-                type="button"
-                onClick={() => setGanttOffsetDays((d) => d + 7)}
-                className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-600 dark:text-slate-300 hover:bg-gray-100 cursor-pointer"
-              >
-                后移 7 天 ▶
-              </button>
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* 多尺度缩放分段器 (Scale Zoom Controller) */}
+              <div className="flex items-center p-0.5 rounded-xl bg-gray-200/70 dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => handleScaleChange("day")}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    ganttScale === "day"
+                      ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
+                      : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                  title="21 天微观敏捷排期视界"
+                >
+                  🌞 日 (21天)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleScaleChange("month")}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    ganttScale === "month"
+                      ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
+                      : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                  title="12 个月中期推进视界"
+                >
+                  📅 月 (年度推进)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleScaleChange("year")}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    ganttScale === "year"
+                      ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
+                      : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                  title="3 年跨度战略路线图"
+                >
+                  🪐 年 (跨年路线图)
+                </button>
+              </div>
+
+              {/* 前后翻页 */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setGanttOffset((d) => d - stepAmount)}
+                  className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer shadow-2xs transition-colors"
+                >
+                  {prevLabel}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGanttOffset((d) => d + stepAmount)}
+                  className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer shadow-2xs transition-colors"
+                >
+                  {nextLabel}
+                </button>
+              </div>
             </div>
           </div>
 
           {/* 甘特图主体容器 (横向滚动支持) */}
           <div className="overflow-x-auto">
             <div className="min-w-[960px]">
-              {/* 表头：左侧固定项目信息 (240px) + 右侧 21 天刻度 */}
+              {/* 表头：左侧固定项目信息 (240px) + 右侧多尺度刻度 */}
               <div className="flex border-b border-gray-200 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/80 text-[11px] font-black text-gray-600 dark:text-slate-300">
                 <div className="w-64 p-3 border-r border-gray-200 dark:border-slate-800 shrink-0 flex items-center justify-between">
                   <span>项目 / 里程碑阶段</span>
@@ -999,21 +1218,24 @@ export default function ProjectsView() {
                   </span>
                 </div>
 
-                <div className="flex-1 grid grid-cols-21 divide-x divide-gray-100 dark:divide-slate-800/80 text-center">
-                  {ganttDays.map((d) => (
+                <div
+                  className="flex-1 grid divide-x divide-gray-100 dark:divide-slate-800/80 text-center"
+                  style={{ gridTemplateColumns: `repeat(${ganttColumns.length}, minmax(0, 1fr))` }}
+                >
+                  {ganttColumns.map((col) => (
                     <div
-                      key={d.dateStr}
+                      key={col.key}
                       className={`py-2 px-0.5 flex flex-col items-center justify-center transition-colors ${
-                        d.isToday
+                        col.isCurrent
                           ? "bg-[#00C776]/15 text-[#00C776] font-black"
-                          : d.isWeekend
+                          : col.isWeekend
                           ? "bg-gray-100/50 dark:bg-slate-800/40 text-amber-600 dark:text-amber-400"
                           : "text-gray-700 dark:text-slate-300"
                       }`}
                     >
-                      <span className="text-[9px] opacity-70">周{d.dayLabel}</span>
-                      <span className="text-xs font-black">{d.dayNum}</span>
-                      {d.isToday && (
+                      <span className="text-[9px] opacity-70 truncate max-w-full px-0.5">{col.subLabel}</span>
+                      <span className="text-xs font-black">{col.label}</span>
+                      {col.isCurrent && (
                         <span className="w-1.5 h-1.5 rounded-full bg-[#00C776] mt-0.5 animate-ping" />
                       )}
                     </div>
@@ -1029,7 +1251,8 @@ export default function ProjectsView() {
                   const total = projectTodos.length;
                   const done = doneCount(p.id);
                   const percent = total > 0 ? Math.round((done / total) * 100) : 0;
-                  const isExpanded = expandedProjectId !== p.id; // 甘特图默认展开
+                  const isExpanded = !ganttCollapsedIds.includes(p.id); // 甘特图默认展开
+                  const { startIdx: pStart, span: pSpan } = calculateProjectSpan(projectTodos);
 
                   return (
                     <div key={p.id} className="group/project">
@@ -1040,11 +1263,7 @@ export default function ProjectsView() {
                           <div className="flex items-center gap-2 min-w-0">
                             <button
                               type="button"
-                              onClick={() =>
-                                setExpandedProjectId(
-                                  expandedProjectId === p.id ? null : p.id,
-                                )
-                              }
+                              onClick={() => toggleGanttCollapse(p.id)}
                               className="text-gray-400 hover:text-gray-700 dark:hover:text-white cursor-pointer text-xs"
                             >
                               {isExpanded ? "▼" : "▶"}
@@ -1075,14 +1294,17 @@ export default function ProjectsView() {
                         {/* 右侧项目进度跨度条 (Project Track) */}
                         <div className="flex-1 h-12 relative flex items-center px-1">
                           {/* 背景刻度辅助线 */}
-                          <div className="absolute inset-0 grid grid-cols-21 divide-x divide-gray-100 dark:divide-slate-800/60 pointer-events-none">
-                            {ganttDays.map((d) => (
+                          <div
+                            className="absolute inset-0 grid divide-x divide-gray-100 dark:divide-slate-800/60 pointer-events-none"
+                            style={{ gridTemplateColumns: `repeat(${ganttColumns.length}, minmax(0, 1fr))` }}
+                          >
+                            {ganttColumns.map((col) => (
                               <div
-                                key={d.dateStr}
+                                key={col.key}
                                 className={`h-full ${
-                                  d.isToday
+                                  col.isCurrent
                                     ? "bg-[#00C776]/5"
-                                    : d.isWeekend
+                                    : col.isWeekend
                                     ? "bg-gray-50/50 dark:bg-slate-800/20"
                                     : ""
                                 }`}
@@ -1090,10 +1312,12 @@ export default function ProjectsView() {
                             ))}
                           </div>
 
-                          {/* 跨度进度块 */}
+                          {/* 跨度进度块 (自适应尺度百分比) */}
                           <div
-                            className="h-6 rounded-xl relative overflow-hidden shadow-2xs flex items-center justify-between px-3 transition-all cursor-pointer z-10 w-full"
+                            className="h-6 rounded-xl absolute overflow-hidden shadow-2xs flex items-center justify-between px-3 transition-all cursor-pointer z-10"
                             style={{
+                              left: `${(pStart / ganttColumns.length) * 100}%`,
+                              width: `${Math.max(8, (pSpan / ganttColumns.length) * 100)}%`,
                               backgroundColor: `${projectThemeColor}20`,
                               border: `1.5px solid ${projectThemeColor}`,
                             }}
@@ -1109,8 +1333,8 @@ export default function ProjectsView() {
                             <span className="relative z-10 text-[10px] font-black text-gray-800 dark:text-white truncate">
                               {p.name} · {p.status}
                             </span>
-                            <span className="relative z-10 text-[10px] font-black text-gray-800 dark:text-white shrink-0">
-                              {done}/{total} 项完成 ({percent}%)
+                            <span className="relative z-10 text-[10px] font-black text-gray-800 dark:text-white shrink-0 ml-1">
+                              {done}/{total} ({percent}%)
                             </span>
                           </div>
                         </div>
@@ -1160,14 +1384,17 @@ export default function ProjectsView() {
                               {/* 右侧甘特图条块 (Gantt Milestone Bar) */}
                               <div className="flex-1 h-9 relative flex items-center">
                                 {/* 背景网格 */}
-                                <div className="absolute inset-0 grid grid-cols-21 divide-x divide-gray-100 dark:divide-slate-800/40 pointer-events-none">
-                                  {ganttDays.map((d) => (
+                                <div
+                                  className="absolute inset-0 grid divide-x divide-gray-100 dark:divide-slate-800/40 pointer-events-none"
+                                  style={{ gridTemplateColumns: `repeat(${ganttColumns.length}, minmax(0, 1fr))` }}
+                                >
+                                  {ganttColumns.map((col) => (
                                     <div
-                                      key={d.dateStr}
+                                      key={col.key}
                                       className={`h-full ${
-                                        d.isToday
+                                        col.isCurrent
                                           ? "bg-[#00C776]/5"
-                                          : d.isWeekend
+                                          : col.isWeekend
                                           ? "bg-gray-50/30 dark:bg-slate-800/10"
                                           : ""
                                       }`}
@@ -1179,8 +1406,8 @@ export default function ProjectsView() {
                                 <div
                                   className="absolute h-6 rounded-lg px-2 flex items-center justify-between text-[10px] font-bold shadow-2xs transition-all z-10 cursor-pointer"
                                   style={{
-                                    left: `${(startIdx / 21) * 100}%`,
-                                    width: `${(span / 21) * 100}%`,
+                                    left: `${(startIdx / ganttColumns.length) * 100}%`,
+                                    width: `${Math.max(ganttScale === "day" ? 4 : 7, (span / ganttColumns.length) * 100)}%`,
                                     backgroundColor: isDone
                                       ? "#94A3B8"
                                       : t.priority === "high"
