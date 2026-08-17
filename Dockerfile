@@ -19,6 +19,23 @@ COPY . .
 ENV NODE_ENV=production
 RUN corepack enable && pnpm build
 
+# 修复: Next.js standalone + pnpm 缺失 @swc/helpers/esm (Next.js 16.3.x 追踪 bug)
+# standalone 输出常缺少 @swc/helpers 的 esm/ 目录，导致容器启动时
+# require-handler 无法加载 _interop_require_default.js。这里按版本精确补齐。
+RUN for SWC_DIR in /app/.next/standalone/node_modules/.pnpm/@swc+helpers@*/node_modules/@swc/helpers; do \
+      if [ -d "$SWC_DIR" ] && [ ! -d "$SWC_DIR/esm" ]; then \
+        SWC_VERSION=$(echo "$SWC_DIR" | sed -E 's#.*/@swc\+helpers@([^/]+)/.*#\1#'); \
+        for SRC_DIR in /app/node_modules/.pnpm/@swc+helpers@*"/node_modules/@swc/helpers"; do \
+          SRC_VERSION=$(echo "$SRC_DIR" | sed -E 's#.*/@swc\+helpers@([^/]+)/.*#\1#'); \
+          if [ "$SRC_VERSION" = "$SWC_VERSION" ] && [ -d "$SRC_DIR/esm" ]; then \
+            echo "Fixing @swc/helpers@$SWC_VERSION: copying esm/ into standalone"; \
+            cp -r "$SRC_DIR/esm" "$SWC_DIR/esm"; \
+            break; \
+          fi; \
+        done; \
+      fi; \
+    done
+
 # Stage 3: Runner
 FROM base AS runner
 WORKDIR /app

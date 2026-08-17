@@ -79,8 +79,10 @@ export default function ProjectsView() {
   const [ganttCollapsedIds, setGanttCollapsedIds] = useState<string[]>([]);
 
   // 甘特图时间多尺度缩放（日视图 21天 / 月视图 12个月 / 年视图 3年12季度）
-  const [ganttScale, setGanttScale] = useState<GanttScale>("day");
-  const [ganttOffset, setGanttOffset] = useState(0);
+    const [ganttScale, setGanttScale] = useState<GanttScale>("day");
+    const [ganttOffset, setGanttOffset] = useState(0);
+    // 甘特图项目筛选（"all" 或项目 id）
+    const [ganttProjectFilter, setGanttProjectFilter] = useState<string>("all");
 
   // 挂载后同步本地设备状态记忆（卡片展开、甘特图折叠、视图模式、甘特图尺度）
   useEffect(() => {
@@ -1131,19 +1133,30 @@ export default function ProjectsView() {
         <div className="bg-white dark:bg-slate-900/90 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-2xs overflow-hidden flex flex-col">
           {/* 甘特图工具栏 (Gantt Toolbar) */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-xs font-bold text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
-                <span>🗓️</span>
-                <span>{timelineLabel}</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setGanttOffset(0)}
-                className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-700 dark:text-slate-300 hover:text-[#00C776] cursor-pointer shadow-2xs transition-colors"
-              >
-                {ganttScale === "day" ? "定位今天" : ganttScale === "month" ? "定位本月" : "定位今年"}
-              </button>
-            </div>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="text-xs font-bold text-gray-700 dark:text-slate-300 flex items-center gap-1.5">
+                          <span>🗓️</span>
+                          <span>{timelineLabel}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setGanttOffset(0)}
+                          className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-700 dark:text-slate-300 hover:text-[#00C776] cursor-pointer shadow-2xs transition-colors"
+                        >
+                          {ganttScale === "day" ? "定位今天" : ganttScale === "month" ? "定位本月" : "定位今年"}
+                        </button>
+                        {/* 项目筛选下拉 */}
+                        <select
+                          value={ganttProjectFilter}
+                          onChange={(e) => setGanttProjectFilter(e.target.value)}
+                          className="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-700 dark:text-slate-300 cursor-pointer shadow-2xs transition-colors focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
+                        >
+                          <option value="all">全部项目</option>
+                          {projects.map((p) => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          ))}
+                        </select>
+                      </div>
 
             <div className="flex items-center gap-3 flex-wrap">
               {/* 多尺度缩放分段器 (Scale Zoom Controller) */}
@@ -1214,8 +1227,8 @@ export default function ProjectsView() {
                 <div className="w-64 p-3 border-r border-gray-200 dark:border-slate-800 shrink-0 flex items-center justify-between">
                   <span>项目 / 里程碑阶段</span>
                   <span className="text-[10px] text-gray-400 font-normal">
-                    共 {projects.length} 项
-                  </span>
+                                      共 {ganttProjectFilter === "all" ? projects.length : 1} 项
+                                    </span>
                 </div>
 
                 <div
@@ -1244,8 +1257,11 @@ export default function ProjectsView() {
               </div>
 
               {/* 表体：按项目循环渲染甘特图行 */}
-              <div className="divide-y divide-gray-100 dark:divide-slate-800">
-                {projects.map((p) => {
+                            <div className="divide-y divide-gray-100 dark:divide-slate-800">
+                              {(ganttProjectFilter === "all"
+                                ? projects
+                                : projects.filter((p) => p.id === ganttProjectFilter)
+                              ).map((p) => {
                   const projectThemeColor = p.color || p.statusColor || "#00C776";
                   const projectTodos = getProjectTodos(p.id);
                   const total = projectTodos.length;
