@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import BrandLogo from "@/components/brand-logo";
+import BrandLogoText from "@/components/brand-logo-text";
 
 function LoginForm() {
   const router = useRouter();
@@ -60,7 +61,7 @@ function LoginForm() {
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-gray-300 shadow-2xs overflow-hidden bg-white">
               <BrandLogo />
             </div>
-            <span className="text-2xl font-bold tracking-tight">Navelix</span>
+            <BrandLogoText className="text-2xl font-bold tracking-tight" />
           </div>
 
           <div>
@@ -107,7 +108,9 @@ function LoginForm() {
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-gray-200 shadow-2xs overflow-hidden bg-white">
                 <BrandLogo />
               </div>
-              <h1 className="text-xl font-bold text-gray-900">登录到 Navelix</h1>
+              <h1 className="text-xl font-bold text-gray-900">
+                登录到 <BrandLogoText className="text-xl font-bold text-gray-900" />
+              </h1>
               <p className="mt-1 text-xs text-gray-400">
                 欢迎回到你的数字工作空间
               </p>
