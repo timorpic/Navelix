@@ -19,15 +19,15 @@ export default function CalendarView() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
 
   useEffect(() => {
-    try {
-      const savedMode = localStorage.getItem("navelix_calendar_view_mode");
-      if (savedMode === "month" || savedMode === "week" || savedMode === "today") {
-        setViewMode(savedMode);
+      try {
+        const savedMode = localStorage.getItem("navelix_calendar_view_mode");
+        if (savedMode === "month" || savedMode === "week" || savedMode === "today") {
+          queueMicrotask(() => setViewMode(savedMode));
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
-  }, []);
+    }, []);
 
   const handleViewModeChange = (mode: CalendarViewMode) => {
     setViewMode(mode);

@@ -43,11 +43,11 @@ function HomeContent() {
     try {
       const left = localStorage.getItem("navelix_sidebar_left");
       if (left !== null) {
-        setLeftCollapsed(left === "true");
+        queueMicrotask(() => setLeftCollapsed(left === "true"));
       }
       const right = localStorage.getItem("navelix_sidebar_right");
       if (right !== null) {
-        setRightCollapsed(right === "true");
+        queueMicrotask(() => setRightCollapsed(right === "true"));
       }
     } catch {
       /* ignore */

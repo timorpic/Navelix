@@ -25,7 +25,7 @@ export default function RightSidebar({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    queueMicrotask(() => setMounted(true));
   }, []);
 
   // 2. 加载工作区上下文

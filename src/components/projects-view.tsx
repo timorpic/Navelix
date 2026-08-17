@@ -85,28 +85,28 @@ export default function ProjectsView() {
     const [ganttProjectFilter, setGanttProjectFilter] = useState<string>("all");
 
   // 挂载后同步本地设备状态记忆（卡片展开、甘特图折叠、视图模式、甘特图尺度）
-  useEffect(() => {
-    try {
-      const savedTab = localStorage.getItem("navelix_projects_view_tab");
-      if (savedTab === "cards" || savedTab === "gantt") {
-        setViewTab(savedTab);
+    useEffect(() => {
+      try {
+        const savedTab = localStorage.getItem("navelix_projects_view_tab");
+        if (savedTab === "cards" || savedTab === "gantt") {
+          queueMicrotask(() => setViewTab(savedTab));
+        }
+        const savedExpanded = localStorage.getItem("navelix_projects_expanded_ids");
+        if (savedExpanded) {
+          queueMicrotask(() => setExpandedProjectIds(JSON.parse(savedExpanded)));
+        }
+        const savedGantt = localStorage.getItem("navelix_projects_gantt_collapsed_ids");
+        if (savedGantt) {
+          queueMicrotask(() => setGanttCollapsedIds(JSON.parse(savedGantt)));
+        }
+        const savedScale = localStorage.getItem("navelix_projects_gantt_scale");
+        if (savedScale === "day" || savedScale === "month" || savedScale === "year") {
+          queueMicrotask(() => setGanttScale(savedScale));
+        }
+      } catch {
+        // ignore
       }
-      const savedExpanded = localStorage.getItem("navelix_projects_expanded_ids");
-      if (savedExpanded) {
-        setExpandedProjectIds(JSON.parse(savedExpanded));
-      }
-      const savedGantt = localStorage.getItem("navelix_projects_gantt_collapsed_ids");
-      if (savedGantt) {
-        setGanttCollapsedIds(JSON.parse(savedGantt));
-      }
-      const savedScale = localStorage.getItem("navelix_projects_gantt_scale");
-      if (savedScale === "day" || savedScale === "month" || savedScale === "year") {
-        setGanttScale(savedScale);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
+    }, []);
 
   const handleScaleChange = (scale: GanttScale) => {
     setGanttScale(scale);
@@ -147,10 +147,7 @@ export default function ProjectsView() {
     } catch {}
   };
 
-  // Gantt Chart time window offset (days from today)
-  const [ganttOffsetDays, setGanttOffsetDays] = useState(0);
-
-  const fetchProjects = useCallback(async () => {
+    const fetchProjects = useCallback(async () => {
     try {
       const [pRes, tRes, mRes] = await Promise.all([
         fetch("/api/projects"),

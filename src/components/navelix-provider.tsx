@@ -189,28 +189,28 @@ export function NavelixProvider({
 
   // 5. 挂载加载与跨标签页 Storage 同步
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const media = window.matchMedia("(prefers-color-scheme: dark)");
-      setResolvedDark(media.matches);
-      try {
-        localStorage.removeItem("navelix.antigravity.auth.accounts");
-        localStorage.removeItem("navelix.antigravity.auth.info");
-      } catch {}
-    }
+      if (typeof window !== "undefined") {
+        const media = window.matchMedia("(prefers-color-scheme: dark)");
+        queueMicrotask(() => setResolvedDark(media.matches));
+        try {
+          localStorage.removeItem("navelix.antigravity.auth.accounts");
+          localStorage.removeItem("navelix.antigravity.auth.info");
+        } catch {}
+      }
 
     if (!initialData) {
-      loadData();
-    } else {
-      const localTheme = localStorage.getItem("navelix_theme");
-      if (localTheme && (localTheme === "light" || localTheme === "dark" || localTheme === "system")) {
-        if (localTheme !== config.theme) {
-          setConfig((prev) => ({ ...prev, theme: localTheme as SystemConfig["theme"] }));
+          loadData();
+        } else {
+          const localTheme = localStorage.getItem("navelix_theme");
+          if (localTheme && (localTheme === "light" || localTheme === "dark" || localTheme === "system")) {
+            if (localTheme !== config.theme) {
+              queueMicrotask(() => setConfig((prev) => ({ ...prev, theme: localTheme as SystemConfig["theme"] })));
+            }
+            queueMicrotask(() => applyThemeToDom(localTheme));
+          } else {
+            queueMicrotask(() => applyThemeToDom(config.theme));
+          }
         }
-        applyThemeToDom(localTheme);
-      } else {
-        applyThemeToDom(config.theme);
-      }
-    }
 
     const storageHandler = (e: StorageEvent) => {
       if (e.key === "navelix_theme" && e.newValue) {
@@ -231,8 +231,8 @@ export function NavelixProvider({
     };
 
     window.addEventListener("storage", storageHandler);
-    return () => window.removeEventListener("storage", storageHandler);
-  }, [loadData, initialData, applyThemeToDom]);
+        return () => window.removeEventListener("storage", storageHandler);
+      }, [loadData, initialData, applyThemeToDom, config.theme]);
 
   // 6. 系统主题变动监听器（当 config.theme === 'system' 时响应系统级浅色/深色切换）
   useEffect(() => {

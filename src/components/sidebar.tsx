@@ -36,7 +36,7 @@ export default function Sidebar({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    queueMicrotask(() => setMounted(true));
     const timer = setInterval(() => {
       setNow(new Date());
     }, 1000);

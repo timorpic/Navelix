@@ -100,16 +100,16 @@ export default function DashboardView({
   const [usageMap, setUsageMap] = useState<Record<string, { count: number; lastUsed: number }>>({});
 
   useEffect(() => {
-    setMounted(true);
-    try {
-      const raw = localStorage.getItem("navelix.link.usage");
-      if (raw) {
-        setUsageMap(JSON.parse(raw));
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
+      queueMicrotask(() => setMounted(true));
+            try {
+              const raw = localStorage.getItem("navelix.link.usage");
+              if (raw) {
+                queueMicrotask(() => setUsageMap(JSON.parse(raw)));
+              }
+            } catch {
+              // ignore
+            }
+          }, []);
 
   const analytics = useMemo(() => {
     const map = mounted ? usageMap : {};
