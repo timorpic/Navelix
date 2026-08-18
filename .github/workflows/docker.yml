@@ -201,59 +201,40 @@ jobs:
           docker stop smoke-test-app
           docker rm smoke-test-app
 
-      - name: Send Notification to Navelix Instance (https://notify.timor.eu.org)
+      - name: Send Telegram Notification
         if: always()
         env:
-          NAVELIX_TOKEN: ${{ secrets['NAVELIX_NOTIFICATION_TOKEN'] }}
-          NAVELIX_SERVER_URL: ${{ secrets['NAVELIX_SERVER_URL'] }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          TOKEN="$NAVELIX_TOKEN"
-          SERVER_URL="${NAVELIX_SERVER_URL:-https://notify.timor.eu.org}"
-
-          # ── 网络诊断：定位 GitHub Actions 机房 → 服务器 的连接在哪一层失败 ──
-          echo "--- Network diagnostics ---"
-          DIAG_HOST=$(echo "$SERVER_URL" | sed -E 's#^https?://##; s#[:/].*##')
-          DIAG_PORT=$(echo "$SERVER_URL" | sed -E 's#^https?://[^:]*:([0-9]+).*#\1#; t; s#.*#443#')
-          echo "Target: ${SERVER_URL}  (host=${DIAG_HOST}, port=${DIAG_PORT})"
-          echo "DNS resolution:"
-          getent hosts "$DIAG_HOST" || nslookup "$DIAG_HOST" 2>&1 || true
-          echo "TCP connect test (10s timeout):"
-          if timeout 10 bash -c "</dev/tcp/$DIAG_HOST/$DIAG_PORT" 2>/dev/null; then
-            echo "  TCP OK: connected to ${DIAG_HOST}:${DIAG_PORT}"
-          else
-            echo "  TCP FAILED: cannot connect to ${DIAG_HOST}:${DIAG_PORT}"
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Notice: TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID secrets are not configured in repository settings."
+            exit 0
           fi
-          echo "--- End diagnostics ---"
 
-          if [ -n "$TOKEN" ]; then
-            SHORT_SHA="${{ github.sha }}"
-            SHORT_SHA="${SHORT_SHA:0:7}"
-            STATUS="${{ job.status }}"
-            TITLE="🐳 Docker 镜像构建完成 [${STATUS}]"
-            CONTENT="Navelix Docker 镜像版本 (sha-${SHORT_SHA}) 在 GitHub Actions 集中构建与冒烟测试已完成。触发分支: ${{ github.ref_name }}，状态: ${STATUS}。"
+          SHORT_SHA="${{ github.sha }}"
+          SHORT_SHA="${SHORT_SHA:0:7}"
+          STATUS="${{ job.status }}"
+          MESSAGE="🐳 Docker 镜像构建完成 [${STATUS}]%0ANavelix Docker 镜像版本 (sha-${SHORT_SHA}) 在 GitHub Actions 集中构建与冒烟测试已完成。%0A触发分支: ${{ github.ref_name }}，状态: ${STATUS}。"
 
-            RESPONSE_FILE=$(mktemp)
-            HTTP_CODE=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" \
-              -X POST "${SERVER_URL}/api/notifications" \
-              -H "Authorization: Bearer ${TOKEN}" \
-              -H "Content-Type: application/json" \
-              -d "{\"title\":\"${TITLE}\",\"content\":\"${CONTENT}\",\"source\":\"api\"}")
-            CURL_EXIT=$?
-            echo "POST ${SERVER_URL}/api/notifications -> HTTP ${HTTP_CODE} (curl exit ${CURL_EXIT})"
-            if [ "$CURL_EXIT" -ne 0 ]; then
-              echo "Error: curl failed to reach ${SERVER_URL} (exit ${CURL_EXIT})."
-              rm -f "$RESPONSE_FILE"
-              exit 1
-            fi
-            if [ "${HTTP_CODE}" != "200" ] && [ "${HTTP_CODE}" != "201" ]; then
-              echo "Error: notification request rejected with HTTP ${HTTP_CODE}."
-              echo "Server response body:"
-              cat "$RESPONSE_FILE" || true
-              rm -f "$RESPONSE_FILE"
-              exit 1
-            fi
+          RESPONSE_FILE=$(mktemp)
+          HTTP_CODE=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" \
+            -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{\"chat_id\":\"${TELEGRAM_CHAT_ID}\",\"text\":\"${MESSAGE}\",\"disable_web_page_preview\":true}")
+          CURL_EXIT=$?
+          echo "POST Telegram sendMessage -> HTTP ${HTTP_CODE} (curl exit ${CURL_EXIT})"
+          if [ "$CURL_EXIT" -ne 0 ]; then
+            echo "Error: curl failed to reach Telegram API (exit ${CURL_EXIT})."
             rm -f "$RESPONSE_FILE"
-            echo "Notification sent to ${SERVER_URL} (HTTP ${HTTP_CODE})!"
-          else
-            echo "Notice: NAVELIX_NOTIFICATION_TOKEN secret is not configured in repository settings."
+            exit 1
           fi
+          if [ "${HTTP_CODE}" != "200" ]; then
+            echo "Error: Telegram API rejected the request with HTTP ${HTTP_CODE}."
+            echo "API response body:"
+            cat "$RESPONSE_FILE" || true
+            rm -f "$RESPONSE_FILE"
+            exit 1
+          fi
+          rm -f "$RESPONSE_FILE"
+          echo "Telegram notification sent!"
