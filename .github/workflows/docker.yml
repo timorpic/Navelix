@@ -201,14 +201,14 @@ jobs:
           docker stop smoke-test-app
           docker rm smoke-test-app
 
-      - name: Send Notification to Navelix Instance (square-art-f4c3.timorpic.workers.dev)
+      - name: Send Notification to Navelix Instance (https://notify.timor.eu.org)
         if: always()
         env:
           NAVELIX_TOKEN: ${{ secrets['NAVELIX_NOTIFICATION_TOKEN'] }}
           NAVELIX_SERVER_URL: ${{ secrets['NAVELIX_SERVER_URL'] }}
         run: |
           TOKEN="$NAVELIX_TOKEN"
-          SERVER_URL="${NAVELIX_SERVER_URL:-https://square-art-f4c3.timorpic.workers.dev}"
+          SERVER_URL="${NAVELIX_SERVER_URL:-https://notify.timor.eu.org}"
 
           # ── 网络诊断：定位 GitHub Actions 机房 → 服务器 的连接在哪一层失败 ──
           echo "--- Network diagnostics ---"
