@@ -12,7 +12,7 @@
 
 ### 📌 快捷功能索引
 - **📅 日程与待办**
-  - [日历协同指南](User-Guide-功能使用指南#3-日历日程多人协同与智能顺延)
+  - [日历分工指南](User-Guide-功能使用指南#3-日历日程成员分工与智能顺延)
   - [逾期自动顺延 Rollover](REST-API-开放接口文档#35-逾期待办一键定时顺延-rollover-api)
   - [Apple/Google 日历订阅](REST-API-开放接口文档#36-icalendar-标准外部日历订阅-apple--google--outlook)
 - **📊 项目管理**

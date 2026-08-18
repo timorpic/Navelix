@@ -601,6 +601,7 @@ export default function AdminSystemTab() {
                 onClick={() =>
                   updateConfig({
                     allowPublicAccess: config.allowPublicAccess === false,
+                    securitySetupDone: true,
                   })
                 }
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
@@ -629,6 +630,7 @@ export default function AdminSystemTab() {
                 onClick={() =>
                   updateConfig({
                     allowRegistration: config.allowRegistration === false,
+                    securitySetupDone: true,
                   })
                 }
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${

@@ -262,6 +262,31 @@ function LoginForm() {
                 </p>
               )}
 
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setError("")}
+                  className="invisible"
+                  aria-hidden
+                  tabIndex={-1}
+                >
+                  _
+                </button>
+                <details className="text-right">
+                  <summary className="cursor-pointer text-xs font-medium text-gray-400 transition-colors hover:text-[#009a5a] list-none">
+                    忘记密码？
+                  </summary>
+                  <div className="mt-2 w-64 rounded-xl border border-gray-100 bg-white p-3 text-left text-[11px] leading-relaxed text-gray-500 shadow-sm">
+                    <p>
+                      ① 普通账号：请联系管理员，在后台「账号管理」中重置你的密码；
+                    </p>
+                    <p className="mt-1">
+                      ② 管理员账号：通过环境变量 <code className="font-mono text-[10px] text-[#009a5a]">NAVELIX_ADMIN_PASSWORD</code> 设置新密码并重启应用，即可重置初始管理员密码。
+                    </p>
+                  </div>
+                </details>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}

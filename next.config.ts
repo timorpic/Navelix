@@ -32,6 +32,13 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: "standalone",
   devIndicators: false,
+  // 运行期数据目录（SQLite 库、备份、初始密码）不得被追踪进 standalone 镜像：
+  // 否则构建时 worker 生成的含随机 admin 密码的 dev DB 会被烘焙进 Docker 镜像，
+  // 导致冒烟测试的 NAVELIX_ADMIN_PASSWORD 登录校验失败。
+  // 种子数据源在 src/data/links.ts（由模块打包正常引入），不受此排除影响。
+  outputFileTracingExcludes: {
+    "/*": ["./data/**"],
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "api.dicebear.com" },

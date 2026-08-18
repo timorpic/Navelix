@@ -16,6 +16,7 @@ import DashboardView from "@/components/dashboard-view";
 import { useNavelixData } from "@/hooks/use-navelix-data";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useLinkStatus } from "@/hooks/use-link-status";
+import SecuritySetupBanner from "@/components/security-setup-banner";
 
 function HomeContent() {
   const { categories, links, hydrated } = useNavelixData();
@@ -204,6 +205,9 @@ function HomeContent() {
               </button>
             </div>
           )}
+
+          {/* 首次登录安全设置引导横幅（仅管理员且未完成时展示） */}
+          <SecuritySetupBanner />
 
           {/* Feature Pages (日历日程、项目管理、数据看板、消息通知等独立全景页面不展示 HeroBanner) */}
           {activeCategory === "feature-calendar" ? (

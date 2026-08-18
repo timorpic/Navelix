@@ -1,7 +1,7 @@
 # 🚀 欢迎使用 Navelix 官方 Wiki 知识库
 
-> **Navelix (Personal Digital Hub)** 是一款专为极客、开发者、独立创作者与敏捷团队打造的**现代化全功能个人数字工作空间与数字导航系统**。
-> 它融合了 **AI 智能项目拆解、多用户协同工作空间、交互式甘特图、日历日程规划、全站链接健康巡检与商汤大模型监控**，提供极致流畅的一站式工作流体验。
+> **Navelix (Personal Digital Hub)** 是一款专为极客、开发者、独立创作者打造的**现代化全功能个人数字工作空间与数字导航系统**。
+> 它融合了 **AI 智能项目拆解、跨设备数据漫游、交互式甘特图、日历日程规划、全站链接健康巡检与商汤大模型监控**，提供极致流畅的一站式工作流体验。
 
 ---
 
@@ -13,7 +13,7 @@ graph TD
     
     Navelix --> Mod1["🔖 智能导航与资产管理"]
     Navelix --> Mod2["📊 项目看板与交互式甘特图"]
-    Navelix --> Mod3["📅 日历日程与团队协同待办"]
+    Navelix --> Mod3["📅 日历日程与智能待办"]
     Navelix --> Mod4["🤖 AI 智能中枢与大模型监控"]
     Navelix --> Mod5["🌐 跨设备云漫游与 OpenAPI 开放生态"]
     Navelix --> Mod6["🛡️ 企业级多层安全防御体系"]
@@ -35,7 +35,7 @@ graph TD
     Mod4 --> F12["全工作区上下文智能助理问答"]
     Mod4 --> F13["商汤 SenseNova 5h 窗口实时用量监控"]
 
-    Mod5 --> F14["35+ 项偏好设置毫秒级中心化持久化"]
+    Mod5 --> F14["35+ 项偏好设置中心化持久化"]
     Mod5 --> F15["iOS 快捷指令 / NAS 脚本 / Webhook 集成"]
     Mod5 --> F16["SHA-256 个人 Access Token 鉴权"]
 
@@ -80,4 +80,4 @@ docker run -d \
 
 ---
 
-*Navelix Core 遵循 MIT 开源协议 | 长期主义，让技术创造更多价值。*
+*Navelix 遵循**自定义许可证**（个人非商业用途免费；禁止修改与商用，详见 [LICENSE](https://github.com/timorpic/Navelix/blob/main/LICENSE)）| 长期主义，让技术创造更多价值。*

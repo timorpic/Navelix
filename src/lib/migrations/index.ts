@@ -157,7 +157,6 @@ export function runMigrations(db: DatabaseSync): void {
     "weather_api_base_url",
     "weather_api_base_url TEXT NOT NULL DEFAULT 'https://api.seniverse.com'",
   );
-  ensureColumn(db, "user_configs", "is_pro", "is_pro INTEGER NOT NULL DEFAULT 0");
   ensureColumn(
     db,
     "user_configs",
@@ -198,13 +197,19 @@ export function runMigrations(db: DatabaseSync): void {
     db,
     "user_configs",
     "allow_public_access",
-    "allow_public_access INTEGER NOT NULL DEFAULT 1",
+    "allow_public_access INTEGER NOT NULL DEFAULT 0",
   );
   ensureColumn(
     db,
     "user_configs",
     "allow_registration",
-    "allow_registration INTEGER NOT NULL DEFAULT 1",
+    "allow_registration INTEGER NOT NULL DEFAULT 0",
+  );
+  ensureColumn(
+    db,
+    "user_configs",
+    "security_setup_done",
+    "security_setup_done INTEGER NOT NULL DEFAULT 0",
   );
   ensureColumn(
     db,
@@ -238,6 +243,12 @@ export function runMigrations(db: DatabaseSync): void {
   ensureColumn(db, "user_configs", "cliproxy_enabled", "cliproxy_enabled INTEGER NOT NULL DEFAULT 1");
   ensureColumn(db, "user_configs", "cliproxy_url", "cliproxy_url TEXT NOT NULL DEFAULT 'http://127.0.0.1:8317'");
   ensureColumn(db, "user_configs", "cliproxy_key", "cliproxy_key TEXT NOT NULL DEFAULT ''");
+
+  // 首次引入 security_setup_done 的存量部署：默认标记为已完成，避免打扰已在运行的老用户；
+  // 全新部署（user_version=0）保持 0，首次登录对管理员展示安全设置引导横幅
+  if (user_version > 0) {
+    db.prepare("UPDATE user_configs SET security_setup_done = 1").run();
+  }
 
   // ── v1：一次性迁移：为旧库中已有的用户配置补上社交链接默认值（仅在首次升级时执行，
   //     之后用户在后台清空字段即为"隐藏"语义，不会被再次覆盖）
@@ -426,13 +437,16 @@ export function runMigrations(db: DatabaseSync): void {
           sensenova_username TEXT NOT NULL DEFAULT '',
           sensenova_password TEXT NOT NULL DEFAULT '',
           sensenova_account_id TEXT NOT NULL DEFAULT '',
-          sensenova_token_key TEXT NOT NULL DEFAULT ''
+          sensenova_token_key TEXT NOT NULL DEFAULT '',
+          allow_public_access INTEGER NOT NULL DEFAULT 0,
+          allow_registration INTEGER NOT NULL DEFAULT 0,
+          security_setup_done INTEGER NOT NULL DEFAULT 0
         );
         INSERT OR IGNORE INTO user_configs_new (
-          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key
+          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key, allow_public_access, allow_registration, security_setup_done
         )
         SELECT
-          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key
+          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key, allow_public_access, allow_registration, security_setup_done
         FROM user_configs;
         DROP TABLE user_configs;
         ALTER TABLE user_configs_new RENAME TO user_configs;

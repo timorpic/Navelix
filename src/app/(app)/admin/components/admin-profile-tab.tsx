@@ -244,6 +244,7 @@ export default function AdminProfileTab() {
         setCurrentUser(data.user);
         setModalPasswordNotice("🎉 密码修改成功！");
         notify("个人账号", "登录密码已成功重置");
+        updateConfig({ securitySetupDone: true });
         setTimeout(() => {
           setShowChangePasswordModal(false);
           setModalOldPassword("");

@@ -39,6 +39,16 @@ export default function AdminPage() {
 
   const [activeTab, setActiveTab] = useState<AdminTab>("links");
   const [users, setUsers] = useState<Array<{ id: string; username: string; displayName: string; role: "admin" | "user"; avatar: string; createdAt: number }>>([]);
+
+  // 支持 URL 深链：/admin?tab=system 等（如首次登录安全设置引导）
+  useEffect(() => {
+    try {
+      const param = new URL(window.location.href).searchParams.get("tab");
+      if (param && (["links", "categories", "quickAccess", "projects", "schedules", "users", "analytics", "models", "system", "personalization", "profile"] as AdminTab[]).includes(param as AdminTab)) {
+        queueMicrotask(() => setActiveTab(param as AdminTab));
+      }
+    } catch { /* ignore */ }
+  }, []);
   const [currentUser, setCurrentUser] = useState<{
     username: string; displayName: string; role: "admin" | "user";
     avatar?: string; email?: string; bio?: string;

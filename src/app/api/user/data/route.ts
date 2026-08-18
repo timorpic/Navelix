@@ -151,6 +151,7 @@ export async function GET() {
         clock_widget_mode: "time" | "weather" | "analog";
         allow_public_access: number;
         allow_registration: number;
+        security_setup_done: number;
         custom_search_name: string;
         custom_search_url: string;
         custom_head_scripts: string;
@@ -169,8 +170,9 @@ export async function GET() {
         searchEngine: (configRow.search_engine as SystemConfig["searchEngine"]) || "google",
         customSearchName: configRow.custom_search_name || "",
         customSearchUrl: configRow.custom_search_url || "",
-        allowPublicAccess: configRow.allow_public_access !== 0,
-        allowRegistration: configRow.allow_registration !== 0,
+        allowPublicAccess: configRow.allow_public_access === 1 || (configRow.allow_public_access as unknown) === true || (configRow.allow_public_access as unknown) === "1",
+        allowRegistration: configRow.allow_registration === 1 || (configRow.allow_registration as unknown) === true || (configRow.allow_registration as unknown) === "1",
+        securitySetupDone: configRow.security_setup_done === 1 || (configRow.security_setup_done as unknown) === true || (configRow.security_setup_done as unknown) === "1",
         customHeadScripts: configRow.custom_head_scripts || "",
         customCss: configRow.custom_css || "",
         aiBaseUrl: configRow.ai_base_url,
@@ -208,6 +210,9 @@ export async function GET() {
         aiKeyConfigured: false,
         aiModel: "gpt-4o-mini",
         siteTitle: "Navelix · Personal Digital Hub",
+        allowPublicAccess: false,
+        allowRegistration: false,
+        securitySetupDone: false,
         linkStatusEnabled: true,
         linkStatusInterval: 60,
         socialGithub: "https://github.com",

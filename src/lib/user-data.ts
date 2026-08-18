@@ -123,8 +123,9 @@ export function getUserData(userId: string): UserDataResult {
         searchEngine: (configRow.search_engine as SystemConfig["searchEngine"]) || "google",
         customSearchName: String(configRow.custom_search_name || ""),
         customSearchUrl: String(configRow.custom_search_url || ""),
-        allowPublicAccess: configRow.allow_public_access !== 0 && configRow.allow_public_access !== false && configRow.allow_public_access !== "0",
-        allowRegistration: configRow.allow_registration !== 0 && configRow.allow_registration !== false && configRow.allow_registration !== "0",
+        allowPublicAccess: configRow.allow_public_access === 1 || configRow.allow_public_access === true || configRow.allow_public_access === "1",
+        allowRegistration: configRow.allow_registration === 1 || configRow.allow_registration === true || configRow.allow_registration === "1",
+        securitySetupDone: configRow.security_setup_done === 1 || configRow.security_setup_done === true || configRow.security_setup_done === "1",
         customHeadScripts: String(configRow.custom_head_scripts || ""),
         customCss: String(configRow.custom_css || ""),
         aiBaseUrl: String(configRow.ai_base_url || "https://api.openai.com/v1"),
@@ -146,7 +147,6 @@ export function getUserData(userId: string): UserDataResult {
         sensenovaConfigured: Boolean(configRow.sensenova_username && configRow.sensenova_password),
         sensenovaUsername: String(configRow.sensenova_username || ""),
         sensenovaAccountId: String(configRow.sensenova_account_id || ""),
-        isPro: configRow.is_pro === 1 || configRow.is_pro === true || configRow.is_pro === "1",
         linkOpenTarget: (configRow.link_open_target as SystemConfig["linkOpenTarget"]) || "_blank",
         wallpaperMode: (configRow.wallpaper_mode as SystemConfig["wallpaperMode"]) || "none",
         customWallpaperUrl: String(configRow.custom_wallpaper_url || ""),
@@ -157,7 +157,6 @@ export function getUserData(userId: string): UserDataResult {
     : {
         logoText: "Navelix",
         logoImage: "",
-        isPro: false,
         showSearchBar: true,
         maxWidth: "1200px",
         customFooter: "© 2026 Navelix. 保留所有权利。",
@@ -165,8 +164,9 @@ export function getUserData(userId: string): UserDataResult {
         searchEngine: "google",
         customSearchName: "",
         customSearchUrl: "",
-        allowPublicAccess: true,
-        allowRegistration: true,
+        allowPublicAccess: false,
+        allowRegistration: false,
+        securitySetupDone: false,
         customHeadScripts: "",
         customCss: "",
         aiBaseUrl: "https://api.openai.com/v1",
@@ -468,15 +468,15 @@ export function saveUserConfigs(
   const weatherApiKey = secret("weatherApiKey", "weather_api_key");
   const weatherLocation = str("weatherLocation", "weather_location", "");
   const weatherApiBaseUrl = str("weatherApiBaseUrl", "weather_api_base_url", "https://api.seniverse.com");
-  const isPro = bool("isPro", "is_pro", 0);
   const linkOpenTarget = str("linkOpenTarget", "link_open_target", "_blank");
   const wallpaperMode = str("wallpaperMode", "wallpaper_mode", "none");
   const customWallpaperUrl = str("customWallpaperUrl", "custom_wallpaper_url", "");
   const glassmorphism = bool("glassmorphism", "glassmorphism", 0);
   const sidebarDefaultState = str("sidebarDefaultState", "sidebar_default_state", "expanded");
   const clockWidgetMode = str("clockWidgetMode", "clock_widget_mode", "time");
-  const allowPublicAccess = bool("allowPublicAccess", "allow_public_access", 1);
-  const allowRegistration = bool("allowRegistration", "allow_registration", 1);
+  const allowPublicAccess = bool("allowPublicAccess", "allow_public_access", 0);
+  const allowRegistration = bool("allowRegistration", "allow_registration", 0);
+  const securitySetupDone = bool("securitySetupDone", "security_setup_done", 0);
   const customSearchName = str("customSearchName", "custom_search_name", "");
   const customSearchUrl = str("customSearchUrl", "custom_search_url", "");
   const customHeadScripts = str("customHeadScripts", "custom_head_scripts", "");
@@ -511,9 +511,10 @@ export function saveUserConfigs(
       user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme,
       search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled,
       link_status_interval, social_github, social_x, social_linkedin, social_email,
-      weather_enabled, weather_api_key, weather_location, weather_api_base_url, is_pro,
+      weather_enabled, weather_api_key, weather_location, weather_api_base_url,
       link_open_target, wallpaper_mode, custom_wallpaper_url, glassmorphism,
       sidebar_default_state, clock_widget_mode, allow_public_access, allow_registration,
+      security_setup_done,
       custom_search_name, custom_search_url, custom_head_scripts, custom_css,
       sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key
     )
@@ -541,7 +542,6 @@ export function saveUserConfigs(
     encryptedWeatherApiKey,
     weatherLocation,
     weatherApiBaseUrl,
-    isPro,
     linkOpenTarget,
     wallpaperMode,
     customWallpaperUrl,
@@ -550,6 +550,7 @@ export function saveUserConfigs(
     clockWidgetMode,
     allowPublicAccess,
     allowRegistration,
+    securitySetupDone,
     customSearchName,
     customSearchUrl,
     customHeadScripts,

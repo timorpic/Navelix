@@ -249,7 +249,7 @@ export function seedUserData(userId: string) {
       status: "进行中",
       statusColor:
         "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900",
-      url: "https://github.com",
+      url: "",
     },
     {
       id: "p2",
@@ -257,7 +257,7 @@ export function seedUserData(userId: string) {
       status: "研究中",
       statusColor:
         "bg-sky-50 text-sky-600 border border-sky-200 dark:bg-sky-950/50 dark:text-sky-400 dark:border-sky-900",
-      url: "https://github.com",
+      url: "",
     },
     {
       id: "p3",
@@ -265,7 +265,7 @@ export function seedUserData(userId: string) {
       status: "维护中",
       statusColor:
         "bg-teal-50 text-teal-600 border border-teal-200 dark:bg-teal-950/50 dark:text-teal-400 dark:border-teal-900",
-      url: "https://github.com",
+      url: "",
     },
   ];
   defaults.forEach((p, index) => {

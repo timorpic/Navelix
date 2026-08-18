@@ -65,8 +65,6 @@ export interface Project {
 export interface SystemConfig {
   logoText: string;
   logoImage?: string;
-  isPro?: boolean;
-  proKey?: string;
   showSearchBar: boolean;
   maxWidth: "1000px" | "1200px" | "1400px" | "full";
   customFooter: string;
@@ -76,8 +74,10 @@ export interface SystemConfig {
   customSearchUrl?: string; // 搜索模板，如 https://search.example.com/search?q=%s
 
   // 访问与安全控制策略
-  allowPublicAccess?: boolean; // 是否允许未登录访客公开浏览主页（默认 true）
-  allowRegistration?: boolean; // 是否开放新用户注册（默认 true）
+  allowPublicAccess?: boolean; // 是否允许未登录访客公开浏览主页（默认 false，保守安全）
+  allowRegistration?: boolean; // 是否开放新用户注册（默认 false，保守安全）
+  // 首次登录安全设置引导是否已完成（修改初始密码 / 配置访问策略）
+  securitySetupDone?: boolean;
 
   // 自定义脚本与样式注入
   // ⚠️ 安全警告：以下两项会以 dangerouslySetInnerHTML / <style> 直接注入到所有访客页面，
