@@ -216,11 +216,28 @@ jobs:
             TITLE="🐳 Docker 镜像构建完成 [${STATUS}]"
             CONTENT="Navelix Docker 镜像版本 (sha-${SHORT_SHA}) 在 GitHub Actions 集中构建与冒烟测试已完成。触发分支: ${{ github.ref_name }}，状态: ${STATUS}。"
 
-            curl -s -k -X POST "${SERVER_URL}/api/notifications" \
+            RESPONSE_FILE=$(mktemp)
+            HTTP_CODE=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" \
+              -X POST "${SERVER_URL}/api/notifications" \
               -H "Authorization: Bearer ${TOKEN}" \
               -H "Content-Type: application/json" \
-              -d "{\"title\":\"${TITLE}\",\"content\":\"${CONTENT}\"}" || true
-            echo "Notification sent to ${SERVER_URL}!"
+              -d "{\"title\":\"${TITLE}\",\"content\":\"${CONTENT}\"}")
+            CURL_EXIT=$?
+            echo "POST ${SERVER_URL}/api/notifications -> HTTP ${HTTP_CODE} (curl exit ${CURL_EXIT})"
+            if [ "$CURL_EXIT" -ne 0 ]; then
+              echo "Error: curl failed to reach ${SERVER_URL} (exit ${CURL_EXIT})."
+              rm -f "$RESPONSE_FILE"
+              exit 1
+            fi
+            if [ "${HTTP_CODE}" != "200" ] && [ "${HTTP_CODE}" != "201" ]; then
+              echo "Error: notification request rejected with HTTP ${HTTP_CODE}."
+              echo "Server response body:"
+              cat "$RESPONSE_FILE" || true
+              rm -f "$RESPONSE_FILE"
+              exit 1
+            fi
+            rm -f "$RESPONSE_FILE"
+            echo "Notification sent to ${SERVER_URL} (HTTP ${HTTP_CODE})!"
           else
             echo "Notice: NAVELIX_NOTIFICATION_TOKEN secret is not configured in repository settings."
           fi
