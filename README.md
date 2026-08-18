@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="public/navelix-title.svg" width="520" alt="Navelix · Personal Digital Hub">
+  <img src="public/navelix-title.svg" width="670" alt="Navelix · Personal Digital Hub">
 </p>
 
 <p align="center">
