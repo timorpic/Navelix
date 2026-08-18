@@ -215,14 +215,24 @@ jobs:
           SHORT_SHA="${{ github.sha }}"
           SHORT_SHA="${SHORT_SHA:0:7}"
           STATUS="${{ job.status }}"
-          MESSAGE="🐳 Docker 镜像构建完成 [${STATUS}]%0ANavelix Docker 镜像版本 (sha-${SHORT_SHA}) 在 GitHub Actions 集中构建与冒烟测试已完成。%0A触发分支: ${{ github.ref_name }}，状态: ${STATUS}。"
+          MESSAGE=$(printf '%s\n' \
+            "🐳 Docker 镜像构建完成 [${STATUS}]" \
+            "Navelix Docker 镜像版本 (sha-${SHORT_SHA}) 在 GitHub Actions 集中构建与冒烟测试已完成。" \
+            "触发分支: ${{ github.ref_name }}，状态: ${STATUS}。")
+
+          PAYLOAD_FILE=$(mktemp)
+          jq -n \
+            --arg chat_id "$TELEGRAM_CHAT_ID" \
+            --arg text "$MESSAGE" \
+            '{chat_id: $chat_id, text: $text, disable_web_page_preview: true}' > "$PAYLOAD_FILE"
 
           RESPONSE_FILE=$(mktemp)
           HTTP_CODE=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" \
             -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -H "Content-Type: application/json" \
-            -d "{\"chat_id\":\"${TELEGRAM_CHAT_ID}\",\"text\":\"${MESSAGE}\",\"disable_web_page_preview\":true}")
+            --data-binary "@$PAYLOAD_FILE")
           CURL_EXIT=$?
+          rm -f "$PAYLOAD_FILE"
           echo "POST Telegram sendMessage -> HTTP ${HTTP_CODE} (curl exit ${CURL_EXIT})"
           if [ "$CURL_EXIT" -ne 0 ]; then
             echo "Error: curl failed to reach Telegram API (exit ${CURL_EXIT})."
