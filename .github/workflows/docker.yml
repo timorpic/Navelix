@@ -209,6 +209,22 @@ jobs:
         run: |
           TOKEN="$NAVELIX_TOKEN"
           SERVER_URL="${NAVELIX_SERVER_URL:-https://hei.timor.eu.org:2096}"
+
+          # ── 网络诊断：定位 GitHub Actions 机房 → 服务器 的连接在哪一层失败 ──
+          echo "--- Network diagnostics ---"
+          DIAG_HOST=$(echo "$SERVER_URL" | sed -E 's#^https?://##; s#[:/].*##')
+          DIAG_PORT=$(echo "$SERVER_URL" | sed -E 's#^https?://[^:]*:([0-9]+).*#\1#; t; s#.*#443#')
+          echo "Target: ${SERVER_URL}  (host=${DIAG_HOST}, port=${DIAG_PORT})"
+          echo "DNS resolution:"
+          getent hosts "$DIAG_HOST" || nslookup "$DIAG_HOST" 2>&1 || true
+          echo "TCP connect test (10s timeout):"
+          if timeout 10 bash -c "</dev/tcp/$DIAG_HOST/$DIAG_PORT" 2>/dev/null; then
+            echo "  TCP OK: connected to ${DIAG_HOST}:${DIAG_PORT}"
+          else
+            echo "  TCP FAILED: cannot connect to ${DIAG_HOST}:${DIAG_PORT}"
+          fi
+          echo "--- End diagnostics ---"
+
           if [ -n "$TOKEN" ]; then
             SHORT_SHA="${{ github.sha }}"
             SHORT_SHA="${SHORT_SHA:0:7}"
@@ -221,7 +237,7 @@ jobs:
               -X POST "${SERVER_URL}/api/notifications" \
               -H "Authorization: Bearer ${TOKEN}" \
               -H "Content-Type: application/json" \
-              -d "{\"title\":\"${TITLE}\",\"content\":\"${CONTENT}\"}")
+              -d "{\"title\":\"${TITLE}\",\"content\":\"${CONTENT}\",\"source\":\"api\"}")
             CURL_EXIT=$?
             echo "POST ${SERVER_URL}/api/notifications -> HTTP ${HTTP_CODE} (curl exit ${CURL_EXIT})"
             if [ "$CURL_EXIT" -ne 0 ]; then
