@@ -195,7 +195,7 @@ export default function ModelMonitorWidget() {
                           </div>
                           <div className="h-1 rounded-full bg-gray-200 dark:bg-slate-700 overflow-hidden">
                             <div
-                              className="h-full rounded-full bg-indigo-500 transition-all"
+                              className="h-full rounded-full bg-teal-400 transition-all"
                               style={{ width: pct !== null ? `${pct}%` : "0%" }}
                             />
                           </div>
@@ -263,7 +263,7 @@ export default function ModelMonitorWidget() {
               </div>
               <div className="h-1 rounded-full bg-gray-200 dark:bg-slate-700 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-teal-500 transition-all"
+                  className="h-full rounded-full bg-teal-400 transition-all"
                   style={{ width: `${codexRemainingPct(a.codexUsage.primaryWindow)}%` }}
                 />
               </div>

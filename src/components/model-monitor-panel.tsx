@@ -74,10 +74,11 @@ interface MonitorAccount {
 
 const PROVIDER_META: Record<
   "antigravity" | "codex",
-  { label: string; icon: string; color: string; connectLabel: string; desc: string }
+  { label: string; shortLabel: string; icon: string; color: string; connectLabel: string; desc: string }
 > = {
   antigravity: {
     label: "反重力 Antigravity",
+    shortLabel: "反重力",
     icon: "🌀",
     color: "text-indigo-500",
     connectLabel: "连接反重力账号",
@@ -85,6 +86,7 @@ const PROVIDER_META: Record<
   },
   codex: {
     label: "Codex",
+    shortLabel: "Codex",
     icon: "🧠",
     color: "text-teal-500",
     connectLabel: "连接 Codex 账号",
@@ -127,6 +129,7 @@ export default function ModelMonitorPanel() {
   const [submitting, setSubmitting] = useState(false);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [tab, setTab] = useState<"antigravity" | "codex">("antigravity");
 
   const load = useCallback(async () => {
     try {
@@ -292,74 +295,21 @@ export default function ModelMonitorPanel() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          {(Object.keys(PROVIDER_META) as Array<"antigravity" | "codex">).map((provider) => {
-            const meta = PROVIDER_META[provider];
+        <div className="mt-4 flex items-center gap-1 p-1 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
+          {(Object.keys(PROVIDER_META) as Array<"antigravity" | "codex">).map((p) => {
+            const meta = PROVIDER_META[p];
             return (
-              <div
-                key={provider}
-                className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-3"
+              <button
+                key={p}
+                onClick={() => setTab(p)}
+                className={`flex-1 h-9 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  tab === p
+                    ? "bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200"
+                }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-lg ${meta.color}`}>{meta.icon}</span>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">{meta.label}</p>
-                      <p className="text-[11px] text-gray-400 dark:text-slate-400">{meta.desc}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => connect(provider)}
-                  disabled={connecting !== null}
-                  className="w-full h-9 rounded-xl bg-[#00C776] hover:bg-[#009a5a] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold transition-colors cursor-pointer"
-                >
-                  {connecting === provider && activeSession
-                    ? "等待粘贴回调地址…"
-                    : provider === "antigravity"
-                      ? "＋ 连接反重力账号"
-                      : "＋ 连接 Codex 账号"}
-                </button>
-
-                {connecting === provider && activeSession && (
-                  <div className="space-y-2">
-                    <p className="text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
-                      请在浏览器中完成授权。授权完成后浏览器地址栏会跳转到一个类似
-                      <code className="mx-1 px-1 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-[10px] break-all">
-                        localhost:{provider === "antigravity" ? 51121 : 1455}/...?code=...
-                      </code>
-                      的地址，请将浏览器地址栏中的完整回调地址复制并粘贴到下方：
-                    </p>
-                    <div className="flex gap-2">
-                      <input
-                        value={callbackUrl}
-                        onChange={(e) => setCallbackUrl(e.target.value)}
-                        placeholder="粘贴完整回调地址（含 code= 与 state=）"
-                        className="flex-1 min-w-0 h-9 px-3 rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 outline-none focus:border-[#00C776] transition-colors"
-                      />
-                      <button
-                        onClick={submitCallback}
-                        disabled={submitting || !callbackUrl.trim()}
-                        className="h-9 px-4 rounded-xl bg-[#00C776] hover:bg-[#009a5a] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-colors cursor-pointer shrink-0"
-                      >
-                        {submitting ? "处理中…" : "提交"}
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-gray-400 dark:text-slate-500">
-                        提交后系统会自动读取 code 完成登录
-                      </span>
-                      <button
-                        onClick={cancelConnect}
-                        className="text-[11px] text-gray-400 hover:text-rose-500 transition-colors cursor-pointer"
-                      >
-                        取消
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+                {meta.icon} {meta.shortLabel}
+              </button>
             );
           })}
         </div>
@@ -367,36 +317,94 @@ export default function ModelMonitorPanel() {
         {loading ? (
           <p className="py-8 text-center text-xs text-gray-400 dark:text-slate-400">加载账号列表中…</p>
         ) : (
-          <>
-            <div className="mt-6">
-              <p className="text-xs font-bold text-gray-700 dark:text-slate-200 mb-3">🌀 反重力账号</p>
-              {antigravityAccounts.length === 0 ? (
-                <p className="py-4 px-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-dashed border-gray-200 dark:border-slate-700 text-center text-xs text-gray-400 dark:text-slate-400">
-                  尚未连接反重力账号
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {antigravityAccounts.map((a) => (
-                    <AccountCard
-                      key={a.id}
-                      account={a}
-                      refreshing={refreshingId === a.id}
-                      onRefresh={() => refresh(a.id)}
-                      onDisconnect={() => disconnect(a.id)}
+          <div className="mt-4">
+            <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`text-lg ${PROVIDER_META[tab].color}`}>{PROVIDER_META[tab].icon}</span>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">{PROVIDER_META[tab].label}</p>
+                    <p className="text-[11px] text-gray-400 dark:text-slate-400">{PROVIDER_META[tab].desc}</p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => connect(tab)}
+                disabled={connecting !== null}
+                className="w-full h-9 rounded-xl bg-[#00C776] hover:bg-[#009a5a] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold transition-colors cursor-pointer"
+              >
+                {connecting === tab && activeSession
+                  ? "等待粘贴回调地址…"
+                  : tab === "antigravity"
+                    ? "＋ 连接反重力账号"
+                    : "＋ 连接 Codex 账号"}
+              </button>
+
+              {connecting === tab && activeSession && (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
+                    请在浏览器中完成授权。授权完成后浏览器地址栏会跳转到一个类似
+                    <code className="mx-1 px-1 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-[10px] break-all">
+                      localhost:{tab === "antigravity" ? 51121 : 1455}/...?code=...
+                    </code>
+                    的地址，请将浏览器地址栏中的完整回调地址复制并粘贴到下方：
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      value={callbackUrl}
+                      onChange={(e) => setCallbackUrl(e.target.value)}
+                      placeholder="粘贴完整回调地址（含 code= 与 state=）"
+                      className="flex-1 min-w-0 h-9 px-3 rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 outline-none focus:border-[#00C776] transition-colors"
                     />
-                  ))}
+                    <button
+                      onClick={submitCallback}
+                      disabled={submitting || !callbackUrl.trim()}
+                      className="h-9 px-4 rounded-xl bg-[#00C776] hover:bg-[#009a5a] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-colors cursor-pointer shrink-0"
+                    >
+                      {submitting ? "处理中…" : "提交"}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-gray-400 dark:text-slate-500">
+                      提交后系统会自动读取 code 完成登录
+                    </span>
+                    <button
+                      onClick={cancelConnect}
+                      className="text-[11px] text-gray-400 hover:text-rose-500 transition-colors cursor-pointer"
+                    >
+                      取消
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="mt-6">
-              <p className="text-xs font-bold text-gray-700 dark:text-slate-200 mb-3">🧠 Codex 账号</p>
-              {codexAccounts.length === 0 ? (
+            <div className="mt-4">
+              {tab === "antigravity" ? (
+                antigravityAccounts.length === 0 ? (
+                  <p className="py-4 px-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-dashed border-gray-200 dark:border-slate-700 text-center text-xs text-gray-400 dark:text-slate-400">
+                    尚未连接反重力账号
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                    {antigravityAccounts.map((a) => (
+                      <AccountCard
+                        key={a.id}
+                        account={a}
+                        refreshing={refreshingId === a.id}
+                        onRefresh={() => refresh(a.id)}
+                        onDisconnect={() => disconnect(a.id)}
+                      />
+                    ))}
+                  </div>
+                )
+              ) : codexAccounts.length === 0 ? (
                 <p className="py-4 px-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-dashed border-gray-200 dark:border-slate-700 text-center text-xs text-gray-400 dark:text-slate-400">
                   尚未连接 Codex 账号
                 </p>
               ) : (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {codexAccounts.map((a) => (
                     <AccountCard
                       key={a.id}
@@ -417,7 +425,7 @@ export default function ModelMonitorPanel() {
                 会被本机其它程序监听，但浏览器地址栏中的回调地址仍可直接复制使用，不影响授权。
               </p>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -598,7 +606,7 @@ function QuotaBar({
       </div>
       <div className="h-1.5 rounded-full bg-gray-200 dark:bg-slate-700 overflow-hidden">
         <div
-          className="h-full rounded-full bg-indigo-500 transition-all"
+          className="h-full rounded-full bg-teal-400 transition-all"
           style={{ width: pct !== null ? `${pct}%` : "0%" }}
         />
       </div>
@@ -649,7 +657,7 @@ function CodexUsageBar({ window: w }: { window: CodexUsageWindow }) {
       </div>
       <div className="h-1.5 rounded-full bg-gray-200 dark:bg-slate-700 overflow-hidden">
         <div
-          className="h-full rounded-full bg-teal-500 transition-all"
+          className="h-full rounded-full bg-teal-400 transition-all"
           style={{ width: remaining !== null ? `${remaining}%` : "0%" }}
         />
       </div>
