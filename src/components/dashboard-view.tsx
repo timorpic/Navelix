@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
 import { toLocalDateStr } from "@/lib/date-utils";
 import { useFocusTracker } from "@/hooks/use-focus-tracker";
 import { useLinkStatus } from "@/hooks/use-link-status";
+import FocusStatsWidget from "./focus-stats-widget";
 
 interface DashboardViewProps {
   categories: Category[];
@@ -234,6 +235,9 @@ export default function DashboardView({
           <span>同步刷新</span>
         </button>
       </div>
+
+      {/* ── 专注统计（自首页侧栏迁移）── */}
+      <FocusStatsWidget />
 
       {/* ── Top 4 Hero KPI Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

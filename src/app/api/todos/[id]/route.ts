@@ -67,7 +67,7 @@ export async function PATCH(
 
 // DELETE /api/todos/[id] - delete a todo
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getSessionUser();

@@ -105,7 +105,7 @@ docker compose up -d
 
 ## 数据与隐私
 
-所有数据存储在本地 SQLite（`data/nexus.db`）。AI API Key / 天气 Key 仅保存在本地数据库且由服务端安全代理，导出配置时不会泄露。系统具备内置物理热备份与快速数据恢复。
+所有数据存储在本地 SQLite（`data/navelix.db`）。AI API Key / 天气 Key 仅保存在本地数据库且由服务端安全代理，导出配置时不会泄露。系统具备内置物理热备份与快速数据恢复。
 
 ---
 

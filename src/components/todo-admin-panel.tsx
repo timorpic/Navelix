@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { TodoItem } from "@/types";
 
 const PRIORITY_LABEL: Record<TodoItem["priority"], string> = {

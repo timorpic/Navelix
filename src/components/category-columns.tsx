@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import BrandIcon from "./brand-icon";
 import type { Category, SiteLink } from "@/types";
 import { recordLinkUsage } from "@/lib/link-usage";

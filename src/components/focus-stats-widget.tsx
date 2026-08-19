@@ -1,8 +1,6 @@
 "use client";
 
-import React from "react";
 import { useFocusTracker } from "@/hooks/use-focus-tracker";
-
 export default function FocusStatsWidget() {
   const { totalHours, weeklyChange, dailyAverage, isPositive, weeklyData } =
     useFocusTracker();

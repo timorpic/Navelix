@@ -42,6 +42,23 @@ export default function AdminSystemTab() {
   const [updateResult, setUpdateResult] = useState<UpdateCheckResult | null>(null);
   const autoCheckedUpdateRef = useRef(false);
 
+  const [antigravitySecret, setAntigravitySecret] = useState("");
+  const [antigravityConfigured, setAntigravityConfigured] = useState(false);
+  const [savingAntigravitySecret, setSavingAntigravitySecret] = useState(false);
+  const [antigravityNotice, setAntigravityNotice] = useState("");
+
+  // ── Effect: 读取系统级配置状态（不返回密钥明文） ──
+  useEffect(() => {
+    fetch("/api/admin/system-settings")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data.antigravityClientSecretConfigured === "boolean") {
+          setAntigravityConfigured(data.antigravityClientSecretConfigured);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // ── notify / flash helpers ──
     const [notice, setNotice] = useState("");
     const flash = (msg: string) => {
@@ -172,6 +189,32 @@ export default function AdminSystemTab() {
     }
   };
 
+  // ── Handler: Save Antigravity OAuth client secret ──
+  const handleSaveAntigravitySecret = async () => {
+    setSavingAntigravitySecret(true);
+    try {
+      const res = await fetch("/api/admin/system-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ antigravityClientSecret: antigravitySecret }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAntigravityConfigured(Boolean(data.antigravityClientSecretConfigured));
+        setAntigravitySecret("");
+        setAntigravityNotice("✅ 反重力 OAuth 客户端密钥已保存");
+        notify("系统设置", "反重力 OAuth 客户端密钥已保存");
+      } else {
+        setAntigravityNotice("❌ " + (data.error || "保存失败"));
+      }
+    } catch {
+      setAntigravityNotice("❌ 保存失败");
+    } finally {
+      setSavingAntigravitySecret(false);
+      setTimeout(() => setAntigravityNotice(""), 4000);
+    }
+  };
+
   // ── Handler: Export full Navelix JSON ──
   const handleExport = async () => {
     try {
@@ -182,10 +225,6 @@ export default function AdminSystemTab() {
       const safeConfig = { ...(dbData.config || config) };
       delete safeConfig.aiApiKey;
       delete safeConfig.weatherApiKey;
-      delete safeConfig.sensenovaUsername;
-      delete safeConfig.sensenovaPassword;
-      delete safeConfig.sensenovaAccountId;
-      delete safeConfig.sensenovaTokenKey;
 
       // 2. Collect local storage state
       let focusTracker = null;
@@ -268,10 +307,6 @@ export default function AdminSystemTab() {
         if (safeCfg) {
           delete safeCfg.aiApiKey;
           delete safeCfg.weatherApiKey;
-          delete safeCfg.sensenovaUsername;
-          delete safeCfg.sensenovaPassword;
-          delete safeCfg.sensenovaAccountId;
-          delete safeCfg.sensenovaTokenKey;
         }
 
         const saveRes = await fetch("/api/user/data", {
@@ -938,7 +973,74 @@ export default function AdminSystemTab() {
           </div>
         </div>
 
-        {/* 块 9：🔄 版本与更新 */}
+        {/* 块 9：🔐 反重力 OAuth 配置 */}
+        <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
+          <div>
+            <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+              <span>🔐</span>
+              <span>反重力 OAuth 配置</span>
+            </h3>
+            <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
+              模型账号监控面板授权反重力账号时使用的 Google OAuth 客户端密钥，保存在数据库中
+            </p>
+          </div>
+
+          <div className="space-y-3.5">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
+              <div>
+                <p className="text-xs font-bold text-gray-800 dark:text-slate-200">客户端密钥状态</p>
+                <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
+                  当前{antigravityConfigured ? "已配置（已隐藏，重新输入可覆盖）" : "未配置"}
+                </p>
+              </div>
+              <span
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold ${
+                  antigravityConfigured
+                    ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400"
+                    : "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400"
+                }`}
+              >
+                {antigravityConfigured ? "已配置" : "未配置"}
+              </span>
+            </div>
+
+            <div>
+              <label
+                htmlFor="admin-antigravity-client-secret"
+                className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1"
+              >
+                Google OAuth 客户端密钥
+              </label>
+              <input
+                id="admin-antigravity-client-secret"
+                type="password"
+                value={antigravitySecret}
+                onChange={(e) => setAntigravitySecret(e.target.value)}
+                placeholder="粘贴 Client Secret（GOCSPX-…）"
+                autoComplete="off"
+                className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-lg px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={savingAntigravitySecret || !antigravitySecret.trim()}
+                onClick={handleSaveAntigravitySecret}
+                className="px-4 py-2 rounded-lg bg-[#14B8A6] hover:bg-[#0D9488] text-white text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {savingAntigravitySecret ? "保存中…" : "保存密钥"}
+              </button>
+              {antigravityNotice && (
+                <p className="text-xs font-medium text-teal-600 dark:text-teal-400">
+                  {antigravityNotice}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 块 10：🔄 版本与更新 */}
         <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs transition-colors">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-lg">🔄</span>

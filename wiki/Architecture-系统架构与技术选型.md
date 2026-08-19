@@ -34,13 +34,13 @@ graph TD
         UserDataModule["全量用户数据与偏好漫游"]
         ProjectModule["项目四维看板与甘特图计算"]
         TodoModule["日历日程与 Rollover 顺延"]
-        AIModule["大模型接入 & SenseNova PKCE 引擎"]
+        AIModule["大模型接入 & OAuth 账号监控引擎"]
         BackupModule["SQLite VACUUM INTO 备份引擎"]
     end
 
     subgraph Storage["存储与持久化层"]
-        SQLite[("SQLite3 nexus.db - WAL 模式")]
-        WALLog["nexus.db-wal 预写日志"]
+        SQLite[("SQLite3 navelix.db - WAL 模式")]
+        WALLog["navelix.db-wal 预写日志"]
         BackupFiles["data/backups/*.db 物理快照"]
     end
 
@@ -58,11 +58,11 @@ graph TD
 
 ## 🗄️ 数据库 Schema 与表结构设计
 
-系统所有核心数据存储于 `data/nexus.db`，核心表结构如下：
+系统所有核心数据存储于 `data/navelix.db`，核心表结构如下：
 
 1. **`users`**：系统用户表（ID、用户名、密码哈希、显示昵称、角色 `admin/user`、头像、个人简介）；
 2. **`sessions`**：用户会话表（Token 哈希、User ID、用户代理、IP 地址、过期时间）；
-3. **`user_configs`**：用户偏好与系统配置表（35+ 项偏好设置、AI 密钥、商汤账号、搜索引擎、布局）；
+3. **`user_configs`**：用户偏好与系统配置表（35+ 项偏好设置、AI 密钥、搜索引擎、布局）；
 4. **`user_categories`**：导航分类表（ID、User ID、名称、图标、色彩）；
 5. **`user_links`**：导航链接表（ID、User ID、标题、URL、描述、图标、分类、快捷访问标记）；
 6. **`projects`**：项目表（ID、User ID、名称、描述、状态、状态色彩、URL、排序权重、创建时间、更新时间）；

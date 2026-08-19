@@ -344,7 +344,7 @@ Content-Type: application/json
 
 ### 8.1 获取全量工作台数据与偏好配置
 - **请求方式**: `GET /api/user/data`
-- **响应内容**: 包含 `categories`、`links`、`projects` 以及全量 `config`（包含主题、壁纸、搜索引擎、商汤状态等跨端偏好）。
+- **响应内容**: 包含 `categories`、`links`、`projects` 以及全量 `config`（包含主题、壁纸、搜索引擎、模型账号等跨端偏好）。
 
 ### 8.2 批量保存或更新工作台数据
 - **请求方式**: `POST /api/user/data`

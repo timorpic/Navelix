@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
     recordAuditLog({
       userId: adminUser.id,
       action: "database.restore.executed",
-      target: "nexus.db",
+      target: "navelix.db",
       details: "管理员执行了数据库物理还原覆盖操作",
     });
 

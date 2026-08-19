@@ -26,7 +26,7 @@ export function performDatabaseBackup(operatorUserId = "system"): string | null 
       .toISOString()
       .replace(/[:.]/g, "-")
       .replace("Z", "");
-    const backupFileName = `nexus-backup-${timestamp}.db`;
+    const backupFileName = `navelix-backup-${timestamp}.db`;
     const backupPath = path.join(BACKUP_DIR, backupFileName);
 
     // 如果文件已存在，跳过
@@ -68,7 +68,11 @@ function cleanOldBackups() {
 
     const files = fs
       .readdirSync(BACKUP_DIR)
-      .filter((f) => f.startsWith("nexus-backup-") && f.endsWith(".db"))
+      .filter(
+        (f) =>
+          f.endsWith(".db") &&
+          (f.startsWith("navelix-backup-") || f.startsWith("nexus-backup-")),
+      )
       .map((f) => {
         const fullPath = path.join(BACKUP_DIR, f);
         const stat = fs.statSync(fullPath);

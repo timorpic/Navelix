@@ -105,7 +105,7 @@ PORT=3721 pnpm start
 | `NAVELIX_ADMIN_PASSWORD` | *(自动生成随机强密码)* | 否 | 首次初始化时默认管理员 `admin` 的初始密码（若未配置，系统会自动生成并输出到控制台与 `data/navelix-admin-password.txt`） |
 | `NAVELIX_COOKIE_SECURE` | `false` | 否 | 认证 Cookie 是否强制 `Secure` 标头（局域网 HTTP 保持 `false`；使用域名并启用 HTTPS 反代时设为 `true`） |
 | `TRUST_PROXY` | `false` | 否 | 是否信任上游反向代理的 `X-Forwarded-For` 真实 IP 标头（若前置部署了 Nginx/Caddy/Cloudflare，**务必设为 `true`** 以启用精准限流） |
-| `DATABASE_PATH` | `/app/data/nexus.db` | 否 | SQLite 主数据库文件存储路径 |
+| `DATABASE_PATH` | `/app/data/navelix.db` | 否 | SQLite 主数据库文件存储路径 |
 | `TZ` | `Asia/Shanghai` | 否 | 容器运行时区设置 |
 
 ---

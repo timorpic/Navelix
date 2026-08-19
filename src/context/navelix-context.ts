@@ -37,6 +37,7 @@ export const defaultConfig: SystemConfig = {
   glassmorphism: false,
   sidebarDefaultState: "expanded",
   clockWidgetMode: "time",
+  modelMonitorEnabled: true,
 };
 
 export interface NavelixDataApi {

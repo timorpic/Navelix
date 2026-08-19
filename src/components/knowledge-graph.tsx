@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import type { Category, SiteLink } from "@/types";
 import { recordLinkUsage } from "@/lib/link-usage";
 

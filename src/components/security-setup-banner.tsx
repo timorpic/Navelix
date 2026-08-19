@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { useNavelixData } from "@/hooks/use-navelix-data";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
