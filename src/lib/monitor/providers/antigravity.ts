@@ -1,4 +1,5 @@
 import { ANTIGRAVITY_OAUTH } from "../oauth.ts";
+import { getAntigravityClientSecret } from "../../system-settings.ts";
 
 /**
  * loadCodeAssist / retrieveUserQuotaSummary / fetchAvailableModels 会按客户端类型
@@ -92,7 +93,7 @@ export async function exchangeAntigravityCode(
   const body = new URLSearchParams();
   body.set("code", code);
   body.set("client_id", ANTIGRAVITY_OAUTH.clientId);
-  body.set("client_secret", ANTIGRAVITY_OAUTH.clientSecret || "");
+  body.set("client_secret", getAntigravityClientSecret());
   body.set("redirect_uri", redirectUri);
   body.set("grant_type", "authorization_code");
 
@@ -114,7 +115,7 @@ export async function refreshAntigravityToken(
   const body = new URLSearchParams();
   body.set("refresh_token", refreshToken);
   body.set("client_id", ANTIGRAVITY_OAUTH.clientId);
-  body.set("client_secret", ANTIGRAVITY_OAUTH.clientSecret || "");
+  body.set("client_secret", getAntigravityClientSecret());
   body.set("grant_type", "refresh_token");
 
   const resp = await fetch(ANTIGRAVITY_OAUTH.tokenUrl, {

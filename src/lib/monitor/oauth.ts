@@ -18,8 +18,8 @@ export const ANTIGRAVITY_OAUTH: ProviderOAuthConfig = {
   authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
   tokenUrl: "https://oauth2.googleapis.com/token",
   clientId: "1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com",
-  // client secret 从环境变量读取，避免提交明文凭据
-  clientSecret: process.env.ANTIGRAVITY_OAUTH_CLIENT_SECRET || "",
+  // client secret 存数据库（管理员后台配置），不放在 .env
+  // 令牌交换/刷新时通过 getAntigravityClientSecret() 实时读取
   redirectUri: "http://localhost:51121/oauth-callback",
   callbackPort: 51121,
   scopes: [

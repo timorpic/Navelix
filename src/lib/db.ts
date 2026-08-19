@@ -200,6 +200,12 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_model_accounts_user
     ON model_accounts(user_id, provider);
+
+  CREATE TABLE IF NOT EXISTS system_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL DEFAULT '',
+    updated_at INTEGER NOT NULL DEFAULT 0
+  );
 `);
 
 // 迁移逻辑已抽离至 src/lib/migrations/index.ts（Schema 版本 v1~v6 + 数据修复）
