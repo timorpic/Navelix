@@ -25,14 +25,47 @@ export function setSystemSetting(key: string, value: string): void {
   `).run(key, String(value), Date.now());
 }
 
-/** 反重力 OAuth client secret（管理员后台配置，AES-256-GCM 加密落库） */
+/**
+ * 官方 Antigravity Hub 客户端默认配套 Client Secret。
+ * 与 ANTIGRAVITY_OAUTH.clientId (1071006060591-tmhssin2h21lcre235vtolojh4g403ep) 配对，
+ * 实现开箱即用免配置授权。
+ */
+export const DEFAULT_ANTIGRAVITY_CLIENT_SECRET =
+  "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";
+
+/** 反重力 OAuth client secret（优先环境变量/数据库自定义配置，兜底使用官方默认配对密钥） */
 export function getAntigravityClientSecret(): string {
+  // 1. 优先读取环境变量
+  if (
+    process.env.ANTIGRAVITY_CLIENT_SECRET &&
+    process.env.ANTIGRAVITY_CLIENT_SECRET.trim()
+  ) {
+    return process.env.ANTIGRAVITY_CLIENT_SECRET.trim();
+  }
+
+  // 2. 读取数据库自定义加密配置
   const raw = getSystemSetting(SYSTEM_SETTING_KEYS.antigravityClientSecret);
-  if (!raw) return "";
-  return decryptSecret(raw);
+  if (raw) {
+    const decrypted = decryptSecret(raw);
+    if (decrypted) return decrypted;
+  }
+
+  // 3. 兜底使用官方配对默认值（开箱即用）
+  return DEFAULT_ANTIGRAVITY_CLIENT_SECRET;
+}
+
+export function isCustomAntigravityClientSecretConfigured(): boolean {
+  if (
+    process.env.ANTIGRAVITY_CLIENT_SECRET &&
+    process.env.ANTIGRAVITY_CLIENT_SECRET.trim()
+  ) {
+    return true;
+  }
+  const raw = getSystemSetting(SYSTEM_SETTING_KEYS.antigravityClientSecret);
+  return Boolean(raw && decryptSecret(raw));
 }
 
 export function setAntigravityClientSecret(secret: string): void {
   const enc = encryptSecret(secret.trim());
   setSystemSetting(SYSTEM_SETTING_KEYS.antigravityClientSecret, enc);
-}
+}

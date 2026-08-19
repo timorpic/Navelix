@@ -44,6 +44,7 @@ export default function AdminSystemTab() {
 
   const [antigravitySecret, setAntigravitySecret] = useState("");
   const [antigravityConfigured, setAntigravityConfigured] = useState(false);
+  const [isCustomAntigravitySecret, setIsCustomAntigravitySecret] = useState(false);
   const [savingAntigravitySecret, setSavingAntigravitySecret] = useState(false);
   const [antigravityNotice, setAntigravityNotice] = useState("");
 
@@ -54,10 +55,12 @@ export default function AdminSystemTab() {
       .then((data) => {
         if (data && typeof data.antigravityClientSecretConfigured === "boolean") {
           setAntigravityConfigured(data.antigravityClientSecretConfigured);
+          setIsCustomAntigravitySecret(Boolean(data.isCustomSecret));
         }
       })
       .catch(() => {});
   }, []);
+
 
   // ── notify / flash helpers ──
     const [notice, setNotice] = useState("");
@@ -201,6 +204,7 @@ export default function AdminSystemTab() {
       const data = await res.json();
       if (res.ok) {
         setAntigravityConfigured(Boolean(data.antigravityClientSecretConfigured));
+        setIsCustomAntigravitySecret(Boolean(data.isCustomSecret));
         setAntigravitySecret("");
         setAntigravityNotice("✅ 反重力 OAuth 客户端密钥已保存");
         notify("系统设置", "反重力 OAuth 客户端密钥已保存");
@@ -990,17 +994,13 @@ export default function AdminSystemTab() {
               <div>
                 <p className="text-xs font-bold text-gray-800 dark:text-slate-200">客户端密钥状态</p>
                 <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
-                  当前{antigravityConfigured ? "已配置（已隐藏，重新输入可覆盖）" : "未配置"}
+                  {isCustomAntigravitySecret
+                    ? "当前已配置自定义密钥（可重新输入覆盖）"
+                    : "当前使用内置官方默认密钥（开箱即用，无需配置；也可填入自定义密钥覆盖）"}
                 </p>
               </div>
-              <span
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold ${
-                  antigravityConfigured
-                    ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400"
-                    : "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400"
-                }`}
-              >
-                {antigravityConfigured ? "已配置" : "未配置"}
+              <span className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+                {isCustomAntigravitySecret ? "已配置自定义" : "内置默认就绪"}
               </span>
             </div>
 

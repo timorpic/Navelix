@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { checkCSRF } from "@/lib/csrf";
 import {
   getAntigravityClientSecret,
+  isCustomAntigravityClientSecretConfigured,
   setAntigravityClientSecret,
 } from "@/lib/system-settings";
 
@@ -16,9 +18,9 @@ export async function GET(req: NextRequest) {
   if (!adminUser) {
     return NextResponse.json({ error: "无权访问，仅管理员可查看系统配置" }, { status: 403 });
   }
-  // 不返回密钥明文，仅返回是否已配置
   return NextResponse.json({
     antigravityClientSecretConfigured: getAntigravityClientSecret().length > 0,
+    isCustomSecret: isCustomAntigravityClientSecretConfigured(),
   });
 }
 
@@ -26,6 +28,14 @@ export async function PUT(req: NextRequest) {
   const adminUser = await requireAdmin(req);
   if (!adminUser) {
     return NextResponse.json({ error: "无权访问，仅管理员可修改系统配置" }, { status: 403 });
+  }
+
+  const csrfResult = checkCSRF(req);
+  if (!csrfResult.success) {
+    return NextResponse.json(
+      { error: csrfResult.error || "CSRF 验证失败" },
+      { status: csrfResult.status || 403 },
+    );
   }
 
   const body = await req.json().catch(() => ({}));
@@ -37,5 +47,6 @@ export async function PUT(req: NextRequest) {
   return NextResponse.json({
     success: true,
     antigravityClientSecretConfigured: getAntigravityClientSecret().length > 0,
+    isCustomSecret: isCustomAntigravityClientSecretConfigured(),
   });
-}
+}
