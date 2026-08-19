@@ -35,7 +35,7 @@ services:
     volumes:
       - ./data:/app/data
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3721/login').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))\""]
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3721/api/healthz').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))\""]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -87,6 +87,56 @@ docker run -d \
 > 并将其自动迁移为新的 `data/navelix.db`（数据完整保留），**无需手动操作**。
 > 迁移完成后旧的 `data/nexus.db` 会被保留作为备份，确认数据无误后可手动删除该文件。
 > 历史备份文件（`data/backups/nexus-backup-*.db`）仍可正常用于后台还原。
+
+### 🚨 升级前快照（强烈建议）
+
+镜像升级（尤其配合 Watchtower 自动更新时）前，先对数据卷做一次物理快照，保证任何迁移故障都可回滚：
+
+```bash
+# 停止服务后复制整个数据卷
+cd /volume1/docker
+docker stop navelix
+tar -czf "navelix-data-$(date +%Y%m%d-%H%M%S).tar.gz" navelix/
+docker start navelix
+```
+
+或不停机在线复制（WAL 下最终一致性略弱，但无需停机）：
+
+```bash
+docker run --rm -v /volume1/docker/navelix:/src:ro -v "$(pwd)":/dst alpine \
+  tar -czf "/dst/navelix-$(date +%Y%m%d-%H%M%S).tar.gz" -C /src .
+```
+
+> 应用内每日自动备份（`data/backups/*.db`）只保留最近 7 份，升级前请额外做整卷快照。
+> Watchtower 用户：建议将 Watchtower 改用手动触发或公告窗口，先快照再 `watchtower --run-once`。
+
+### 🔑 主加密密钥（APP_SECRET / .app_secret）轮换 SOP
+
+所有敏感凭据（模型账号令牌、AI Key、天气 Key）由主密钥加密后落库。主密钥来自：
+1. 环境变量 `APP_SECRET`（未设置则用 2.）；
+2. 迁移生成的 `data/.app_secret`（64 位 hex）。
+
+> 若认为主密钥泄露，可执行全库重加密（生成新主密钥 → 解密旧密文 → 用新密钥重新加密写入）。
+
+```bash
+# 1) 停止服务
+docker stop navelix
+
+# 2) 备份旧密钥与数据（回滚兜底）
+cp /volume1/docker/navelix/.app_secret /volume1/docker/navelix/.app_secret.bak
+tar -czf "navelix-pre-rotate-$(date +%Y%m%d).tar.gz" /volume1/docker/navelix/
+
+# 3) 生成新主密钥并写入（64 位 hex，权限 0600）
+openssl rand -hex 32 > /volume1/docker/navelix/.app_secret
+chmod 600 /volume1/docker/navelix/.app_secret
+
+# 4) 启动后，登录后台：设置 → 重新加密全库（若后端提供该工具），
+#    或执行内置迁移命令 / 手动触发全库重加密脚本
+docker start navelix
+```
+
+> 说明：新主密钥生成后，旧密文无法再解密；必须先完成"解密旧→加密新"的重加密流程再对外暴露服务。
+> 该流程未来将提供后台一键操作（见路线图）。轮换期间请勿登录写操作，避免部分数据使用旧密钥。
 
 ---
 

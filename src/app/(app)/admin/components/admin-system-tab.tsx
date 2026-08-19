@@ -43,7 +43,6 @@ export default function AdminSystemTab() {
   const autoCheckedUpdateRef = useRef(false);
 
   const [antigravitySecret, setAntigravitySecret] = useState("");
-  const [antigravityConfigured, setAntigravityConfigured] = useState(false);
   const [isCustomAntigravitySecret, setIsCustomAntigravitySecret] = useState(false);
   const [savingAntigravitySecret, setSavingAntigravitySecret] = useState(false);
   const [antigravityNotice, setAntigravityNotice] = useState("");
@@ -54,7 +53,6 @@ export default function AdminSystemTab() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && typeof data.antigravityClientSecretConfigured === "boolean") {
-          setAntigravityConfigured(data.antigravityClientSecretConfigured);
           setIsCustomAntigravitySecret(Boolean(data.isCustomSecret));
         }
       })
@@ -203,7 +201,6 @@ export default function AdminSystemTab() {
       });
       const data = await res.json();
       if (res.ok) {
-        setAntigravityConfigured(Boolean(data.antigravityClientSecretConfigured));
         setIsCustomAntigravitySecret(Boolean(data.isCustomSecret));
         setAntigravitySecret("");
         setAntigravityNotice("✅ 反重力 OAuth 客户端密钥已保存");

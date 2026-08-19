@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start -p 3721",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --test src/**/*.test.ts"
+    "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters",
+    "test": "node --experimental-strip-types --test src/**/*.test.ts",
+    "test:coverage": "node --experimental-strip-types --experimental-test-coverage --test-coverage-lines=60 --test-coverage-functions=55 --test src/**/*.test.ts"
   },
   "engines": {
     "node": ">=22.5.0"
