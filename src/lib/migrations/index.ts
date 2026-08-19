@@ -77,8 +77,11 @@ function dropColumn(db: DatabaseSync, table: string, column: string) {
   if (columns.some((c) => c.name === column)) {
     try {
       db.exec(`ALTER TABLE ${table} DROP COLUMN ${column}`);
-    } catch {
-      // 并发 worker 已删除该列，忽略
+    } catch (err) {
+      console.error(
+        `[Navelix] 删除列 ${table}.${column} 失败:`,
+        err instanceof Error ? err.message : err,
+      );
     }
   }
 }
@@ -379,10 +382,14 @@ export function runMigrations(db: DatabaseSync): void {
         CREATE TABLE sessions_new (
           token_hash TEXT PRIMARY KEY,
           user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          user_agent TEXT NOT NULL DEFAULT '',
+          ip_address TEXT NOT NULL DEFAULT '',
+          last_active_at INTEGER NOT NULL DEFAULT 0,
           expires_at INTEGER NOT NULL,
           created_at INTEGER NOT NULL
         );
-        INSERT OR IGNORE INTO sessions_new SELECT * FROM sessions;
+        INSERT OR IGNORE INTO sessions_new (token_hash, user_id, user_agent, ip_address, last_active_at, expires_at, created_at)
+        SELECT token_hash, user_id, user_agent, ip_address, last_active_at, expires_at, created_at FROM sessions;
         DROP TABLE sessions;
         ALTER TABLE sessions_new RENAME TO sessions;
 
@@ -436,19 +443,30 @@ export function runMigrations(db: DatabaseSync): void {
           social_x TEXT NOT NULL DEFAULT '',
           social_linkedin TEXT NOT NULL DEFAULT '',
           social_email TEXT NOT NULL DEFAULT '',
+          cliproxy_enabled INTEGER NOT NULL DEFAULT 1,
+          cliproxy_url TEXT NOT NULL DEFAULT 'http://[IP]:8317',
+          cliproxy_key TEXT NOT NULL DEFAULT '',
           weather_enabled INTEGER NOT NULL DEFAULT 0,
           weather_api_key TEXT NOT NULL DEFAULT '',
           weather_location TEXT NOT NULL DEFAULT '',
           weather_api_base_url TEXT NOT NULL DEFAULT 'https://api.seniverse.com',
+          link_open_target TEXT NOT NULL DEFAULT '_blank',
+          wallpaper_mode TEXT NOT NULL DEFAULT 'none',
+          custom_wallpaper_url TEXT NOT NULL DEFAULT '',
+          glassmorphism INTEGER NOT NULL DEFAULT 0,
+          sidebar_default_state TEXT NOT NULL DEFAULT 'expanded',
+          clock_widget_mode TEXT NOT NULL DEFAULT 'time',
           allow_public_access INTEGER NOT NULL DEFAULT 0,
           allow_registration INTEGER NOT NULL DEFAULT 0,
-          security_setup_done INTEGER NOT NULL DEFAULT 0
+          security_setup_done INTEGER NOT NULL DEFAULT 0,
+          custom_head_scripts TEXT NOT NULL DEFAULT '',
+          custom_css TEXT NOT NULL DEFAULT ''
         );
         INSERT OR IGNORE INTO user_configs_new (
-          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, allow_public_access, allow_registration, security_setup_done
+          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, cliproxy_enabled, cliproxy_url, cliproxy_key, weather_enabled, weather_api_key, weather_location, weather_api_base_url, link_open_target, wallpaper_mode, custom_wallpaper_url, glassmorphism, sidebar_default_state, clock_widget_mode, allow_public_access, allow_registration, security_setup_done, custom_head_scripts, custom_css
         )
         SELECT
-          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, allow_public_access, allow_registration, security_setup_done
+          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, cliproxy_enabled, cliproxy_url, cliproxy_key, weather_enabled, weather_api_key, weather_location, weather_api_base_url, link_open_target, wallpaper_mode, custom_wallpaper_url, glassmorphism, sidebar_default_state, clock_widget_mode, allow_public_access, allow_registration, security_setup_done, custom_head_scripts, custom_css
         FROM user_configs;
         DROP TABLE user_configs;
         ALTER TABLE user_configs_new RENAME TO user_configs;
@@ -459,10 +477,12 @@ export function runMigrations(db: DatabaseSync): void {
           user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
           title TEXT NOT NULL,
           content TEXT NOT NULL DEFAULT '',
+          source TEXT NOT NULL DEFAULT 'system',
           created_at INTEGER NOT NULL,
           read INTEGER NOT NULL DEFAULT 0
         );
-        INSERT OR IGNORE INTO notifications_new SELECT * FROM notifications;
+        INSERT OR IGNORE INTO notifications_new (id, user_id, title, content, source, created_at, read)
+        SELECT id, user_id, title, content, source, created_at, read FROM notifications;
         DROP TABLE notifications;
         ALTER TABLE notifications_new RENAME TO notifications;
 
@@ -474,10 +494,14 @@ export function runMigrations(db: DatabaseSync): void {
           status TEXT NOT NULL,
           status_color TEXT NOT NULL DEFAULT '',
           url TEXT NOT NULL DEFAULT '',
+          description TEXT NOT NULL DEFAULT '',
+          created_at INTEGER NOT NULL DEFAULT 0,
+          updated_at INTEGER NOT NULL DEFAULT 0,
           sort_order INTEGER NOT NULL DEFAULT 0,
           PRIMARY KEY (id, user_id)
         );
-        INSERT OR IGNORE INTO projects_new SELECT * FROM projects;
+        INSERT OR IGNORE INTO projects_new (id, user_id, name, status, status_color, url, description, created_at, updated_at, sort_order)
+        SELECT id, user_id, name, status, status_color, url, description, created_at, updated_at, sort_order FROM projects;
         DROP TABLE projects;
         ALTER TABLE projects_new RENAME TO projects;
 
@@ -490,17 +514,25 @@ export function runMigrations(db: DatabaseSync): void {
           done INTEGER NOT NULL DEFAULT 0,
           due_date TEXT NOT NULL DEFAULT '',
           project_id TEXT NOT NULL DEFAULT '',
+          updated_at INTEGER NOT NULL DEFAULT 0,
+          assignee_id TEXT NOT NULL DEFAULT '',
+          assignee_name TEXT NOT NULL DEFAULT '',
           created_at INTEGER NOT NULL,
           sort_order INTEGER NOT NULL DEFAULT 0,
           PRIMARY KEY (id, user_id)
         );
-        INSERT OR IGNORE INTO user_todos_new SELECT * FROM user_todos;
+        INSERT OR IGNORE INTO user_todos_new (id, user_id, title, priority, done, due_date, project_id, updated_at, assignee_id, assignee_name, created_at, sort_order)
+        SELECT id, user_id, title, priority, done, due_date, project_id, updated_at, assignee_id, assignee_name, created_at, sort_order FROM user_todos;
         DROP TABLE user_todos;
         ALTER TABLE user_todos_new RENAME TO user_todos;
       `);
 
       db.exec("COMMIT;");
-    } catch {
+    } catch (err) {
+      console.error(
+        "[Navelix] v5 表结构重建失败（外键约束未生效）:",
+        err instanceof Error ? err.message : err,
+      );
       try { db.exec("ROLLBACK;"); } catch {}
     } finally {
       db.exec("PRAGMA foreign_keys = ON;");

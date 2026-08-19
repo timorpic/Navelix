@@ -486,7 +486,7 @@ export function saveUserConfigs(
   }
 
   db.prepare(`
-    INSERT OR REPLACE INTO user_configs (
+    INSERT INTO user_configs (
       user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme,
       ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled,
       link_status_interval, social_github, social_x, social_linkedin, social_email,
@@ -497,6 +497,39 @@ export function saveUserConfigs(
       custom_head_scripts, custom_css
     )
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(user_id) DO UPDATE SET
+      logo_text = excluded.logo_text,
+      logo_image = excluded.logo_image,
+      show_search_bar = excluded.show_search_bar,
+      max_width = excluded.max_width,
+      custom_footer = excluded.custom_footer,
+      theme = excluded.theme,
+      ai_base_url = excluded.ai_base_url,
+      ai_api_key = excluded.ai_api_key,
+      ai_model = excluded.ai_model,
+      site_title = excluded.site_title,
+      link_status_enabled = excluded.link_status_enabled,
+      link_status_interval = excluded.link_status_interval,
+      social_github = excluded.social_github,
+      social_x = excluded.social_x,
+      social_linkedin = excluded.social_linkedin,
+      social_email = excluded.social_email,
+      weather_enabled = excluded.weather_enabled,
+      weather_api_key = excluded.weather_api_key,
+      weather_location = excluded.weather_location,
+      weather_api_base_url = excluded.weather_api_base_url,
+      link_open_target = excluded.link_open_target,
+      wallpaper_mode = excluded.wallpaper_mode,
+      custom_wallpaper_url = excluded.custom_wallpaper_url,
+      glassmorphism = excluded.glassmorphism,
+      sidebar_default_state = excluded.sidebar_default_state,
+      clock_widget_mode = excluded.clock_widget_mode,
+      allow_public_access = excluded.allow_public_access,
+      allow_registration = excluded.allow_registration,
+      security_setup_done = excluded.security_setup_done,
+      model_monitor_enabled = excluded.model_monitor_enabled,
+      custom_head_scripts = excluded.custom_head_scripts,
+      custom_css = excluded.custom_css
   `).run(
     userId,
     logoText,

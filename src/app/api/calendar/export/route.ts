@@ -4,17 +4,47 @@ import { db, type UserRow } from "@/lib/db";
 import { getSessionUser, toPublicUser } from "@/lib/auth";
 
 function formatDateToIcs(dateStr: string): string {
-  // input: YYYY-MM-DD -> output: YYYYMMDD
   return dateStr.replace(/-/g, "");
 }
 
 function getNextDayIcs(dateStr: string): string {
-  const d = new Date(dateStr);
+  const parts = dateStr.split("-");
+  const d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
   d.setDate(d.getDate() + 1);
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}${m}${day}`;
+}
+
+/** RFC 5545 文本值转义：\ → \\, ; → \\;, , → \\,, \n → \\n */
+function escapeIcsText(text: string): string {
+  return text.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+}
+
+/** 按 UTF-8 字节长度折叠超过 75 八位组的 ICS 行（续行空格） */
+function foldIcsLine(line: string): string {
+  const maxLen = 75;
+  if (Buffer.byteLength(line, "utf8") <= maxLen) return line;
+  const lines: string[] = [];
+  let pos = 0;
+  while (pos < line.length) {
+    // 在 75 字节边界处截断，避免截断多字节字符
+    let end = pos;
+    let byteLen = 0;
+    const maxBytes = maxLen - (lines.length > 0 ? 1 : 0); // 续行前缀占一个空格字节
+    while (end < line.length) {
+      const ch = line.charCodeAt(end);
+      const chLen = ch < 0x80 ? 1 : ch < 0x800 ? 2 : ch < 0x10000 ? 3 : 4;
+      if (byteLen + chLen > maxBytes) break;
+      byteLen += chLen;
+      end++;
+    }
+    if (end === pos) end = pos + 1; // 安全回退
+    lines.push((lines.length > 0 ? " " : "") + line.slice(pos, end));
+    pos = end;
+  }
+  return lines.join("\r\n");
 }
 
 export async function GET(req: NextRequest) {
@@ -50,7 +80,7 @@ export async function GET(req: NextRequest) {
       .prepare(
         `SELECT t.id, t.title, t.priority, t.done, t.due_date, t.created_at, p.name AS project_name
          FROM user_todos t
-         LEFT JOIN projects p ON t.project_id = p.id
+         LEFT JOIN projects p ON t.project_id = p.id AND p.user_id = t.user_id
          WHERE t.user_id = ?
          ORDER BY t.due_date ASC, t.created_at ASC`,
       )
@@ -93,8 +123,8 @@ export async function GET(req: NextRequest) {
       lines.push(`DTSTAMP:${formatDateToIcs(new Date().toISOString().split("T")[0])}T000000Z`);
       lines.push(`DTSTART;VALUE=DATE:${dtStart}`);
       lines.push(`DTEND;VALUE=DATE:${dtEnd}`);
-      lines.push(`SUMMARY:${todo.title.replace(/\n/g, " ")}`);
-      lines.push(`DESCRIPTION:【${prioText}】${projectText}`);
+      lines.push(foldIcsLine(`SUMMARY:${escapeIcsText(todo.title)}`));
+      lines.push(foldIcsLine(`DESCRIPTION:【${escapeIcsText(prioText)}】${escapeIcsText(projectText)}`));
       lines.push(`STATUS:${statusText}`);
       if (todo.priority === "high") {
         lines.push("PRIORITY:1");

@@ -256,6 +256,11 @@ export async function DELETE(req: Request) {
   db.prepare("DELETE FROM user_categories WHERE user_id = ?").run(id);
   db.prepare("DELETE FROM user_links WHERE user_id = ?").run(id);
   db.prepare("DELETE FROM user_configs WHERE user_id = ?").run(id);
+  db.prepare("DELETE FROM projects WHERE user_id = ?").run(id);
+  db.prepare("DELETE FROM user_todos WHERE user_id = ?").run(id);
+  db.prepare("DELETE FROM notifications WHERE user_id = ?").run(id);
+  db.prepare("DELETE FROM api_tokens WHERE user_id = ?").run(id);
+  db.prepare("DELETE FROM model_accounts WHERE user_id = ?").run(id);
 
   return NextResponse.json({ message: "User deleted successfully" });
 }
