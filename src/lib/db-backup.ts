@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { db } from "./db.ts";
 import { recordAuditLog } from "./audit.ts";
+import { logger } from "./logger.ts";
 
 const BACKUP_DIR = path.join(process.cwd(), "data", "backups");
 const MAX_BACKUPS = 7;
@@ -54,7 +55,9 @@ export function performDatabaseBackup(operatorUserId = "system"): string | null 
 
     return backupPath;
   } catch (err) {
-    console.error("[Navelix Backup] Database backup failed:", err);
+    logger.error("backup failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 }

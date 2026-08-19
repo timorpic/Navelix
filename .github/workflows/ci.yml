@@ -32,8 +32,11 @@ jobs:
       - name: Run ESLint
         run: pnpm lint
 
-      - name: Run Test Suite
-        run: pnpm test
+      - name: Strict TypeScript Check
+        run: pnpm typecheck
+
+      - name: Run Test Suite (with Coverage Gate)
+        run: pnpm test:coverage
 
       - name: Run Production Build
         run: pnpm build

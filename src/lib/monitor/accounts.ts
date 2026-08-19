@@ -1,5 +1,6 @@
 import { db } from "../db.ts";
 import { encryptSecret, decryptSecret } from "../secret.ts";
+import { logger } from "../logger.ts";
 import type { MonitorProvider } from "./oauth.ts";
 import {
   fetchAntigravityCredits,
@@ -78,7 +79,7 @@ export interface MonitorAccountInput {
 const SELECT_COLS =
   "id, user_id, provider, email, label, access_token_enc, refresh_token_enc, id_token_enc, token_expires_at, plan_type, subscription_start, subscription_until, credits_amount, min_credit_amount, credits_known, project_id, quota_summary, last_error, last_checked_at, created_at, updated_at";
 
-function parseQuotaSummary(raw: string): AntigravityQuotaSummary | null {
+export function parseQuotaSummary(raw: string): AntigravityQuotaSummary | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
@@ -155,7 +156,7 @@ function parseQuotaSummary(raw: string): AntigravityQuotaSummary | null {
   }
 }
 
-function parseCodexUsage(raw: string): CodexUsage | null {
+export function parseCodexUsage(raw: string): CodexUsage | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as CodexUsage;
@@ -422,9 +423,9 @@ export async function refreshMonitorAccount(
         );
         updateMonitorQuota(id, { ...summary, status });
       } catch (err) {
-        console.warn(
-          `[monitor] antigravity quota fetch failed: ${err instanceof Error ? err.message : String(err)}`,
-        );
+        logger.warn("antigravity quota fetch failed", {
+        error: err instanceof Error ? err.message : String(err),
+      });
         updateMonitorQuota(id, {
           groups: [],
           buckets: [],
@@ -450,9 +451,9 @@ export async function refreshMonitorAccount(
             claims.accountId,
           );
         } catch (err) {
-          console.warn(
-            `[monitor] codex usage fetch failed: ${err instanceof Error ? err.message : String(err)}`,
-          );
+          logger.warn("codex usage fetch failed", {
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
         db.prepare(`
           UPDATE model_accounts SET
