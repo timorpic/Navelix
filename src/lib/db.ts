@@ -19,7 +19,7 @@ if (!fs.existsSync(DATA_DIR)) {
   } catch {}
 }
 
-const DB_FILE = path.join(DATA_DIR, "nexus.db");
+const DB_FILE = path.join(DATA_DIR, "navelix.db");
 export const db = new DatabaseSync(DB_FILE);
 
 try {

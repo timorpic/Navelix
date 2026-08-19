@@ -20,7 +20,7 @@
   - [原子化里程碑 API](REST-API-开放接口文档#42-创建新项目-支持原子化里程碑待办同步)
 - **🤖 AI 智能中枢**
   - [AI 项目智能拆解](User-Guide-功能使用指南#41-ai-项目智能拆解与分工)
-  - [SenseNova 模型监控](User-Guide-功能使用指南#44-商汤-sensenova-大模型用量监控)
+  - [账号额度监控](User-Guide-功能使用指南#44-反重力--codex-账号额度监控)
 - **💡 自动化实战案例**
   - [GitHub Actions CI 通知](REST-API-开放接口文档#案例-a-github-actions--docker-ci-自动化构建通知)
   - [iOS 快捷指令一键录入](REST-API-开放接口文档#案例-b-ios-快捷指令一键录入日程待办并指派负责人)
