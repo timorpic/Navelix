@@ -182,10 +182,6 @@ export default function AdminSystemTab() {
       const safeConfig = { ...(dbData.config || config) };
       delete safeConfig.aiApiKey;
       delete safeConfig.weatherApiKey;
-      delete safeConfig.sensenovaUsername;
-      delete safeConfig.sensenovaPassword;
-      delete safeConfig.sensenovaAccountId;
-      delete safeConfig.sensenovaTokenKey;
 
       // 2. Collect local storage state
       let focusTracker = null;
@@ -268,10 +264,6 @@ export default function AdminSystemTab() {
         if (safeCfg) {
           delete safeCfg.aiApiKey;
           delete safeCfg.weatherApiKey;
-          delete safeCfg.sensenovaUsername;
-          delete safeCfg.sensenovaPassword;
-          delete safeCfg.sensenovaAccountId;
-          delete safeCfg.sensenovaTokenKey;
         }
 
         const saveRes = await fetch("/api/user/data", {

@@ -103,16 +103,6 @@ export interface SystemConfig {
   weatherApiBaseUrl?: string; // 默认 devapi.qweather.com
   weatherKeyConfigured?: boolean;
 
-  // 商汤 SenseNova 模型用量面板
-  sensenovaEnabled?: boolean; // 前台面板显隐开关（后台控制）
-  // 是否已配置凭据（不下发明文账号/密码/tokenKey，仅用于前端提示）
-  sensenovaConfigured?: boolean;
-  // 以下 4 项仅用于后台表单提交（明文永不下发前端，GET 不回传）；留空 = 保持原值
-  sensenovaUsername?: string;
-  sensenovaAccountId?: string;
-  sensenovaPassword?: string; // 仅提交，留空=保持不变
-  sensenovaTokenKey?: string; // 仅提交，留空=保持不变
-
   // 更多个性化外观配置
   linkOpenTarget?: "_blank" | "_self";
   wallpaperMode?: "none" | "bing" | "custom";
@@ -121,4 +111,6 @@ export interface SystemConfig {
   sidebarDefaultState?: "expanded" | "collapsed";
   sidebarRightDefaultState?: "expanded" | "collapsed";
   clockWidgetMode?: "time" | "weather" | "analog";
+  // 前台右侧侧边栏是否显示模型监控块（后台模型监控面板可切换）
+  modelMonitorEnabled?: boolean;
 }

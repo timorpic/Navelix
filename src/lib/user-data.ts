@@ -140,16 +140,13 @@ export function getUserData(userId: string): UserDataResult {
         weatherKeyConfigured: Boolean(configRow.weather_api_key),
         weatherLocation: String(configRow.weather_location || ""),
         weatherApiBaseUrl: String(configRow.weather_api_base_url || "https://api.seniverse.com"),
-        sensenovaEnabled: configRow.sensenova_enabled === 1,
-        sensenovaConfigured: Boolean(configRow.sensenova_username && configRow.sensenova_password),
-        sensenovaUsername: String(configRow.sensenova_username || ""),
-        sensenovaAccountId: String(configRow.sensenova_account_id || ""),
         linkOpenTarget: (configRow.link_open_target as SystemConfig["linkOpenTarget"]) || "_blank",
         wallpaperMode: (configRow.wallpaper_mode as SystemConfig["wallpaperMode"]) || "none",
         customWallpaperUrl: String(configRow.custom_wallpaper_url || ""),
         glassmorphism: configRow.glassmorphism === 1 || configRow.glassmorphism === true || configRow.glassmorphism === "1",
         sidebarDefaultState: (configRow.sidebar_default_state as SystemConfig["sidebarDefaultState"]) || "expanded",
         clockWidgetMode: (configRow.clock_widget_mode as SystemConfig["clockWidgetMode"]) || "time",
+        modelMonitorEnabled: configRow.model_monitor_enabled === 1 || configRow.model_monitor_enabled === true || configRow.model_monitor_enabled === "1",
       }
     : {
         logoText: "Navelix",
@@ -177,16 +174,13 @@ export function getUserData(userId: string): UserDataResult {
         weatherKeyConfigured: false,
         weatherLocation: "",
         weatherApiBaseUrl: "https://api.seniverse.com",
-        sensenovaEnabled: false,
-        sensenovaConfigured: false,
-        sensenovaUsername: "",
-        sensenovaAccountId: "",
         linkOpenTarget: "_blank",
         wallpaperMode: "none",
         customWallpaperUrl: "",
         glassmorphism: false,
         sidebarDefaultState: "expanded",
         clockWidgetMode: "time",
+        modelMonitorEnabled: true,
       };
 
   const result: UserDataResult = { user, categories: categoryRows as Category[], links, projects, config };
@@ -467,22 +461,16 @@ export function saveUserConfigs(
   const glassmorphism = bool("glassmorphism", "glassmorphism", 0);
   const sidebarDefaultState = str("sidebarDefaultState", "sidebar_default_state", "expanded");
   const clockWidgetMode = str("clockWidgetMode", "clock_widget_mode", "time");
+  const modelMonitorEnabled = bool("modelMonitorEnabled", "model_monitor_enabled", 1);
   const allowPublicAccess = bool("allowPublicAccess", "allow_public_access", 0);
   const allowRegistration = bool("allowRegistration", "allow_registration", 0);
   const securitySetupDone = bool("securitySetupDone", "security_setup_done", 0);
   const customHeadScripts = str("customHeadScripts", "custom_head_scripts", "");
   const customCss = str("customCss", "custom_css", "");
-  const sensenovaEnabled = bool("sensenovaEnabled", "sensenova_enabled", 0);
-  const sensenovaUsername = secret("sensenovaUsername", "sensenova_username");
-  const sensenovaPassword = secret("sensenovaPassword", "sensenova_password");
-  const sensenovaAccountId = str("sensenovaAccountId", "sensenova_account_id", "");
-  const sensenovaTokenKey = secret("sensenovaTokenKey", "sensenova_token_key");
 
   // 对敏感密钥字段应用 AES-256-GCM 静态落盘加密
   const encryptedAiApiKey = encryptSecret(aiApiKey);
   const encryptedWeatherApiKey = encryptSecret(weatherApiKey);
-  const encryptedSensenovaPassword = encryptSecret(sensenovaPassword);
-  const encryptedSensenovaTokenKey = encryptSecret(sensenovaTokenKey);
 
   // 安全告警：自定义脚本/CSS 会绕过 CSP 直接注入到所有访客页面。
   // 此处仅记录日志供运维审计；写入权限已由 POST /api/user/data 的 admin 角色门禁收口。
@@ -505,11 +493,10 @@ export function saveUserConfigs(
       weather_enabled, weather_api_key, weather_location, weather_api_base_url,
       link_open_target, wallpaper_mode, custom_wallpaper_url, glassmorphism,
       sidebar_default_state, clock_widget_mode, allow_public_access, allow_registration,
-      security_setup_done,
-      custom_head_scripts, custom_css,
-      sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key
+      security_setup_done, model_monitor_enabled,
+      custom_head_scripts, custom_css
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     userId,
     logoText,
@@ -541,13 +528,9 @@ export function saveUserConfigs(
     allowPublicAccess,
     allowRegistration,
     securitySetupDone,
+    modelMonitorEnabled,
     customHeadScripts,
     customCss,
-    sensenovaEnabled,
-    sensenovaUsername,
-    encryptedSensenovaPassword,
-    sensenovaAccountId,
-    encryptedSensenovaTokenKey,
   );
 
   // 记录关键配置变更安全审计日志

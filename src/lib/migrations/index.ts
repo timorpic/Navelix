@@ -6,6 +6,7 @@ import {
   hashPassword,
   verifyPassword,
 } from "../password.ts";
+import { performDatabaseBackup } from "../db-backup.ts";
 
 /**
  * 数据库迁移模块：承载所有 Schema 版本迁移（v1 ~ v6）与一次性数据修复。
@@ -240,11 +241,6 @@ export function runMigrations(db: DatabaseSync): void {
     "custom_css",
     "custom_css TEXT NOT NULL DEFAULT ''",
   );
-  ensureColumn(db, "user_configs", "sensenova_enabled", "sensenova_enabled INTEGER NOT NULL DEFAULT 0");
-  ensureColumn(db, "user_configs", "sensenova_username", "sensenova_username TEXT NOT NULL DEFAULT ''");
-  ensureColumn(db, "user_configs", "sensenova_password", "sensenova_password TEXT NOT NULL DEFAULT ''");
-  ensureColumn(db, "user_configs", "sensenova_account_id", "sensenova_account_id TEXT NOT NULL DEFAULT ''");
-  ensureColumn(db, "user_configs", "sensenova_token_key", "sensenova_token_key TEXT NOT NULL DEFAULT ''");
   ensureColumn(db, "user_configs", "cliproxy_enabled", "cliproxy_enabled INTEGER NOT NULL DEFAULT 1");
   ensureColumn(db, "user_configs", "cliproxy_url", "cliproxy_url TEXT NOT NULL DEFAULT 'http://127.0.0.1:8317'");
   ensureColumn(db, "user_configs", "cliproxy_key", "cliproxy_key TEXT NOT NULL DEFAULT ''");
@@ -437,20 +433,15 @@ export function runMigrations(db: DatabaseSync): void {
           weather_api_key TEXT NOT NULL DEFAULT '',
           weather_location TEXT NOT NULL DEFAULT '',
           weather_api_base_url TEXT NOT NULL DEFAULT 'https://api.seniverse.com',
-          sensenova_enabled INTEGER NOT NULL DEFAULT 0,
-          sensenova_username TEXT NOT NULL DEFAULT '',
-          sensenova_password TEXT NOT NULL DEFAULT '',
-          sensenova_account_id TEXT NOT NULL DEFAULT '',
-          sensenova_token_key TEXT NOT NULL DEFAULT '',
           allow_public_access INTEGER NOT NULL DEFAULT 0,
           allow_registration INTEGER NOT NULL DEFAULT 0,
           security_setup_done INTEGER NOT NULL DEFAULT 0
         );
         INSERT OR IGNORE INTO user_configs_new (
-          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key, allow_public_access, allow_registration, security_setup_done
+          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, allow_public_access, allow_registration, security_setup_done
         )
         SELECT
-          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key, allow_public_access, allow_registration, security_setup_done
+          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, allow_public_access, allow_registration, security_setup_done
         FROM user_configs;
         DROP TABLE user_configs;
         ALTER TABLE user_configs_new RENAME TO user_configs;
@@ -637,6 +628,59 @@ export function runMigrations(db: DatabaseSync): void {
     dropColumn(db, "user_configs", "custom_search_url");
     db.exec("PRAGMA user_version = 10");
   }
+
+  // ── v11：删除已废弃的商汤 SenseNova 模型用量监控配置列（首页面板与后台配置均已移除）
+  if (user_version < 11) {
+    // 破坏性结构变更前自动生成物理热备份，确保已部署库凭据数据可回滚
+    performDatabaseBackup("migration-v11");
+    dropColumn(db, "user_configs", "sensenova_enabled");
+    dropColumn(db, "user_configs", "sensenova_username");
+    dropColumn(db, "user_configs", "sensenova_password");
+    dropColumn(db, "user_configs", "sensenova_account_id");
+    dropColumn(db, "user_configs", "sensenova_token_key");
+    db.exec("PRAGMA user_version = 11");
+  }
+
+  // ── v12：新增模型账号表（反重力 / Codex OAuth 账号与额度缓存）
+  if (user_version < 12) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS model_accounts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        provider TEXT NOT NULL,
+        email TEXT NOT NULL DEFAULT '',
+        label TEXT NOT NULL DEFAULT '',
+        access_token_enc TEXT NOT NULL DEFAULT '',
+        refresh_token_enc TEXT NOT NULL DEFAULT '',
+        id_token_enc TEXT NOT NULL DEFAULT '',
+        token_expires_at INTEGER NOT NULL DEFAULT 0,
+        plan_type TEXT NOT NULL DEFAULT '',
+        subscription_start TEXT NOT NULL DEFAULT '',
+        subscription_until TEXT NOT NULL DEFAULT '',
+        credits_amount REAL,
+        min_credit_amount REAL,
+        credits_known INTEGER NOT NULL DEFAULT 0,
+        last_error TEXT NOT NULL DEFAULT '',
+        last_checked_at INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_model_accounts_user
+        ON model_accounts(user_id, provider);
+    `);
+    db.exec("PRAGMA user_version = 12");
+  }
+
+  // ── v12 之后：model_accounts 新增反重力项目 ID 与额度窗口缓存列
+  // ── user_configs 新增前台侧边栏模型监控显示开关
+  ensureColumn(db, "model_accounts", "project_id", "project_id TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, "model_accounts", "quota_summary", "quota_summary TEXT NOT NULL DEFAULT ''");
+  ensureColumn(
+    db,
+    "user_configs",
+    "model_monitor_enabled",
+    "model_monitor_enabled INTEGER NOT NULL DEFAULT 1",
+  );
 
   // 通知数据自动清理：保留 30 天内的操作记录，避免数据库无限制膨胀
   db.prepare(

@@ -4,8 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useNavelixData } from "@/hooks/use-navelix-data";
 import type { AIChatMessage, Project, TodoItem } from "@/types";
-import FocusStatsWidget from "./focus-stats-widget";
-import SenseNovaUsage from "./sensenova-usage";
+import ModelMonitorWidget from "./model-monitor-widget";
 
 export default function RightSidebar({
   collapsed = false,
@@ -415,11 +414,8 @@ export default function RightSidebar({
 
         </div>
 
-        {/* ── Widget 1.4: Focus Stats ── */}
-        <FocusStatsWidget />
-
-        {/* ── Widget 1.5: SenseNova Model Usage Panel ── */}
-        {config.sensenovaEnabled && <SenseNovaUsage />}
+        {/* ── Widget 1.5: 模型监控 ── */}
+        {config.modelMonitorEnabled && <ModelMonitorWidget />}
 
         {/* ── Widget 3: Social Profile Links ── */}
         {socialLinks.length > 0 && (
