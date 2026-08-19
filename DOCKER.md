@@ -82,6 +82,12 @@ docker run -d \
 - 支持后台一键下载 `.db` 完整数据库物理快照；
 - 支持后台直接上传历史 `.db` 备份文件一键还原全量数据。
 
+> **🔄 旧版本升级迁移（nexus.db → navelix.db）**
+> 早期版本主数据库名为 `nexus.db`。新版本升级后首次启动时，系统会自动检测挂载卷中的 `data/nexus.db`，
+> 并将其自动迁移为新的 `data/navelix.db`（数据完整保留），**无需手动操作**。
+> 迁移完成后旧的 `data/nexus.db` 会被保留作为备份，确认数据无误后可手动删除该文件。
+> 历史备份文件（`data/backups/nexus-backup-*.db`）仍可正常用于后台还原。
+
 ---
 
 **Navelix · Personal Digital Hub** — 让每一个常用入口，都在它该在的地方。
