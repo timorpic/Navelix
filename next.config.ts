@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+// 生产环境移除 'unsafe-eval'（Next.js 生产包无需 eval），开发保留以兼容 HMR
+const isProduction = process.env.NODE_ENV === "production";
+const scriptSrc = isProduction
+  ? "'self' 'unsafe-inline'"
+  : "'self' 'unsafe-inline' 'unsafe-eval'";
+
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -17,7 +23,7 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      `script-src ${scriptSrc}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https: http:",
       "font-src 'self' data:",
