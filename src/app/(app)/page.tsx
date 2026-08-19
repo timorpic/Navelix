@@ -10,6 +10,7 @@ import RightSidebar from "@/components/right-sidebar";
 import CardGrid from "@/components/card-grid";
 import WorkspaceOverviewColumns from "@/components/workspace-overview-columns";
 import RecentActivitiesCard from "@/components/recent-activities-card";
+import GlobalSearchResults from "@/components/global-search-results";
 import CalendarView from "@/components/calendar-view";
 import ProjectsView from "@/components/projects-view";
 import DashboardView from "@/components/dashboard-view";
@@ -116,17 +117,13 @@ function HomeContent() {
     if (activeCategory !== "all") {
       result = result.filter((l) => l.category === activeCategory);
     }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (l) =>
-          l.title.toLowerCase().includes(q) ||
-          l.description.toLowerCase().includes(q) ||
-          l.url.toLowerCase().includes(q),
-      );
-    }
     return result;
-  }, [links, activeCategory, searchQuery]);
+  }, [links, activeCategory]);
+
+  const handleSearchNavigate = (categoryId: string) => {
+    setSearchQuery("");
+    handleSelectCategory(categoryId);
+  };
 
   const { statuses } = useLinkStatus(
     config.linkStatusEnabled ? links : [],
@@ -155,7 +152,7 @@ function HomeContent() {
     );
   }
 
-  const isFiltering = activeCategory !== "all" || searchQuery.trim().length > 0;
+  const isFiltering = activeCategory !== "all";
 
   // Compute container max width dynamically (1200px default)
   const maxWidthClass =
@@ -227,15 +224,20 @@ function HomeContent() {
                 onSelectCategory={handleSelectCategory}
               />
 
-              {isFiltering ? (
-                /* Search / Category Filtered View */
+              {searchQuery.trim() ? (
+                /* 全系统搜索结果显示页 */
+                <GlobalSearchResults
+                  query={searchQuery}
+                  onNavigate={handleSearchNavigate}
+                  onClear={() => setSearchQuery("")}
+                />
+              ) : isFiltering ? (
+                /* Category Filtered View */
                 <div className="flex flex-col gap-4 mt-2">
                   <div className="flex items-center justify-between">
                     <h2 className="text-base font-bold text-gray-900 dark:text-white">
-                      {activeCategory === "all"
-                        ? `搜索结果 ("${searchQuery}")`
-                        : categories.find((c) => c.id === activeCategory)?.name ||
-                          "分类书签"}
+                      {categories.find((c) => c.id === activeCategory)?.name ||
+                        "分类书签"}
                     </h2>
                     <button
                       onClick={() => {
