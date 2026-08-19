@@ -65,7 +65,7 @@ export interface OAuthSession {
   userId: string;
   pkceVerifier?: string;
   createdAt: number;
-  status: "pending" | "done" | "error";
+  status: "pending" | "processing" | "done" | "error";
   error?: string;
   accountId?: string;
 }

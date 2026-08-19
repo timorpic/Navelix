@@ -221,6 +221,17 @@ export function saveMonitorAccount(
   userId: string,
   input: MonitorAccountInput,
 ): string {
+  // 去重：同一用户对同一 provider 的同一邮箱不重复创建
+  if (input.email) {
+    const existing = db
+      .prepare(
+        "SELECT id FROM model_accounts WHERE user_id = ? AND provider = ? AND email = ?",
+      )
+      .get(userId, input.provider, input.email) as { id: string } | undefined;
+    if (existing) {
+      input.id = existing.id;
+    }
+  }
   const id = input.id || crypto.randomUUID();
   const now = Date.now();
   db.prepare(`
@@ -277,6 +288,14 @@ export function updateMonitorCredits(
     projectId?: string;
   },
 ): void {
+  // 保留旧 project_id，避免上游返回空值时覆盖有效值
+  const oldRow = db
+    .prepare("SELECT project_id FROM model_accounts WHERE id = ?")
+    .get(id) as { project_id: string } | undefined;
+  const resolvedProjectId =
+    credits.projectId && credits.projectId.trim()
+      ? credits.projectId.trim()
+      : oldRow?.project_id || "";
   db.prepare(`
     UPDATE model_accounts SET
       credits_amount = ?,
@@ -290,7 +309,7 @@ export function updateMonitorCredits(
   `).run(
     credits.creditAmount,
     credits.minCreditAmount,
-    credits.projectId || "",
+    resolvedProjectId,
     Date.now(),
     Date.now(),
     id,
@@ -457,7 +476,7 @@ export async function refreshMonitorAccount(
           id,
         );
       } else {
-        updateMonitorCredits(id, { creditAmount: 0, minCreditAmount: 0 });
+        updateMonitorError(id, "缺少 refresh_token，无法刷新 Codex 账号");
       }
     }
 

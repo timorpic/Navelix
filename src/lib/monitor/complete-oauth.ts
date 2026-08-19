@@ -12,6 +12,7 @@ export interface CompleteOAuthResult {
 export function completeOAuthFlow(
   provider: MonitorProvider,
   callbackUrl: string,
+  requesterId: string,
 ): Promise<CompleteOAuthResult> {
   let parsed: URL;
   try {
@@ -38,9 +39,16 @@ export function completeOAuthFlow(
   if (session.provider !== provider) {
     return Promise.resolve({ ok: false, error: "会话状态与当前 provider 不匹配，请重新发起授权" });
   }
+  if (session.userId !== requesterId) {
+    return Promise.resolve({ ok: false, error: "会话不属于当前用户，请重新发起授权" });
+  }
   if (session.status === "done") {
     return Promise.resolve({ ok: true, accountId: session.accountId });
   }
+  if (session.status === "processing") {
+    return Promise.resolve({ ok: false, error: "该回调正在处理中，请勿重复提交" });
+  }
+  setOAuthSessionStatus(state, "processing");
   if (errorParam) {
     setOAuthSessionStatus(state, "error", { error: `授权被拒绝: ${errorParam}` });
     return Promise.resolve({ ok: false, error: `授权被拒绝: ${errorParam}` });

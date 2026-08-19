@@ -13,10 +13,10 @@ export async function GET() {
 
   const row = db
     .prepare(
-      "SELECT weather_enabled, weather_api_key, weather_location FROM user_configs WHERE user_id = ?",
+      "SELECT weather_enabled, weather_api_key, weather_location, weather_api_base_url FROM user_configs WHERE user_id = ?",
     )
     .get(user.id) as
-    | { weather_enabled: number; weather_api_key: string; weather_location: string }
+    | { weather_enabled: number; weather_api_key: string; weather_location: string; weather_api_base_url: string }
     | undefined;
 
   const enabled = row?.weather_enabled === 1;
@@ -25,11 +25,15 @@ export async function GET() {
   }
 
   const rawKey = row?.weather_api_key?.trim() || "";
-  const key = decryptSecret(rawKey) || "SrnuFIBmt5hQtLK6Z";
+  const key = decryptSecret(rawKey);
+  if (!key) {
+    return NextResponse.json({ enabled: false, message: "天气未配置 API Key" });
+  }
   const loc = row?.weather_location?.trim() || "beijing";
+  const baseUrl = row?.weather_api_base_url?.trim() || "https://api.seniverse.com";
 
   try {
-    const url = `https://api.seniverse.com/v3/weather/now.json?key=${encodeURIComponent(key)}&location=${encodeURIComponent(loc)}&language=zh-Hans&unit=c`;
+    const url = `${baseUrl}/v3/weather/now.json?key=${encodeURIComponent(key)}&location=${encodeURIComponent(loc)}&language=zh-Hans&unit=c`;
     const res = await safeFetch(url, { cache: "no-store", timeoutMs: 8000 });
     if (res.ok) {
       const data = await res.json();

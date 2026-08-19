@@ -147,6 +147,10 @@ export function getClientId(req: Request): string {
     const realIp = req.headers.get("x-real-ip");
     if (realIp) return realIp.trim();
   }
+  // 未开 TRUST_PROXY 时回退尝试 x-real-ip（部分宿主/反代会显式注入），
+  // 兜底为全局桶；登录路由会叠加用户名作为二级 key，避免全局锁死。
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
   return "direct-client";
 }
 
@@ -154,6 +158,18 @@ export function getClientId(req: Request): string {
 const LOGIN_THRESHOLD = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const loginAttempts = new Map<string, { count: number; firstFailure: number }>();
+let lastLoginPruneAt = Date.now();
+const LOGIN_PRUNE_INTERVAL_MS = 10 * 60 * 1000;
+
+function pruneExpiredLoginAttempts(now: number) {
+  if (now - lastLoginPruneAt < LOGIN_PRUNE_INTERVAL_MS) return;
+  lastLoginPruneAt = now;
+  for (const [key, entry] of loginAttempts) {
+    if (now - entry.firstFailure > LOGIN_WINDOW_MS) {
+      loginAttempts.delete(key);
+    }
+  }
+}
 
 export interface LoginRateLimitStatus {
   allowed: boolean;
@@ -165,6 +181,7 @@ export interface LoginRateLimitStatus {
 
 export function checkLoginRateLimit(clientId: string): LoginRateLimitStatus {
   const now = Date.now();
+  pruneExpiredLoginAttempts(now);
   const entry = loginAttempts.get(clientId);
   if (!entry) {
     return { allowed: true, remaining: LOGIN_THRESHOLD, lockRemainingMs: 0 };
@@ -184,6 +201,7 @@ export function checkLoginRateLimit(clientId: string): LoginRateLimitStatus {
 
 export function recordLoginFailure(clientId: string): void {
   const now = Date.now();
+  pruneExpiredLoginAttempts(now);
   const entry = loginAttempts.get(clientId);
   if (!entry || now - entry.firstFailure > LOGIN_WINDOW_MS) {
     loginAttempts.set(clientId, { count: 1, firstFailure: now });

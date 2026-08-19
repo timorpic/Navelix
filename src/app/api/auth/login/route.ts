@@ -14,8 +14,17 @@ import {
 } from "@/lib/auth";
 
 export async function POST(req: Request) {
+  const body = await req.json().catch(() => null);
+  const username = String(body?.username ?? "")
+    .trim()
+    .toLowerCase();
+  const password = String(body?.password ?? "");
+
   const clientId = getClientId(req);
-  const { allowed, lockRemainingMs } = checkLoginRateLimit(clientId);
+  // 叠加用户名作为二级限流 key：未开启 TRUST_PROXY 时所有请求落在
+  // 全局 "direct-client" 桶，只有用户名维度可拆分，避免一个 IP 锁死全站
+  const limitKey = username ? `${clientId}:${username}` : clientId;
+  const { allowed, lockRemainingMs } = checkLoginRateLimit(limitKey);
   if (!allowed) {
     const minutes = Math.max(1, Math.ceil(lockRemainingMs / 60000));
     return NextResponse.json(
@@ -23,12 +32,6 @@ export async function POST(req: Request) {
       { status: 429 },
     );
   }
-
-  const body = await req.json().catch(() => null);
-  const username = String(body?.username ?? "")
-    .trim()
-    .toLowerCase();
-  const password = body?.password ?? "";
 
   const row = db
     .prepare(
@@ -47,7 +50,7 @@ export async function POST(req: Request) {
     | undefined;
 
   if (!row || !verifyPassword(password, row.password_hash)) {
-    recordLoginFailure(clientId);
+    recordLoginFailure(limitKey);
     // 统一中文错误信息：避免通过语言差异泄露"用户是否存在"，同时兼容客户端提示
     return NextResponse.json(
       { error: "用户名或密码错误" },
@@ -55,7 +58,7 @@ export async function POST(req: Request) {
     );
   }
 
-  resetLoginRateLimit(clientId);
+  resetLoginRateLimit(limitKey);
   // 管理员首次登录成功后自动删除初始密码提示文件
   if (row.role === "admin") {
     try {

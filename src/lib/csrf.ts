@@ -21,8 +21,13 @@ export function checkCSRF(req: Request): CSRFCheckResult {
 
   const origin = req.headers.get("origin");
   const referer = req.headers.get("referer");
-  const hostHeader = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
-  const host = hostHeader.split(":")[0];
+  // 仅在信任反向代理时才采用 X-Forwarded-Host，否则可能被伪造头绕过同源校验
+  const trustProxy =
+    process.env.TRUST_PROXY === "true" || process.env.TRUST_PROXY === "1";
+  const rawHost = (trustProxy ? req.headers.get("x-forwarded-host") : null) || req.headers.get("host") || "";
+  const host = rawHost.includes("[")
+    ? rawHost.match(/^\[([^\]]+)\]/)?.[1] || rawHost
+    : rawHost.split(":")[0];
 
   const targetUrlStr = origin || referer;
   if (!targetUrlStr) {
@@ -39,7 +44,7 @@ export function checkCSRF(req: Request): CSRFCheckResult {
     const targetHost = targetUrl.hostname;
 
     const isLocalHost = (h: string) =>
-      h === "localhost" || h === "127.0.0.1" || h === "::1";
+      h === "localhost" || h === "::1" || h.startsWith("127.");
 
     if (targetHost && host) {
       if (isLocalHost(targetHost) && isLocalHost(host)) {

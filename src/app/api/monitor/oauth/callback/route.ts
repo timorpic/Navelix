@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "请粘贴浏览器返回的回调地址" }, { status: 400 });
   }
 
-  const result = await completeOAuthFlow(provider, body.callbackUrl.trim());
+  const result = await completeOAuthFlow(provider, body.callbackUrl.trim(), user.id);
   if (!result.ok) {
     return NextResponse.json({ error: result.error || "授权处理失败" }, { status: 400 });
   }

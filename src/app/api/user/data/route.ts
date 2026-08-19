@@ -61,7 +61,7 @@ export async function GET() {
   // Fetch projects
   const projectRows = db
     .prepare(
-      `SELECT id, name, status, status_color, url
+      `SELECT id, name, status, status_color, url, description, sort_order, created_at, updated_at
        FROM projects
        WHERE user_id = ?
        ORDER BY sort_order ASC`,
@@ -72,6 +72,10 @@ export async function GET() {
     status: string;
     status_color: string;
     url: string;
+    description: string;
+    sort_order: number;
+    created_at: number;
+    updated_at: number;
   }>;
 
   const projects = projectRows.map((p) => ({
@@ -80,6 +84,10 @@ export async function GET() {
     status: p.status,
     statusColor: p.status_color,
     url: p.url,
+    description: p.description,
+    sortOrder: p.sort_order,
+    createdAt: p.created_at,
+    updatedAt: p.updated_at,
   }));
 
   // Fetch todos/schedules
@@ -146,6 +154,7 @@ export async function GET() {
         allow_public_access: number;
         allow_registration: number;
         security_setup_done: number;
+        model_monitor_enabled: number;
         custom_head_scripts: string;
         custom_css: string;
       }
@@ -162,6 +171,7 @@ export async function GET() {
         allowPublicAccess: configRow.allow_public_access === 1 || (configRow.allow_public_access as unknown) === true || (configRow.allow_public_access as unknown) === "1",
         allowRegistration: configRow.allow_registration === 1 || (configRow.allow_registration as unknown) === true || (configRow.allow_registration as unknown) === "1",
         securitySetupDone: configRow.security_setup_done === 1 || (configRow.security_setup_done as unknown) === true || (configRow.security_setup_done as unknown) === "1",
+        modelMonitorEnabled: configRow.model_monitor_enabled === 1 || (configRow.model_monitor_enabled as unknown) === true || (configRow.model_monitor_enabled as unknown) === "1",
         customHeadScripts: configRow.custom_head_scripts || "",
         customCss: configRow.custom_css || "",
         aiBaseUrl: configRow.ai_base_url,
@@ -199,6 +209,7 @@ export async function GET() {
         allowPublicAccess: false,
         allowRegistration: false,
         securitySetupDone: false,
+        modelMonitorEnabled: true,
         linkStatusEnabled: true,
         linkStatusInterval: 60,
         socialGithub: "https://github.com",
@@ -264,6 +275,8 @@ export async function POST(req: NextRequest) {
           { status: 403 },
         );
       }
+      // 注册开关属全局安全策略，仅管理员可改；普通用户提交一律忽略
+      delete cfg.allowRegistration;
     }
 
     if (Array.isArray(body.categories)) {

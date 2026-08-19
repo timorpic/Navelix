@@ -59,7 +59,7 @@ export function encryptSecret(plainText: string): string {
     return `${PREFIX}${iv.toString("hex")}:${authTag}:${encrypted}`;
   } catch (err) {
     console.error("[Navelix Secret] Encrypt failed:", err);
-    return plainText;
+    throw new Error("加密失败，请检查系统状态");
   }
 }
 
