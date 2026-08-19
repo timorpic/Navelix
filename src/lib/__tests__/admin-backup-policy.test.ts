@@ -35,16 +35,13 @@ describe("Admin Backup & Access Policies", () => {
     }
   });
 
-  it("should properly store and format custom search engine URL and scripts", () => {
+  it("should properly store and format custom head scripts and CSS", () => {
     const testUser = "test-custom-search-" + Date.now();
     try {
       db.prepare("INSERT INTO users (id, username, password_hash, display_name, role, created_at) VALUES (?, ?, 'hash', 'Test', 'user', ?)").run(testUser, testUser, Date.now());
-      db.prepare("INSERT INTO user_configs (user_id, search_engine, custom_search_name, custom_search_url, custom_head_scripts, custom_css) VALUES (?, 'custom', 'SearXNG', 'https://search.example.com/search?q=%s', '<script src=\"/test.js\"></script>', 'body { color: red; }')").run(testUser);
+      db.prepare("INSERT INTO user_configs (user_id, custom_head_scripts, custom_css) VALUES (?, '<script src=\"/test.js\"></script>', 'body { color: red; }')").run(testUser);
 
-      const cfg = db.prepare("SELECT search_engine, custom_search_name, custom_search_url, custom_head_scripts, custom_css FROM user_configs WHERE user_id = ?").get(testUser) as { search_engine: string; custom_search_name: string; custom_search_url: string; custom_head_scripts: string; custom_css: string };
-      assert.equal(cfg.search_engine, "custom");
-      assert.equal(cfg.custom_search_name, "SearXNG");
-      assert.equal(cfg.custom_search_url, "https://search.example.com/search?q=%s");
+      const cfg = db.prepare("SELECT custom_head_scripts, custom_css FROM user_configs WHERE user_id = ?").get(testUser) as { custom_head_scripts: string; custom_css: string };
       assert.equal(cfg.custom_head_scripts, '<script src="/test.js"></script>');
       assert.equal(cfg.custom_css, "body { color: red; }");
     } finally {

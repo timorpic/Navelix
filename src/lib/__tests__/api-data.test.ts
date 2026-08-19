@@ -149,21 +149,21 @@ describe("saveUserConfigs (字段合并 + 密钥留空语义)", () => {
       theme: "dark",
     });
     let row = db
-      .prepare("SELECT logo_text, theme, search_engine FROM user_configs WHERE user_id = ?")
-      .get(TEST_USER_ID) as { logo_text: string; theme: string; search_engine: string };
+      .prepare("SELECT logo_text, theme, site_title FROM user_configs WHERE user_id = ?")
+      .get(TEST_USER_ID) as { logo_text: string; theme: string; site_title: string };
     assert.equal(row.logo_text, "测试品牌");
     assert.equal(row.theme, "dark");
     // 未传字段应保留默认值
-    assert.equal(row.search_engine, "google");
+    assert.equal(row.site_title, "Navelix · Personal Digital Hub");
 
-    // 第二次只改 search_engine → 品牌与主题保留
-    saveUserConfigs(TEST_USER_ID, { searchEngine: "bing" });
+    // 第二次只改 site_title → 品牌与主题保留
+    saveUserConfigs(TEST_USER_ID, { siteTitle: "测试站点" });
     row = db
-      .prepare("SELECT logo_text, theme, search_engine FROM user_configs WHERE user_id = ?")
-      .get(TEST_USER_ID) as { logo_text: string; theme: string; search_engine: string };
+      .prepare("SELECT logo_text, theme, site_title FROM user_configs WHERE user_id = ?")
+      .get(TEST_USER_ID) as { logo_text: string; theme: string; site_title: string };
     assert.equal(row.logo_text, "测试品牌");
     assert.equal(row.theme, "dark");
-    assert.equal(row.search_engine, "bing");
+    assert.equal(row.site_title, "测试站点");
   });
 
   it("密钥字段传入空字符串时不清空已有密钥（留空=保持不变且落盘加密）", () => {
