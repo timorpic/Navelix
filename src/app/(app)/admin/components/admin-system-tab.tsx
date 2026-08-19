@@ -481,15 +481,15 @@ export default function AdminSystemTab() {
           </div>
         </div>
 
-        {/* 块 2：🔍 默认搜索引擎与搜索栏 */}
+        {/* 块 2：🔍 首页搜索栏（仅系统内搜索，无需配置搜索引擎） */}
         <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
           <div>
             <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
               <span>🔍</span>
-              <span>默认搜索引擎与搜索栏</span>
+              <span>首页搜索栏</span>
             </h3>
             <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-              配置前台主页默认搜索引擎、自定义私有搜索服务及搜索栏显示状态
+              首页搜索仅限系统内（书签、日程、项目、消息），无需配置外部搜索引擎
             </p>
           </div>
           <div className="space-y-3.5">
@@ -513,63 +513,6 @@ export default function AdminSystemTab() {
                 {config.showSearchBar ? "隐藏" : "显示"}
               </button>
             </div>
-
-            <div>
-              <label
-                htmlFor="admin-search-engine"
-                className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1"
-              >
-                默认搜索引擎
-              </label>
-              <select
-                id="admin-search-engine"
-                name="searchEngine"
-                value={config.searchEngine}
-                onChange={(e) =>
-                  updateConfig({
-                    searchEngine: e.target.value as "google" | "baidu" | "bing" | "perplexity" | "custom",
-                  })
-                }
-                className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-lg px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-medium"
-              >
-                <option value="google">Google</option>
-                <option value="baidu">Baidu 百度</option>
-                <option value="bing">Bing 必应</option>
-                <option value="perplexity">Perplexity AI</option>
-                <option value="custom">⚡ 自定义搜索引擎 (SearXNG / 私有搜索)</option>
-              </select>
-            </div>
-
-            {config.searchEngine === "custom" && (
-              <div className="space-y-2.5 p-3 rounded-xl bg-gray-50/80 dark:bg-slate-900/60 border border-emerald-100 dark:border-emerald-950/60 animate-fadeIn">
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1">
-                    搜索引擎名称
-                  </label>
-                  <input
-                                      type="text"
-                                      name="customSearchName"
-                                      value={config.customSearchName || ""}
-                                      onChange={(e) => updateConfig({ customSearchName: e.target.value })}
-                    placeholder="例如 SearXNG / 内网知识搜索"
-                    className="w-full h-8 border border-gray-200 dark:border-slate-700 rounded-lg px-2.5 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-700 dark:text-slate-300 mb-1">
-                    搜索 URL 模板（使用 <code className="text-[#00C776]">%s</code> 代表搜索关键词）
-                  </label>
-                  <input
-                                      type="text"
-                                      name="customSearchUrl"
-                                      value={config.customSearchUrl || ""}
-                                      onChange={(e) => updateConfig({ customSearchUrl: e.target.value })}
-                    placeholder="https://search.example.com/search?q=%s"
-                    className="w-full h-8 border border-gray-200 dark:border-slate-700 rounded-lg px-2.5 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono text-[11px]"
-                  />
-                </div>
-              </div>
-            )}
           </div>
         </div>
 

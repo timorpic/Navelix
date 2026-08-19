@@ -123,7 +123,6 @@ export async function GET() {
         max_width: "1000px" | "1200px" | "1400px" | "full";
         custom_footer: string;
         theme: "light" | "dark" | "system";
-        search_engine: "google" | "baidu" | "bing" | "perplexity";
         ai_base_url: string;
         ai_api_key: string;
         ai_model: string;
@@ -152,8 +151,6 @@ export async function GET() {
         allow_public_access: number;
         allow_registration: number;
         security_setup_done: number;
-        custom_search_name: string;
-        custom_search_url: string;
         custom_head_scripts: string;
         custom_css: string;
       }
@@ -167,9 +164,6 @@ export async function GET() {
         maxWidth: configRow.max_width,
         customFooter: configRow.custom_footer,
         theme: configRow.theme,
-        searchEngine: (configRow.search_engine as SystemConfig["searchEngine"]) || "google",
-        customSearchName: configRow.custom_search_name || "",
-        customSearchUrl: configRow.custom_search_url || "",
         allowPublicAccess: configRow.allow_public_access === 1 || (configRow.allow_public_access as unknown) === true || (configRow.allow_public_access as unknown) === "1",
         allowRegistration: configRow.allow_registration === 1 || (configRow.allow_registration as unknown) === true || (configRow.allow_registration as unknown) === "1",
         securitySetupDone: configRow.security_setup_done === 1 || (configRow.security_setup_done as unknown) === true || (configRow.security_setup_done as unknown) === "1",
@@ -205,7 +199,6 @@ export async function GET() {
         maxWidth: "1200px",
         customFooter: "© 2026 Navelix. 保留所有权利。",
         theme: "system",
-        searchEngine: "google",
         aiBaseUrl: "https://api.openai.com/v1",
         aiKeyConfigured: false,
         aiModel: "gpt-4o-mini",

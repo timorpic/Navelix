@@ -66,6 +66,23 @@ function ensureColumn(
 }
 
 /**
+ * 删除列（SQLite >= 3.35 支持 ALTER TABLE DROP COLUMN）。
+ * 多 worker 并发时，后到者读取 table_info 时列已不存在，直接跳过。
+ */
+function dropColumn(db: DatabaseSync, table: string, column: string) {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all() as {
+    name: string;
+  }[];
+  if (columns.some((c) => c.name === column)) {
+    try {
+      db.exec(`ALTER TABLE ${table} DROP COLUMN ${column}`);
+    } catch {
+      // 并发 worker 已删除该列，忽略
+    }
+  }
+}
+
+/**
  * 执行全部 Schema 迁移与一次性数据修复。
  * 须在 db.ts 完成 CREATE TABLE 之后调用。
  */
@@ -210,18 +227,6 @@ export function runMigrations(db: DatabaseSync): void {
     "user_configs",
     "security_setup_done",
     "security_setup_done INTEGER NOT NULL DEFAULT 0",
-  );
-  ensureColumn(
-    db,
-    "user_configs",
-    "custom_search_name",
-    "custom_search_name TEXT NOT NULL DEFAULT ''",
-  );
-  ensureColumn(
-    db,
-    "user_configs",
-    "custom_search_url",
-    "custom_search_url TEXT NOT NULL DEFAULT ''",
   );
   ensureColumn(
     db,
@@ -418,7 +423,6 @@ export function runMigrations(db: DatabaseSync): void {
           custom_footer TEXT NOT NULL DEFAULT '© 2026 Navelix. 保留所有权利。',
           language TEXT NOT NULL DEFAULT 'zh',
           theme TEXT NOT NULL DEFAULT 'light',
-          search_engine TEXT NOT NULL DEFAULT 'google',
           ai_base_url TEXT NOT NULL DEFAULT 'https://api.openai.com/v1',
           ai_api_key TEXT NOT NULL DEFAULT '',
           ai_model TEXT NOT NULL DEFAULT 'gpt-4o-mini',
@@ -443,10 +447,10 @@ export function runMigrations(db: DatabaseSync): void {
           security_setup_done INTEGER NOT NULL DEFAULT 0
         );
         INSERT OR IGNORE INTO user_configs_new (
-          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key, allow_public_access, allow_registration, security_setup_done
+          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key, allow_public_access, allow_registration, security_setup_done
         )
         SELECT
-          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key, allow_public_access, allow_registration, security_setup_done
+          user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval, social_github, social_x, social_linkedin, social_email, weather_enabled, weather_api_key, weather_location, weather_api_base_url, sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key, allow_public_access, allow_registration, security_setup_done
         FROM user_configs;
         DROP TABLE user_configs;
         ALTER TABLE user_configs_new RENAME TO user_configs;
@@ -523,7 +527,6 @@ export function runMigrations(db: DatabaseSync): void {
             max_width = '1200px',
             custom_footer = '© 2026 Navelix. 保留所有权利。',
             theme = 'system',
-            search_engine = 'google',
             ai_base_url = 'https://api.openai.com/v1',
             ai_model = 'gpt-4o-mini',
             site_title = 'Navelix · Personal Digital Hub',
@@ -625,6 +628,14 @@ export function runMigrations(db: DatabaseSync): void {
   if (user_version < 9) {
     db.prepare("DELETE FROM users WHERE username LIKE 'tokuser_%' OR username LIKE 'test-%' OR id LIKE 'user_token_test_%' OR id LIKE 'test-%'").run();
     db.exec("PRAGMA user_version = 9");
+  }
+
+  // ── v10：删除已废弃的外部搜索引擎配置列（首页搜索已改为仅系统内搜索）
+  if (user_version < 10) {
+    dropColumn(db, "user_configs", "search_engine");
+    dropColumn(db, "user_configs", "custom_search_name");
+    dropColumn(db, "user_configs", "custom_search_url");
+    db.exec("PRAGMA user_version = 10");
   }
 
   // 通知数据自动清理：保留 30 天内的操作记录，避免数据库无限制膨胀

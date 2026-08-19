@@ -110,7 +110,6 @@ db.exec(`
     custom_footer TEXT NOT NULL DEFAULT '© 2026 Navelix. 保留所有权利。',
     language TEXT NOT NULL DEFAULT 'zh',
     theme TEXT NOT NULL DEFAULT 'light',
-    search_engine TEXT NOT NULL DEFAULT 'google',
     ai_base_url TEXT NOT NULL DEFAULT 'https://api.openai.com/v1',
     ai_api_key TEXT NOT NULL DEFAULT '',
     ai_model TEXT NOT NULL DEFAULT 'gpt-4o-mini',

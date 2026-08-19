@@ -120,9 +120,6 @@ export function getUserData(userId: string): UserDataResult {
         maxWidth: (configRow.max_width as SystemConfig["maxWidth"]) || "1200px",
         customFooter: String(configRow.custom_footer || "© 2026 Navelix. 保留所有权利。"),
         theme: (configRow.theme as SystemConfig["theme"]) || "system",
-        searchEngine: (configRow.search_engine as SystemConfig["searchEngine"]) || "google",
-        customSearchName: String(configRow.custom_search_name || ""),
-        customSearchUrl: String(configRow.custom_search_url || ""),
         allowPublicAccess: configRow.allow_public_access === 1 || configRow.allow_public_access === true || configRow.allow_public_access === "1",
         allowRegistration: configRow.allow_registration === 1 || configRow.allow_registration === true || configRow.allow_registration === "1",
         securitySetupDone: configRow.security_setup_done === 1 || configRow.security_setup_done === true || configRow.security_setup_done === "1",
@@ -161,9 +158,6 @@ export function getUserData(userId: string): UserDataResult {
         maxWidth: "1200px",
         customFooter: "© 2026 Navelix. 保留所有权利。",
         theme: "system",
-        searchEngine: "google",
-        customSearchName: "",
-        customSearchUrl: "",
         allowPublicAccess: false,
         allowRegistration: false,
         securitySetupDone: false,
@@ -453,7 +447,6 @@ export function saveUserConfigs(
   const maxWidth = str("maxWidth", "max_width", "1200px");
   const customFooter = str("customFooter", "custom_footer", "© 2026 Navelix. 保留所有权利。");
   const theme = str("theme", "theme", "system");
-  const searchEngine = str("searchEngine", "search_engine", "google");
   const aiBaseUrl = str("aiBaseUrl", "ai_base_url", "https://api.openai.com/v1");
   const aiApiKey = secret("aiApiKey", "ai_api_key");
   const aiModel = str("aiModel", "ai_model", "gpt-4o-mini");
@@ -477,8 +470,6 @@ export function saveUserConfigs(
   const allowPublicAccess = bool("allowPublicAccess", "allow_public_access", 0);
   const allowRegistration = bool("allowRegistration", "allow_registration", 0);
   const securitySetupDone = bool("securitySetupDone", "security_setup_done", 0);
-  const customSearchName = str("customSearchName", "custom_search_name", "");
-  const customSearchUrl = str("customSearchUrl", "custom_search_url", "");
   const customHeadScripts = str("customHeadScripts", "custom_head_scripts", "");
   const customCss = str("customCss", "custom_css", "");
   const sensenovaEnabled = bool("sensenovaEnabled", "sensenova_enabled", 0);
@@ -509,16 +500,16 @@ export function saveUserConfigs(
   db.prepare(`
     INSERT OR REPLACE INTO user_configs (
       user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme,
-      search_engine, ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled,
+      ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled,
       link_status_interval, social_github, social_x, social_linkedin, social_email,
       weather_enabled, weather_api_key, weather_location, weather_api_base_url,
       link_open_target, wallpaper_mode, custom_wallpaper_url, glassmorphism,
       sidebar_default_state, clock_widget_mode, allow_public_access, allow_registration,
       security_setup_done,
-      custom_search_name, custom_search_url, custom_head_scripts, custom_css,
+      custom_head_scripts, custom_css,
       sensenova_enabled, sensenova_username, sensenova_password, sensenova_account_id, sensenova_token_key
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     userId,
     logoText,
@@ -527,7 +518,6 @@ export function saveUserConfigs(
     maxWidth,
     customFooter,
     theme,
-    searchEngine,
     aiBaseUrl,
     encryptedAiApiKey,
     aiModel,
@@ -551,8 +541,6 @@ export function saveUserConfigs(
     allowPublicAccess,
     allowRegistration,
     securitySetupDone,
-    customSearchName,
-    customSearchUrl,
     customHeadScripts,
     customCss,
     sensenovaEnabled,

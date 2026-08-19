@@ -44,9 +44,6 @@ describe("Full JSON Export & Import Verification", () => {
         logoText: "MyHub",
         logoImage: "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=",
         showSearchBar: true,
-        searchEngine: "custom",
-        customSearchName: "SearXNG 聚合搜索",
-        customSearchUrl: "https://search.myserver.com/search?q=%s",
         allowPublicAccess: false,
         allowRegistration: false,
         customHeadScripts: "<script src='https://analytics.example.com/tracker.js'></script>",
@@ -112,9 +109,6 @@ describe("Full JSON Export & Import Verification", () => {
         logoText: parsed.config.logo_text,
         logoImage: parsed.config.logo_image,
         showSearchBar: parsed.config.show_search_bar === 1,
-        searchEngine: parsed.config.search_engine,
-        customSearchName: parsed.config.custom_search_name,
-        customSearchUrl: parsed.config.custom_search_url,
         allowPublicAccess: parsed.config.allow_public_access === 1,
         allowRegistration: parsed.config.allow_registration === 1,
         customHeadScripts: parsed.config.custom_head_scripts,
@@ -145,9 +139,6 @@ describe("Full JSON Export & Import Verification", () => {
       const restoredConfig = db.prepare("SELECT * FROM user_configs WHERE user_id = ?").get(restoredUserId) as Record<string, unknown>;
       assert.equal(restoredConfig.site_title, "我的专属数字工作台");
       assert.equal(restoredConfig.logo_text, "MyHub");
-      assert.equal(restoredConfig.search_engine, "custom");
-      assert.equal(restoredConfig.custom_search_name, "SearXNG 聚合搜索");
-      assert.equal(restoredConfig.custom_search_url, "https://search.myserver.com/search?q=%s");
       assert.equal(restoredConfig.allow_public_access, 0);
       assert.equal(restoredConfig.allow_registration, 0);
       assert.equal(restoredConfig.custom_head_scripts, "<script src='https://analytics.example.com/tracker.js'></script>");

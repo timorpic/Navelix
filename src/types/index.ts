@@ -69,9 +69,6 @@ export interface SystemConfig {
   maxWidth: "1000px" | "1200px" | "1400px" | "full";
   customFooter: string;
   theme: "light" | "dark" | "system";
-  searchEngine: "google" | "baidu" | "bing" | "perplexity" | "custom";
-  customSearchName?: string;
-  customSearchUrl?: string; // 搜索模板，如 https://search.example.com/search?q=%s
 
   // 访问与安全控制策略
   allowPublicAccess?: boolean; // 是否允许未登录访客公开浏览主页（默认 false，保守安全）
