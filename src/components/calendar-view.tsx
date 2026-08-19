@@ -125,7 +125,7 @@ export default function CalendarView() {
       const res = await fetch("/api/todos/rollover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, today: todayStr }),
       });
       const data = await res.json();
       if (data.success) {

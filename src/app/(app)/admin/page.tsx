@@ -56,12 +56,13 @@ export default function AdminPage() {
 
   const [showAdminNotifications, setShowAdminNotifications] = useState(false);
   const [adminNotifications, setAdminNotifications] = useState<NotificationItem[]>([]);
+  const [adminUnreadCount, setAdminUnreadCount] = useState(0);
   const [showAdminUserMenu, setShowAdminUserMenu] = useState(false);
   const [showReset, setShowReset] = useState(false);
   const [notice, setNotice] = useState("");
   const adminNotifRef = useRef<HTMLDivElement>(null);
 
-  const adminUnread = adminNotifications.some((n) => !n.read);
+  const adminUnread = adminUnreadCount > 0;
 
   const flash = (msg: string) => {
     setNotice(msg);
@@ -83,9 +84,13 @@ export default function AdminPage() {
         if (Array.isArray(data.notifications)) {
           setAdminNotifications(data.notifications);
         }
+        if (Number.isInteger(data.unreadCount)) {
+          setAdminUnreadCount(data.unreadCount);
+        }
       } catch {}
       fetch("/api/notifications/read", { method: "POST" }).catch(() => {});
       setAdminNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      setAdminUnreadCount(0);
     }
   };
 
@@ -118,7 +123,10 @@ export default function AdminPage() {
       .catch(() => setCurrentUser(null));
     fetch("/api/notifications")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data && Array.isArray(data.notifications)) setAdminNotifications(data.notifications); })
+      .then((data) => {
+        if (data && Array.isArray(data.notifications)) setAdminNotifications(data.notifications);
+        if (data && Number.isInteger(data.unreadCount)) setAdminUnreadCount(data.unreadCount);
+      })
       .catch(() => {});
   }, []);
 
@@ -201,7 +209,7 @@ export default function AdminPage() {
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-100 dark:border-slate-700">
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-bold text-gray-900 dark:text-white">后台消息通知</span>
-                    {adminUnread && <span className="px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600 text-[10px] font-bold">{adminNotifications.filter((n) => !n.read).length}</span>}
+                    {adminUnread && <span className="px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600 text-[10px] font-bold">{adminUnreadCount > 99 ? "99+" : adminUnreadCount}</span>}
                   </div>
                   <div className="flex items-center gap-2">
                     {adminUnread && (

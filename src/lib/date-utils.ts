@@ -10,6 +10,24 @@ export function toLocalDateStr(d: Date = new Date()): string {
 }
 
 /**
+ * 按指定 IANA 时区格式化日期（服务器时区与用户时区不一致时兜底用，如 Asia/Shanghai）
+ */
+export function toZonedLocalDateStr(d: Date = new Date(), timeZone = "Asia/Shanghai"): string {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(d);
+    const get = (type: string) => parts.find((p) => p.type === type)?.value || "";
+    return `${get("year")}-${get("month")}-${get("day")}`;
+  } catch {
+    return toLocalDateStr(d);
+  }
+}
+
+/**
  * 按照本地日期加减天数并输出 YYYY-MM-DD
  */
 export function addDaysLocal(d: Date | string, days: number): string {

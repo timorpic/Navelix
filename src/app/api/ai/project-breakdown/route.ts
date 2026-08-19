@@ -88,6 +88,11 @@ export async function POST(req: Request) {
       .prepare("SELECT id, username, display_name AS displayName FROM users ORDER BY created_at ASC")
       .all() as Array<{ id: string; username: string; displayName: string }>;
 
+    // 服务端维护 展示名 → 真实用户 ID 映射；只把展示名发给大模型，避免泄露内部 ID
+    const memberById = new Map<string, string>(
+      members.map((m) => [String(m.displayName || m.username).toLowerCase(), m.id]),
+    );
+
     const currentUserName = user.displayName || user.username;
     const defaultAssignee = { id: user.id, name: currentUserName };
 
@@ -125,23 +130,22 @@ export async function POST(req: Request) {
       ? cleanBaseUrl
       : `${cleanBaseUrl}/chat/completions`;
 
-    const membersDesc = members.map((m) => `${m.displayName || m.username} (ID: ${m.id})`).join("、");
+    const membersDesc = members.map((m) => m.displayName || m.username).join("、");
 
     const systemPrompt = `你是一位顶级的敏捷项目管理专家和系统架构师。
 任务：请将用户提出的数字化项目拆分为 3 到 5 个递进、具体的行动里程碑任务，并为任务指派合适的团队成员。
 当前排期基准日期是：${startDate}。
-当前协同团队可选成员列表：${membersDesc || `${currentUserName} (ID: ${user.id})`}。
+当前协同团队可选成员名称列表：${membersDesc || currentUserName}。
 
 每个任务必须包含：
 1. title: 任务名称（具体、明确、可执行，不超过20字）
 2. priority: 优先级，必须从 "high"、"medium"、"low" 中选择
 3. dueDate: 截止日期，必须为 YYYY-MM-DD 格式。请根据任务实际工作量和阶段难度合理预估工期（如前期准备 1~2 天，核心攻坚开发 3~6 天，系统联调测试 2~4 天，上线发布 1~2 天），不要机械地固定按每2天递增，要符合真实的工程交付节奏。
-4. assigneeId: 推荐指派的成员 ID（必须从可选成员列表中的 ID 选择，若不确定则使用 "${user.id}"）
-5. assigneeName: 推荐指派的成员名称（如 "${currentUserName}"）
+4. assigneeName: 推荐指派的成员名称（必须从上方的成员名称列表中精确选择一个；若没有合适的人选则返回空字符串 ""）
 
 输出格式约束：
 你必须【只】返回一个合法的 JSON 对象，不要包含 markdown 格式标记、不要输出 \`\`\`json 等代码块，直接返回纯 JSON：
-{"tasks":[{"title":"任务1","priority":"high","dueDate":"${startDate}","assigneeId":"${user.id}","assigneeName":"${currentUserName}"}]}`;
+{"tasks":[{"title":"任务1","priority":"high","dueDate":"${startDate}","assigneeName":"${currentUserName}"}]}`;
 
     const userPrompt = `项目名称：${projectName}${projectDescription ? `\n项目说明与目标：${projectDescription}` : ""}`;
 
@@ -192,13 +196,32 @@ export async function POST(req: Request) {
 
       const parsed = JSON.parse(cleaned);
       if (Array.isArray(parsed?.tasks) && parsed.tasks.length > 0) {
-        const validatedTasks: BreakdownTask[] = parsed.tasks.map((t: { title?: string; priority?: string; dueDate?: string; assigneeId?: string; assigneeName?: string }, idx: number) => ({
-          title: String(t.title || `阶段任务 ${idx + 1}`).trim(),
-          priority: t.priority === "high" || t.priority === "low" ? t.priority : "medium",
-          dueDate: t.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(t.dueDate) ? t.dueDate : addDaysLocal(startDate, (idx + 1) * 3),
-          assigneeId: t.assigneeId ? String(t.assigneeId).trim() : defaultAssignee.id,
-          assigneeName: t.assigneeName ? String(t.assigneeName).trim() : defaultAssignee.name,
-        }));
+        const validatedTasks: BreakdownTask[] = parsed.tasks.map((t: { title?: string; priority?: string; dueDate?: string; assigneeName?: string }, idx: number) => {
+          const suggestedName = String(t.assigneeName || "").trim();
+          let assigneeId = "";
+          let assigneeName = "";
+          if (suggestedName) {
+            const matchedId = memberById.get(suggestedName.toLowerCase());
+            if (matchedId) {
+              assigneeId = matchedId;
+              assigneeName = suggestedName;
+            } else {
+              // 大模型返回的名称不在成员列表中：仅保留名称，不带入他人 ID
+              assigneeId = user.id;
+              assigneeName = suggestedName;
+            }
+          } else {
+            assigneeId = defaultAssignee.id;
+            assigneeName = defaultAssignee.name;
+          }
+          return {
+            title: String(t.title || `阶段任务 ${idx + 1}`).trim(),
+            priority: t.priority === "high" || t.priority === "low" ? t.priority : "medium",
+            dueDate: t.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(t.dueDate) ? t.dueDate : addDaysLocal(startDate, (idx + 1) * 3),
+            assigneeId,
+            assigneeName,
+          };
+        });
 
         return NextResponse.json({
           success: true,

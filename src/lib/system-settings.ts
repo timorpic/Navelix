@@ -1,4 +1,5 @@
 import { db } from "./db.ts";
+import { decryptSecret, encryptSecret } from "./secret.ts";
 
 /**
  * 全局系统设置（key-value，存数据库）。
@@ -24,11 +25,14 @@ export function setSystemSetting(key: string, value: string): void {
   `).run(key, String(value), Date.now());
 }
 
-/** 反重力 OAuth client secret（管理员后台配置，存数据库） */
+/** 反重力 OAuth client secret（管理员后台配置，AES-256-GCM 加密落库） */
 export function getAntigravityClientSecret(): string {
-  return getSystemSetting(SYSTEM_SETTING_KEYS.antigravityClientSecret);
+  const raw = getSystemSetting(SYSTEM_SETTING_KEYS.antigravityClientSecret);
+  if (!raw) return "";
+  return decryptSecret(raw);
 }
 
 export function setAntigravityClientSecret(secret: string): void {
-  setSystemSetting(SYSTEM_SETTING_KEYS.antigravityClientSecret, secret.trim());
+  const enc = encryptSecret(secret.trim());
+  setSystemSetting(SYSTEM_SETTING_KEYS.antigravityClientSecret, enc);
 }

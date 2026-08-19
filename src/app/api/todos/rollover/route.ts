@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
-import { toLocalDateStr, addDaysLocal } from "@/lib/date-utils";
+import { addDaysLocal, toZonedLocalDateStr } from "@/lib/date-utils";
 
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
@@ -12,7 +12,10 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const action = body.action === "week" ? "week" : "today";
-    const todayStr = toLocalDateStr();
+    // 优先采用客户端浏览器计算好的本地日期，兜底按 Asia/Shanghai 取时区安全值
+    const todayStr = /^\d{4}-\d{2}-\d{2}$/.test(String(body.today || ""))
+      ? String(body.today)
+      : toZonedLocalDateStr(new Date(), "Asia/Shanghai");
 
     // 查询所有过期且未完成的待办事项 (due_date < todayStr AND due_date != '' AND done = 0)
     const overdueTodos = db

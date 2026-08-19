@@ -106,6 +106,46 @@ export function isCloudMetadataIP(ip: string): boolean {
 /**
  * 校验任意 IP（IPv4 或 IPv6）是否为受限的内部/保留 IP
  */
+/**
+ * 回环地址与链路本地一律恒定拦截：
+ * 回环可探针宿主机本机服务（如反代端口、容器管理面），
+ * 链路本地 169.254/16 含云元数据凭据窃取面。
+ * 无论是否开启 allowPrivateIPs 都执行此检查。
+ */
+export function isLoopbackOrLinkLocalIP(ip: string): boolean {
+  if (net.isIPv4(ip)) {
+    const p0 = parseInt(ip.split(".")[0], 10);
+    return p0 === 127 || p0 === 169;
+  }
+  if (net.isIPv6(ip)) {
+    const lower = ip.toLowerCase();
+    if (
+      lower === "::1" ||
+      lower === "0:0:0:0:0:0:0:1" ||
+      lower.startsWith("fe80") ||
+      lower.startsWith("fe9") ||
+      lower.startsWith("fea") ||
+      lower.startsWith("feb")
+    ) {
+      return true;
+    }
+    if (lower.startsWith("::ffff:")) {
+      const v4Part = lower.slice(7);
+      if (net.isIPv4(v4Part)) return isLoopbackOrLinkLocalIP(v4Part);
+      const hexParts = v4Part.split(":");
+      if (hexParts.length === 2) {
+        const p1 = parseInt(hexParts[0], 16);
+        const p2 = parseInt(hexParts[1], 16);
+        if (!isNaN(p1) && !isNaN(p2)) {
+          const ipv4Str = `${(p1 >> 8) & 0xff}.${p1 & 0xff}.${(p2 >> 8) & 0xff}.${p2 & 0xff}`;
+          return isLoopbackOrLinkLocalIP(ipv4Str);
+        }
+      }
+    }
+  }
+  return false;
+}
+
 export function isPrivateOrReservedIP(ip: string): boolean {
   if (net.isIPv4(ip)) return isPrivateIPv4(ip);
   if (net.isIPv6(ip)) return isPrivateIPv6(ip);
@@ -125,10 +165,18 @@ export async function validateHostIPs(hostname: string, options: ValidateHostOpt
   const cleanHost = hostname.trim().toLowerCase();
 
   // 1. 如果配置了允许内网 IP（导航站抓取内网 NAS/路由器/开发服务）
-  if (allowPrivateIPs) {
-    // 始终严格禁止 Cloud Metadata IP (169.254.169.254) 凭证窃取攻击
-    if (net.isIP(cleanHost) && isCloudMetadataIP(cleanHost)) {
-      throw new Error(`SSRF_BLOCKED: Cloud metadata IP '${cleanHost}' is forbidden`);
+if (allowPrivateIPs) {
+    // 绝对封禁：回环地址与链路本地（含云元数据）——不论内网模式是否开启
+    if (
+      cleanHost === "localhost" ||
+      cleanHost.endsWith(".localhost") ||
+      cleanHost.endsWith(".local") ||
+      cleanHost.endsWith(".internal")
+    ) {
+      throw new Error(`SSRF_BLOCKED: Host '${hostname}' is an internal domain name`);
+    }
+    if (net.isIP(cleanHost) && isLoopbackOrLinkLocalIP(cleanHost)) {
+      throw new Error(`SSRF_BLOCKED: IP '${cleanHost}' is loopback/link-local and forbidden`);
     }
 
     if (net.isIP(cleanHost)) {
@@ -147,8 +195,8 @@ export async function validateHostIPs(hostname: string, options: ValidateHostOpt
     }
 
     for (const { address } of addresses) {
-      if (isCloudMetadataIP(address)) {
-        throw new Error(`SSRF_BLOCKED: Hostname '${hostname}' resolved to cloud metadata IP '${address}'`);
+      if (isLoopbackOrLinkLocalIP(address)) {
+        throw new Error(`SSRF_BLOCKED: Hostname '${hostname}' resolved to loopback/link-local IP '${address}'`);
       }
     }
     return addresses.map((a) => a.address);

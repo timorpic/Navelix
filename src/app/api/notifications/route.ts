@@ -40,7 +40,14 @@ export async function GET(req: NextRequest) {
     )
     .all(user.id) as unknown as NotificationRow[];
 
-  return NextResponse.json({ notifications: rows.map(toNotification) });
+  const unreadRow = db
+    .prepare("SELECT COUNT(*) AS c FROM notifications WHERE user_id = ? AND read = 0")
+    .get(user.id) as { c: number };
+
+  return NextResponse.json({
+    notifications: rows.map(toNotification),
+    unreadCount: unreadRow.c,
+  });
 }
 
 // POST /api/notifications - 记录一条当前用户的操作通知，携带声明来源（source / tag）
