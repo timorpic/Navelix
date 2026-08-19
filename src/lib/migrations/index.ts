@@ -332,7 +332,14 @@ export function runMigrations(db: DatabaseSync): void {
     `).run("admin-001", "admin", hashPassword(seedPassword), "Navelix Admin", "admin", "", Date.now());
 
     if (!process.env.NAVELIX_ADMIN_PASSWORD) {
-      persistAdminPassword(seedPassword);
+      // 并发场景下确认最终落库的确实是本次生成的密码后再写提示文件，
+      // 避免多 worker 各自生成不同密码导致文件与库不一致
+      const after = db
+        .prepare("SELECT password_hash FROM users WHERE username = 'admin'")
+        .get() as { password_hash: string } | undefined;
+      if (after && verifyPassword(seedPassword, after.password_hash)) {
+        persistAdminPassword(seedPassword);
+      }
     }
   }
 
