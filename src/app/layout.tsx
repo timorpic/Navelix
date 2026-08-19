@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { cookies } from "next/headers";
+import { PWARegister } from "@/components/pwa-register";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,10 +14,17 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "Navelix · Personal Digital Hub",
   description: "Your personal digital operating system - navigation, tools, and projects in one workspace.",
+  manifest: "/manifest.webmanifest",
+  themeColor: "#00C776",
   icons: {
     icon: "/icon.svg",
     shortcut: "/icon.svg",
     apple: "/icon.svg",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Navelix",
+    statusBarStyle: "default",
   },
 };
 
@@ -39,9 +47,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           id="theme-init"
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
         />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#00C776" />
       </head>
       <body className="min-h-full flex flex-col">
         {children}
+        <PWARegister />
       </body>
     </html>
   );

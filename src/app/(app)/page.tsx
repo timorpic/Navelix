@@ -14,13 +14,14 @@ import GlobalSearchResults from "@/components/global-search-results";
 import CalendarView from "@/components/calendar-view";
 import ProjectsView from "@/components/projects-view";
 import DashboardView from "@/components/dashboard-view";
+import { QuickCaptureLayer } from "@/components/quick-capture-layer";
 import { useNavelixData } from "@/hooks/use-navelix-data";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useLinkStatus } from "@/hooks/use-link-status";
 import SecuritySetupBanner from "@/components/security-setup-banner";
 
 function HomeContent() {
-  const { categories, links, hydrated } = useNavelixData();
+  const { categories, links, hydrated, addLink } = useNavelixData();
   const { config, updateConfig } = useNavelixConfig();
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get("tab") || searchParams.get("category");
@@ -293,6 +294,9 @@ function HomeContent() {
           dangerouslySetInnerHTML={{ __html: config.customHeadScripts }}
         />
       )}
+
+      {/* PWA 快速采集层（?action=quick-add-bookmark 等） */}
+      <QuickCaptureLayer categories={categories} onAdd={addLink} />
     </div>
   );
 }
