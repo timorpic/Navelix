@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { Project, TodoItem } from "@/types";
 
 const STATUS_OPTIONS = [

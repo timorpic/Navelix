@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 
 interface QuotaWindowBar {

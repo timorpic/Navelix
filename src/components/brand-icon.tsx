@@ -1,7 +1,5 @@
 "use client";
 
-import React from "react";
-
 interface BrandIconProps {
   name: string;
   className?: string;

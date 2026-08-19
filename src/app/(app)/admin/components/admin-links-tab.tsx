@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import BrandIcon from "@/components/brand-icon";
 import AddCategoryModal from "@/components/add-category-modal";
 import AddLinkModal from "@/components/add-link-modal";

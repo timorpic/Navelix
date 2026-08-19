@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
 import { toLocalDateStr } from "@/lib/date-utils";
 import { useFocusTracker } from "@/hooks/use-focus-tracker";

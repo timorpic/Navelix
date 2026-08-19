@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Modal from "@/components/modal";
 import ConfirmDialog from "@/components/confirm-dialog";
 import { pushNotification } from "@/lib/notifications";
