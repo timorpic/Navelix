@@ -291,15 +291,9 @@ export default function AdminProTab() {
                   ✨ 已激活 · {licenseStatus.payload?.plan === "pro_lifetime" ? "终身买断" : "高级订阅"}
                 </span>
               ) : licenseStatus.isDockerBuild ? (
-                licenseStatus.isEE ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-400/30">
-                    免费版 (可激活 Pro)
-                  </span>
-                ) : (
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-100 dark:bg-sky-400/20 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-400/30">
-                    开源社区版 (CE)
-                  </span>
-                )
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-400/30">
+                  免费版 (可激活 Pro)
+                </span>
               ) : licenseStatus.isEE ? (
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-400/20 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-400/30">
                   开发版 (已挂载 EE 驱动)
