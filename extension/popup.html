@@ -8,13 +8,14 @@
       /* ── Design Tokens：与 Navelix 主站 globals.css 深浅色配色一致 ── */
       :root {
         color-scheme: light dark;
-        --bg: #f6f8fa;
+        --bg: #ffffff;
         --surface: #ffffff;
-        --surface-hover: #f1f5f9;
-        --border: #e5e7eb;
-        --border-strong: #d1d5db;
-        --text: #111827;
-        --muted: #6b7280;
+        --surface-hover: #f8fafc;
+        --input-bg: #f8fafc;
+        --border: #e2e8f0;
+        --border-strong: #cbd5e1;
+        --text: #0f172a;
+        --muted: #64748b;
         --faint: #94a3b8;
         --accent: #00c776;
         --accent-strong: #009a5a;
@@ -32,20 +33,21 @@
         --info: #2563eb;
         --info-bg: #eff6ff;
         --info-border: #bfdbfe;
-        --toast-bg: rgba(255, 255, 255, 0.9);
-        --shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+        --toast-bg: rgba(255, 255, 255, 0.95);
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
       }
       @media (prefers-color-scheme: dark) {
         :root {
           color-scheme: dark;
-          --bg: #151218;
-          --surface: #1c1920;
-          --surface-hover: #2a2530;
-          --border: #2a2530;
-          --border-strong: #3a3442;
-          --text: #ffffff;
-          --muted: #8b8792;
-          --faint: #6d6b75;
+          --bg: #12141a;
+          --surface: #12141a;
+          --surface-hover: #181b22;
+          --input-bg: #181b22;
+          --border: #252833;
+          --border-strong: #323644;
+          --text: #f8fafc;
+          --muted: #94a3b8;
+          --faint: #64748b;
           --accent: #00c776;
           --accent-strong: #00b368;
           --accent-soft: rgba(0, 199, 118, 0.14);
@@ -62,8 +64,8 @@
           --info: #60a5fa;
           --info-bg: rgba(59, 130, 246, 0.12);
           --info-border: rgba(59, 130, 246, 0.3);
-          --toast-bg: rgba(23, 25, 28, 0.92);
-          --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+          --toast-bg: rgba(18, 20, 26, 0.95);
+          --shadow: none;
         }
       }
 
@@ -84,45 +86,63 @@
       button { font-family: inherit; }
 
       /* ── Header ── */
-      .hdr { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 10px; }
-      .hdr-l { display: flex; align-items: center; gap: 8px; }
-      .hdr .logo { width: 26px; height: 26px; border-radius: 7px; }
-      .hdr .brand { display: flex; flex-direction: column; line-height: 1.15; }
-      .hdr .b1 { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
-      .hdr .b2 { font-size: 11px; color: var(--muted); }
+      .hdr { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 16px; }
+      .hdr-l { display: flex; align-items: center; }
+      .brand-logo { height: 52px; width: auto; max-width: 220px; display: block; object-fit: contain; }
+      .logo-dark { display: none; }
+      .logo-light { display: block; }
+      @media (prefers-color-scheme: dark) {
+        .logo-dark { display: block; }
+        .logo-light { display: none; }
+      }
       .hdr-r { display: flex; align-items: center; gap: 8px; }
       .ver { font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
-      .icon-btn {
-        width: 26px; height: 26px; border: none; background: none; border-radius: 7px;
-        color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-        transition: background 0.15s ease-out, color 0.15s ease-out;
-      }
-      .icon-btn:hover { background: var(--surface-hover); color: var(--text); }
 
       /* ── Segmented Navigation ── */
-      .seg { display: flex; padding: 0 14px; gap: 2px; }
+      .seg {
+        display: flex;
+        margin: 4px 16px 16px;
+        padding: 3px;
+        background: var(--input-bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        gap: 4px;
+      }
       .seg-item {
-        position: relative; flex: 1; height: 36px; border: none; background: none; cursor: pointer;
-        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-        font-size: 13px; font-weight: 500; color: var(--muted); border-radius: 8px;
+        position: relative;
+        flex: 1;
+        height: 32px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--muted);
+        border-radius: 7px;
         transition: color 0.15s ease-out, background 0.15s ease-out;
       }
-      .seg-item:hover { background: var(--accent-soft); color: var(--text); }
-      .seg-item.active { color: var(--accent); font-weight: 600; background: var(--accent-soft); }
-      .seg-item.active::after {
-        content: ""; position: absolute; left: 24px; right: 24px; bottom: -1px; height: 2px;
-        background: var(--accent); border-radius: 2px;
+      .seg-item:hover {
+        background: var(--surface-hover);
+        color: var(--text);
       }
-      .seg-divider { height: 1px; background: var(--border); margin: 4px 0 4px; }
+      .seg-item.active {
+        color: var(--accent);
+        font-weight: 600;
+        background: var(--accent-soft);
+      }
 
       /* ── Views ── */
-      .view { padding: 10px 14px 14px; display: none; }
+      .view { padding: 0 16px 16px; display: none; }
       .view.active { display: block; }
 
       [hidden] { display: none !important; }
 
       /* ── Card ── */
-      .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; box-shadow: var(--shadow); }
+      .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); }
 
       /* ── Alert（未配置/提示） ── */
       .alert { display: flex; gap: 9px; align-items: flex-start; border-radius: 9px; padding: 9px 11px; font-size: 12px; line-height: 1.45; }
@@ -131,16 +151,16 @@
       .alert span { color: var(--muted); }
       .alert.warn { background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn); }
       .alert.warn span { color: var(--warn); opacity: 0.85; }
-      .alert:not([hidden]) { margin-bottom: 12px; }
+      .alert:not([hidden]) { margin-bottom: 14px; }
 
       /* ── Form Field ── */
-      .field { margin-bottom: 12px; }
-      .field > label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+      .field { margin-bottom: 14px; }
+      .field > label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 7px; }
       .input-card { position: relative; display: flex; align-items: center; }
       .input-card .ic-left { position: absolute; left: 10px; color: var(--faint); pointer-events: none; }
       .input-card input, .input-card select {
         width: 100%; height: 38px; border: 1px solid var(--border); border-radius: 9px;
-        background: var(--surface); color: var(--text); font-size: 13px;
+        background: var(--input-bg); color: var(--text); font-size: 13px;
         padding: 0 34px 0 34px; transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out, background 0.15s ease-out;
         appearance: none; -webkit-appearance: none; font-family: inherit;
       }
@@ -209,11 +229,8 @@
     <!-- Header -->
     <header class="hdr">
       <div class="hdr-l">
-        <img class="logo" src="icons/icon-32.png" alt="Navelix" />
-        <div class="brand">
-          <span class="b1">Navelix</span>
-          <span class="b2">收藏助手</span>
-        </div>
+        <img class="brand-logo logo-light" src="icons/navelix-logo.svg" alt="Navelix" />
+        <img class="brand-logo logo-dark" src="icons/navelix-logo-dark.svg" alt="Navelix" />
       </div>
       <div class="hdr-r">
         <span class="ver">v1.0.0</span>
@@ -231,7 +248,6 @@
         <span>设置</span>
       </button>
     </nav>
-    <div class="seg-divider"></div>
 
     <main>
       <!-- 收藏视图 -->
@@ -258,7 +274,7 @@
             </div>
           </div>
 
-          <div class="field" style="margin-bottom:4px">
+          <div class="field" style="margin-bottom:16px">
             <label>分类</label>
             <div class="input-card select">
               <svg class="ic ic-left"><use href="#i-folder" /></svg>
@@ -287,7 +303,7 @@
             </div>
           </div>
 
-          <div class="field" style="margin-bottom:4px">
+          <div class="field" style="margin-bottom:16px">
             <label>API 令牌</label>
             <div class="input-card">
               <svg class="ic ic-left"><use href="#i-lock" /></svg>
@@ -299,11 +315,11 @@
           </div>
 
           <div class="btn-row">
-            <button id="saveCfgBtn" class="btn btn-primary" style="margin-top:12px">
+            <button id="saveCfgBtn" class="btn btn-primary">
               <svg class="ic" id="saveCfgIcon" data-loading="i-spinner"><use href="#i-check" /></svg>
               <span id="saveCfgLabel">保存配置</span>
             </button>
-            <button id="testCfgBtn" class="btn btn-ghost" style="margin-top:12px">
+            <button id="testCfgBtn" class="btn btn-ghost">
               <svg class="ic" id="testCfgIcon" data-loading="i-spinner"><use href="#i-plug" /></svg>
               <span id="testCfgLabel">测试连接</span>
             </button>
