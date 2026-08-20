@@ -5,6 +5,7 @@ export async function register() {
     try {
       const path = await import("node:path");
       const fs = await import("node:fs");
+      const eeJscRelative = "./ee/dist/bundle.jsc";
       const eeJscPath = path.resolve(process.cwd(), "ee", "dist", "bundle.jsc");
 
       if (fs.existsSync(eeJscPath)) {
@@ -13,7 +14,7 @@ export async function register() {
         if (moduleMod?.createRequire) {
           const req = moduleMod.createRequire(path.resolve(process.cwd(), "package.json"));
           req("bytenode");
-          req(eeJscPath);
+          req(eeJscRelative);
           console.log("[Navelix EE] 已挂载 EE 商业驱动字节码制品 (ee/dist/bundle.jsc)");
         }
       }
