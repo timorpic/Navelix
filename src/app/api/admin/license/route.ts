@@ -7,6 +7,7 @@ import {
   verifyLicenseKey,
 } from "@/lib/license";
 import { getMachineFingerprint } from "@/lib/fingerprint";
+import { getBuildInfo } from "@/lib/build-info";
 
 export async function GET() {
   const user = await getSessionUser();
@@ -16,7 +17,12 @@ export async function GET() {
 
   const status = getLicenseStatus();
   const machineFingerprint = getMachineFingerprint();
-  return NextResponse.json({ ...status, machineFingerprint });
+  const buildInfo = getBuildInfo();
+  return NextResponse.json({
+    ...status,
+    machineFingerprint,
+    isDockerBuild: buildInfo.isDockerBuild,
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -47,11 +53,14 @@ export async function POST(req: NextRequest) {
 
   saveLicenseKey(key);
 
+  const status = getLicenseStatus();
+  const buildInfo = getBuildInfo();
+
   return NextResponse.json({
     success: true,
-    isPro: true,
-    payload: verifyRes.payload,
+    ...status,
     machineFingerprint: getMachineFingerprint(),
+    isDockerBuild: buildInfo.isDockerBuild,
   });
 }
 
