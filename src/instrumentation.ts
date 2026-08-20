@@ -4,12 +4,13 @@ export async function register() {
     try {
       const path = await import("node:path");
       const fs = await import("node:fs");
+      const { createRequire } = await import("node:module");
       const eeJscPath = path.resolve(process.cwd(), "ee", "dist", "bundle.jsc");
 
       if (fs.existsSync(eeJscPath)) {
-        const dynamicRequire = new Function("m", "return require(m)");
-        dynamicRequire("bytenode");
-        dynamicRequire(eeJscPath);
+        const req = createRequire(import.meta.url);
+        req("bytenode");
+        req(eeJscPath);
         console.log("[Navelix EE] 已挂载 EE 商业驱动字节码制品 (ee/dist/bundle.jsc)");
       }
     } catch (err) {
