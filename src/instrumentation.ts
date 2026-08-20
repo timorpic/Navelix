@@ -17,6 +17,8 @@ export async function register() {
           req(eeJscRelative);
           console.log("[Navelix EE] 已挂载 EE 商业驱动字节码制品 (ee/dist/bundle.jsc)");
         }
+      } else {
+        console.log("[Navelix EE] 未检测到 EE 商业驱动，当前以开源社区版 (CE) 运行");
       }
     } catch (err) {
       console.warn("[Navelix EE] 未挂载 EE 驱动，已作为开源社区版 (CE) 运行:", err);
