@@ -27,8 +27,33 @@ COPY . .
 RUN mkdir -p public ee && \
     node -e "const fs=require('fs'); fs.writeFileSync('public/build-info.json', JSON.stringify({ version: '$NAVELIX_VERSION', sourceSha: '$SOURCE_SHA', buildDate: '$BUILD_DATE' }));"
 
-# 编译商业 EE 驱动为 V8 字节码并物理销毁全部 .ts 源码明文（仅打包 .jsc 二进制制品）
-RUN if [ -f "ee/compile.mjs" ]; then PURGE_EE_TS=true node ee/compile.mjs; fi
+# 编译商业 EE 驱动为 V8 字节码并物理销毁全部 .ts 源码明文（仅打包 .jsc 二进制制品，无外部编译脚本依赖）
+RUN if [ -f "ee/index.ts" ]; then \
+      node -e " \
+        const esbuild = require('esbuild'); \
+        const bytenode = require('bytenode'); \
+        const fs = require('node:fs'); \
+        const path = require('node:path'); \
+        fs.mkdirSync('ee/dist', { recursive: true }); \
+        esbuild.buildSync({ \
+          entryPoints: ['ee/index.ts'], \
+          bundle: true, \
+          platform: 'node', \
+          format: 'cjs', \
+          target: 'node22', \
+          outfile: 'ee/dist/bundle.cjs', \
+          minify: true, \
+          treeShaking: true, \
+          external: ['node:*', 'node:crypto', 'node:fs', 'node:path', 'node:sqlite', 'node:buffer', 'bytenode'] \
+        }); \
+        bytenode.compileFile({ filename: 'ee/dist/bundle.cjs', output: 'ee/dist/bundle.jsc', compileAsModule: true }); \
+        if (fs.existsSync('ee/dist/bundle.cjs')) fs.unlinkSync('ee/dist/bundle.cjs'); \
+        const loader = '\"use strict\";\nconst fs=require(\"node:fs\");\nconst path=require(\"node:path\");\nconst dyn=new Function(\"m\",\"return require(m)\");\nconst jsc=path.join(__dirname,\"dist\",\"bundle.jsc\");\nif(fs.existsSync(jsc)){dyn(\"bytenode\");dyn(jsc);}'; \
+        fs.writeFileSync('ee/index.cjs', loader, 'utf8'); \
+        fs.writeFileSync('ee/index.js', loader, 'utf8'); \
+      "; \
+    fi && \
+    find ee -name "*.ts" -delete 2>/dev/null || true
 
 ENV NODE_ENV=production
 RUN corepack enable && pnpm build
