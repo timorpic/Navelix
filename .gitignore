@@ -1,0 +1,53 @@
+# ── Dependencies ──
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ── Testing & Coverage ──
+/coverage
+
+# ── Next.js Build ──
+/.next/
+/out/
+/build
+
+# ── Local SQLite Data & Passwords ──
+/data/
+*.db
+*.db-shm
+*.db-wal
+
+# ── Environment & Secrets ──
+.env
+.env*.local
+
+# ── Logs & Debugging ──
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# ── TypeScript & OS ──
+.DS_Store
+*.pem
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
+# ── Private Commercial & Licensing Tools ──
+/ee/
+*.pem
+*.key
+.license_private_key.pem
+
+# -- hermes --
+IDEA.md
+/temp/
+.agents/
+AGENTS.md

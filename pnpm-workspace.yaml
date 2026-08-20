@@ -1,0 +1,4 @@
+# ── PNPM Workspace Configuration ──
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true

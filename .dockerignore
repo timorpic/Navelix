@@ -1,0 +1,49 @@
+# ── Dependencies ──
+node_modules
+.pnpm-store
+.pnpm-store-tmp
+
+# ── Next.js Build Output ──
+.next
+out
+build
+tsconfig.tsbuildinfo
+
+# ── Runtime Data (SQLite database, admin password) ──
+data
+*.db
+*.db-shm
+*.db-wal
+
+# ── Environment & Secrets ──
+.env
+.env*.local
+.env*.development
+.env*.production
+
+# ── Git Repository ──
+.git
+.gitignore
+
+# ── Documentation & Metadata ──
+*.md
+AGENTS.md
+CLAUDE.md
+DOCKER.md
+review-report.md
+review-report-v2.md
+delivery-summary.md
+
+# ── Private Commercial & Licensing Tools ──
+*.pem
+*.key
+.license_private_key.pem
+
+# ── Logs & Temp ──
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.workbuddy
+.gemini

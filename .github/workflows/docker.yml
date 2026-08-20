@@ -1,0 +1,293 @@
+name: Build and Validate Docker Image
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      HAS_EE_BUNDLE: ${{ secrets.EE_COMMERCIAL_BUNDLE != '' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 版本一致性强制闸门：Release tag 必须与 package.json version 完全一致（v 前缀除外），
+      # 否则直接构建失败，从代码层面杜绝「忘记同步 package.json / Dockerfile」。
+      # 唯一版本真源：package.json；Dockerfile 的 NAVELIX_VERSION 仅作为 CI 未注入时的 fallback。
+      - name: Validate version consistency (release tag == package.json)
+        if: ${{ github.event.release != null && github.event.release.tag_name != '' }}
+        run: |
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          EXPECTED="${RELEASE_TAG#v}"
+          echo "Release tag        : ${RELEASE_TAG}"
+          echo "package.json version: ${PKG_VERSION}"
+          if [ "$EXPECTED" != "$PKG_VERSION" ]; then
+            echo "❌ 版本不一致: Release tag (${EXPECTED}) != package.json version (${PKG_VERSION})"
+            echo "   请先执行: node scripts/sync-version.mjs ${EXPECTED}"
+            echo "   并重新提交后再发布 Release。"
+            exit 1
+          fi
+          echo "✅ Release 版本与 package.json 一致 (v${PKG_VERSION})"
+
+      - name: Restore EE commercial drivers from secret (Official Pro Release)
+        if: ${{ env.HAS_EE_BUNDLE == 'true' }}
+        env:
+          EE_BUNDLE: ${{ secrets.EE_COMMERCIAL_BUNDLE }}
+        run: |
+          echo "$EE_BUNDLE" | base64 -d | tar -xzf -
+          echo "✅ Official EE commercial module restored for Pro image build."
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub (Optional)
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+
+      - name: Lowercase repository name
+        id: repo_name
+        run: |
+          echo "repo=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ steps.repo_name.outputs.repo }}
+            ${{ env.DOCKERHUB_USERNAME != '' && format('docker.io/{0}/navelix', env.DOCKERHUB_USERNAME) || '' }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ github.event.release.tag_name || github.ref_name }}
+            type=sha,prefix=sha-
+            type=semver,pattern={{version}}
+
+      - name: Get build metadata
+        id: date
+        run: |
+          echo "build_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          SHORT_SHA="${{ github.sha }}"
+          SHORT_SHA="${SHORT_SHA:0:7}"
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          if [ -n "$RELEASE_TAG" ]; then
+            echo "version=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "version=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          no-cache: true
+          provenance: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            SOURCE_SHA=${{ github.sha }}
+            BUILD_DATE=${{ steps.date.outputs.build_date }}
+            NAVELIX_VERSION=${{ steps.date.outputs.version }}
+
+      - name: Update Docker Hub Description
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+          repository: ${{ env.DOCKERHUB_USERNAME }}/navelix
+          short-description: "Navelix · Personal Digital Hub - 零依赖本地私有部署个人数字工作空间"
+          readme-filepath: ./DOCKER.md
+
+  smoke-test:
+    name: Smoke Test Image
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run container and verify health & features
+        run: |
+          IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          SHORT_SHA="${{ github.sha }}"
+          IMAGE_TAG="${IMAGE_NAME}:sha-${SHORT_SHA:0:7}"
+
+          echo "Pulling image ${IMAGE_TAG}..."
+          docker pull "${IMAGE_TAG}"
+
+          echo "Starting container on port 3721..."
+          CONTAINER_ID=$(docker run -d --name smoke-test-app \
+            -e PORT=3721 \
+            -p 3721:3721 \
+            -e NAVELIX_ADMIN_PASSWORD=ci-test-password \
+            "${IMAGE_TAG}")
+
+          echo "Polling http://localhost:3721/login..."
+          READY=false
+          for i in {1..30}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3721/login || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "Server is ready! GET /login returned HTTP 200."
+              READY=true
+              break
+            fi
+            echo "Attempt $i/30: GET /login returned HTTP '$STATUS', retrying..."
+            sleep 2
+          done
+
+          if [ "$READY" != "true" ]; then
+            echo "Error: Server failed to respond with HTTP 200 on /login."
+            docker logs smoke-test-app
+            exit 1
+          fi
+
+          echo "Testing authentication with POST /api/auth/login..."
+          curl -s -c /tmp/navelix-cookies.txt -X POST http://localhost:3721/api/auth/login \
+            -H "Content-Type: application/json" \
+            -H "Origin: http://localhost:3721" \
+            -d '{"username":"admin","password":"ci-test-password"}' > /tmp/login-result.json
+          LOGIN_STATUS=$(cat /tmp/login-result.json | python3 -c "import sys,json; print('200' if json.load(sys.stdin).get('user',{}).get('id') else '401')" 2>/dev/null || echo "401")
+          if [ "$LOGIN_STATUS" != "200" ]; then
+            echo "Error: POST /api/auth/login failed (HTTP $LOGIN_STATUS)."
+            cat /tmp/login-result.json
+            docker logs smoke-test-app
+            exit 1
+          fi
+          echo "Authentication test passed!"
+
+          echo "Testing GET /api/user/data (fetch seeded data)..."
+          curl -s -b /tmp/navelix-cookies.txt http://localhost:3721/api/user/data > /tmp/user-data.json
+          cat /tmp/user-data.json | python3 -c "import sys,json; d=json.load(sys.stdin); assert isinstance(d.get('categories'),list) and len(d['categories'])>0, 'categories empty'; assert isinstance(d.get('links'),list), 'links missing'; assert isinstance(d.get('config'),dict), 'config missing'; assert 'aiApiKey' not in d.get('config',{}), 'aiApiKey leaked!'; assert 'weatherApiKey' not in d.get('config',{}), 'weatherApiKey leaked!'; print('GET /api/user/data OK: categories=%d links=%d' % (len(d['categories']), len(d['links'])))" || { echo "GET /api/user/data test FAILED"; docker logs smoke-test-app; exit 1; }
+          echo "GET /api/user/data test passed!"
+
+          echo "Testing POST /api/user/data (save config)..."
+          curl -s -b /tmp/navelix-cookies.txt -X POST http://localhost:3721/api/user/data \
+            -H "Content-Type: application/json" \
+            -H "Origin: http://localhost:3721" \
+            -d '{"config":{"logoText":"SmokeTest"}}' > /tmp/save-result.json
+          SAVE_STATUS=$(cat /tmp/save-result.json | python3 -c "import sys,json; print('200' if json.load(sys.stdin).get('success') else '500')" 2>/dev/null || echo "500")
+          if [ "$SAVE_STATUS" != "200" ]; then
+            echo "Error: POST /api/user/data failed."
+            cat /tmp/save-result.json
+            docker logs smoke-test-app
+            exit 1
+          fi
+          echo "POST /api/user/data test passed!"
+
+          echo "Verifying changed config persisted + API key not leaked..."
+          curl -s -b /tmp/navelix-cookies.txt http://localhost:3721/api/user/data > /tmp/verify-data.json
+          cat /tmp/verify-data.json | python3 -c "import sys,json; d=json.load(sys.stdin); cfg=d.get('config',{}); assert cfg.get('logoText')=='SmokeTest', 'logoText not persisted'; assert 'aiApiKey' not in cfg, 'aiApiKey leaked!'; assert 'weatherApiKey' not in cfg, 'weatherApiKey leaked!'; print('Config persistence + security check passed (OK)')" || { echo "Verification FAILED"; docker logs smoke-test-app; exit 1; }
+          echo "All CRUD smoke tests passed!"
+
+          echo "Verifying container user is non-root..."
+          CONTAINER_USER=$(docker exec smoke-test-app whoami)
+          echo "Container user: $CONTAINER_USER"
+          if [ "$CONTAINER_USER" = "root" ]; then
+            echo "Error: Container process is running as root!"
+            exit 1
+          fi
+
+          echo "Verifying data directory is writable..."
+          docker exec smoke-test-app test -w /app/data || (echo "Error: /app/data is not writable" && exit 1)
+          docker exec smoke-test-app touch /app/data/ci-write-test.txt
+          docker exec smoke-test-app rm /app/data/ci-write-test.txt
+          echo "Data directory write check passed!"
+
+          echo "Verifying zero .ts source files exist in the container image..."
+          TS_COUNT=$(docker exec smoke-test-app find /app -name "*.ts" | wc -l)
+          if [ "$TS_COUNT" -ne 0 ]; then
+            echo "Error: Found $TS_COUNT uncompiled .ts files in container!"
+            docker exec smoke-test-app find /app -name "*.ts"
+            exit 1
+          fi
+          echo "Zero .ts source files confirmed (100% bytecode protected)!"
+
+          echo "Verifying EE V8 bytecode bundle and bytenode presence..."
+          docker exec smoke-test-app test -f /app/ee/dist/bundle.jsc || (echo "Error: /app/ee/dist/bundle.jsc bytecode not found" && exit 1)
+          docker exec smoke-test-app test -d /app/node_modules/bytenode || (echo "Error: /app/node_modules/bytenode missing" && exit 1)
+          echo "V8 bytecode and bytenode presence confirmed!"
+
+          echo "All smoke tests passed successfully!"
+          docker stop smoke-test-app
+          docker rm smoke-test-app
+
+      - name: Send Telegram Notification
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "Notice: TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID secrets are not configured in repository settings."
+            exit 0
+          fi
+
+          SHORT_SHA="${{ github.sha }}"
+          SHORT_SHA="${SHORT_SHA:0:7}"
+          STATUS="${{ job.status }}"
+          MESSAGE=$(printf '%s\n' \
+            "🐳 Docker 镜像构建完成 [${STATUS}]" \
+            "Navelix Docker 镜像版本 (sha-${SHORT_SHA}) 在 GitHub Actions 集中构建与冒烟测试已完成。" \
+            "触发分支: ${{ github.ref_name }}，状态: ${STATUS}。")
+
+          PAYLOAD_FILE=$(mktemp)
+          jq -n \
+            --arg chat_id "$TELEGRAM_CHAT_ID" \
+            --arg text "$MESSAGE" \
+            '{chat_id: $chat_id, text: $text, disable_web_page_preview: true}' > "$PAYLOAD_FILE"
+
+          RESPONSE_FILE=$(mktemp)
+          HTTP_CODE=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" \
+            -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -H "Content-Type: application/json" \
+            --data-binary "@$PAYLOAD_FILE")
+          CURL_EXIT=$?
+          rm -f "$PAYLOAD_FILE"
+          echo "POST Telegram sendMessage -> HTTP ${HTTP_CODE} (curl exit ${CURL_EXIT})"
+          if [ "$CURL_EXIT" -ne 0 ]; then
+            echo "Error: curl failed to reach Telegram API (exit ${CURL_EXIT})."
+            rm -f "$RESPONSE_FILE"
+            exit 1
+          fi
+          if [ "${HTTP_CODE}" != "200" ]; then
+            echo "Error: Telegram API rejected the request with HTTP ${HTTP_CODE}."
+            echo "API response body:"
+            cat "$RESPONSE_FILE" || true
+            rm -f "$RESPONSE_FILE"
+            exit 1
+          fi
+          rm -f "$RESPONSE_FILE"
+          echo "Telegram notification sent!"

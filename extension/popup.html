@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Navelix 收藏助手</title>
+    <style>
+      /* ── Design Tokens：与 Navelix 主站 globals.css 深浅色配色一致 ── */
+      :root {
+        color-scheme: light dark;
+        --bg: #f6f8fa;
+        --surface: #ffffff;
+        --surface-hover: #f1f5f9;
+        --border: #e5e7eb;
+        --border-strong: #d1d5db;
+        --text: #111827;
+        --muted: #6b7280;
+        --faint: #94a3b8;
+        --accent: #00c776;
+        --accent-strong: #009a5a;
+        --accent-soft: rgba(0, 199, 118, 0.1);
+        --accent-glow: rgba(0, 199, 118, 0.16);
+        --ok: #059669;
+        --ok-bg: #ecfdf5;
+        --ok-border: #a7f3d0;
+        --danger: #f43f5e;
+        --danger-bg: #fff1f2;
+        --danger-border: #fecdd3;
+        --warn: #d97706;
+        --warn-bg: #fffbeb;
+        --warn-border: #fde68a;
+        --info: #2563eb;
+        --info-bg: #eff6ff;
+        --info-border: #bfdbfe;
+        --toast-bg: rgba(255, 255, 255, 0.9);
+        --shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #151218;
+          --surface: #1c1920;
+          --surface-hover: #2a2530;
+          --border: #2a2530;
+          --border-strong: #3a3442;
+          --text: #ffffff;
+          --muted: #8b8792;
+          --faint: #6d6b75;
+          --accent: #00c776;
+          --accent-strong: #00b368;
+          --accent-soft: rgba(0, 199, 118, 0.14);
+          --accent-glow: rgba(0, 199, 118, 0.22);
+          --ok: #34d399;
+          --ok-bg: rgba(16, 185, 129, 0.12);
+          --ok-border: rgba(16, 185, 129, 0.3);
+          --danger: #fb7185;
+          --danger-bg: rgba(244, 63, 94, 0.12);
+          --danger-border: rgba(244, 63, 94, 0.3);
+          --warn: #fbbf24;
+          --warn-bg: rgba(245, 158, 11, 0.12);
+          --warn-border: rgba(245, 158, 11, 0.3);
+          --info: #60a5fa;
+          --info-bg: rgba(59, 130, 246, 0.12);
+          --info-border: rgba(59, 130, 246, 0.3);
+          --toast-bg: rgba(23, 25, 28, 0.92);
+          --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+        }
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        width: 360px;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 13px;
+        line-height: 1.5;
+        overflow-x: hidden;
+      }
+      svg.ic { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.75; fill: none; stroke-linecap: round; stroke-linejoin: round; display: block; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .spinner { animation: spin 0.8s linear infinite; }
+      button { font-family: inherit; }
+
+      /* ── Header ── */
+      .hdr { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 10px; }
+      .hdr-l { display: flex; align-items: center; gap: 8px; }
+      .hdr .logo { width: 26px; height: 26px; border-radius: 7px; }
+      .hdr .brand { display: flex; flex-direction: column; line-height: 1.15; }
+      .hdr .b1 { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+      .hdr .b2 { font-size: 11px; color: var(--muted); }
+      .hdr-r { display: flex; align-items: center; gap: 8px; }
+      .ver { font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+      .icon-btn {
+        width: 26px; height: 26px; border: none; background: none; border-radius: 7px;
+        color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+        transition: background 0.15s ease-out, color 0.15s ease-out;
+      }
+      .icon-btn:hover { background: var(--surface-hover); color: var(--text); }
+
+      /* ── Segmented Navigation ── */
+      .seg { display: flex; padding: 0 14px; gap: 2px; }
+      .seg-item {
+        position: relative; flex: 1; height: 36px; border: none; background: none; cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        font-size: 13px; font-weight: 500; color: var(--muted); border-radius: 8px;
+        transition: color 0.15s ease-out, background 0.15s ease-out;
+      }
+      .seg-item:hover { background: var(--accent-soft); color: var(--text); }
+      .seg-item.active { color: var(--accent); font-weight: 600; background: var(--accent-soft); }
+      .seg-item.active::after {
+        content: ""; position: absolute; left: 24px; right: 24px; bottom: -1px; height: 2px;
+        background: var(--accent); border-radius: 2px;
+      }
+      .seg-divider { height: 1px; background: var(--border); margin: 4px 0 4px; }
+
+      /* ── Views ── */
+      .view { padding: 10px 14px 14px; display: none; }
+      .view.active { display: block; }
+
+      [hidden] { display: none !important; }
+
+      /* ── Card ── */
+      .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; box-shadow: var(--shadow); }
+
+      /* ── Alert（未配置/提示） ── */
+      .alert { display: flex; gap: 9px; align-items: flex-start; border-radius: 9px; padding: 9px 11px; font-size: 12px; line-height: 1.45; }
+      .alert svg.ic { margin-top: 1px; flex: none; }
+      .alert b { display: block; font-weight: 600; font-size: 12.5px; }
+      .alert span { color: var(--muted); }
+      .alert.warn { background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn); }
+      .alert.warn span { color: var(--warn); opacity: 0.85; }
+      .alert:not([hidden]) { margin-bottom: 12px; }
+
+      /* ── Form Field ── */
+      .field { margin-bottom: 12px; }
+      .field > label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+      .input-card { position: relative; display: flex; align-items: center; }
+      .input-card .ic-left { position: absolute; left: 10px; color: var(--faint); pointer-events: none; }
+      .input-card input, .input-card select {
+        width: 100%; height: 38px; border: 1px solid var(--border); border-radius: 9px;
+        background: var(--surface); color: var(--text); font-size: 13px;
+        padding: 0 34px 0 34px; transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out, background 0.15s ease-out;
+        appearance: none; -webkit-appearance: none; font-family: inherit;
+      }
+      .input-card input::placeholder { color: var(--faint); }
+      .input-card input:focus, .input-card select:focus {
+        outline: none; border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+        background: var(--surface);
+      }
+      .input-card .ic-right { position: absolute; right: 10px; color: var(--faint); pointer-events: none; }
+      .input-card.select select { cursor: pointer; }
+      .icon-btn.eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: var(--faint); }
+      .icon-btn.eye:hover { color: var(--text); background: none; }
+
+      /* ── Buttons ── */
+      .btn { width: 100%; height: 40px; border-radius: 9px; cursor: pointer; font-size: 14px; font-weight: 600;
+        display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+        transition: filter 0.15s ease-out, transform 0.15s ease-out, background 0.15s ease-out, opacity 0.15s;
+        font-family: inherit; }
+      .btn:active { transform: scale(0.98); }
+      .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+      .btn-primary { border: none; background: linear-gradient(180deg, var(--accent), var(--accent-strong)); color: #fff; }
+      .btn-primary:hover:not(:disabled) { filter: brightness(1.07); }
+      .btn-primary svg.ic { stroke-width: 2; }
+      .btn-secondary { border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-weight: 500; }
+      .btn-secondary:hover:not(:disabled) { background: var(--surface-hover); }
+      .btn-ghost { border: 1px solid var(--border); background: var(--surface-hover); color: var(--text); font-weight: 500; }
+      .btn-ghost:hover:not(:disabled) { background: var(--surface); }
+      .btn-row { display: flex; gap: 8px; margin-top: 2px; }
+      .btn-row .btn { width: auto; flex: 1; }
+      .btn[data-loading] { pointer-events: none; }
+
+      /* ── Status Message ── */
+      .msg { display: none; align-items: flex-start; gap: 8px; border-radius: 8px; padding: 8px 10px; font-size: 12px; line-height: 1.45; }
+      .msg.on { display: flex; }
+      .msg svg.ic { margin-top: 1px; flex: none; }
+      .msg b { display: block; font-weight: 600; font-size: 12.5px; }
+      .msg span { color: var(--muted); }
+      .msg.ok { background: var(--ok-bg); border: 1px solid var(--ok-border); color: var(--ok); }
+      .msg.err { background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger); }
+      .msg.warn { background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn); }
+      .msg.info { background: var(--info-bg); border: 1px solid var(--info-border); color: var(--info); }
+      #status { margin-top: 12px; }
+      #settingsStatus { margin-top: 12px; }
+
+      /* ── Toast ── */
+      .toast {
+        position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%) translateY(6px);
+        display: flex; align-items: center; gap: 9px; max-width: 316px;
+        background: var(--toast-bg); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+        border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px;
+        box-shadow: var(--shadow), 0 8px 24px rgba(0, 0, 0, 0.08);
+        opacity: 0; pointer-events: none; transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+        font-size: 12px; z-index: 10;
+      }
+      .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+      .toast svg.ic { flex: none; }
+      .toast b { display: block; font-weight: 600; font-size: 12.5px; }
+      .toast span { color: var(--muted); }
+      .toast.ok { color: var(--ok); }
+      .toast.info { color: var(--info); }
+      .toast.err { color: var(--danger); }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="hdr">
+      <div class="hdr-l">
+        <img class="logo" src="icons/icon-32.png" alt="Navelix" />
+        <div class="brand">
+          <span class="b1">Navelix</span>
+          <span class="b2">收藏助手</span>
+        </div>
+      </div>
+      <div class="hdr-r">
+        <span class="ver">v1.0.0</span>
+      </div>
+    </header>
+
+    <!-- Segmented Navigation -->
+    <nav class="seg">
+      <button id="tabSave" class="seg-item active">
+        <svg class="ic"><use href="#i-bookmark" /></svg>
+        <span>收藏</span>
+      </button>
+      <button id="tabSettings" class="seg-item">
+        <svg class="ic"><use href="#i-gear" /></svg>
+        <span>设置</span>
+      </button>
+    </nav>
+    <div class="seg-divider"></div>
+
+    <main>
+      <!-- 收藏视图 -->
+      <section id="viewSave" class="view active">
+        <div id="needConfig" class="alert warn" hidden>
+          <svg class="ic"><use href="#i-alert" /></svg>
+          <div><b>尚未配置 Navelix 实例</b><span>请先在「设置」中完成实例地址和 API 令牌配置。</span></div>
+        </div>
+
+        <div class="card">
+          <div class="field">
+            <label>标题</label>
+            <div class="input-card">
+              <svg class="ic ic-left"><use href="#i-type" /></svg>
+              <input id="title" type="text" placeholder="页面标题" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>网址</label>
+            <div class="input-card">
+              <svg class="ic ic-left"><use href="#i-link" /></svg>
+              <input id="url" type="url" placeholder="https://…" spellcheck="false" />
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:4px">
+            <label>分类</label>
+            <div class="input-card select">
+              <svg class="ic ic-left"><use href="#i-folder" /></svg>
+              <select id="category"></select>
+              <svg class="ic ic-right"><use href="#i-chevron" /></svg>
+            </div>
+          </div>
+
+          <button id="saveBtn" class="btn btn-primary">
+            <svg class="ic" id="saveIcon" data-idle="i-plus" data-loading="i-spinner" data-done="i-check"><use href="#i-plus" /></svg>
+            <span id="saveLabel">收藏</span>
+          </button>
+        </div>
+
+        <div id="status" class="msg"></div>
+      </section>
+
+      <!-- 设置视图 -->
+      <section id="viewSettings" class="view">
+        <div class="card">
+          <div class="field">
+            <label>实例地址</label>
+            <div class="input-card">
+              <svg class="ic ic-left"><use href="#i-globe" /></svg>
+              <input id="baseUrl" type="url" placeholder="https://navelix.example.com" spellcheck="false" />
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:4px">
+            <label>API 令牌</label>
+            <div class="input-card">
+              <svg class="ic ic-left"><use href="#i-lock" /></svg>
+              <input id="token" type="password" placeholder="nvx_live_…" autocomplete="off" spellcheck="false" />
+              <button id="togglePw" class="icon-btn eye" type="button" title="显示/隐藏">
+                <svg class="ic" id="eyeIcon"><use href="#i-eye" /></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button id="saveCfgBtn" class="btn btn-primary" style="margin-top:12px">
+              <svg class="ic" id="saveCfgIcon" data-loading="i-spinner"><use href="#i-check" /></svg>
+              <span id="saveCfgLabel">保存配置</span>
+            </button>
+            <button id="testCfgBtn" class="btn btn-ghost" style="margin-top:12px">
+              <svg class="ic" id="testCfgIcon" data-loading="i-spinner"><use href="#i-plug" /></svg>
+              <span id="testCfgLabel">测试连接</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="settingsStatus" class="msg"></div>
+      </section>
+    </main>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- SVG 图标库 -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+      <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
+      <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-type" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-2.61"/><line x1="2" x2="22" y1="2" y2="22"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></symbol>
+      <symbol id="i-alert-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+      <symbol id="i-plug" viewBox="0 0 24 24"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></symbol>
+      <symbol id="i-spinner" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></symbol>
+    </svg>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

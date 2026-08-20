@@ -1,0 +1,35 @@
+# ── Navelix Production Docker Compose Deployment ──
+name: navelix
+
+services:
+  # Navelix 个人数字工作空间主服务
+  navelix:
+    image: registry-1.docker.io/timorpic/navelix:latest
+    container_name: rA9-timorpic-navelix
+    restart: unless-stopped
+    ports:
+      - "3721:3721"
+    environment:
+      - PORT=3721
+      - HOSTNAME=0.0.0.0
+      # - NAVELIX_ADMIN_PASSWORD=your_secure_password  # 可选：指定初始管理员密码；留空则在 data/ 生成随机强密码
+      # - NAVELIX_LICENSE_KEY=eyJsaWNlbnNl...          # 可选：容器启动时直接注入商业版 License Key（也可在后台网页激活）
+      - NAVELIX_COOKIE_SECURE=false                  # 局域网 HTTP 保持 false；配置 HTTPS 反代时改为 true
+      - TZ=Asia/Shanghai
+    volumes:
+      - /volume1/docker/navelix:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3721/api/healthz').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # 可选：Watchtower 自动更新服务（后台自动拉取最新镜像并无缝重启更新容器）
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: navelix-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 300 --cleanup navelix
