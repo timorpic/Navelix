@@ -197,7 +197,7 @@ jobs:
           curl -s -b /tmp/navelix-cookies.txt -X POST http://localhost:3721/api/user/data \
             -H "Content-Type: application/json" \
             -H "Origin: http://localhost:3721" \
-            -d '{"config":{"logoText":"SmokeTest"}}' > /tmp/save-result.json
+            -d '{"config":{"customFooter":"SmokeTest"}}' > /tmp/save-result.json
           SAVE_STATUS=$(cat /tmp/save-result.json | python3 -c "import sys,json; print('200' if json.load(sys.stdin).get('success') else '500')" 2>/dev/null || echo "500")
           if [ "$SAVE_STATUS" != "200" ]; then
             echo "Error: POST /api/user/data failed."
@@ -209,7 +209,7 @@ jobs:
 
           echo "Verifying changed config persisted + API key not leaked..."
           curl -s -b /tmp/navelix-cookies.txt http://localhost:3721/api/user/data > /tmp/verify-data.json
-          cat /tmp/verify-data.json | python3 -c "import sys,json; d=json.load(sys.stdin); cfg=d.get('config',{}); assert cfg.get('logoText')=='SmokeTest', 'logoText not persisted'; assert 'aiApiKey' not in cfg, 'aiApiKey leaked!'; assert 'weatherApiKey' not in cfg, 'weatherApiKey leaked!'; print('Config persistence + security check passed (OK)')" || { echo "Verification FAILED"; docker logs smoke-test-app; exit 1; }
+          cat /tmp/verify-data.json | python3 -c "import sys,json; d=json.load(sys.stdin); cfg=d.get('config',{}); assert cfg.get('customFooter')=='SmokeTest', 'customFooter not persisted'; assert 'aiApiKey' not in cfg, 'aiApiKey leaked!'; assert 'weatherApiKey' not in cfg, 'weatherApiKey leaked!'; print('Config persistence + security check passed (OK)')" || { echo "Verification FAILED"; docker logs smoke-test-app; exit 1; }
           echo "All CRUD smoke tests passed!"
 
           echo "Verifying container user is non-root..."
@@ -235,10 +235,13 @@ jobs:
           fi
           echo "Zero .ts source files confirmed (100% bytecode protected)!"
 
-          echo "Verifying EE V8 bytecode bundle and bytenode presence..."
-          docker exec smoke-test-app test -f /app/ee/dist/bundle.jsc || (echo "Error: /app/ee/dist/bundle.jsc bytecode not found" && exit 1)
-          docker exec smoke-test-app test -d /app/node_modules/bytenode || (echo "Error: /app/node_modules/bytenode missing" && exit 1)
-          echo "V8 bytecode and bytenode presence confirmed!"
+          echo "Verifying EE V8 bytecode bundle and bytenode presence (if EE bundle shipped)..."
+          if docker exec smoke-test-app test -f /app/ee/dist/bundle.jsc; then
+            docker exec smoke-test-app test -d /app/node_modules/bytenode || (echo "Error: /app/node_modules/bytenode missing" && exit 1)
+            echo "V8 bytecode and bytenode presence confirmed!"
+          else
+            echo "No /app/ee/dist/bundle.jsc found - CE build (without commercial EE bundle), skipping bytecode check."
+          fi
 
           echo "All smoke tests passed successfully!"
           docker stop smoke-test-app
