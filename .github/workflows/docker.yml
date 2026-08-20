@@ -15,7 +15,7 @@ jobs:
     env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      HAS_EE_BUNDLE: ${{ secrets.EE_COMMERCIAL_BUNDLE != '' }}
+      HAS_EE_PAT: ${{ secrets.EE_REPO_PAT != '' }}
 
     steps:
       - name: Checkout repository
@@ -40,13 +40,15 @@ jobs:
           fi
           echo "✅ Release 版本与 package.json 一致 (v${PKG_VERSION})"
 
-      - name: Restore EE commercial drivers from secret (Official Pro Release)
-        if: ${{ env.HAS_EE_BUNDLE == 'true' }}
+      - name: Clone EE commercial drivers from private repo (Official Pro Release)
+        if: ${{ env.HAS_EE_PAT == 'true' }}
         env:
-          EE_BUNDLE: ${{ secrets.EE_COMMERCIAL_BUNDLE }}
+          EE_REPO_PAT: ${{ secrets.EE_REPO_PAT }}
         run: |
-          echo "$EE_BUNDLE" | base64 -d | tar -xzf -
-          echo "✅ Official EE commercial module restored for Pro image build."
+          git clone --depth 1 --branch main \
+            "https://x-access-token:${EE_REPO_PAT}@github.com/timorpic/Navelix-EE.git" ee
+          rm -rf ee/.git
+          echo "✅ Official EE commercial module cloned from private repo for Pro image build."
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
