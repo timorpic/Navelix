@@ -28,7 +28,7 @@ RUN mkdir -p public ee && \
     node -e "const fs=require('fs'); fs.writeFileSync('public/build-info.json', JSON.stringify({ version: '$NAVELIX_VERSION', sourceSha: '$SOURCE_SHA', buildDate: '$BUILD_DATE' }));"
 
 # 编译商业 EE 驱动为 V8 字节码并物理销毁全部 .ts 源码明文（仅打包 .jsc 二进制制品）
-RUN PURGE_EE_TS=true node scripts/compile-ee.mjs
+RUN if [ -f "ee/compile.mjs" ]; then PURGE_EE_TS=true node ee/compile.mjs; fi
 
 ENV NODE_ENV=production
 RUN corepack enable && pnpm build
