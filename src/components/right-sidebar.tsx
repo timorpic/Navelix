@@ -5,6 +5,9 @@ import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useNavelixData } from "@/hooks/use-navelix-data";
 import type { AIChatMessage, Project, TodoItem } from "@/types";
 import ModelMonitorWidget from "./model-monitor-widget";
+import TodayActivityWidget from "./today-activity-widget";
+import PendingRemindersWidget from "./pending-reminders-widget";
+import TodaySummaryWidget from "./today-summary-widget";
 
 export default function RightSidebar({
   collapsed = false,
@@ -285,6 +288,7 @@ export default function RightSidebar({
       {/* 可滚动内容区 */}
       <div className="flex-1 overflow-y-auto flex flex-col gap-5 p-4 lg:p-6">
         {/* ── Widget 1: AI Copilot 数字副驾驶 ── */}
+        {config.aiCopilotEnabled !== false && (
         <div className="flex flex-col bg-gradient-to-b from-[#F2FBFB] via-[#EAF8F8] to-[#E2F5F5] dark:from-[#1b1e28] dark:via-[#1f2430] dark:to-[#171a23] rounded-2xl p-4 border border-[#CEEFEF] dark:border-slate-700/80 shadow-2xs space-y-3.5 transition-colors">
           {/* Copilot Header */}
           <div className="flex items-center justify-between pb-2 border-b border-[#CEEFEF]/80 dark:border-slate-700/60">
@@ -413,12 +417,22 @@ export default function RightSidebar({
 
 
         </div>
+        )}
 
         {/* ── Widget 1.5: 模型监控 ── */}
         {config.modelMonitorEnabled && <ModelMonitorWidget />}
 
+        {/* ── Widget 1.6: 今日动态 ── */}
+        {config.todayActivityEnabled !== false && <TodayActivityWidget />}
+
+        {/* ── Widget 1.8: 待处理提醒 ── */}
+        {config.pendingRemindersEnabled && <PendingRemindersWidget />}
+
+        {/* ── Widget 1.9: 今日摘要 ── */}
+        {config.todaySummaryEnabled && <TodaySummaryWidget />}
+
         {/* ── Widget 3: Social Profile Links ── */}
-        {socialLinks.length > 0 && (
+        {config.socialLinksEnabled !== false && socialLinks.length > 0 && (
           <div className="flex flex-col gap-2 pt-2 border-t border-gray-100 dark:border-slate-800">
             <span className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
               社交与联系

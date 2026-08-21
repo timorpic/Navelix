@@ -38,6 +38,12 @@ export const defaultConfig: SystemConfig = {
   sidebarDefaultState: "expanded",
   clockWidgetMode: "time",
   modelMonitorEnabled: true,
+  aiCopilotEnabled: true,
+  todayActivityEnabled: true,
+  recentVisitsEnabled: true,
+  pendingRemindersEnabled: false,
+  todaySummaryEnabled: false,
+  socialLinksEnabled: true,
 };
 
 export interface NavelixDataApi {

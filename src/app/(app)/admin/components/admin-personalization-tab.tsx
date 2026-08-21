@@ -260,30 +260,29 @@ export default function AdminPersonalizationTab() {
         </div>
       </div>
 
-      {/* 🖼️ 背景壁纸与毛玻璃特效 */}
-      <div className="pt-5 border-t border-gray-100 dark:border-slate-700">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-lg">🖼️</span>
-          <div>
+      {/* 布局：背景壁纸 / 侧边栏形态 / 中央内容宽度 三列横排 */}
+      <div className="pt-5 border-t border-gray-100 dark:border-slate-700 grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+        {/* 列1: 🖼️ 背景壁纸与冰晶毛玻璃特效 */}
+        <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-lg leading-none">🖼️</span>
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">
               背景壁纸与冰晶毛玻璃特效
             </h3>
-            <p className="text-xs text-gray-400 dark:text-slate-400">
-              开启 Bing 每日高清壁纸、自定义壁纸链接以及半透明水凝膜毛玻璃悬浮质感
-            </p>
           </div>
-        </div>
+          <p className="text-xs text-gray-400 dark:text-slate-400 mb-3">
+            开启 Bing 每日高清壁纸、自定义壁纸链接以及半透明水凝膜毛玻璃悬浮质感
+          </p>
 
-        <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-3">
+        <div className="space-y-3">
             <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
               背景壁纸模式
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-col gap-2">
               <button
                 type="button"
                 onClick={() => updateConfig({ wallpaperMode: "none" })}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-left px-3 ${
                   (config.wallpaperMode || "none") === "none"
                     ? "bg-[#00C776] text-white"
                     : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
@@ -294,7 +293,7 @@ export default function AdminPersonalizationTab() {
               <button
                 type="button"
                 onClick={() => updateConfig({ wallpaperMode: "bing" })}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-left px-3 ${
                   config.wallpaperMode === "bing"
                     ? "bg-[#00C776] text-white"
                     : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
@@ -305,7 +304,7 @@ export default function AdminPersonalizationTab() {
               <button
                 type="button"
                 onClick={() => updateConfig({ wallpaperMode: "custom" })}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-left px-3 ${
                   config.wallpaperMode === "custom"
                     ? "bg-[#00C776] text-white"
                     : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
@@ -328,7 +327,7 @@ export default function AdminPersonalizationTab() {
           </div>
 
           {/* 毛玻璃开关 */}
-          <div className="space-y-2 border-t border-gray-200 dark:border-slate-700 pt-3 md:border-t-0 md:border-l md:pt-0 md:pl-4">
+          <div className="space-y-2 pt-3 border-t border-gray-200 dark:border-slate-700">
             <div>
               <h4 className="text-xs font-bold text-gray-800 dark:text-slate-200">
                 冰晶毛玻璃质感 (Backdrop Blur)
@@ -357,33 +356,32 @@ export default function AdminPersonalizationTab() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* 📌 侧边栏与小组件样式 */}
-      <div className="pt-5 border-t border-gray-100 dark:border-slate-700">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-lg">📌</span>
+      {/* 列2: 📌 侧边栏形态与顶部小组件模式 */}
+      <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg leading-none">📌</span>
           <div>
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">
               侧边栏形态与顶部小组件模式
             </h3>
             <p className="text-xs text-gray-400 dark:text-slate-400">
-              设置桌面端侧边栏初始展开/折叠状态、中央内容区宽度，以及顶部组件模式（数字时钟 / 天气 / 模拟指针时钟）
+              设置桌面端侧边栏初始展开/折叠状态，以及顶部组件模式（数字时钟 / 天气 / 模拟指针时钟）
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-4">
           {/* 侧边栏默认状态 */}
           <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
             <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
               侧边栏默认显示状态
             </label>
-            <div className="grid grid-cols-2 gap-2 pt-1">
+            <div className="flex flex-col gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => updateConfig({ sidebarDefaultState: "expanded" })}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-left px-3 ${
                   (config.sidebarDefaultState || "expanded") === "expanded"
                     ? "bg-[#00C776] text-white"
                     : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
@@ -394,7 +392,7 @@ export default function AdminPersonalizationTab() {
               <button
                 type="button"
                 onClick={() => updateConfig({ sidebarDefaultState: "collapsed" })}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-left px-3 ${
                   config.sidebarDefaultState === "collapsed"
                     ? "bg-[#00C776] text-white"
                     : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
@@ -410,11 +408,11 @@ export default function AdminPersonalizationTab() {
             <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
               顶部小组件样式模式
             </label>
-            <div className="grid grid-cols-3 gap-2 pt-1">
+            <div className="flex flex-col gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => updateConfig({ clockWidgetMode: "time" })}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-left px-3 ${
                   (config.clockWidgetMode || "time") === "time"
                     ? "bg-[#00C776] text-white"
                     : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
@@ -425,7 +423,7 @@ export default function AdminPersonalizationTab() {
               <button
                 type="button"
                 onClick={() => updateConfig({ clockWidgetMode: "weather" })}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-left px-3 ${
                   config.clockWidgetMode === "weather"
                     ? "bg-[#00C776] text-white"
                     : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
@@ -436,7 +434,7 @@ export default function AdminPersonalizationTab() {
               <button
                 type="button"
                 onClick={() => updateConfig({ clockWidgetMode: "analog" })}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-left px-3 ${
                   config.clockWidgetMode === "analog"
                     ? "bg-[#00C776] text-white"
                     : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
@@ -446,62 +444,146 @@ export default function AdminPersonalizationTab() {
               </button>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* 内容区域宽度 */}
-          <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
-            <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
-              中央内容区域宽度
-            </label>
-            <p className="text-[11px] text-gray-400 dark:text-slate-400 pt-0.5">
-              主页面为「左侧边栏 + 中央主区域 + 右侧边栏」布局，此项控制中央内容区的最大宽度
+      {/* 列3: 📐 中央内容区域宽度 */}
+      <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-lg leading-none">📐</span>
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+            中央内容区域宽度
+          </h3>
+        </div>
+        <p className="text-[11px] text-gray-400 dark:text-slate-400">
+          主页面为「左侧边栏 + 中央主区域 + 右侧边栏」布局，此项控制中央内容区的最大宽度
+        </p>
+        <div className="flex flex-col gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => updateConfig({ maxWidth: "1000px" })}
+            className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-left px-3 ${
+              config.maxWidth === "1000px"
+                ? "bg-[#00C776] text-white"
+                : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+            }`}
+          >
+            1000px 较窄
+          </button>
+          <button
+            type="button"
+            onClick={() => updateConfig({ maxWidth: "1200px" })}
+            className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-left px-3 ${
+              (config.maxWidth || "1200px") === "1200px"
+                ? "bg-[#00C776] text-white"
+                : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+            }`}
+          >
+            1200px 主流
+          </button>
+          <button
+            type="button"
+            onClick={() => updateConfig({ maxWidth: "1400px" })}
+            className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-left px-3 ${
+              config.maxWidth === "1400px"
+                ? "bg-[#00C776] text-white"
+                : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+            }`}
+          >
+            1400px 大屏
+          </button>
+          <button
+            type="button"
+            onClick={() => updateConfig({ maxWidth: "full" })}
+            className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-left px-3 ${
+              config.maxWidth === "full"
+                ? "bg-[#00C776] text-white"
+                : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+            }`}
+          >
+            full 铺满
+          </button>
+        </div>
+      </div>
+      </div>
+
+      {/* ▶️ 右侧侧边栏组件开关 */}
+      <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 w-fit">
+        <div className="flex items-start gap-2 mb-3">
+          <span className="text-lg leading-none">▶️</span>
+          <div className="min-w-0">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+              右侧侧边栏组件
+            </h3>
+            <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5 leading-relaxed max-w-sm break-words">
+              控制首页右侧侧边栏各小组件的显示与隐藏，默认顺序：AI Copilot → 今日动态 → 模型监控 → 待处理提醒 → 今日摘要 → 社交与联系
             </p>
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => updateConfig({ maxWidth: "1000px" })}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  config.maxWidth === "1000px"
-                    ? "bg-[#00C776] text-white"
-                    : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
-                }`}
-              >
-                1000px 较窄
-              </button>
-              <button
-                type="button"
-                onClick={() => updateConfig({ maxWidth: "1200px" })}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  (config.maxWidth || "1200px") === "1200px"
-                    ? "bg-[#00C776] text-white"
-                    : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
-                }`}
-              >
-                1200px 主流
-              </button>
-              <button
-                type="button"
-                onClick={() => updateConfig({ maxWidth: "1400px" })}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  config.maxWidth === "1400px"
-                    ? "bg-[#00C776] text-white"
-                    : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
-                }`}
-              >
-                1400px 大屏
-              </button>
-              <button
-                type="button"
-                onClick={() => updateConfig({ maxWidth: "full" })}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  config.maxWidth === "full"
-                    ? "bg-[#00C776] text-white"
-                    : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
-                }`}
-              >
-                full 铺满
-              </button>
-            </div>
           </div>
+        </div>
+
+        <div className="flex flex-col divide-y divide-gray-200 dark:divide-slate-700 max-w-sm bg-white dark:bg-slate-800/70 rounded-lg border border-gray-100 dark:border-slate-700 overflow-hidden mx-auto">
+          {[
+            {
+              key: "aiCopilotEnabled" as const,
+              label: "AI Copilot",
+              icon: "🤖",
+              defaultOn: true,
+            },
+            {
+              key: "todayActivityEnabled" as const,
+              label: "今日动态",
+              icon: "⚡",
+              defaultOn: true,
+            },
+            {
+              key: "modelMonitorEnabled" as const,
+              label: "模型监控",
+              icon: "🧠",
+              defaultOn: true,
+            },
+            {
+              key: "pendingRemindersEnabled" as const,
+              label: "待处理提醒",
+              icon: "📌",
+              defaultOn: false,
+            },
+            {
+              key: "todaySummaryEnabled" as const,
+              label: "今日摘要",
+              icon: "📋",
+              defaultOn: false,
+            },
+            {
+              key: "socialLinksEnabled" as const,
+              label: "社交与联系",
+              icon: "👥",
+              defaultOn: true,
+            },
+          ].map((item) => {
+            const enabled = config[item.key] !== false;
+            return (
+              <div
+                key={item.key}
+                className="px-3 py-2.5 flex items-center gap-2.5"
+              >
+                <span className="text-sm shrink-0">{item.icon}</span>
+                <span className="flex-1 text-xs font-semibold text-gray-800 dark:text-slate-200 min-w-0 truncate">
+                  {item.label}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => updateConfig({ [item.key]: !enabled })}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer shrink-0 ${
+                    enabled
+                      ? "bg-[#00C776] text-white"
+                      : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
+                  }`}
+                >
+                  {enabled ? "已显示" : "已隐藏"}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 

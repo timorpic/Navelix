@@ -158,6 +158,12 @@ export async function GET() {
         allow_registration: number;
         security_setup_done: number;
         model_monitor_enabled: number;
+        ai_copilot_enabled: number;
+        today_activity_enabled: number;
+        recent_visits_enabled: number;
+        pending_reminders_enabled: number;
+        today_summary_enabled: number;
+        social_links_enabled: number;
         custom_head_scripts: string;
         custom_css: string;
       }
@@ -204,6 +210,12 @@ export async function GET() {
         allowRegistration: effectiveAllowRegistration,
         securitySetupDone: configRow.security_setup_done === 1 || (configRow.security_setup_done as unknown) === true || (configRow.security_setup_done as unknown) === "1",
         modelMonitorEnabled: configRow.model_monitor_enabled === 1 || (configRow.model_monitor_enabled as unknown) === true || (configRow.model_monitor_enabled as unknown) === "1",
+        aiCopilotEnabled: configRow.ai_copilot_enabled === 1 || (configRow.ai_copilot_enabled as unknown) === true || (configRow.ai_copilot_enabled as unknown) === "1",
+        todayActivityEnabled: configRow.today_activity_enabled === 1 || (configRow.today_activity_enabled as unknown) === true || (configRow.today_activity_enabled as unknown) === "1",
+        recentVisitsEnabled: configRow.recent_visits_enabled === 1 || (configRow.recent_visits_enabled as unknown) === true || (configRow.recent_visits_enabled as unknown) === "1",
+        pendingRemindersEnabled: configRow.pending_reminders_enabled === 1 || (configRow.pending_reminders_enabled as unknown) === true || (configRow.pending_reminders_enabled as unknown) === "1",
+        todaySummaryEnabled: configRow.today_summary_enabled === 1 || (configRow.today_summary_enabled as unknown) === true || (configRow.today_summary_enabled as unknown) === "1",
+        socialLinksEnabled: configRow.social_links_enabled === 1 || (configRow.social_links_enabled as unknown) === true || (configRow.social_links_enabled as unknown) === "1",
         customHeadScripts: hasCodeInject ? configRow.custom_head_scripts || "" : "",
         customCss: hasCodeInject ? configRow.custom_css || "" : "",
         aiBaseUrl: configRow.ai_base_url,
@@ -241,6 +253,12 @@ export async function GET() {
         allowRegistration: false,
         securitySetupDone: false,
         modelMonitorEnabled: true,
+        aiCopilotEnabled: true,
+        todayActivityEnabled: true,
+        recentVisitsEnabled: true,
+        pendingRemindersEnabled: false,
+        todaySummaryEnabled: false,
+        socialLinksEnabled: true,
         linkStatusEnabled: false,
         linkStatusInterval: 60,
         socialGithub: "https://github.com",

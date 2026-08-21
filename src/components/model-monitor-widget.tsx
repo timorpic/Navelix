@@ -64,19 +64,6 @@ interface WidgetAccount {
   lastError: string;
 }
 
-function formatResetTime(iso: string): string {
-  if (!iso) return "";
-  const t = new Date(iso).getTime();
-  if (Number.isNaN(t)) return iso;
-  const diff = t - Date.now();
-  if (diff <= 0) return "已到重置时间";
-  const days = Math.floor(diff / 86400_000);
-  const hours = Math.floor((diff % 86400_000) / 3600_000);
-  const mins = Math.floor((diff % 3600_000) / 60_000);
-  if (days > 0) return `${days}天 ${hours}小时后重置`;
-  return hours > 0 ? `${hours}h ${mins}m 后重置` : `${mins}m 后重置`;
-}
-
 export default function ModelMonitorWidget() {
   const [accounts, setAccounts] = useState<WidgetAccount[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -174,40 +161,18 @@ export default function ModelMonitorWidget() {
             <div className="space-y-2">
               {a.quotaSummary.groups.map((grp) => (
                 <div key={grp.name}>
-                  <p className="text-[10px] font-bold text-gray-700 dark:text-slate-200 mb-1">
-                    {grp.shortName}
+                  <p className="text-[10px] font-bold text-gray-700 dark:text-slate-200 mb-1 truncate">
+                    ● {grp.shortName}
                   </p>
-                  <div className="space-y-1.5">
-                    {grp.windows.map((bar) => {
-                      const pct =
+                  <MiniBarChart
+                    bars={grp.windows.map((bar) => ({
+                      label: bar.label,
+                      pct:
                         bar.remainingFraction !== null
                           ? Math.round(Math.max(0, Math.min(1, bar.remainingFraction)) * 100)
-                          : null;
-                      return (
-                        <div key={bar.key}>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[10px] font-medium text-gray-600 dark:text-slate-300 truncate">
-                              {bar.label}
-                            </span>
-                            <span className="text-[10px] font-bold text-gray-700 dark:text-slate-200 shrink-0 ml-2">
-                              {pct !== null ? `${pct}%` : "—"}
-                            </span>
-                          </div>
-                          <div className="h-1 rounded-full bg-gray-200 dark:bg-slate-700 overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-teal-400 transition-all"
-                              style={{ width: pct !== null ? `${pct}%` : "0%" }}
-                            />
-                          </div>
-                          {bar.resetTime && (
-                            <p className="text-[9px] text-gray-400 dark:text-slate-500 mt-0.5">
-                              {formatResetTime(bar.resetTime)}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                          : null,
+                    }))}
+                  />
                 </div>
               ))}
             </div>
@@ -251,28 +216,23 @@ export default function ModelMonitorWidget() {
               <span className="font-bold text-gray-700 dark:text-slate-200">未查询</span>
             )}
           </div>
-          {a.codexUsage?.primaryWindow && (
-            <div>
-              <div className="flex items-center justify-between text-[10px] mb-1">
-                <span className="text-gray-400 dark:text-slate-500">
-                  额度信息 · {codexWindowLabel(a.codexUsage.primaryWindow.windowSeconds)}
-                </span>
-                <span className="font-bold text-gray-700 dark:text-slate-200">
-                  {codexRemainingText(a.codexUsage.primaryWindow)}
-                </span>
-              </div>
-              <div className="h-1 rounded-full bg-gray-200 dark:bg-slate-700 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-teal-400 transition-all"
-                  style={{ width: `${codexRemainingPct(a.codexUsage.primaryWindow)}%` }}
-                />
-              </div>
-              {a.codexUsage.primaryWindow.resetAt && (
-                <p className="text-[9px] text-gray-400 dark:text-slate-500 mt-0.5">
-                  {formatResetTime(new Date(a.codexUsage.primaryWindow.resetAt * 1000).toISOString())}
-                </p>
-              )}
-            </div>
+          {a.codexUsage && (
+            <MiniBarChart
+              bars={[
+                a.codexUsage.primaryWindow
+                  ? {
+                      label: codexWindowLabel(a.codexUsage.primaryWindow.windowSeconds),
+                      pct: codexRemainingPct(a.codexUsage.primaryWindow),
+                    }
+                  : null,
+                a.codexUsage.secondaryWindow
+                  ? {
+                      label: codexWindowLabel(a.codexUsage.secondaryWindow.windowSeconds),
+                      pct: codexRemainingPct(a.codexUsage.secondaryWindow),
+                    }
+                  : null,
+              ].filter((x): x is NonNullable<typeof x> => x !== null)}
+            />
           )}
           {a.lastError && (
             <p className="text-[9px] text-rose-400 truncate" title={a.lastError}>
@@ -281,6 +241,37 @@ export default function ModelMonitorWidget() {
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+function MiniBarChart({
+  bars,
+}: {
+  bars: { label: string; pct: number | null }[];
+}) {
+  if (bars.length === 0) return null;
+  return (
+    <div className="space-y-1">
+      {bars.map((bar, i) => {
+        const pct = bar.pct !== null ? Math.max(0, Math.min(100, bar.pct)) : null;
+        return (
+          <div key={`${bar.label}-${i}`} className="flex items-center gap-2">
+            <span className="text-[10px] font-medium text-gray-600 dark:text-slate-300 shrink-0 w-6">
+              {bar.label}
+            </span>
+            <div className="flex-1 h-1 rounded-full bg-gray-200 dark:bg-slate-700 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-[#00C776] transition-all"
+                style={{ width: pct !== null ? `${pct}%` : "0%" }}
+              />
+            </div>
+            <span className="text-[10px] font-bold text-gray-700 dark:text-slate-200 shrink-0">
+              {pct !== null ? `${pct}% 剩余` : "—"}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -308,8 +299,4 @@ function codexLimitText(usage: CodexUsage): string {
 function codexRemainingPct(window: CodexUsageWindow): number {
   if (window.usedPercent === null) return 0;
   return Math.round(Math.max(0, Math.min(100, 100 - window.usedPercent)));
-}
-
-function codexRemainingText(window: CodexUsageWindow): string {
-  return window.usedPercent === null ? "—" : `${codexRemainingPct(window)}%`;
 }

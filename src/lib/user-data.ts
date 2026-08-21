@@ -231,6 +231,12 @@ export function getUserData(userId: string): UserDataResult {
         sidebarDefaultState: (configRow.sidebar_default_state as SystemConfig["sidebarDefaultState"]) || "expanded",
         clockWidgetMode: (configRow.clock_widget_mode as SystemConfig["clockWidgetMode"]) || "time",
         modelMonitorEnabled: configRow.model_monitor_enabled === 1 || configRow.model_monitor_enabled === true || configRow.model_monitor_enabled === "1",
+        aiCopilotEnabled: configRow.ai_copilot_enabled === 1 || configRow.ai_copilot_enabled === true || configRow.ai_copilot_enabled === "1",
+        todayActivityEnabled: configRow.today_activity_enabled === 1 || configRow.today_activity_enabled === true || configRow.today_activity_enabled === "1",
+        recentVisitsEnabled: configRow.recent_visits_enabled === 1 || configRow.recent_visits_enabled === true || configRow.recent_visits_enabled === "1",
+        pendingRemindersEnabled: configRow.pending_reminders_enabled === 1 || configRow.pending_reminders_enabled === true || configRow.pending_reminders_enabled === "1",
+        todaySummaryEnabled: configRow.today_summary_enabled === 1 || configRow.today_summary_enabled === true || configRow.today_summary_enabled === "1",
+        socialLinksEnabled: configRow.social_links_enabled === 1 || configRow.social_links_enabled === true || configRow.social_links_enabled === "1",
       }
     : {
         logoText: "Navelix",
@@ -265,6 +271,12 @@ export function getUserData(userId: string): UserDataResult {
         sidebarDefaultState: "expanded",
         clockWidgetMode: "time",
         modelMonitorEnabled: true,
+        aiCopilotEnabled: true,
+        todayActivityEnabled: true,
+        recentVisitsEnabled: true,
+        pendingRemindersEnabled: false,
+        todaySummaryEnabled: false,
+        socialLinksEnabled: true,
       };
 
   const result: UserDataResult = { user, categories: categoryRows as Category[], links, projects, config };
@@ -559,6 +571,12 @@ export function saveUserConfigs(
   const sidebarDefaultState = str("sidebarDefaultState", "sidebar_default_state", "expanded");
   const clockWidgetMode = str("clockWidgetMode", "clock_widget_mode", "time");
   const modelMonitorEnabled = bool("modelMonitorEnabled", "model_monitor_enabled", 1);
+  const aiCopilotEnabled = bool("aiCopilotEnabled", "ai_copilot_enabled", 1);
+  const todayActivityEnabled = bool("todayActivityEnabled", "today_activity_enabled", 1);
+  const recentVisitsEnabled = bool("recentVisitsEnabled", "recent_visits_enabled", 1);
+  const pendingRemindersEnabled = bool("pendingRemindersEnabled", "pending_reminders_enabled", 0);
+  const todaySummaryEnabled = bool("todaySummaryEnabled", "today_summary_enabled", 0);
+  const socialLinksEnabled = bool("socialLinksEnabled", "social_links_enabled", 1);
   const userRow = db.prepare("SELECT role FROM users WHERE id = ?").get(userId) as { role?: string } | undefined;
   const isAdmin = userRow?.role === "admin";
   const allowPublicAccess = isAdmin
@@ -597,9 +615,11 @@ export function saveUserConfigs(
       link_open_target, wallpaper_mode, custom_wallpaper_url, glassmorphism,
       sidebar_default_state, clock_widget_mode, allow_public_access, allow_registration,
       security_setup_done, model_monitor_enabled,
+      ai_copilot_enabled, today_activity_enabled, recent_visits_enabled,
+      pending_reminders_enabled, today_summary_enabled, social_links_enabled,
       custom_head_scripts, custom_css
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(user_id) DO UPDATE SET
       logo_text = excluded.logo_text,
       logo_image = excluded.logo_image,
@@ -631,6 +651,12 @@ export function saveUserConfigs(
       allow_registration = excluded.allow_registration,
       security_setup_done = excluded.security_setup_done,
       model_monitor_enabled = excluded.model_monitor_enabled,
+      ai_copilot_enabled = excluded.ai_copilot_enabled,
+      today_activity_enabled = excluded.today_activity_enabled,
+      recent_visits_enabled = excluded.recent_visits_enabled,
+      pending_reminders_enabled = excluded.pending_reminders_enabled,
+      today_summary_enabled = excluded.today_summary_enabled,
+      social_links_enabled = excluded.social_links_enabled,
       custom_head_scripts = excluded.custom_head_scripts,
       custom_css = excluded.custom_css
   `).run(
@@ -665,6 +691,12 @@ export function saveUserConfigs(
     allowRegistration,
     securitySetupDone,
     modelMonitorEnabled,
+    aiCopilotEnabled,
+    todayActivityEnabled,
+    recentVisitsEnabled,
+    pendingRemindersEnabled,
+    todaySummaryEnabled,
+    socialLinksEnabled,
     customHeadScripts,
     customCss,
   );

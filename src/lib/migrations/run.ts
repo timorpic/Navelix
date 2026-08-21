@@ -654,6 +654,13 @@ export function runMigrations(db: DatabaseSync): void {
     "model_monitor_enabled",
     "model_monitor_enabled INTEGER NOT NULL DEFAULT 1",
   );
+  // 前台右侧侧边栏各小组件显示开关（管理后台「界面与功能偏好」可切换）
+  ensureColumn(db, "user_configs", "ai_copilot_enabled", "ai_copilot_enabled INTEGER NOT NULL DEFAULT 1");
+  ensureColumn(db, "user_configs", "today_activity_enabled", "today_activity_enabled INTEGER NOT NULL DEFAULT 1");
+  ensureColumn(db, "user_configs", "recent_visits_enabled", "recent_visits_enabled INTEGER NOT NULL DEFAULT 1");
+  ensureColumn(db, "user_configs", "pending_reminders_enabled", "pending_reminders_enabled INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(db, "user_configs", "today_summary_enabled", "today_summary_enabled INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(db, "user_configs", "social_links_enabled", "social_links_enabled INTEGER NOT NULL DEFAULT 1");
 
   // 通知数据自动清理：保留 30 天内的操作记录，避免数据库无限制膨胀
   db.prepare(
