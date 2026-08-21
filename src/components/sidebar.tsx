@@ -243,23 +243,21 @@ export default function Sidebar({
 
       <aside
         className={`fixed inset-y-0 left-0 z-50 ${
-          collapsed ? "w-14" : "w-60"
-        } shrink-0 flex flex-col justify-between border-r ${
-          collapsed ? "p-1.5" : "p-5"
-        } select-none ${
+          collapsed ? "w-16 px-2 py-4" : "w-60 p-5"
+        } shrink-0 flex flex-col justify-between border-r select-none overflow-x-hidden ${
           mounted ? "transition-all duration-300 ease-in-out" : "transition-none"
         } lg:static lg:z-auto lg:translate-x-0 lg:h-screen lg:sticky lg:top-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         } text-gray-900 dark:text-slate-100 ${
           config.glassmorphism
-            ? "backdrop-blur-xl bg-white/75 dark:bg-slate-900/80 border-white/40 dark:border-slate-700/60 shadow-xl"
+            ? "backdrop-blur-xl bg-white/75 dark:bg-slate-900/80 border-white/40 dark:border-slate-700/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_4px_16px_rgba(0,0,0,0.06)]"
             : "bg-white border-gray-100 dark:bg-slate-900 dark:border-slate-800"
         }`}
       >
         {/* Top Section - 填满剩余空间，让底部抽屉固定在最低端 */}
         <div className="flex-1 min-h-0 flex flex-col gap-6">
           {/* Brand Logo & Theme Toggle */}
-          <div className="flex items-center justify-between px-2">
+          <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between px-2"} w-full`}>
             <div className="flex items-center gap-3 min-w-0">
               <LogoMark size={collapsed ? "sm" : "md"} />
               {!collapsed && (
@@ -269,34 +267,33 @@ export default function Sidebar({
               )}
             </div>
 
-            <div className="flex items-center gap-1 shrink-0">
-                          {/* Theme Toggle Button */}
-                          {!collapsed && (
-                            <button
-                              onClick={handleToggleDarkMode}
-                              className="p-1.5 rounded-xl transition-colors cursor-pointer hover:bg-gray-100 text-gray-600 dark:bg-slate-800/80 dark:text-amber-400 dark:hover:bg-slate-700 shrink-0 border border-transparent dark:border-slate-700/60"
-                              title={config.theme === "system" ? "跟随系统" : isDark ? "切换至浅色模式" : "切换至深色模式"}
-                            >
-                              {config.theme === "system" ? (
-                                <svg className="w-4 h-4 text-[#00C776]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
-                                </svg>
-                              ) : isDark ? (
-                                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                                </svg>
-                              ) : (
-                                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                                </svg>
-                              )}
-                            </button>
-                          )}
-                        </div>
+            {!collapsed && (
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={handleToggleDarkMode}
+                  className="p-1.5 rounded-xl transition-colors cursor-pointer hover:bg-gray-100 text-gray-600 dark:bg-slate-800/80 dark:text-amber-400 dark:hover:bg-slate-700 shrink-0 border border-transparent dark:border-slate-700/60"
+                  title={config.theme === "system" ? "跟随系统" : isDark ? "切换至浅色模式" : "切换至深色模式"}
+                >
+                  {config.theme === "system" ? (
+                    <svg className="w-4 h-4 text-[#00C776]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                    </svg>
+                  ) : isDark ? (
+                    <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Main Navigation Menu - 在品牌与底部抽屉之间滚动 */}
-          <nav className="flex-1 min-h-0 flex flex-col gap-1.5 overflow-y-auto pr-1 scrollbar-thin">
+          <nav className="flex-1 min-h-0 flex flex-col gap-1.5 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {!collapsed && (
               <div className="px-3.5 mb-1 text-[10px] font-bold tracking-wider text-gray-400 dark:text-slate-500 uppercase">
                 分类书签
@@ -308,20 +305,25 @@ export default function Sidebar({
               return (
                 <div
                   key={item.id}
-                  className="group relative flex items-center"
+                  className="group relative flex items-center justify-center w-full"
                 >
                   <button
                     onClick={() => {
                       onSelectCategory(item.id);
                       setMobileOpen(false);
                     }}
-                    className={`flex-1 flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                    title={item.name}
+                    className={`flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer ${
+                      collapsed
+                        ? "w-10 h-10 text-base shrink-0"
+                        : "flex-1 gap-3.5 px-3.5 py-2.5 text-xs font-semibold justify-start"
+                    } ${
                       isSelected
                         ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                    } ${collapsed ? "justify-center px-2 py-2.5" : ""}`}
+                    }`}
                   >
-                    <span className="text-sm shrink-0">{item.icon}</span>
+                    <span className="shrink-0">{item.icon}</span>
                     {!collapsed && (
                       <div className="flex items-center gap-1.5 min-w-0 pr-6">
                         <span className="truncate">{item.name}</span>
@@ -389,21 +391,28 @@ export default function Sidebar({
               const isSelected = activeCategory === tool.id;
 
               return (
-                <button
-                  key={tool.id}
-                  onClick={() => {
-                    onSelectCategory(tool.id);
-                    setMobileOpen(false);
-                  }}
-                  className={`flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
-                    isSelected
-                      ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                  } ${collapsed ? "justify-center px-2 py-2.5" : ""}`}
-                >
-                  <span className="text-sm">{tool.icon}</span>
-                  {!collapsed && <span className="truncate">{tool.name}</span>}
-                </button>
+                <div key={tool.id} className="flex items-center justify-center w-full">
+                  <button
+                    key={tool.id}
+                    onClick={() => {
+                      onSelectCategory(tool.id);
+                      setMobileOpen(false);
+                    }}
+                    title={tool.name}
+                    className={`flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer ${
+                      collapsed
+                        ? "w-10 h-10 text-base shrink-0"
+                        : "flex-1 gap-3.5 px-3.5 py-2.5 text-xs font-semibold justify-start"
+                    } ${
+                      isSelected
+                        ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                    }`}
+                  >
+                    <span className="shrink-0">{tool.icon}</span>
+                    {!collapsed && <span className="truncate">{tool.name}</span>}
+                  </button>
+                </div>
               );
             })}
           </nav>
@@ -626,10 +635,10 @@ export default function Sidebar({
         )}
         {/* 收起时底部展开按钮 */}
         {collapsed && (
-          <div className="flex items-center justify-center py-3 border-t border-gray-100 dark:border-slate-800">
+          <div className="flex items-center justify-center pt-3 border-t border-gray-100 dark:border-slate-800 w-full">
             <button
               onClick={onToggle}
-              className="p-1.5 rounded-lg transition-colors cursor-pointer text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
+              className="w-10 h-10 flex items-center justify-center rounded-xl transition-colors cursor-pointer text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-800 shrink-0"
               title="展开侧边栏"
             >
               <svg
