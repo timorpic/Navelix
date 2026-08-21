@@ -51,7 +51,7 @@ export default function LinkCard({ link, status }: LinkCardProps) {
       : null;
 
   const cardStyle = config.glassmorphism
-    ? "backdrop-blur-md bg-white/70 dark:bg-slate-800/70 border-white/40 dark:border-slate-700/60 shadow-xs hover:shadow-lg hover:border-[#00C776]/50"
+    ? "backdrop-blur-md bg-white/70 dark:bg-slate-800/70 border-white/40 dark:border-slate-700/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_16px_rgba(0,0,0,0.08)] hover:border-[#00C776]/50"
     : "bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700 hover:shadow-md hover:border-[#00C776]/40";
 
   return (

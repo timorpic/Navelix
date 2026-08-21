@@ -274,9 +274,8 @@ export default function AdminPersonalizationTab() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* 壁纸模式 */}
-          <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-3">
+        <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3">
             <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
               背景壁纸模式
             </label>
@@ -329,16 +328,18 @@ export default function AdminPersonalizationTab() {
           </div>
 
           {/* 毛玻璃开关 */}
-          <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2 flex flex-col justify-between">
+          <div className="space-y-2 border-t border-gray-200 dark:border-slate-700 pt-3 md:border-t-0 md:border-l md:pt-0 md:pl-4">
             <div>
               <h4 className="text-xs font-bold text-gray-800 dark:text-slate-200">
                 冰晶毛玻璃质感 (Backdrop Blur)
               </h4>
               <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-1">
-                开启后卡片与侧边栏呈现水凝膜半透明高斯模糊背景
+                {config.wallpaperMode === "none"
+                  ? "卡片与侧边栏呈现玻璃光泽感；搭配上方壁纸后有半透明模糊效果"
+                  : "卡片与侧边栏呈现水凝膜半透明高斯模糊背景"}
               </p>
             </div>
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between">
               <span className="text-xs text-gray-600 dark:text-slate-300 font-semibold">
                 {config.glassmorphism ? "当前状态：已启用毛玻璃" : "当前状态：经典纯色背景"}
               </span>
@@ -367,7 +368,7 @@ export default function AdminPersonalizationTab() {
               侧边栏形态与顶部小组件模式
             </h3>
             <p className="text-xs text-gray-400 dark:text-slate-400">
-              设置桌面端侧边栏初始展开/折叠状态，以及顶部组件模式（数字时钟 / 天气 / 模拟指针时钟）
+              设置桌面端侧边栏初始展开/折叠状态、中央内容区宽度，以及顶部组件模式（数字时钟 / 天气 / 模拟指针时钟）
             </p>
           </div>
         </div>
@@ -442,6 +443,62 @@ export default function AdminPersonalizationTab() {
                 }`}
               >
                 🕰️ 指针表盘
+              </button>
+            </div>
+          </div>
+
+          {/* 内容区域宽度 */}
+          <div className="p-4 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
+            <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
+              中央内容区域宽度
+            </label>
+            <p className="text-[11px] text-gray-400 dark:text-slate-400 pt-0.5">
+              主页面为「左侧边栏 + 中央主区域 + 右侧边栏」布局，此项控制中央内容区的最大宽度
+            </p>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => updateConfig({ maxWidth: "1000px" })}
+                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  config.maxWidth === "1000px"
+                    ? "bg-[#00C776] text-white"
+                    : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                }`}
+              >
+                1000px 较窄
+              </button>
+              <button
+                type="button"
+                onClick={() => updateConfig({ maxWidth: "1200px" })}
+                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  (config.maxWidth || "1200px") === "1200px"
+                    ? "bg-[#00C776] text-white"
+                    : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                }`}
+              >
+                1200px 主流
+              </button>
+              <button
+                type="button"
+                onClick={() => updateConfig({ maxWidth: "1400px" })}
+                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  config.maxWidth === "1400px"
+                    ? "bg-[#00C776] text-white"
+                    : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                }`}
+              >
+                1400px 大屏
+              </button>
+              <button
+                type="button"
+                onClick={() => updateConfig({ maxWidth: "full" })}
+                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  config.maxWidth === "full"
+                    ? "bg-[#00C776] text-white"
+                    : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700"
+                }`}
+              >
+                full 铺满
               </button>
             </div>
           </div>

@@ -18,7 +18,7 @@ export default function QuickAccess({ links }: QuickAccessProps) {
   }
 
   const cardStyle = config.glassmorphism
-    ? "backdrop-blur-md bg-white/70 dark:bg-slate-800/70 border-white/40 dark:border-slate-700/60 shadow-xs hover:shadow-lg"
+    ? "backdrop-blur-md bg-white/70 dark:bg-slate-800/70 border-white/40 dark:border-slate-700/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_16px_rgba(0,0,0,0.08)]"
     : "bg-white dark:bg-slate-800/90 border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-md";
 
   return (
