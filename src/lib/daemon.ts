@@ -1,7 +1,11 @@
 import { db } from "./db.ts";
+import fs from "node:fs";
+import path from "node:path";
 import { refreshMonitorAccount } from "./monitor/accounts.ts";
 import { emitUserEvent } from "./events.ts";
 import { safeFetch } from "./ssrf.ts";
+import { sendTelegramNotification } from "./telegram.ts";
+import { isTelegramNotifySystemEnabled } from "./system-settings.ts";
 
 // 全局防重入标记（确保 Next.js 开发热重载或多实例时不重复起定时器）
 declare global {
@@ -109,11 +113,66 @@ export async function runCloudBackupSchedule(): Promise<void> {
     const res = await uploadBackupToStorage(cfg, localSnapshot, fileName);
     if (res.success) {
       console.log(`[Daemon] 成功完成每日自动异地云备份: ${fileName}`);
+      sendTelegramNotification(
+        `✅ Navelix 云备份成功\n\n文件：${fileName}\n位置：${cfg.type} 存储`,
+        isTelegramNotifySystemEnabled(),
+      ).catch(() => {});
     } else {
       console.warn(`[Daemon] 自动异地云备份上传失败:`, res.error);
+      sendTelegramNotification(
+        `❌ Navelix 云备份上传失败\n\n错误：${res.error || "未知错误"}`,
+        isTelegramNotifySystemEnabled(),
+      ).catch(() => {});
     }
   } catch (err) {
     console.warn("[Daemon] 自动异地云备份异常:", err);
+  }
+}
+
+/**
+ * 检查 data 目录磁盘占用，超过阈值时发送 Telegram 告警。
+ * 阈值：数据目录 > 2GB，或备份目录 > 1GB。
+ */
+export function checkDiskUsage(): void {
+  try {
+    const dataDir = path.join(process.cwd(), "data");
+    const backupDir = path.join(dataDir, "backups");
+    const notify = () => isTelegramNotifySystemEnabled();
+
+    const dirSize = (dir: string): number => {
+      if (!fs.existsSync(dir)) return 0;
+      let total = 0;
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const p = path.join(dir, entry.name);
+        try {
+          if (entry.isDirectory()) total += dirSize(p);
+          else total += fs.statSync(p).size;
+        } catch {
+          // ignore
+        }
+      }
+      return total;
+    };
+
+    const mb = (b: number) => `${(b / (1024 * 1024)).toFixed(1)} MB`;
+
+    const dataSize = dirSize(dataDir);
+    const backupSize = dirSize(backupDir);
+
+    if (dataSize > 2 * 1024 * 1024 * 1024) {
+      sendTelegramNotification(
+        `⚠️ Navelix 数据目录占用过高\n\ndata/ 目录：${mb(dataSize)}\n请及时清理无用数据。`,
+        notify(),
+      ).catch(() => {});
+    }
+    if (backupSize > 1024 * 1024 * 1024) {
+      sendTelegramNotification(
+        `⚠️ Navelix 备份目录占用过高\n\nbackups/ 目录：${mb(backupSize)}\n请及时清理旧备份。`,
+        notify(),
+      ).catch(() => {});
+    }
+  } catch {
+    // 磁盘检查失败不影响主流程
   }
 }
 
@@ -128,6 +187,12 @@ export function startBackgroundDaemon(): void {
   globalThis.__navelix_daemon_timers__ = [];
 
   console.log("[Daemon] Navelix 后台守护任务体系已启动");
+
+  // 服务启动通知（系统异常场景：服务重启）
+  sendTelegramNotification(
+    `🟢 Navelix 服务已启动\n\n${new Date().toLocaleString("zh-CN")}`,
+    isTelegramNotifySystemEnabled(),
+  ).catch(() => {});
 
   // 1. 服务启动 10 秒后执行首次模型配额预拉取
   const initTimer = setTimeout(() => {
@@ -153,6 +218,12 @@ export function startBackgroundDaemon(): void {
     runCloudBackupSchedule().catch(() => {});
   }, 24 * 60 * 60 * 1000);
   globalThis.__navelix_daemon_timers__.push(cloudBackupInterval);
+
+  // 5. 磁盘占用检查（每 6 小时）
+  const diskCheckInterval = setInterval(() => {
+    checkDiskUsage();
+  }, 6 * 60 * 60 * 1000);
+  globalThis.__navelix_daemon_timers__.push(diskCheckInterval);
 }
 
 /**

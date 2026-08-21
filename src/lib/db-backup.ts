@@ -3,6 +3,8 @@ import path from "node:path";
 import { db } from "./db.ts";
 import { recordAuditLog } from "./audit.ts";
 import { logger } from "./logger.ts";
+import { sendTelegramNotification } from "./telegram.ts";
+import { isTelegramNotifyBackupEnabled } from "./system-settings.ts";
 
 const BACKUP_DIR = path.join(process.cwd(), "data", "backups");
 const MAX_BACKUPS = 7;
@@ -53,13 +55,31 @@ export function performDatabaseBackup(operatorUserId = "system"): string | null 
     // 保留最近 MAX_BACKUPS 个备份文件，清理旧备份
     cleanOldBackups();
 
+    // 备份完成 Telegram 通知
+    sendTelegramNotification(
+      `✅ Navelix 数据库备份成功\n\n文件：${backupFileName}\n大小：${formatFileSize(fs.statSync(backupPath).size)}`,
+      isTelegramNotifyBackupEnabled(),
+    ).catch(() => {});
+
     return backupPath;
   } catch (err) {
     logger.error("backup failed", {
       error: err instanceof Error ? err.message : String(err),
     });
+    sendTelegramNotification(
+      `❌ Navelix 数据库备份失败\n\n错误：${err instanceof Error ? err.message : String(err)}`,
+      isTelegramNotifyBackupEnabled(),
+    ).catch(() => {});
     return null;
   }
+}
+
+/** 将字节数格式化为人类可读大小 */
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
 /**
