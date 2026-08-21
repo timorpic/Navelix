@@ -661,6 +661,8 @@ export function runMigrations(db: DatabaseSync): void {
   ensureColumn(db, "user_configs", "pending_reminders_enabled", "pending_reminders_enabled INTEGER NOT NULL DEFAULT 0");
   ensureColumn(db, "user_configs", "today_summary_enabled", "today_summary_enabled INTEGER NOT NULL DEFAULT 0");
   ensureColumn(db, "user_configs", "social_links_enabled", "social_links_enabled INTEGER NOT NULL DEFAULT 1");
+  // 收藏夹 Markdown 笔记（用于内容检索与展示）
+  ensureColumn(db, "user_links", "notes", "notes TEXT NOT NULL DEFAULT ''");
 
   // 通知数据自动清理：保留 30 天内的操作记录，避免数据库无限制膨胀
   db.prepare(

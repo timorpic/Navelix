@@ -65,6 +65,7 @@ export function initSchema(db: DatabaseSync): void {
       description TEXT NOT NULL DEFAULT '',
       icon TEXT NOT NULL DEFAULT '',
       category TEXT NOT NULL,
+      notes TEXT NOT NULL DEFAULT '',
       is_quick_access INTEGER NOT NULL DEFAULT 0,
       PRIMARY KEY (id, user_id)
     );

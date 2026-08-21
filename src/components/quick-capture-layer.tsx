@@ -19,6 +19,7 @@ export function QuickCaptureLayer({
     description: string;
     category: string;
     icon: string;
+    notes?: string;
   }) => void;
 }) {
   const searchParams = useSearchParams();

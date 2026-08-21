@@ -3,6 +3,11 @@ import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
 import { decryptSecret } from "@/lib/secret";
+import {
+  executeAiTool,
+  extractToolCalls,
+  stripToolCalls,
+} from "@/lib/ai-tools";
 
 interface ChatHistoryItem {
   sender?: string;
@@ -12,12 +17,14 @@ interface ChatHistoryItem {
 const REQUEST_TIMEOUT_MS = 30_000;
 
 interface ProjectRow {
+  id: string;
   name: string;
   status: string;
   url?: string;
 }
 
 interface TodoRow {
+  id: string;
   title: string;
   priority: string;
   done: number;
@@ -52,7 +59,7 @@ function buildWorkspaceContext(userId: string): string {
     // 2. 读取项目 (projects)
     const projects = db
       .prepare(
-        `SELECT name, status, url
+        `SELECT id, name, status, url
          FROM projects
          WHERE user_id = ?
          ORDER BY sort_order ASC
@@ -63,7 +70,7 @@ function buildWorkspaceContext(userId: string): string {
     // 3. 读取待办 (user_todos)
     const todos = db
       .prepare(
-        `SELECT title, priority, done, due_date
+        `SELECT id, title, priority, done, due_date
          FROM user_todos
          WHERE user_id = ?
          ORDER BY done ASC,
@@ -86,7 +93,7 @@ function buildWorkspaceContext(userId: string): string {
 
     const projectLines = projects.length > 0
       ? projects.map((p) => {
-          return `- [${p.status || "状态未填"}] 项目名称：${p.name}${p.url ? ` (链接: ${p.url})` : ""}`;
+          return `- [${p.status || "状态未填"}] (id: ${p.id}) 项目名称：${p.name}${p.url ? ` (链接: ${p.url})` : ""}`;
         }).join("\n")
       : "（当前暂无项目数据）";
 
@@ -94,7 +101,7 @@ function buildWorkspaceContext(userId: string): string {
       ? todos.map((t) => {
           const statusText = t.done === 1 ? "已完成" : "未完成";
           const prioText = t.priority === "high" ? "高优先级" : t.priority === "medium" ? "中优先级" : "普通优先级";
-          return `- [${statusText} | ${prioText}] 待办：${t.title}${t.due_date ? ` (截止日期: ${t.due_date})` : ""}`;
+          return `- [${statusText} | ${prioText}] (id: ${t.id}) 待办：${t.title}${t.due_date ? ` (截止日期: ${t.due_date})` : ""}`;
         }).join("\n")
       : "（当前暂无待办事项）";
 
@@ -122,7 +129,26 @@ ${linkLines}
 【核心指令与回答准则】：
 1. 当用户询问项目（如“我有哪些已完成的项目”、“正在进行的项目”等）、待办任务或书签时，必须直接提取上述数据回答，绝不能回答“我没有权限访问您的数据”或“我不知道您的项目”。
 2. 若用户询问已完成项目，请明确列出状态为“已完成”的所有项目名称及相关信息。
-3. 若用户请求工作建议、任务拆解或优先级规划，请结合上述进行中的项目与待办清单给出针对性方案。`;
+3. 若用户请求工作建议、任务拆解或优先级规划，请结合上述进行中的项目与待办清单给出针对性方案。
+
+【可执行的写操作工具 (Tool Calling)】：
+当用户明确要求你创建、修改或删除“待办/日程”或“项目”时，你可以在回复中追加一个或多个工具调用块，格式必须严格如下：
+<TOOL>{"tool":"create_todo","args":{"title":"待办标题","priority":"high|medium|low","dueDate":"YYYY-MM-DD"}}</TOOL>
+
+可用工具清单：
+1. create_todo —— 新建待办/日程。args: { title: string 必填, priority?: high|medium|low, dueDate?: YYYY-MM-DD, projectId?: string }
+2. update_todo —— 修改待办。args: { id: string 必填, title?: string, priority?: string, dueDate?: string, done?: boolean }
+3. delete_todo —— 删除待办。args: { id: string 必填 }
+4. create_project —— 新建项目。args: { name: string 必填, status?: string, color?: string, url?: string, description?: string }
+5. update_project —— 修改项目。args: { id: string 必填, name?: string, status?: string, color?: string, url?: string, description?: string }
+6. delete_project —— 删除项目。args: { id: string 必填 }
+
+工具调用规则：
+- 只有在用户明确表达“创建/修改/删除”意图时才输出工具调用块；普通查询不要输出。
+- 每个工具调用块独立放在一行，可以连续输出多个。
+- 在正文中简要说明你将要执行的操作，再把 <TOOL> 块追加在回复末尾。
+- 删除操作前，请在正文中向用户复述确认要删除的目标，但仍可输出工具调用块（由系统执行）。
+- 不要编造待办或项目的 id；若需要修改/删除特定项，从上方工作区数据中引用其真实 id（若未提供，可要求用户说明要操作的是哪一项）。`;
   } catch (e) {
     console.error("[AI Chat] Failed to build workspace context:", e);
     return "你是由 Navelix 数字导航工作空间集成的 AI 智能助手。请解答用户的疑问，使用简洁、清晰且富有条理的中文回答。";
@@ -248,8 +274,21 @@ export async function POST(req: Request) {
       data?.choices?.[0]?.text ||
       "未获取到有效的模型回复。";
 
+    // 解析并执行 AI 请求的写操作工具调用
+    const toolCalls = extractToolCalls(replyText);
+    const cleanText = stripToolCalls(replyText);
+    let toolReport = "";
+    if (toolCalls.length > 0) {
+      const lines: string[] = [];
+      for (const call of toolCalls) {
+        const result = executeAiTool(user.id, call);
+        lines.push(result.ok ? `✅ ${result.message}` : `❌ ${result.error}`);
+      }
+      toolReport = `\n\n${lines.join("\n")}`;
+    }
+
     return NextResponse.json({
-      text: replyText,
+      text: `${cleanText || (toolReport ? "已执行您的请求：" : "未获取到有效的模型回复。")}${toolReport}`,
     });
   } catch (err) {
     return NextResponse.json(

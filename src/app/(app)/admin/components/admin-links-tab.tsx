@@ -105,7 +105,8 @@ export default function AdminLinksTab({ activeTab }: AdminLinksTabProps) {
         (l) =>
           l.title.toLowerCase().includes(q) ||
           l.url.toLowerCase().includes(q) ||
-          l.description.toLowerCase().includes(q),
+          l.description.toLowerCase().includes(q) ||
+          (l.notes || "").toLowerCase().includes(q),
       );
     }
     return result;
@@ -169,6 +170,7 @@ export default function AdminLinksTab({ activeTab }: AdminLinksTabProps) {
     description: string;
     category: string;
     icon: string;
+    notes?: string;
   }) => {
     if (editingLink) {
       updateLink(editingLink.id, data);

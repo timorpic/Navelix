@@ -19,6 +19,7 @@ interface LinkInput {
   category?: unknown;
   icon?: unknown;
   isQuickAccess?: unknown;
+  notes?: unknown;
 }
 
 // GET /api/links - 当前用户的书签 + 全部分类（供扩展/快捷指令读取）
@@ -30,7 +31,7 @@ export async function GET() {
 
   const links = db
     .prepare(
-      `SELECT id, title, url, description, icon, category, is_quick_access AS isQuickAccess
+      `SELECT id, title, url, description, icon, category, notes, is_quick_access AS isQuickAccess
        FROM user_links WHERE user_id = ? ORDER BY is_quick_access DESC, title ASC`,
     )
     .all(user.id);
@@ -80,6 +81,7 @@ export async function POST(req: NextRequest) {
   const description = typeof body.description === "string" ? body.description.trim().slice(0, 500) : "";
   const category = typeof body.category === "string" && body.category.trim() ? body.category.trim() : "favorites";
   const icon = typeof body.icon === "string" ? body.icon.trim().slice(0, 500) : "";
+  const notes = typeof body.notes === "string" ? body.notes.trim().slice(0, 20000) : "";
   const isQuickAccess = body.isQuickAccess === true || body.isQuickAccess === 1 || body.isQuickAccess === "1" ? 1 : 0;
 
   // 幂等：已有同 URL 则不重复插入
@@ -92,15 +94,15 @@ export async function POST(req: NextRequest) {
 
   const id = `link-${Date.now()}-${randomBytes(3).toString("hex")}`;
   db.prepare(
-    `INSERT INTO user_links (id, user_id, title, url, description, icon, category, is_quick_access)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(id, user.id, title, url, description, icon, category, isQuickAccess);
+    `INSERT INTO user_links (id, user_id, title, url, description, icon, category, notes, is_quick_access)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(id, user.id, title, url, description, icon, category, notes, isQuickAccess);
 
   // 触发实时同步通知（供网页端 / 其他终端秒级感知）
   emitUserEvent(user.id, "links:change", { linkId: id, url, title });
 
   return NextResponse.json(
-    { link: { id, title, url, description, icon, category, isQuickAccess }, duplicate: false },
+    { link: { id, title, url, description, icon, category, notes, isQuickAccess }, duplicate: false },
     { status: 201 },
   );
 }

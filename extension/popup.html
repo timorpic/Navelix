@@ -233,7 +233,7 @@
         <img class="brand-logo logo-dark" src="icons/navelix-logo-dark.svg" alt="Navelix" />
       </div>
       <div class="hdr-r">
-        <span class="ver">v1.0.0</span>
+        <span class="ver">v1.1.0</span>
       </div>
     </header>
 
@@ -281,6 +281,16 @@
               <select id="category"></select>
               <svg class="ic ic-right"><use href="#i-chevron" /></svg>
             </div>
+          </div>
+
+          <div class="field">
+            <label>Markdown 笔记 <span style="color:var(--faint);font-weight:400">(可选，用于内容检索)</span></label>
+            <textarea id="notes" rows="4" placeholder="记录页面要点、摘要或个人笔记…" style="width:100%;border:1px solid var(--border);border-radius:9px;background:var(--input-bg);color:var(--text);font-size:13px;padding:9px 11px;resize:vertical;min-height:76px;font-family:inherit;"></textarea>
+            <button id="summarizeBtn" type="button" class="btn btn-ghost" style="margin-top:8px;height:34px;font-size:12px;" disabled>
+              <svg class="ic" id="summarizeIcon"><use href="#i-sparkles" /></svg>
+              <span id="summarizeLabel">✨ AI 抓取并生成摘要</span>
+            </button>
+            <p id="summaryMsg" style="display:none;font-size:11px;color:var(--danger);margin-top:6px;"></p>
           </div>
 
           <button id="saveBtn" class="btn btn-primary">
@@ -352,6 +362,7 @@
       <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
       <symbol id="i-plug" viewBox="0 0 24 24"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></symbol>
       <symbol id="i-spinner" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></symbol>
+      <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></symbol>
     </svg>
 
     <script type="module" src="popup.js"></script>

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Navelix 收藏助手",
-  "version": "1.0.0",
-  "description": "新标签页接管 Navelix 导航站；工具栏/右键一键收藏当前网页。",
+  "version": "1.1.0",
+  "description": "新标签页接管 Navelix 导航站；工具栏/右键一键收藏当前网页，支持 Markdown 笔记与 AI 摘要。",
   "permissions": ["storage", "contextMenus", "tabs", "notifications"],
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js", "type": "module" },

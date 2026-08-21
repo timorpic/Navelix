@@ -162,7 +162,7 @@ export default function GlobalSearchResults({
     return links
       .filter(
         (l) =>
-          matchText(keywords, l.title, l.description, l.url) ||
+          matchText(keywords, l.title, l.description, l.url, l.notes || "") ||
           matchText(keywords, categoryNameMap.get(l.category) || ""),
       )
       .slice(0, MAX_PER_SECTION);

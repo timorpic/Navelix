@@ -18,6 +18,8 @@ export interface SiteLink {
   icon: string;
   category: string;
   isQuickAccess?: boolean;
+  /** 收藏页面的 Markdown 笔记/摘要（用于内容检索与展示） */
+  notes?: string;
 }
 
 export interface ProductivityStat {

@@ -93,10 +93,12 @@ async function loadSaveView() {
   if (!cfg.baseUrl) {
     $("needConfig").hidden = false;
     $("saveBtn").disabled = true;
+    $("summarizeBtn").disabled = true;
     return;
   }
   $("needConfig").hidden = true;
   $("saveBtn").disabled = false;
+  $("summarizeBtn").disabled = false;
 
   if (!$("url").value) await prefillFromActiveTab();
 
@@ -118,6 +120,7 @@ async function loadSaveView() {
 $("saveBtn").addEventListener("click", async () => {
   const url = $("url").value.trim();
   const title = $("title").value.trim();
+  const notes = $("notes").value.trim();
   if (!url) {
     setStatus("status", "err", "网址为空", "请输入要收藏的网址。");
     return;
@@ -125,7 +128,7 @@ $("saveBtn").addEventListener("click", async () => {
   clearStatus("status");
   setBtnLoading("saveBtn", "saveIcon", "saveLabel", "收藏中…");
   try {
-    const result = await saveBookmark({ title, url, category: $("category").value });
+    const result = await saveBookmark({ title, url, category: $("category").value, notes });
     const catName = $("category").selectedOptions[0]?.textContent || "";
     const suffix = catName ? `已保存到「${catName}」` : "已保存到你的书签库";
     if (result.duplicate) {
@@ -141,6 +144,38 @@ $("saveBtn").addEventListener("click", async () => {
   } catch (err) {
     setBtnReset("saveBtn", "saveIcon", "saveLabel", "收藏");
     setStatus("status", "err", "收藏失败", err instanceof Error ? err.message : String(err));
+  }
+});
+
+// ── AI 抓取并生成摘要 ──
+$("summarizeBtn").addEventListener("click", async () => {
+  const url = $("url").value.trim();
+  const msgEl = $("summaryMsg");
+  msgEl.style.display = "none";
+  if (!url) {
+    msgEl.textContent = "请先填写网址";
+    msgEl.style.display = "block";
+    return;
+  }
+  setBtnLoading("summarizeBtn", "summarizeIcon", "summarizeLabel", "抓取生成中…");
+  try {
+    const data = await apiCall("/api/ai/summarize", {
+      method: "POST",
+      body: JSON.stringify({ url }),
+    });
+    if (data.notes) {
+      $("notes").value = data.notes;
+      if (data.title && !$("title").value.trim()) $("title").value = data.title;
+      toast("ok", "摘要已生成", "已填入笔记区域");
+    } else {
+      msgEl.textContent = data.error || "生成摘要失败";
+      msgEl.style.display = "block";
+    }
+  } catch (err) {
+    msgEl.textContent = err instanceof Error ? err.message : String(err);
+    msgEl.style.display = "block";
+  } finally {
+    setBtnReset("summarizeBtn", "summarizeIcon", "summarizeLabel", "✨ AI 抓取并生成摘要", "i-sparkles");
   }
 });
 

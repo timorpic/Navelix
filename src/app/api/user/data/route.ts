@@ -39,7 +39,7 @@ export async function GET() {
   // Fetch links
   const linkRows = db
     .prepare(
-      "SELECT id, title, url, description, icon, category, is_quick_access FROM user_links WHERE user_id = ?",
+      "SELECT id, title, url, description, icon, category, notes, is_quick_access FROM user_links WHERE user_id = ?",
     )
     .all(userId) as Array<{
     id: string;
@@ -48,6 +48,7 @@ export async function GET() {
     description: string;
     icon: string;
     category: string;
+    notes: string;
     is_quick_access: number;
   }>;
 
@@ -58,6 +59,7 @@ export async function GET() {
     description: l.description,
     icon: l.icon,
     category: l.category,
+    notes: l.notes || undefined,
     isQuickAccess: l.is_quick_access === 1,
   }));
 

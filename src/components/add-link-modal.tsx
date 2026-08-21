@@ -17,6 +17,7 @@ interface AddLinkModalProps {
     description: string;
     category: string;
     icon: string;
+    notes?: string;
   }) => void;
 }
 
@@ -111,6 +112,7 @@ export default function AddLinkModal({
   const [title, setTitle] = useState(link?.title ?? "");
   const [url, setUrl] = useState(link?.url ?? "");
   const [description, setDescription] = useState(link?.description ?? "");
+  const [notes, setNotes] = useState(link?.notes ?? "");
   const [category, setCategory] = useState(
     link?.category ?? defaultCategory ?? "",
   );
@@ -125,6 +127,8 @@ export default function AddLinkModal({
   const [customSiteUrl, setCustomSiteUrl] = useState("");
   const [siteLoading, setSiteLoading] = useState(false);
   const [siteError, setSiteError] = useState("");
+  const [summarizing, setSummarizing] = useState(false);
+  const [summaryError, setSummaryError] = useState("");
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -225,6 +229,38 @@ export default function AddLinkModal({
     }
   };
 
+  const handleSummarize = async () => {
+    const targetUrl = url.trim();
+    if (!targetUrl) {
+      setSummaryError("请先填写网址");
+      return;
+    }
+    if (!/^https?:\/\//i.test(targetUrl)) {
+      setSummaryError("请输入完整的 http/https 网址");
+      return;
+    }
+    setSummarizing(true);
+    setSummaryError("");
+    try {
+      const res = await fetch("/api/ai/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: targetUrl }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.notes) {
+        setNotes(data.notes);
+        if (data.title && !title.trim()) setTitle(data.title);
+      } else {
+        setSummaryError(data.error || "生成摘要失败");
+      }
+    } catch {
+      setSummaryError("网络请求失败");
+    } finally {
+      setSummarizing(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedTitle = title.trim();
@@ -256,6 +292,7 @@ export default function AddLinkModal({
       description: description.trim(),
       category: targetCategory,
       icon: icon.trim(),
+      notes: notes.trim(),
     });
     setError("");
     onClose();
@@ -312,6 +349,17 @@ export default function AddLinkModal({
             placeholder="e.g. https://github.com"
             className={inputClass}
           />
+          <button
+            type="button"
+            onClick={handleSummarize}
+            disabled={summarizing}
+            className="mt-2 w-full py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-[#00C776]/10 to-indigo-500/10 hover:from-[#00C776]/20 hover:to-indigo-500/20 text-[#00C776] border border-[#00C776]/25 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {summarizing ? "⏳ 正在抓取并生成摘要…" : "✨ AI 抓取并生成 Markdown 摘要"}
+          </button>
+          {summaryError && (
+            <p className="mt-1 text-[11px] text-red-500">{summaryError}</p>
+          )}
         </div>
         <div>
           <label
@@ -520,6 +568,23 @@ export default function AddLinkModal({
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Optional short description"
             className={inputClass}
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="link-notes"
+            className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-slate-400"
+          >
+            Markdown 笔记 <span className="text-[10px] text-gray-400 dark:text-slate-500">(可选，用于内容检索)</span>
+          </label>
+          <textarea
+            id="link-notes"
+            name="notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder={"记录页面要点、摘要或个人笔记，例如：\n- 核心功能：…\n- 使用场景：…"}
+            rows={4}
+            className={`${inputClass} resize-y min-h-[84px]`}
           />
         </div>
         {error && <p className="text-xs text-red-500">{error}</p>}

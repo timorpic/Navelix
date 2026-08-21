@@ -74,7 +74,7 @@ describe("Full JSON Export & Import Verification", () => {
 
       // 3. Simulate Full Export Payload Generation (like handleExport does)
       const catRows = db.prepare("SELECT id, name, label, icon, color FROM user_categories WHERE user_id = ?").all(testUserId);
-      const linkRows = db.prepare("SELECT id, title, url, description, icon, category, is_quick_access FROM user_links WHERE user_id = ?").all(testUserId);
+      const linkRows = db.prepare("SELECT id, title, url, description, icon, category, notes, is_quick_access FROM user_links WHERE user_id = ?").all(testUserId);
       const projRows = db.prepare("SELECT id, name, status, status_color, url FROM projects WHERE user_id = ?").all(testUserId);
       const todoRows = db.prepare("SELECT id, title, priority, done, due_date, project_id, created_at, sort_order FROM user_todos WHERE user_id = ?").all(testUserId);
       const configRow = db.prepare("SELECT * FROM user_configs WHERE user_id = ?").get(testUserId) as Record<string, unknown>;

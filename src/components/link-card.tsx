@@ -117,6 +117,11 @@ export default function LinkCard({ link, status }: LinkCardProps) {
           )}
         </div>
         <p className="truncate text-xs text-gray-400 dark:text-slate-400">{link.description}</p>
+        {link.notes && (
+          <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-gray-500 dark:text-slate-500 whitespace-pre-wrap break-words">
+            📝 {link.notes}
+          </p>
+        )}
       </div>
     </a>
   );

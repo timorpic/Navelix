@@ -96,7 +96,7 @@ export function getUserData(userId: string): UserDataResult {
   // Fetch links (own + subscribed categories)
   const ownLinkRows = db
     .prepare(
-      "SELECT id, title, url, description, icon, category, is_quick_access FROM user_links WHERE user_id = ?",
+      "SELECT id, title, url, description, icon, category, notes, is_quick_access FROM user_links WHERE user_id = ?",
     )
     .all(userId) as Array<{
     id: string;
@@ -105,6 +105,7 @@ export function getUserData(userId: string): UserDataResult {
     description: string;
     icon: string;
     category: string;
+    notes: string;
     is_quick_access: number;
   }>;
 
@@ -113,7 +114,7 @@ export function getUserData(userId: string): UserDataResult {
     for (const sub of subCategoryRows) {
       const linksInSub = db
         .prepare(
-          "SELECT id, title, url, description, icon, category, is_quick_access FROM user_links WHERE user_id = ? AND category = ?",
+          "SELECT id, title, url, description, icon, category, notes, is_quick_access FROM user_links WHERE user_id = ? AND category = ?",
         )
         .all(sub.owner_id, sub.id) as typeof ownLinkRows;
       subLinkRows.push(...linksInSub);
@@ -129,6 +130,7 @@ export function getUserData(userId: string): UserDataResult {
     description: l.description,
     icon: l.icon,
     category: l.category,
+    notes: l.notes || undefined,
     isQuickAccess: l.is_quick_access === 1,
   }));
 
@@ -307,6 +309,7 @@ interface LinkInput {
   icon?: unknown;
   category?: unknown;
   isQuickAccess?: unknown;
+  notes?: unknown;
 }
 
 /** 项目输入 */
@@ -382,14 +385,15 @@ export function saveUserCategories(userId: string, items: CategoryInput[]): void
 export function saveUserLinks(userId: string, items: LinkInput[]): void {
   const incomingIds: string[] = [];
   const upsert = db.prepare(`
-    INSERT INTO user_links (id, user_id, title, url, description, icon, category, is_quick_access)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO user_links (id, user_id, title, url, description, icon, category, notes, is_quick_access)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id, user_id) DO UPDATE SET
       title = excluded.title,
       url = excluded.url,
       description = excluded.description,
       icon = excluded.icon,
       category = excluded.category,
+      notes = excluded.notes,
       is_quick_access = excluded.is_quick_access
   `);
   for (const l of items) {
@@ -404,6 +408,7 @@ export function saveUserLinks(userId: string, items: LinkInput[]): void {
       String(l.description || ""),
       String(l.icon || ""),
       String(l.category || "uncategorized"),
+      String(l.notes || ""),
       l.isQuickAccess ? 1 : 0,
     );
   }
