@@ -30,9 +30,7 @@ data
 AGENTS.md
 CLAUDE.md
 DOCKER.md
-review-report.md
-review-report-v2.md
-delivery-summary.md
+MEMORY.md
 
 # ── Private Commercial & Licensing Tools ──
 *.pem

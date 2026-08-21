@@ -46,8 +46,9 @@ next-env.d.ts
 *.key
 .license_private_key.pem
 
-# -- hermes --
+# -- AI --
 IDEA.md
 /temp/
 .agents/
 AGENTS.md
+MEMORY.md
