@@ -12,7 +12,7 @@
 
 <p align="center">
   <a href="https://github.com/timorpic/Navelix/releases"><img src="https://img.shields.io/github/v/release/timorpic/Navelix?color=00C776&label=Version" alt="Release"></a>
-  <a href="https://github.com/timorpic/Navelix/pkgs/container/navelix"><img src="https://img.shields.io/badge/Docker-3721:3721-00C776?logo=docker" alt="Docker"></a>
+  <a href="https://hub.docker.com/r/timorpic/navelix"><img src="https://img.shields.io/docker/pulls/timorpic/navelix?color=00C776&logo=docker" alt="Docker Pulls"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Custom-00C776" alt="License"></a>
   <a href="https://github.com/timorpic/Navelix/wiki"><img src="https://img.shields.io/badge/Wiki-Documentation-00C776?logo=gitbook" alt="Wiki"></a>
 </p>
@@ -20,6 +20,8 @@
 ---
 
 你的个人数字工作空间——网址导航、AI 智能助手、项目管理看板、交互式甘特图、日历日程与效率工具，收进同一个首页。零外部数据库依赖，单容器轻量高效运行。
+
+![Docker Pulls](https://img.shields.io/docker/pulls/timorpic/navelix)
 
 ## 界面预览
 
