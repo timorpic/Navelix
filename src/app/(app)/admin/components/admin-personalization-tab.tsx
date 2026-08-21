@@ -300,34 +300,45 @@ export default function AdminPersonalizationTab() {
                   水晶毛玻璃强度 (Backdrop Blur)
                 </label>
                 <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-0.5">
-                  调节半透明区域的模糊强度
+                  调节半透明区域的模糊强度或彻底关闭
                 </p>
               </div>
 
-              {/* 大点击热区分段按钮组 */}
-              <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100/80 dark:bg-slate-800/80 rounded-2xl border border-gray-200/60 dark:border-slate-700/60">
+              {/* 大点击热区分段按钮组（关闭 / 低 / 中 / 高） */}
+              <div className="grid grid-cols-4 gap-1.5 p-1 bg-gray-100/80 dark:bg-slate-800/80 rounded-2xl border border-gray-200/60 dark:border-slate-700/60">
                 {[
+                  { id: "off", label: "关闭" },
                   { id: "low", label: "低" },
                   { id: "medium", label: "中" },
                   { id: "high", label: "高" },
                 ].map((item) => {
-                  const isSelected = glassmorphism && blurStrength === item.id;
+                  const isSelected = item.id === "off" ? !glassmorphism : glassmorphism && blurStrength === item.id;
                   return (
                     <button
                       key={item.id}
                       type="button"
                       onClick={() => {
-                        setBlurStrength(item.id as "low" | "medium" | "high");
-                        setGlassmorphism(true);
+                        if (item.id === "off") {
+                          setGlassmorphism(false);
+                        } else {
+                          setBlurStrength(item.id as "low" | "medium" | "high");
+                          setGlassmorphism(true);
+                        }
                       }}
-                      className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      className={`py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                         isSelected
-                          ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-sm shadow-black/5"
+                          ? item.id === "off"
+                            ? "bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-200 shadow-sm shadow-black/5"
+                            : "bg-white dark:bg-slate-900 text-[#00C776] shadow-sm shadow-black/5"
                           : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
                       }`}
                     >
                       <span className={`w-2 h-2 rounded-full transition-colors ${
-                        isSelected ? "bg-[#00C776]" : "bg-transparent border border-gray-300 dark:border-slate-600"
+                        isSelected
+                          ? item.id === "off"
+                            ? "bg-gray-400 dark:bg-slate-500"
+                            : "bg-[#00C776]"
+                          : "bg-transparent border border-gray-300 dark:border-slate-600"
                       }`} />
                       <span>{item.label}</span>
                     </button>
@@ -335,29 +346,39 @@ export default function AdminPersonalizationTab() {
                 })}
               </div>
 
-              {/* 轨道可视化指示条（支持点击左中右快速选） */}
+              {/* 轨道可视化指示条（支持点击快速选） */}
               <div
                 onClick={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = e.clientX - rect.left;
                   const ratio = x / rect.width;
-                  if (ratio < 0.33) setBlurStrength("low");
-                  else if (ratio < 0.66) setBlurStrength("medium");
-                  else setBlurStrength("high");
-                  setGlassmorphism(true);
+                  if (ratio < 0.25) {
+                    setGlassmorphism(false);
+                  } else if (ratio < 0.5) {
+                    setBlurStrength("low");
+                    setGlassmorphism(true);
+                  } else if (ratio < 0.75) {
+                    setBlurStrength("medium");
+                    setGlassmorphism(true);
+                  } else {
+                    setBlurStrength("high");
+                    setGlassmorphism(true);
+                  }
                 }}
                 className="relative w-full h-3 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center px-1.5 cursor-pointer mt-2"
                 title="点击快速调节模糊强度"
               >
                 <div
                   className={`h-1.5 bg-[#00C776] rounded-full transition-all duration-300 ${
-                    !glassmorphism ? "w-0" : blurStrength === "low" ? "w-1/4" : blurStrength === "medium" ? "w-1/2" : "w-full"
+                    !glassmorphism ? "w-0" : blurStrength === "low" ? "w-1/3" : blurStrength === "medium" ? "w-2/3" : "w-full"
                   }`}
                 />
                 <div
-                  className="w-3.5 h-3.5 rounded-full bg-[#00C776] shadow-sm border-2 border-white dark:border-slate-900 absolute top-1/2 -translate-y-1/2 transition-all duration-300"
+                  className={`w-3.5 h-3.5 rounded-full shadow-sm border-2 border-white dark:border-slate-900 absolute top-1/2 -translate-y-1/2 transition-all duration-300 ${
+                    !glassmorphism ? "bg-gray-400" : "bg-[#00C776]"
+                  }`}
                   style={{
-                    left: !glassmorphism ? "0%" : blurStrength === "low" ? "15%" : blurStrength === "medium" ? "50%" : "88%",
+                    left: !glassmorphism ? "0%" : blurStrength === "low" ? "30%" : blurStrength === "medium" ? "62%" : "88%",
                   }}
                 />
               </div>
@@ -369,8 +390,12 @@ export default function AdminPersonalizationTab() {
             <span className="text-xs font-semibold text-gray-700 dark:text-slate-300">
               当前状态：{getWallpaperStatusText()} + {getBlurStatusText()}
             </span>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/60 text-[#00C776] dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
-              {glassmorphism ? "已启用" : "纯色模式"}
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${
+              glassmorphism
+                ? "bg-emerald-100 dark:bg-emerald-950/60 text-[#00C776] dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40"
+                : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700"
+            }`}>
+              {glassmorphism ? "已启用" : "未启用"}
             </span>
           </div>
         </div>
