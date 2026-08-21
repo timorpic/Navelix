@@ -304,54 +304,62 @@ export default function AdminPersonalizationTab() {
                 </p>
               </div>
 
-              {/* 模拟刻度滑块 */}
-              <div className="pt-2 px-1">
-                <div className="flex items-center justify-between text-[11px] font-semibold text-gray-500 dark:text-slate-400 mb-1.5">
-                  <span
-                    onClick={() => {
-                      setBlurStrength("low");
-                      setGlassmorphism(true);
-                    }}
-                    className={`cursor-pointer transition-colors ${blurStrength === "low" && glassmorphism ? "text-[#00C776] font-bold" : ""}`}
-                  >
-                    低
-                  </span>
-                  <span
-                    onClick={() => {
-                      setBlurStrength("medium");
-                      setGlassmorphism(true);
-                    }}
-                    className={`cursor-pointer transition-colors ${blurStrength === "medium" && glassmorphism ? "text-[#00C776] font-bold" : ""}`}
-                  >
-                    中
-                  </span>
-                  <span
-                    onClick={() => {
-                      setBlurStrength("high");
-                      setGlassmorphism(true);
-                    }}
-                    className={`cursor-pointer transition-colors ${blurStrength === "high" && glassmorphism ? "text-[#00C776] font-bold" : ""}`}
-                  >
-                    高
-                  </span>
-                </div>
-                <div className="relative w-full h-2 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-between px-2 cursor-pointer">
-                  <div
-                    className={`h-full bg-[#00C776] rounded-full transition-all ${
-                      !glassmorphism ? "w-0" : blurStrength === "low" ? "w-1/4" : blurStrength === "medium" ? "w-1/2" : "w-full"
-                    }`}
-                  />
-                  <div
-                    onClick={() => {
-                      setBlurStrength(blurStrength === "low" ? "medium" : blurStrength === "medium" ? "high" : "low");
-                      setGlassmorphism(true);
-                    }}
-                    className="w-4 h-4 rounded-full bg-[#00C776] shadow-sm border-2 border-white dark:border-slate-900 absolute top-1/2 -translate-y-1/2 cursor-grab transition-all"
-                    style={{
-                      left: !glassmorphism ? "0%" : blurStrength === "low" ? "15%" : blurStrength === "medium" ? "50%" : "90%",
-                    }}
-                  />
-                </div>
+              {/* 大点击热区分段按钮组 */}
+              <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100/80 dark:bg-slate-800/80 rounded-2xl border border-gray-200/60 dark:border-slate-700/60">
+                {[
+                  { id: "low", label: "低" },
+                  { id: "medium", label: "中" },
+                  { id: "high", label: "高" },
+                ].map((item) => {
+                  const isSelected = glassmorphism && blurStrength === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setBlurStrength(item.id as "low" | "medium" | "high");
+                        setGlassmorphism(true);
+                      }}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        isSelected
+                          ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-sm shadow-black/5"
+                          : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full transition-colors ${
+                        isSelected ? "bg-[#00C776]" : "bg-transparent border border-gray-300 dark:border-slate-600"
+                      }`} />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* 轨道可视化指示条（支持点击左中右快速选） */}
+              <div
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const ratio = x / rect.width;
+                  if (ratio < 0.33) setBlurStrength("low");
+                  else if (ratio < 0.66) setBlurStrength("medium");
+                  else setBlurStrength("high");
+                  setGlassmorphism(true);
+                }}
+                className="relative w-full h-3 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center px-1.5 cursor-pointer mt-2"
+                title="点击快速调节模糊强度"
+              >
+                <div
+                  className={`h-1.5 bg-[#00C776] rounded-full transition-all duration-300 ${
+                    !glassmorphism ? "w-0" : blurStrength === "low" ? "w-1/4" : blurStrength === "medium" ? "w-1/2" : "w-full"
+                  }`}
+                />
+                <div
+                  className="w-3.5 h-3.5 rounded-full bg-[#00C776] shadow-sm border-2 border-white dark:border-slate-900 absolute top-1/2 -translate-y-1/2 transition-all duration-300"
+                  style={{
+                    left: !glassmorphism ? "0%" : blurStrength === "low" ? "15%" : blurStrength === "medium" ? "50%" : "88%",
+                  }}
+                />
               </div>
             </div>
           </div>
