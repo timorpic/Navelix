@@ -107,8 +107,37 @@ export async function GET(req: Request) {
       if (fallback.dataUrl) return NextResponse.json(fallback);
     }
 
+    // 若直接抓取仍未拿到 dataUrl，自动通过开放 Favicon API 多源回退
+    if (!resolved.dataUrl) {
+      const domain = pageUrl.hostname;
+      const openApiUrls = [
+        `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+        `https://api.iowen.cn/favicon/${domain}.png`,
+        `https://icon.horse/icon/${domain}`,
+      ];
+
+      for (const openUrl of openApiUrls) {
+        try {
+          const openResolved = await resolveIcon(openUrl);
+          if (openResolved.dataUrl) {
+            return NextResponse.json(openResolved);
+          }
+        } catch {
+          // 继续尝试下一个开放 API
+        }
+      }
+    }
+
     return NextResponse.json(resolved);
   } catch {
+    // 整个流程异常时，最后通过开放 API 兜底一次
+    try {
+      const domain = pageUrl.hostname;
+      const openResolved = await resolveIcon(`https://icons.duckduckgo.com/ip3/${domain}.ico`);
+      if (openResolved.dataUrl) return NextResponse.json(openResolved);
+    } catch {
+      // 忽略
+    }
     return NextResponse.json(
       { error: "无法访问该网站，请检查网址是否可达" },
       { status: 502 },

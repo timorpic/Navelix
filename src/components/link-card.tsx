@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import type { LinkStatus, LinkProbeInfo } from "@/hooks/use-link-status";
 import type { SiteLink } from "@/types";
@@ -50,6 +51,15 @@ export default function LinkCard({ link, status }: LinkCardProps) {
       ? link.icon
       : null;
 
+  const [iconErrorStep, setIconErrorStep] = useState(0);
+
+  const getOpenApiFaviconUrl = (domainName: string, step: number) => {
+    if (step === 0) return `https://icons.duckduckgo.com/ip3/${domainName}.ico`;
+    if (step === 1) return `https://api.iowen.cn/favicon/${domainName}.png`;
+    if (step === 2) return `https://icon.horse/icon/${domainName}`;
+    return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(link.title)}&backgroundColor=14b8a6`;
+  };
+
   const cardStyle = config.glassmorphism
     ? "backdrop-blur-md bg-white/70 dark:bg-slate-800/70 border-white/40 dark:border-slate-700/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_16px_rgba(0,0,0,0.08)] hover:border-[#00C776]/50"
     : "bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700 hover:shadow-md hover:border-[#00C776]/40";
@@ -72,14 +82,14 @@ export default function LinkCard({ link, status }: LinkCardProps) {
           />
         ) : (
           <Image
-            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
+            src={getOpenApiFaviconUrl(domain, iconErrorStep)}
             alt=""
             width={20}
             height={20}
-            className="h-5 w-5"
+            className="h-5 w-5 object-contain"
             unoptimized
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${link.title}&backgroundColor=14b8a6`;
+            onError={() => {
+              setIconErrorStep((prev) => prev + 1);
             }}
           />
         )}
