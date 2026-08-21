@@ -75,7 +75,6 @@ export default function AdminProTab() {
   });
 
   const [testingStorage, setTestingStorage] = useState(false);
-  const [savingStorage, setSavingStorage] = useState(false);
   const [backingUpNow, setBackingUpNow] = useState(false);
   const [loadingBackups, setLoadingBackups] = useState(false);
   const [remoteBackups, setRemoteBackups] = useState<RemoteBackupItem[]>([]);
@@ -138,14 +137,13 @@ export default function AdminProTab() {
     }
   };
 
-  const handleSaveStorageConfig = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavingStorage(true);
+  const saveStorageConfig = async (next?: CloudStorageConfig) => {
+    const cfg = next ?? storageConfig;
     try {
       const res = await fetch("/api/admin/storage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(storageConfig),
+        body: JSON.stringify(cfg),
       });
       const data = await res.json();
       if (res.ok) {
@@ -155,8 +153,6 @@ export default function AdminProTab() {
       }
     } catch {
       flash("❌ 请求失败");
-    } finally {
-      setSavingStorage(false);
     }
   };
 
@@ -381,7 +377,7 @@ export default function AdminProTab() {
             </div>
           )}
 
-          <form onSubmit={handleSaveStorageConfig} className={`space-y-5 ${!licenseStatus.isPro ? "opacity-60 pointer-events-none" : ""}`}>
+          <div className={`space-y-5 ${!licenseStatus.isPro ? "opacity-60 pointer-events-none" : ""}`}>
             {/* 存储类型选择 */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
@@ -392,7 +388,11 @@ export default function AdminProTab() {
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setStorageConfig({ ...storageConfig, type: item.id as StorageType, enabled: item.id !== "none" })}
+                  onClick={() => {
+                    const next = { ...storageConfig, type: item.id as StorageType, enabled: item.id !== "none" };
+                    setStorageConfig(next);
+                    saveStorageConfig(next);
+                  }}
                   className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                     storageConfig.type === item.id
                       ? "border-[#00C776] bg-emerald-50/50 dark:bg-emerald-950/20 text-gray-900 dark:text-white ring-2 ring-[#00C776]/20"
@@ -418,6 +418,11 @@ export default function AdminProTab() {
                       placeholder="例如 https://s3.us-east-1.amazonaws.com 或 R2 端点"
                       value={storageConfig.s3Endpoint || ""}
                       onChange={(e) => setStorageConfig({ ...storageConfig, s3Endpoint: e.target.value })}
+                      onBlur={(e) => {
+                        const next = { ...storageConfig, s3Endpoint: e.target.value };
+                        setStorageConfig(next);
+                        saveStorageConfig(next);
+                      }}
                       className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-xl px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -430,6 +435,11 @@ export default function AdminProTab() {
                       placeholder="例如 my-navelix-backups"
                       value={storageConfig.s3Bucket || ""}
                       onChange={(e) => setStorageConfig({ ...storageConfig, s3Bucket: e.target.value })}
+                      onBlur={(e) => {
+                        const next = { ...storageConfig, s3Bucket: e.target.value };
+                        setStorageConfig(next);
+                        saveStorageConfig(next);
+                      }}
                       className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-xl px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -442,6 +452,11 @@ export default function AdminProTab() {
                       placeholder="AKIAIOSFODNN7EXAMPLE"
                       value={storageConfig.s3AccessKey || ""}
                       onChange={(e) => setStorageConfig({ ...storageConfig, s3AccessKey: e.target.value })}
+                      onBlur={(e) => {
+                        const next = { ...storageConfig, s3AccessKey: e.target.value };
+                        setStorageConfig(next);
+                        saveStorageConfig(next);
+                      }}
                       className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-xl px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -454,6 +469,11 @@ export default function AdminProTab() {
                       placeholder="••••••••••••••••"
                       value={storageConfig.s3SecretKey || ""}
                       onChange={(e) => setStorageConfig({ ...storageConfig, s3SecretKey: e.target.value })}
+                      onBlur={(e) => {
+                        const next = { ...storageConfig, s3SecretKey: e.target.value };
+                        setStorageConfig(next);
+                        saveStorageConfig(next);
+                      }}
                       className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-xl px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -466,6 +486,11 @@ export default function AdminProTab() {
                       placeholder="auto 或 us-east-1"
                       value={storageConfig.s3Region || ""}
                       onChange={(e) => setStorageConfig({ ...storageConfig, s3Region: e.target.value })}
+                      onBlur={(e) => {
+                        const next = { ...storageConfig, s3Region: e.target.value };
+                        setStorageConfig(next);
+                        saveStorageConfig(next);
+                      }}
                       className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-xl px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -478,6 +503,11 @@ export default function AdminProTab() {
                       placeholder="navelix-backups/"
                       value={storageConfig.s3PathPrefix || ""}
                       onChange={(e) => setStorageConfig({ ...storageConfig, s3PathPrefix: e.target.value })}
+                      onBlur={(e) => {
+                        const next = { ...storageConfig, s3PathPrefix: e.target.value };
+                        setStorageConfig(next);
+                        saveStorageConfig(next);
+                      }}
                       className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-xl px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -498,6 +528,11 @@ export default function AdminProTab() {
                       placeholder="例如 https://dav.jianguoyun.com/dav/navelix-backups/"
                       value={storageConfig.webdavUrl || ""}
                       onChange={(e) => setStorageConfig({ ...storageConfig, webdavUrl: e.target.value })}
+                      onBlur={(e) => {
+                        const next = { ...storageConfig, webdavUrl: e.target.value };
+                        setStorageConfig(next);
+                        saveStorageConfig(next);
+                      }}
                       className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-xl px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -510,6 +545,11 @@ export default function AdminProTab() {
                       placeholder="用户名或邮箱"
                       value={storageConfig.webdavUsername || ""}
                       onChange={(e) => setStorageConfig({ ...storageConfig, webdavUsername: e.target.value })}
+                      onBlur={(e) => {
+                        const next = { ...storageConfig, webdavUsername: e.target.value };
+                        setStorageConfig(next);
+                        saveStorageConfig(next);
+                      }}
                       className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-xl px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -522,6 +562,11 @@ export default function AdminProTab() {
                       placeholder="••••••••••••••••"
                       value={storageConfig.webdavPassword || ""}
                       onChange={(e) => setStorageConfig({ ...storageConfig, webdavPassword: e.target.value })}
+                      onBlur={(e) => {
+                        const next = { ...storageConfig, webdavPassword: e.target.value };
+                        setStorageConfig(next);
+                        saveStorageConfig(next);
+                      }}
                       className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-xl px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -537,7 +582,11 @@ export default function AdminProTab() {
                     type="checkbox"
                     id="autoBackupDaily"
                     checked={storageConfig.autoBackupDaily ?? true}
-                    onChange={(e) => setStorageConfig({ ...storageConfig, autoBackupDaily: e.target.checked })}
+                    onChange={(e) => {
+                      const next = { ...storageConfig, autoBackupDaily: e.target.checked };
+                      setStorageConfig(next);
+                      saveStorageConfig(next);
+                    }}
                     className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
                   />
                   <label htmlFor="autoBackupDaily" className="text-xs font-bold text-gray-800 dark:text-slate-200 cursor-pointer">
@@ -571,18 +620,10 @@ export default function AdminProTab() {
                   >
                     📋 云端快照列表 &amp; 一键还原
                   </button>
-
-                  <button
-                    type="submit"
-                    disabled={savingStorage}
-                    className="px-4 py-1.5 rounded-xl text-xs font-bold bg-[#00C776] hover:bg-[#00B068] text-white transition-all cursor-pointer shadow-md"
-                  >
-                    {savingStorage ? "保存中…" : "💾 保存云配置"}
-                  </button>
                 </div>
               </div>
             )}
-          </form>
+          </div>
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════

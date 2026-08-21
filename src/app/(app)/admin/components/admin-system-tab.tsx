@@ -73,7 +73,6 @@ export default function AdminSystemTab({ currentUser }: AdminSystemTabProps = {}
 
   const [antigravitySecret, setAntigravitySecret] = useState("");
   const [isCustomAntigravitySecret, setIsCustomAntigravitySecret] = useState(false);
-  const [savingAntigravitySecret, setSavingAntigravitySecret] = useState(false);
   const [antigravityNotice, setAntigravityNotice] = useState("");
 
   // ── Effect: 读取系统级配置状态 ──
@@ -184,13 +183,14 @@ export default function AdminSystemTab({ currentUser }: AdminSystemTabProps = {}
   };
 
   // ── Handler: Save Antigravity OAuth client secret ──
-  const handleSaveAntigravitySecret = async () => {
-    setSavingAntigravitySecret(true);
+  const handleSaveAntigravitySecret = async (secret?: string) => {
+    const value = (secret ?? antigravitySecret).trim();
+    if (!value) return;
     try {
       const res = await fetch("/api/admin/system-settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ antigravityClientSecret: antigravitySecret }),
+        body: JSON.stringify({ antigravityClientSecret: value }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -204,7 +204,6 @@ export default function AdminSystemTab({ currentUser }: AdminSystemTabProps = {}
     } catch {
       setAntigravityNotice("❌ 保存失败");
     } finally {
-      setSavingAntigravitySecret(false);
       setTimeout(() => setAntigravityNotice(""), 4000);
     }
   };
@@ -586,23 +585,19 @@ export default function AdminSystemTab({ currentUser }: AdminSystemTabProps = {}
               <input
                 id="admin-antigravity-client-secret"
                 type="password"
-                value={antigravitySecret}
-                onChange={(e) => setAntigravitySecret(e.target.value)}
-                placeholder="粘贴 Client Secret（GOCSPX-…）"
+                defaultValue=""
+                key={isCustomAntigravitySecret ? "configured" : "empty"}
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  if (v) handleSaveAntigravitySecret(v);
+                }}
+                placeholder={isCustomAntigravitySecret ? "已配置自定义密钥 - 粘贴新值可覆盖（留空保持不变）" : "粘贴 Client Secret（GOCSPX-…）"}
                 autoComplete="off"
                 className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-lg px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500"
               />
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                disabled={savingAntigravitySecret || !antigravitySecret.trim()}
-                onClick={handleSaveAntigravitySecret}
-                className="px-4 py-2 rounded-lg bg-[#14B8A6] hover:bg-[#0D9488] text-white text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                {savingAntigravitySecret ? "保存中…" : "保存密钥"}
-              </button>
               {antigravityNotice && (
                 <p className="text-xs font-medium text-teal-600 dark:text-teal-400">
                   {antigravityNotice}

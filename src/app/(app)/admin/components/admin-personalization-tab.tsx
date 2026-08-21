@@ -1,112 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 
 export default function AdminPersonalizationTab() {
-  const { config, updateConfig, resetConfig } = useNavelixConfig();
-
-  // ── 本地草稿状态 ──
-  const [draftWallpaperUrl, setDraftWallpaperUrl] = useState("");
-  const [wallpaperMode, setWallpaperMode] = useState<"bing" | "custom" | "none">("bing");
-  const [glassmorphism, setGlassmorphism] = useState(true);
-  const [blurStrength, setBlurStrength] = useState<"low" | "medium" | "high">("medium");
-  const [sidebarState, setSidebarState] = useState<"expanded" | "collapsed">("expanded");
-  const [clockWidgetMode, setClockWidgetMode] = useState<"time" | "weather" | "tips" | "analog">("time");
-  const [maxWidth, setMaxWidth] = useState<"1000px" | "1200px" | "1400px" | "1600px" | "full">("1200px");
-  const [linkOpenTarget, setLinkOpenTarget] = useState<"_blank" | "_self">("_blank");
-
-  // 右侧边栏各模块开关草稿
-  const [aiCopilot, setAiCopilot] = useState(true);
-  const [todayActivity, setTodayActivity] = useState(true);
-  const [modelMonitor, setModelMonitor] = useState(true);
-  const [linkStatus, setLinkStatus] = useState(false);
-  const [quickAccess, setQuickAccess] = useState(true);
-  const [pendingReminders, setPendingReminders] = useState(true);
-
-  const [notice, setNotice] = useState("");
-
-  // 同步真实配置到本地表单
-  useEffect(() => {
-    queueMicrotask(() => {
-      setDraftWallpaperUrl(config.customWallpaperUrl || "");
-      setWallpaperMode((config.wallpaperMode as "bing" | "custom" | "none") || "bing");
-      setGlassmorphism(config.glassmorphism !== false);
-      setSidebarState(config.sidebarDefaultState || "expanded");
-      setClockWidgetMode((config.clockWidgetMode as "time" | "weather" | "tips" | "analog") || "time");
-      setMaxWidth(config.maxWidth || "1200px");
-      setLinkOpenTarget(config.linkOpenTarget || "_blank");
-
-      setAiCopilot(config.aiCopilotEnabled !== false);
-      setTodayActivity(config.todayActivityEnabled !== false);
-      setModelMonitor(config.modelMonitorEnabled !== false);
-      setLinkStatus(Boolean(config.linkStatusEnabled));
-      setQuickAccess(config.recentVisitsEnabled !== false);
-      setPendingReminders(Boolean(config.pendingRemindersEnabled));
-    });
-  }, [
-    config.customWallpaperUrl,
-    config.wallpaperMode,
-    config.glassmorphism,
-    config.sidebarDefaultState,
-    config.clockWidgetMode,
-    config.maxWidth,
-    config.linkOpenTarget,
-    config.aiCopilotEnabled,
-    config.todayActivityEnabled,
-    config.modelMonitorEnabled,
-    config.linkStatusEnabled,
-    config.recentVisitsEnabled,
-    config.pendingRemindersEnabled,
-  ]);
-
-  // ── 保存设置 ──
-  const handleSave = () => {
-    updateConfig({
-      linkOpenTarget,
-      wallpaperMode,
-      customWallpaperUrl: draftWallpaperUrl,
-      glassmorphism,
-      sidebarDefaultState: sidebarState,
-      clockWidgetMode,
-      maxWidth,
-      aiCopilotEnabled: aiCopilot,
-      todayActivityEnabled: todayActivity,
-      modelMonitorEnabled: modelMonitor,
-      linkStatusEnabled: linkStatus,
-      recentVisitsEnabled: quickAccess,
-      pendingRemindersEnabled: pendingReminders,
-    });
-    setNotice("✅ 偏好设置已成功保存！");
-    window.setTimeout(() => setNotice(""), 3000);
-  };
-
-  // ── 恢复默认 ──
-  const handleReset = () => {
-    if (window.confirm("确定要将所有界面与功能偏好恢复为官方默认设置吗？")) {
-      resetConfig();
-      setNotice("🔄 已恢复为官方推荐默认设置");
-      window.setTimeout(() => setNotice(""), 3000);
-    }
-  };
+  const { config, updateConfig } = useNavelixConfig();
 
   // 预览宽度图计算
   const getPreviewWidthPercent = () => {
-    switch (maxWidth) {
+    switch (config.maxWidth) {
       case "1000px":
         return "w-[60%]";
       case "1200px":
         return "w-[72%]";
       case "1400px":
         return "w-[84%]";
-      case "1600px":
-        return "w-[92%]";
       case "full":
         return "w-full";
       default:
         return "w-[72%]";
     }
   };
+
+  const wallpaperMode = (config.wallpaperMode as "bing" | "custom" | "none") || "bing";
+  const glassmorphism = config.glassmorphism !== false;
+  const sidebarState = (config.sidebarDefaultState as "expanded" | "collapsed") || "expanded";
+  const clockWidgetMode = (config.clockWidgetMode as "time" | "weather" | "analog") || "time";
+  const maxWidth = config.maxWidth || "1200px";
+  const linkOpenTarget = config.linkOpenTarget || "_blank";
 
   const getWallpaperStatusText = () => {
     if (wallpaperMode === "bing") return "无线统背景 (Bing)";
@@ -115,10 +35,7 @@ export default function AdminPersonalizationTab() {
   };
 
   const getBlurStatusText = () => {
-    if (!glassmorphism) return "未开启毛玻璃";
-    if (blurStrength === "low") return "低等强度";
-    if (blurStrength === "high") return "高等强度";
-    return "中等强度";
+    return glassmorphism ? "毛玻璃已启用" : "未开启毛玻璃";
   };
 
   return (
@@ -126,9 +43,7 @@ export default function AdminPersonalizationTab() {
       {/* ── 顶部 Header ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-xl font-bold shadow-xs">
-            🔗
-          </div>
+          <span className="text-xl">🔗</span>
           <div>
             <h2 className="text-base font-extrabold text-gray-900 dark:text-white tracking-tight">
               界面与功能偏好
@@ -138,11 +53,6 @@ export default function AdminPersonalizationTab() {
             </p>
           </div>
         </div>
-        {notice && (
-          <div className="px-3.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-700/60 text-xs font-bold text-emerald-700 dark:text-emerald-300 animate-fadeIn whitespace-nowrap shadow-xs">
-            {notice}
-          </div>
-        )}
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
@@ -150,9 +60,7 @@ export default function AdminPersonalizationTab() {
          ═══════════════════════════════════════════════════════════════ */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-gray-100/90 dark:border-slate-800 shadow-2xs transition-colors space-y-5">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/50 border border-purple-100 dark:border-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center text-base shrink-0 shadow-2xs">
-            🔗
-          </div>
+          <span className="text-base shrink-0">🔗</span>
           <div>
             <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
               链接跳转与打开偏好
@@ -179,7 +87,7 @@ export default function AdminPersonalizationTab() {
           <div className="flex items-center gap-2.5 shrink-0">
             <button
               type="button"
-              onClick={() => setLinkOpenTarget("_blank")}
+              onClick={() => updateConfig({ linkOpenTarget: "_blank" })}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                 linkOpenTarget === "_blank"
                   ? "bg-[#00C776] text-white shadow-xs shadow-[#00C776]/25"
@@ -196,7 +104,7 @@ export default function AdminPersonalizationTab() {
 
             <button
               type="button"
-              onClick={() => setLinkOpenTarget("_self")}
+              onClick={() => updateConfig({ linkOpenTarget: "_self" })}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                 linkOpenTarget === "_self"
                   ? "bg-[#00C776] text-white shadow-xs shadow-[#00C776]/25"
@@ -220,23 +128,16 @@ export default function AdminPersonalizationTab() {
         {/* ── 列 1：背景壁纸与毛玻璃特效 ── */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100/90 dark:border-slate-800 shadow-2xs flex flex-col justify-between space-y-5 transition-colors">
           <div className="space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base shrink-0 shadow-2xs">
-                  🖼️
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
-                    背景壁纸与毛玻璃特效
-                  </h3>
-                  <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5 leading-relaxed">
-                    开启 Bing 每日高清壁纸，自定义壁纸链接以及半透明水滴冰水波玻璃毛玻璃浮现感
-                  </p>
-                </div>
+            <div className="flex items-start gap-3">
+              <span className="text-base shrink-0">🖼️</span>
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
+                  背景壁纸与毛玻璃特效
+                </h3>
+                <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5 leading-relaxed">
+                  开启 Bing 每日高清壁纸，自定义壁纸链接以及半透明水滴冰水波玻璃毛玻璃浮现感
+                </p>
               </div>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950/40 dark:to-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/40 shrink-0">
-                顶级视觉
-              </span>
             </div>
 
             {/* 背景壁纸模式 */}
@@ -255,7 +156,7 @@ export default function AdminPersonalizationTab() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => setWallpaperMode(item.id as "bing" | "custom" | "none")}
+                      onClick={() => updateConfig({ wallpaperMode: item.id as "bing" | "custom" | "none" })}
                       className={`w-full py-2.5 px-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-2.5 text-left border ${
                         isSelected
                           ? "bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 shadow-2xs"
@@ -283,8 +184,8 @@ export default function AdminPersonalizationTab() {
               </label>
               <input
                 type="text"
-                value={draftWallpaperUrl}
-                onChange={(e) => setDraftWallpaperUrl(e.target.value)}
+                defaultValue={config.customWallpaperUrl || ""}
+                onBlur={(e) => updateConfig({ customWallpaperUrl: e.target.value.trim() })}
                 placeholder="https://example.com/wallpaper.jpg"
                 className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono placeholder:text-gray-400 focus:outline-hidden focus:border-[#00C776]"
               />
@@ -293,95 +194,35 @@ export default function AdminPersonalizationTab() {
               </p>
             </div>
 
-            {/* 水晶毛玻璃强度调节 */}
+            {/* 水晶毛玻璃开关 */}
             <div className="space-y-2 pt-1">
               <div>
                 <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
-                  水晶毛玻璃强度 (Backdrop Blur)
+                  水晶毛玻璃质感 (Backdrop Blur)
                 </label>
                 <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-0.5">
-                  调节半透明区域的模糊强度或彻底关闭
+                  开启后卡片与侧边栏呈现半透明毛玻璃质感；搭配壁纸效果更佳
                 </p>
               </div>
 
-              {/* 大点击热区分段按钮组（关闭 / 低 / 中 / 高） */}
-              <div className="grid grid-cols-4 gap-1.5 p-1 bg-gray-100/80 dark:bg-slate-800/80 rounded-2xl border border-gray-200/60 dark:border-slate-700/60">
-                {[
-                  { id: "off", label: "关闭" },
-                  { id: "low", label: "低" },
-                  { id: "medium", label: "中" },
-                  { id: "high", label: "高" },
-                ].map((item) => {
-                  const isSelected = item.id === "off" ? !glassmorphism : glassmorphism && blurStrength === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        if (item.id === "off") {
-                          setGlassmorphism(false);
-                        } else {
-                          setBlurStrength(item.id as "low" | "medium" | "high");
-                          setGlassmorphism(true);
-                        }
-                      }}
-                      className={`py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                        isSelected
-                          ? item.id === "off"
-                            ? "bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-200 shadow-sm shadow-black/5"
-                            : "bg-white dark:bg-slate-900 text-[#00C776] shadow-sm shadow-black/5"
-                          : "text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
-                      }`}
-                    >
-                      <span className={`w-2 h-2 rounded-full transition-colors ${
-                        isSelected
-                          ? item.id === "off"
-                            ? "bg-gray-400 dark:bg-slate-500"
-                            : "bg-[#00C776]"
-                          : "bg-transparent border border-gray-300 dark:border-slate-600"
-                      }`} />
-                      <span>{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* 轨道可视化指示条（支持点击快速选） */}
-              <div
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const x = e.clientX - rect.left;
-                  const ratio = x / rect.width;
-                  if (ratio < 0.25) {
-                    setGlassmorphism(false);
-                  } else if (ratio < 0.5) {
-                    setBlurStrength("low");
-                    setGlassmorphism(true);
-                  } else if (ratio < 0.75) {
-                    setBlurStrength("medium");
-                    setGlassmorphism(true);
-                  } else {
-                    setBlurStrength("high");
-                    setGlassmorphism(true);
-                  }
-                }}
-                className="relative w-full h-3 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center px-1.5 cursor-pointer mt-2"
-                title="点击快速调节模糊强度"
+              <button
+                type="button"
+                onClick={() => updateConfig({ glassmorphism: !glassmorphism })}
+                className={`w-full py-2.5 px-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-2.5 text-left border ${
+                  glassmorphism
+                    ? "bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 shadow-2xs"
+                    : "bg-white dark:bg-slate-900/60 border-gray-200/80 dark:border-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800/60"
+                }`}
               >
-                <div
-                  className={`h-1.5 bg-[#00C776] rounded-full transition-all duration-300 ${
-                    !glassmorphism ? "w-0" : blurStrength === "low" ? "w-1/3" : blurStrength === "medium" ? "w-2/3" : "w-full"
-                  }`}
-                />
-                <div
-                  className={`w-3.5 h-3.5 rounded-full shadow-sm border-2 border-white dark:border-slate-900 absolute top-1/2 -translate-y-1/2 transition-all duration-300 ${
-                    !glassmorphism ? "bg-gray-400" : "bg-[#00C776]"
-                  }`}
-                  style={{
-                    left: !glassmorphism ? "0%" : blurStrength === "low" ? "30%" : blurStrength === "medium" ? "62%" : "88%",
-                  }}
-                />
-              </div>
+                <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border ${
+                  glassmorphism
+                    ? "border-[#00C776] bg-[#00C776]"
+                    : "border-gray-300 dark:border-slate-600 bg-transparent"
+                }`}>
+                  {glassmorphism && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </span>
+                <span>{glassmorphism ? "已开启" : "已关闭"}</span>
+              </button>
             </div>
           </div>
 
@@ -404,9 +245,7 @@ export default function AdminPersonalizationTab() {
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100/90 dark:border-slate-800 shadow-2xs flex flex-col justify-between space-y-5 transition-colors">
           <div className="space-y-4">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center text-base shrink-0 shadow-2xs">
-                📌
-              </div>
+              <span className="text-base shrink-0">📌</span>
               <div>
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
                   侧边栏形态与顶部小组件模式
@@ -432,7 +271,7 @@ export default function AdminPersonalizationTab() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => setSidebarState(item.id as "expanded" | "collapsed")}
+                      onClick={() => updateConfig({ sidebarDefaultState: item.id as "expanded" | "collapsed" })}
                       className={`w-full py-2.5 px-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-2.5 text-left border ${
                         isSelected
                           ? "bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 shadow-2xs"
@@ -465,7 +304,6 @@ export default function AdminPersonalizationTab() {
                 {[
                   { id: "time", label: "数字时钟" },
                   { id: "weather", label: "天气面板" },
-                  { id: "tips", label: "快捷提示" },
                   { id: "analog", label: "组合模式 (多组件)" },
                 ].map((item) => {
                   const isSelected = clockWidgetMode === item.id;
@@ -473,7 +311,7 @@ export default function AdminPersonalizationTab() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => setClockWidgetMode(item.id as "time" | "weather" | "tips" | "analog")}
+                      onClick={() => updateConfig({ clockWidgetMode: item.id as "time" | "weather" | "analog" })}
                       className={`w-full py-2.5 px-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-2.5 text-left border ${
                         isSelected
                           ? "bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 shadow-2xs"
@@ -503,9 +341,7 @@ export default function AdminPersonalizationTab() {
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100/90 dark:border-slate-800 shadow-2xs flex flex-col justify-between space-y-5 transition-colors">
           <div className="space-y-4">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base shrink-0 shadow-2xs">
-                🖥️
-              </div>
+              <span className="text-base shrink-0">🖥️</span>
               <div>
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
                   中央内容区域宽度
@@ -522,7 +358,6 @@ export default function AdminPersonalizationTab() {
                 { id: "1000px", label: "1000px 较窄", desc: "" },
                 { id: "1200px", label: "1200px 主流", desc: "" },
                 { id: "1400px", label: "1400px 大屏", desc: "" },
-                { id: "1600px", label: "1600px 超宽", desc: "" },
                 { id: "full", label: "全屏铺满", desc: "适合超大屏幕，内容无最大宽度限制" },
               ].map((item) => {
                 const isSelected = maxWidth === item.id;
@@ -530,7 +365,7 @@ export default function AdminPersonalizationTab() {
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => setMaxWidth(item.id as "1000px" | "1200px" | "1400px" | "1600px" | "full")}
+                    onClick={() => updateConfig({ maxWidth: item.id as "1000px" | "1200px" | "1400px" | "full" })}
                     className={`w-full py-2.5 px-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex flex-col gap-0.5 text-left border ${
                       isSelected
                         ? "bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 shadow-2xs"
@@ -563,13 +398,13 @@ export default function AdminPersonalizationTab() {
             <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
               效果预览
             </label>
-            <div className="p-3 bg-gray-50 dark:bg-slate-950/70 rounded-2xl border border-gray-200/80 dark:border-slate-800 flex flex-col items-center justify-center min-h-[100px]">
-              <div className="w-full flex items-center justify-center gap-2 h-16 px-2">
+            <div className="p-3 bg-gray-50 dark:bg-slate-950/70 rounded-2xl border border-gray-200/80 dark:border-slate-800 flex flex-col items-center justify-center min-h-[140px]">
+              <div className="w-full flex items-center justify-center gap-2 h-24 px-2">
                 {maxWidth !== "full" && (
-                  <div className="flex-1 h-14 bg-gray-200/60 dark:bg-slate-800/60 rounded-lg border border-dashed border-gray-300 dark:border-slate-700" />
+                  <div className="flex-1 h-20 bg-gray-200/60 dark:bg-slate-800/60 rounded-lg border border-dashed border-gray-300 dark:border-slate-700" />
                 )}
                 <div
-                  className={`h-14 ${getPreviewWidthPercent()} bg-emerald-100/90 dark:bg-emerald-950/70 border border-emerald-400/80 dark:border-emerald-600/80 rounded-lg flex flex-col items-center justify-center transition-all duration-300 shadow-2xs`}
+                  className={`h-20 ${getPreviewWidthPercent()} bg-emerald-100/90 dark:bg-emerald-950/70 border border-emerald-400/80 dark:border-emerald-600/80 rounded-lg flex flex-col items-center justify-center transition-all duration-300 shadow-2xs`}
                 >
                   <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-[#00C776]">
                     <span>|◀</span>
@@ -578,7 +413,7 @@ export default function AdminPersonalizationTab() {
                   </div>
                 </div>
                 {maxWidth !== "full" && (
-                  <div className="flex-1 h-14 bg-gray-200/60 dark:bg-slate-800/60 rounded-lg border border-dashed border-gray-300 dark:border-slate-700" />
+                  <div className="flex-1 h-20 bg-gray-200/60 dark:bg-slate-800/60 rounded-lg border border-dashed border-gray-300 dark:border-slate-700" />
                 )}
               </div>
             </div>
@@ -591,9 +426,7 @@ export default function AdminPersonalizationTab() {
          ═══════════════════════════════════════════════════════════════ */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-gray-100/90 dark:border-slate-800 shadow-2xs transition-colors space-y-5">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/50 border border-purple-100 dark:border-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center text-base shrink-0 shadow-2xs">
-            📑
-          </div>
+          <span className="text-base shrink-0">📑</span>
           <div>
             <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
               右侧侧边栏组件
@@ -612,48 +445,48 @@ export default function AdminPersonalizationTab() {
               title: "AI Copilot",
               desc: "智能助手状态面板",
               icon: "🤖",
-              enabled: aiCopilot,
-              toggle: () => setAiCopilot(!aiCopilot),
+              enabled: config.aiCopilotEnabled !== false,
+              toggle: () => updateConfig({ aiCopilotEnabled: config.aiCopilotEnabled === false }),
             },
             {
               id: "todayActivity",
               title: "今日动态",
               desc: "今日工作动态与事件",
               icon: "⚡",
-              enabled: todayActivity,
-              toggle: () => setTodayActivity(!todayActivity),
+              enabled: config.todayActivityEnabled !== false,
+              toggle: () => updateConfig({ todayActivityEnabled: config.todayActivityEnabled === false }),
             },
             {
               id: "modelMonitor",
               title: "模型监控",
               desc: "账号与调用额度监控",
               icon: "🧠",
-              enabled: modelMonitor,
-              toggle: () => setModelMonitor(!modelMonitor),
+              enabled: config.modelMonitorEnabled !== false,
+              toggle: () => updateConfig({ modelMonitorEnabled: config.modelMonitorEnabled === false }),
             },
             {
               id: "linkStatus",
               title: "连接状态",
               desc: "第三方服务连接状态",
               icon: "🔗",
-              enabled: linkStatus,
-              toggle: () => setLinkStatus(!linkStatus),
+              enabled: config.linkStatusEnabled !== false,
+              toggle: () => updateConfig({ linkStatusEnabled: config.linkStatusEnabled === false }),
             },
             {
               id: "quickAccess",
               title: "快捷访问",
               desc: "常用快捷链接访问",
               icon: "⭐",
-              enabled: quickAccess,
-              toggle: () => setQuickAccess(!quickAccess),
+              enabled: config.recentVisitsEnabled !== false,
+              toggle: () => updateConfig({ recentVisitsEnabled: config.recentVisitsEnabled === false }),
             },
             {
               id: "pendingReminders",
               title: "待处理提醒",
               desc: "待办事项与提醒",
               icon: "🔔",
-              enabled: pendingReminders,
-              toggle: () => setPendingReminders(!pendingReminders),
+              enabled: config.pendingRemindersEnabled !== false,
+              toggle: () => updateConfig({ pendingRemindersEnabled: config.pendingRemindersEnabled === false }),
             },
           ].map((item) => (
             <div
@@ -694,36 +527,6 @@ export default function AdminPersonalizationTab() {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          底部 Sticky 操作栏
-         ═══════════════════════════════════════════════════════════════ */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
-        <button
-          type="button"
-          onClick={handleReset}
-          className="px-5 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/60 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
-        >
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-            <path d="M21 3v5h-5" />
-            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-            <path d="M8 16H3v5" />
-          </svg>
-          <span>恢复默认设置</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={handleSave}
-          className="px-6 py-2.5 rounded-xl text-xs font-bold bg-[#00C776] hover:bg-[#009a5a] text-white transition-all active:scale-[0.98] flex items-center gap-1.5 shadow-sm shadow-[#00C776]/25 cursor-pointer"
-        >
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          <span>保存设置</span>
-        </button>
       </div>
     </div>
   );

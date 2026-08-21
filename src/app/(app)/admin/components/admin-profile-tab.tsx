@@ -66,6 +66,16 @@ export default function AdminProfileTab() {
   const [newTokenNameInput, setNewTokenNameInput] = useState("");
   const [createdSecretToken, setCreatedSecretToken] = useState("");
 
+  // ── Telegram 通知配置 ──
+  const [tgEnabled, setTgEnabled] = useState(false);
+  const [tgNotifyBackup, setTgNotifyBackup] = useState(true);
+  const [tgNotifySystem, setTgNotifySystem] = useState(true);
+  const [tgBotTokenConfigured, setTgBotTokenConfigured] = useState(false);
+  const [tgChatId, setTgChatId] = useState("");
+  const [tgChatIdConfigured, setTgChatIdConfigured] = useState(false);
+  const [tgBotTokenInput, setTgBotTokenInput] = useState("");
+  const [tgTesting, setTgTesting] = useState(false);
+
   // Flash / notify helpers
   const [notice, setNotice] = useState("");
   const flash = (msg: string) => {
@@ -189,18 +199,16 @@ export default function AdminProfileTab() {
     }
   };
 
-  const handleProfileSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setProfilePasswordNotice("");
+  const saveProfile = async (patch: {
+    displayName?: string;
+    email?: string;
+    bio?: string;
+  }) => {
     try {
       const res = await fetch("/api/auth/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          displayName: profileDisplayNameInput,
-          email: profileEmailInput,
-          bio: profileBioInput,
-        }),
+        body: JSON.stringify(patch),
       });
       const data = await res.json();
       if (res.ok && data.user) {
@@ -260,12 +268,13 @@ export default function AdminProfileTab() {
     }
   };
 
-  const handleAvatarSave = async () => {
+  const handleAvatarSave = async (avatar?: string) => {
+    const value = avatar ?? avatarDraft;
     try {
       const res = await fetch("/api/auth/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatar: avatarDraft }),
+        body: JSON.stringify({ avatar: value }),
       });
       const data = await res.json();
       if (res.ok && data.user) {
@@ -276,6 +285,23 @@ export default function AdminProfileTab() {
       }
     } catch {
       flash("头像保存失败");
+    }
+  };
+
+  const fetchTelegramConfig = async () => {
+    try {
+      const res = await fetch("/api/admin/telegram");
+      const data = await res.json();
+      if (data) {
+        setTgEnabled(data.status.enabled);
+        setTgNotifyBackup(data.status.notifyBackup);
+        setTgNotifySystem(data.status.notifySystem);
+        setTgBotTokenConfigured(data.status.configured);
+        setTgChatId(data.chatId || "");
+        setTgChatIdConfigured(data.status.chatIdConfigured);
+      }
+    } catch {
+      // ignore
     }
   };
 
@@ -291,8 +317,64 @@ export default function AdminProfileTab() {
       });
       fetchSessions();
       fetchApiTokens();
+      fetchTelegramConfig();
     });
   }, []);
+
+  const tgSave = async (patch?: {
+    botToken?: string;
+    chatId?: string;
+    enabled?: boolean;
+    notifyBackup?: boolean;
+    notifySystem?: boolean;
+  }) => {
+    try {
+      const res = await fetch("/api/admin/telegram", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          patch ?? {
+            botToken: tgBotTokenInput,
+            chatId: tgChatId,
+            enabled: tgEnabled,
+            notifyBackup: tgNotifyBackup,
+            notifySystem: tgNotifySystem,
+          },
+        ),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTgBotTokenConfigured(data.status.configured);
+        setTgChatIdConfigured(data.status.chatIdConfigured);
+        setTgBotTokenInput("");
+        flash("✅ Telegram 配置已保存");
+      } else {
+        flash(`❌ ${data.error || "保存失败"}`);
+      }
+    } catch {
+      flash("❌ 网络请求失败");
+    }
+  };
+
+  const tgTest = async () => {
+    setTgTesting(true);
+    try {
+      const res = await fetch("/api/admin/telegram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        flash("✅ 测试消息已发送，请检查 Telegram");
+      } else {
+        flash(`❌ ${data.error || "发送失败"}`);
+      }
+    } catch {
+      flash("❌ 网络请求失败");
+    } finally {
+      setTgTesting(false);
+    }
+  };
 
   // Session refresh + drafts when avatar modal opens
   useEffect(() => {
@@ -318,7 +400,7 @@ export default function AdminProfileTab() {
         </div>
       )}
 
-      <div className="max-w-5xl space-y-6">
+      <div className="max-w-full space-y-6">
         <div>
           <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <svg className="w-5 h-5 text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -404,8 +486,8 @@ export default function AdminProfileTab() {
                 </div>
               </div>
 
-              {/* 修改基本资料表单 */}
-              <form onSubmit={handleProfileSave} className="space-y-4">
+              {/* 修改基本资料表单（失焦即保存） */}
+              <div className="space-y-4">
                 <div className="space-y-1">
                   <label htmlFor="admin-profile-display-name" className="block text-xs font-bold text-gray-700 dark:text-slate-200">
                     显示名称 (昵称)
@@ -416,6 +498,7 @@ export default function AdminProfileTab() {
                     type="text"
                     value={profileDisplayNameInput}
                     onChange={(e) => setProfileDisplayNameInput(e.target.value)}
+                    onBlur={() => saveProfile({ displayName: profileDisplayNameInput })}
                     placeholder="例如 亚历克斯"
                     className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
                   />
@@ -431,6 +514,7 @@ export default function AdminProfileTab() {
                     type="email"
                     value={profileEmailInput}
                     onChange={(e) => setProfileEmailInput(e.target.value)}
+                    onBlur={() => saveProfile({ email: profileEmailInput })}
                     placeholder="you@example.com"
                     className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
                   />
@@ -446,6 +530,7 @@ export default function AdminProfileTab() {
                     type="text"
                     value={profileBioInput}
                     onChange={(e) => setProfileBioInput(e.target.value)}
+                    onBlur={() => saveProfile({ bio: profileBioInput })}
                     placeholder="例如：极客致远 · 构建与探索"
                     className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
                   />
@@ -459,16 +544,7 @@ export default function AdminProfileTab() {
                     {profilePasswordNotice}
                   </p>
                 )}
-
-                <div className="pt-2 flex items-center justify-end">
-                  <button
-                    type="submit"
-                    className="h-9 px-5 bg-[#00C776] hover:bg-[#009a5a] text-white font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-xs"
-                  >
-                    💾 保存个人资料
-                  </button>
-                </div>
-              </form>
+              </div>
             </div>
 
             {/* 卡片 2：🌐 个人社交媒体与外部主页 */}
@@ -545,13 +621,14 @@ export default function AdminProfileTab() {
 
           {/* 右栏：登录安全与活跃会话 & API Token 管理 */}
           <div className="space-y-6">
-            {/* 卡片 3：🛡️ 登录安全与在线设备管理 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 卡片 3：🛡️ 已登录设备管理 */}
             <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
                     <span>🛡️</span>
-                    <span>登录安全与在线设备</span>
+                    <span>已登录设备</span>
                   </h3>
                   <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
                     实时监控所有登录本账号的设备会话与 IP
@@ -611,6 +688,167 @@ export default function AdminProfileTab() {
                   ))
                 )}
               </div>
+            </div>
+
+            {/* 卡片 5：📮 Telegram 通知配置 */}
+            <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
+              <div>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                  <span>📮</span>
+                  <span>Telegram Bot 通知</span>
+                </h3>
+                <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
+                  通过 Telegram Bot 推送备份结果、系统异常（服务重启 / 磁盘占用 / 登录异常）等安全通知
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {/* Bot Token */}
+                <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
+                      Bot Token
+                    </p>
+                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                      tgBotTokenConfigured
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                        : "bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-400"
+                    }`}>
+                      {tgBotTokenConfigured ? "已配置" : "未配置"}
+                    </span>
+                  </div>
+                  <input
+                    type="password"
+                    value={tgBotTokenInput}
+                    onChange={(e) => setTgBotTokenInput(e.target.value)}
+                    onBlur={() => {
+                      const v = tgBotTokenInput.trim();
+                      if (v) tgSave({ botToken: v });
+                    }}
+                    placeholder={tgBotTokenConfigured ? "已保存 - 输入新 Token 可覆盖（留空保持不变）" : "123456:ABC-DEF...（向 @BotFather 获取）"}
+                    className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
+                  />
+                </div>
+
+                {/* Chat ID */}
+                <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
+                      Chat ID
+                    </p>
+                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                      tgChatIdConfigured
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                        : "bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-400"
+                    }`}>
+                      {tgChatIdConfigured ? "已配置" : "未配置"}
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={tgChatId}
+                    onChange={(e) => setTgChatId(e.target.value)}
+                    onBlur={() => tgSave({ chatId: tgChatId.trim() })}
+                    placeholder="例如 123456789（向 @userinfobot 查询你的 ID）"
+                    className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
+                  />
+                </div>
+
+                {/* 总开关 */}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
+                  <div>
+                    <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
+                      Telegram 通知总开关
+                    </p>
+                    <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
+                      关闭后所有 Telegram 推送不再发送
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !tgEnabled;
+                      setTgEnabled(next);
+                      tgSave({ enabled: next });
+                    }}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                      tgEnabled
+                        ? "bg-[#00C776] text-white"
+                        : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
+                    }`}
+                  >
+                    {tgEnabled ? "已开启" : "已关闭"}
+                  </button>
+                </div>
+
+                {/* 场景开关 */}
+                <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
+                  <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
+                    通知场景
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] text-gray-600 dark:text-slate-300">备份结果</p>
+                      <p className="text-[10px] text-gray-400 dark:text-slate-400">本地/云备份成功与失败</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !tgNotifyBackup;
+                        setTgNotifyBackup(next);
+                        tgSave({ notifyBackup: next });
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                        tgNotifyBackup
+                          ? "bg-[#00C776] text-white"
+                          : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
+                      }`}
+                    >
+                      {tgNotifyBackup ? "已开启" : "已关闭"}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between pt-1.5 border-t border-gray-200/80 dark:border-slate-700">
+                    <div>
+                      <p className="text-[11px] text-gray-600 dark:text-slate-300">系统异常</p>
+                      <p className="text-[10px] text-gray-400 dark:text-slate-400">服务重启 / 磁盘占用 / 登录异常</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !tgNotifySystem;
+                        setTgNotifySystem(next);
+                        tgSave({ notifySystem: next });
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                        tgNotifySystem
+                          ? "bg-[#00C776] text-white"
+                          : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
+                      }`}
+                    >
+                      {tgNotifySystem ? "已开启" : "已关闭"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 操作按钮 */}
+                <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                  <button
+                    type="button"
+                    disabled={tgTesting}
+                    onClick={tgTest}
+                    className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    {tgTesting ? "发送中…" : "📨 发送测试消息"}
+                  </button>
+                </div>
+
+                {!tgBotTokenConfigured && (
+                  <p className="text-[10px] text-gray-400 dark:text-slate-500">
+                    💡 使用提示：通过 @BotFather 创建 Bot 获取 Token；用 @userinfobot 查询你的 Chat ID。
+                  </p>
+                )}
+              </div>
+            </div>
             </div>
 
             {/* 卡片 4：🔑 个人 API Token 密钥管理 */}
@@ -710,23 +948,17 @@ export default function AdminProfileTab() {
         <AvatarPicker
           value={avatarDraft}
           username={currentUser?.username}
-          onChange={setAvatarDraft}
+          onChange={(v) => {
+            setAvatarDraft(v);
+            handleAvatarSave(v);
+          }}
         />
         <div className="mt-6 flex justify-end gap-2 border-t border-gray-100 dark:border-slate-700 pt-4">
           <button
             onClick={() => setShowAvatarModal(false)}
             className="h-9 rounded-lg px-4 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer"
           >
-            取消
-          </button>
-          <button
-            onClick={() => {
-              handleAvatarSave();
-              setShowAvatarModal(false);
-            }}
-            className="h-9 rounded-lg bg-[#00C776] px-5 text-xs font-semibold text-white hover:bg-[#009a5a] cursor-pointer"
-          >
-            保存头像
+            完成
           </button>
         </div>
       </Modal>
