@@ -72,21 +72,21 @@ export default function LinkCard({ link, status }: LinkCardProps) {
       onClick={() => recordLinkUsage(link.id)}
       className={`group flex items-center gap-3 rounded-xl border p-3 transition-all duration-200 cursor-pointer ${cardStyle}`}
     >
-      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 text-lg">
+      <div className="relative flex h-8 w-8 shrink-0 items-center justify-center">
         {customIcon ? (
           // eslint-disable-next-line @next/next/no-img-element -- 自定义图标可能是 data URL，无法使用 next/image
           <img
             src={customIcon}
             alt=""
-            className="h-5 w-5 object-contain"
+            className="h-6 w-6 object-contain"
           />
         ) : (
           <Image
             src={getOpenApiFaviconUrl(domain, iconErrorStep)}
             alt=""
-            width={20}
-            height={20}
-            className="h-5 w-5 object-contain"
+            width={24}
+            height={24}
+            className="h-6 w-6 object-contain"
             unoptimized
             onError={() => {
               setIconErrorStep((prev) => prev + 1);
@@ -95,7 +95,7 @@ export default function LinkCard({ link, status }: LinkCardProps) {
         )}
         {currentStatus && (
           <span
-            className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ${statusDotClass[currentStatus]}`}
+            className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full ${statusDotClass[currentStatus]}`}
             title={statusTitle}
           />
         )}

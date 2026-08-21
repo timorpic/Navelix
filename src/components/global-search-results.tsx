@@ -81,11 +81,11 @@ function renderLinkIcon(icon: string) {
       <img
         src={icon}
         alt=""
-        className="w-8 h-8 shrink-0 rounded-lg object-contain bg-gray-100 dark:bg-slate-800 p-1"
+        className="w-6 h-6 shrink-0 object-contain"
       />
     );
   }
-  return <span className="text-xl shrink-0">{icon}</span>;
+  return <span className="text-lg shrink-0">{icon}</span>;
 }
 
 export default function GlobalSearchResults({
