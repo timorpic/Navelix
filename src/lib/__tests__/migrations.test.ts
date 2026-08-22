@@ -62,8 +62,15 @@ describe("Schema integrity after migrations", () => {
     }
   });
 
+  it("should keep analytics_events table schema intact", () => {
+    const cols = tableColumns("analytics_events");
+    for (const col of ["event", "user_id", "instance_id", "meta", "ts"]) {
+      assert.ok(cols.includes(col), `analytics_events.${col} should exist`);
+    }
+  });
+
   it("should be at the latest schema version", () => {
     const ver = (db.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
-    assert.equal(ver, 12);
+    assert.equal(ver, 13);
   });
 });

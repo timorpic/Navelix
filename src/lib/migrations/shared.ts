@@ -1,14 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { DatabaseSync } from "node:sqlite";
+import { DATA_DIR_NAME, ADMIN_PASSWORD_FILE } from "../constants.ts";
 
-export const DATA_DIR = path.join(process.cwd(), "data");
+export const DATA_DIR = path.join(process.cwd(), DATA_DIR_NAME);
 
 /**
  * 记录初始管理员密码（首次生成/轮换时写入 data/ 目录，目录已被 gitignore）
  */
 export function persistAdminPassword(password: string) {
-  const file = path.join(DATA_DIR, "navelix-admin-password.txt");
+  const file = path.join(DATA_DIR, ADMIN_PASSWORD_FILE);
   try {
     fs.writeFileSync(
       file,
@@ -19,7 +20,7 @@ export function persistAdminPassword(password: string) {
     // ignore
   }
   console.warn(
-    `[Navelix] 管理员 admin 的初始密码为: ${password}\n请登录后立即修改，并删除 data/navelix-admin-password.txt 文件。`,
+    `[Navelix] 管理员 admin 的初始密码为: ${password}\n请登录后立即修改，并删除 data/${ADMIN_PASSWORD_FILE} 文件。`,
   );
 }
 
