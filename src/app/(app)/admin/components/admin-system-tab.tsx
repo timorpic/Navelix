@@ -659,9 +659,9 @@ export default function AdminSystemTab({ currentUser }: AdminSystemTabProps = {}
               {!updateResult.error &&
                 updateResult.updateAvailable === false && (
                   <p className="text-xs text-emerald-600">
-                    ✅ 已是最新版本
+                    ✅ Release 最新
                     {updateResult.remote?.versionTag
-                      ? `（GitHub 最新 ${updateResult.remote.versionTag}）`
+                      ? ` ${updateResult.remote.versionTag}`
                       : ""}
                   </p>
                 )}
