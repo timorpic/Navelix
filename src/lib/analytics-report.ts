@@ -8,6 +8,22 @@ import {
 } from "./analytics.ts";
 import { safeFetch } from "./ssrf.ts";
 import { getBuildInfo } from "./build-info.ts";
+import fs from "node:fs";
+
+/**
+ * 检测是否运行在 Docker 容器内。
+ * 优先看 /.dockerenv（Docker 容器的标准标记，容器内必然存在），
+ * 其次兜底环境变量（DOCKER / NAVELIX_DOCKER，官方 Dockerfile 未设置，仅兼容手动注入）。
+ * 注意：不可依赖 process.env.DOCKER——Docker 不会自动注入该变量。
+ */
+function isDockerRuntime(): boolean {
+  try {
+    if (fs.existsSync("/.dockerenv")) return true;
+  } catch {
+    // 忽略文件系统异常
+  }
+  return Boolean(process.env.DOCKER || process.env.NAVELIX_DOCKER);
+}
 
 /**
  * M1 每周匿名聚合上报（规范：wiki/Analytics-使用统计与埋点规范.md §10）。
@@ -205,6 +221,7 @@ export function buildWeeklyAggregate(): {
   ).c;
 
   const nodeMajor = process.versions.node.split(".")[0] || "";
+  const dockerRuntime = isDockerRuntime();
   return {
     weekStart,
     events,
@@ -213,7 +230,7 @@ export function buildWeeklyAggregate(): {
     userCount: Number(userCount),
     runtime: {
       node: nodeMajor,
-      docker: Boolean(process.env.DOCKER || process.env.NAVELIX_DOCKER),
+      docker: dockerRuntime,
     },
     // ── 增强维度（v2）──
     content: {
@@ -237,7 +254,7 @@ export function buildWeeklyAggregate(): {
       model: aiRow?.ai_model || "none",
     },
     deploy: {
-      mode: process.env.DOCKER || process.env.NAVELIX_DOCKER ? "docker" : "source",
+      mode: dockerRuntime ? "docker" : "source",
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "unknown",
     },
   };
