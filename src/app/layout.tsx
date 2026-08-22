@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { cookies } from "next/headers";
 import Script from "next/script";
 import { PWARegister } from "@/components/pwa-register";
+import { DEFAULT_SITE_TITLE } from "@/lib/constants";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,7 +18,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Navelix · Personal Digital Hub",
+  title: DEFAULT_SITE_TITLE,
   description: "Your personal digital operating system - navigation, tools, and projects in one workspace.",
   manifest: "/manifest.webmanifest",
   icons: {

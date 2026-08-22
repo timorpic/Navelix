@@ -46,6 +46,12 @@ next-env.d.ts
 *.key
 .license_private_key.pem
 
+# ── Private Telemetry Receiver (作者私有，不上传 GitHub) ──
+/scripts/analytics-receiver/
+
+# ── Private Telemetry Docs (遥测说明文档，不上传 GitHub) ──
+/wiki/Analytics-使用统计与埋点规范.md
+
 # -- AI --
 IDEA.md
 /temp/

@@ -8,6 +8,7 @@ import LogoMark from "./logo-mark";
 import BrandLogoText from "./brand-logo-text";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useNavelixData } from "@/hooks/use-navelix-data";
+import { DEFAULT_CUSTOM_FOOTER } from "@/lib/constants";
 import { resolveAvatar } from "@/lib/avatars";
 import { clearCachedUserData } from "./navelix-provider";
 import TeamCategoriesModal from "./team-categories-modal";
@@ -616,7 +617,7 @@ export default function Sidebar({
           {/* Custom Footer Copyright + 收起按钮 */}
           <div className="flex items-center justify-between px-1 mt-2">
             <p className="text-[10px] text-gray-400 dark:text-slate-400 truncate">
-              {config.customFooter || "© 2026 Navelix. 保留所有权利。"}
+              {config.customFooter || DEFAULT_CUSTOM_FOOTER}
             </p>
             <button
               onClick={onToggle}

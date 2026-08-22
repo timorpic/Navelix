@@ -258,6 +258,60 @@ export interface SafeFetchOptions extends RequestInit {
   allowPrivateIPs?: boolean;
 }
 
+const REDIRECT_STATUS_CODES = new Set([301, 302, 303, 307, 308]);
+
+/**
+ * 校验 URL 合法性并返回解析结果。
+ * 仅允许 http: / https: 协议，其余协议一律拒绝（file / gopher / ftp 等）。
+ */
+export function validateUrl(urlInput: string): URL {
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(urlInput);
+  } catch {
+    throw new Error(`INVALID_URL: Failed to parse URL '${urlInput}'`);
+  }
+  if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+    throw new Error(`SSRF_BLOCKED: Unsupported protocol '${parsedUrl.protocol}'`);
+  }
+  return parsedUrl;
+}
+
+/**
+ * 解析重定向响应，返回下一个目标 URL。
+ * 无 Location 头时返回 null（直接返回原响应）。
+ */
+export function resolveRedirect(
+  response: Response,
+  baseUrl: URL,
+): string | null {
+  const location = response.headers.get("location");
+  if (!location) return null;
+  return new URL(location, baseUrl).toString();
+}
+
+/**
+ * 执行单次 fetch（redirect: 'manual'，带超时中止）。
+ * 超时通过 AbortController 实现，返回前确保计时器清理。
+ */
+export async function performFetch(
+  currentUrl: string,
+  fetchInit: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutTimer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(currentUrl, {
+      ...fetchInit,
+      redirect: "manual",
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutTimer);
+  }
+}
+
 /**
  * SSRF 安全的 fetch 客户端：
  * 1. 验证目标 URL 协议（仅限 http: 和 https:）
@@ -272,50 +326,28 @@ export async function safeFetch(urlInput: string, options: SafeFetchOptions = {}
   let redirectCount = 0;
 
   while (redirectCount <= maxRedirects) {
-    let parsedUrl: URL;
-    try {
-      parsedUrl = new URL(currentUrl);
-    } catch {
-      throw new Error(`INVALID_URL: Failed to parse URL '${currentUrl}'`);
-    }
-
-    if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-      throw new Error(`SSRF_BLOCKED: Unsupported protocol '${parsedUrl.protocol}'`);
-    }
+    const parsedUrl = validateUrl(currentUrl);
 
     // SSRF & DNS 校验：解析 Host 名下所有 IP 并检查私有地址
     await validateHostIPs(parsedUrl.hostname, { allowPrivateIPs });
 
-    const controller = new AbortController();
-    const timeoutTimer = setTimeout(() => controller.abort(), timeoutMs);
+    const response = await performFetch(currentUrl, fetchInit, timeoutMs);
 
-    try {
-      const response = await fetch(currentUrl, {
-        ...fetchInit,
-        redirect: "manual",
-        signal: controller.signal,
-      });
-
-      // 判断是否需要处理重定向
-      if ([301, 302, 303, 307, 308].includes(response.status)) {
-        const location = response.headers.get("location");
-        if (!location) {
-          return response;
-        }
-
-        const nextUrl = new URL(location, parsedUrl).toString();
-        redirectCount++;
-        if (redirectCount > maxRedirects) {
-          throw new Error(`MAX_REDIRECTS_EXCEEDED: Exceeded max redirects limit of ${maxRedirects}`);
-        }
-        currentUrl = nextUrl;
-        continue;
+    // 判断是否需要处理重定向
+    if (REDIRECT_STATUS_CODES.has(response.status)) {
+      const nextUrl = resolveRedirect(response, parsedUrl);
+      if (nextUrl === null) {
+        return response;
       }
-
-      return response;
-    } finally {
-      clearTimeout(timeoutTimer);
+      redirectCount++;
+      if (redirectCount > maxRedirects) {
+        throw new Error(`MAX_REDIRECTS_EXCEEDED: Exceeded max redirects limit of ${maxRedirects}`);
+      }
+      currentUrl = nextUrl;
+      continue;
     }
+
+    return response;
   }
 
   throw new Error(`MAX_REDIRECTS_EXCEEDED: Exceeded max redirects limit`);

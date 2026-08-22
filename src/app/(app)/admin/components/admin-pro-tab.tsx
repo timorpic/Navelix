@@ -5,6 +5,7 @@ import LogoMark from "@/components/logo-mark";
 import BrandLogo from "@/components/brand-logo";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { fileToDataUrl } from "@/lib/image-utils";
+import { DEFAULT_SITE_TITLE } from "@/lib/constants";
 import type { CloudStorageConfig, RemoteBackupItem, StorageType } from "@/lib/storage-provider";
 
 export default function AdminProTab() {
@@ -729,7 +730,7 @@ export default function AdminProTab() {
                 disabled={!licenseStatus.isPro}
                 value={config.siteTitle || ""}
                 onChange={(e) => updateConfig({ siteTitle: e.target.value })}
-                placeholder="Navelix · Personal Digital Hub"
+                placeholder={DEFAULT_SITE_TITLE}
                 className="w-full h-9 border border-gray-200 dark:border-slate-700 rounded-xl px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
               />
             </div>

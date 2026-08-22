@@ -2,13 +2,14 @@
 
 import { createContext, useContext } from "react";
 import type { Category, Project, SiteLink, SystemConfig } from "@/types";
+import { DEFAULT_SITE_TITLE, DEFAULT_CUSTOM_FOOTER } from "@/lib/constants";
 
 export const defaultConfig: SystemConfig = {
   logoText: "Navelix",
   logoImage: "",
   showSearchBar: true,
   maxWidth: "1200px",
-  customFooter: "© 2026 Navelix. 保留所有权利。",
+  customFooter: DEFAULT_CUSTOM_FOOTER,
   theme: "system",
   allowPublicAccess: false,
   allowRegistration: false,
@@ -19,7 +20,7 @@ export const defaultConfig: SystemConfig = {
   aiApiKey: "",
   aiModel: "gpt-4o-mini",
   aiKeyConfigured: false,
-  siteTitle: "Navelix · Personal Digital Hub",
+  siteTitle: DEFAULT_SITE_TITLE,
   linkStatusEnabled: false,
   linkStatusInterval: 60,
   socialGithub: "https://github.com",

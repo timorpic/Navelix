@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
+import { DEFAULT_SITE_TITLE } from "@/lib/constants";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Navelix · Personal Digital Hub",
+    name: DEFAULT_SITE_TITLE,
     short_name: "Navelix",
     description: "你的个人数字工作空间：导航、待办、项目、AI 与模型额度一站式随身中枢。",
     start_url: "/",

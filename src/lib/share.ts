@@ -1,10 +1,22 @@
-import { createHmac } from "node:crypto";
+import { createHmac, hkdfSync } from "node:crypto";
 import { db } from "./db.ts";
 import { getSecretKey } from "./secret.ts";
 import type { Category, SiteLink, Project } from "@/types";
 
+/**
+ * 分享 Token 专用签名密钥：从主密钥（getSecretKey）通过 HKDF 派生独立子密钥。
+ * 避免直接用数据加密主密钥签名，缩小主密钥暴露面；即使分享签名被破解也无法推导主密钥。
+ */
 function getShareSecret(): Buffer {
-  return getSecretKey();
+  return Buffer.from(
+    hkdfSync(
+      "sha256",
+      getSecretKey(),
+      "navelix-share-token-salt-v1",
+      "navelix-share-token-hmac-v1",
+      32,
+    ),
+  );
 }
 
 export interface ShareTokenPayload {

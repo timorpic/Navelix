@@ -2,6 +2,10 @@ import { db, seedUserData, type PublicUser } from "./db.ts";
 import type { Category, Project, SiteLink, SystemConfig } from "@/types";
 import { encryptSecret } from "./secret.ts";
 import { recordAuditLog } from "./audit.ts";
+import {
+  DEFAULT_SITE_TITLE,
+  DEFAULT_CUSTOM_FOOTER,
+} from "./constants.ts";
 
 export interface UserDataResult {
   user?: PublicUser | null;
@@ -204,7 +208,7 @@ export function getUserData(userId: string): UserDataResult {
         logoImage: String(configRow.logo_image || ""),
         showSearchBar: configRow.show_search_bar === 1 || configRow.show_search_bar === true || configRow.show_search_bar === "1",
         maxWidth: (configRow.max_width as SystemConfig["maxWidth"]) || "1200px",
-        customFooter: String(configRow.custom_footer || "© 2026 Navelix. 保留所有权利。"),
+        customFooter: String(configRow.custom_footer || DEFAULT_CUSTOM_FOOTER),
         theme: (configRow.theme as SystemConfig["theme"]) || "system",
         allowPublicAccess: effectiveAllowPublicAccess,
         allowRegistration: effectiveAllowRegistration,
@@ -215,7 +219,7 @@ export function getUserData(userId: string): UserDataResult {
         // 安全：不下发明文密钥，仅返回是否已配置标记
         aiKeyConfigured: Boolean(configRow.ai_api_key),
         aiModel: String(configRow.ai_model || "gpt-4o-mini"),
-        siteTitle: String(configRow.site_title || "Navelix · Personal Digital Hub"),
+        siteTitle: String(configRow.site_title || DEFAULT_SITE_TITLE),
         linkStatusEnabled: configRow.link_status_enabled === 1 || configRow.link_status_enabled === true || configRow.link_status_enabled === "1",
         linkStatusInterval: Number(configRow.link_status_interval) || 60,
         socialGithub: String(configRow.social_github || ""),
@@ -245,7 +249,7 @@ export function getUserData(userId: string): UserDataResult {
         logoImage: "",
         showSearchBar: true,
         maxWidth: "1200px",
-        customFooter: "© 2026 Navelix. 保留所有权利。",
+        customFooter: DEFAULT_CUSTOM_FOOTER,
         theme: "system",
         allowPublicAccess: false,
         allowRegistration: false,
@@ -255,7 +259,7 @@ export function getUserData(userId: string): UserDataResult {
         aiBaseUrl: "https://api.openai.com/v1",
         aiKeyConfigured: false,
         aiModel: "gpt-4o-mini",
-        siteTitle: "Navelix · Personal Digital Hub",
+        siteTitle: DEFAULT_SITE_TITLE,
         linkStatusEnabled: false,
         linkStatusInterval: 60,
         socialGithub: "",
@@ -553,12 +557,12 @@ export function saveUserConfigs(
   const logoImage = str("logoImage", "logo_image", "");
   const showSearchBar = bool("showSearchBar", "show_search_bar", 1);
   const maxWidth = str("maxWidth", "max_width", "1200px");
-  const customFooter = str("customFooter", "custom_footer", "© 2026 Navelix. 保留所有权利。");
+  const customFooter = str("customFooter", "custom_footer", DEFAULT_CUSTOM_FOOTER);
   const theme = str("theme", "theme", "system");
   const aiBaseUrl = str("aiBaseUrl", "ai_base_url", "https://api.openai.com/v1");
   const aiApiKey = secret("aiApiKey", "ai_api_key");
   const aiModel = str("aiModel", "ai_model", "gpt-4o-mini");
-  const siteTitle = str("siteTitle", "site_title", "Navelix · Personal Digital Hub");
+  const siteTitle = str("siteTitle", "site_title", DEFAULT_SITE_TITLE);
   const linkStatusEnabled = bool("linkStatusEnabled", "link_status_enabled", 0);
   const linkStatusInterval = num("linkStatusInterval", "link_status_interval", 60);
   const socialGithub = str("socialGithub", "social_github", "");

@@ -4,6 +4,7 @@ import {
   seedQuickAccess,
   siteLinks as seedLinks,
 } from "../../data/links.ts";
+import { DEFAULT_SITE_TITLE } from "../constants.ts";
 
 // Seed user starter categories and links ONLY ONCE on initial user creation
 export function seedUserData(userId: string) {
@@ -103,6 +104,6 @@ export function seedUserData(userId: string) {
 
   db.prepare(`
     INSERT OR REPLACE INTO user_configs (user_id, logo_text, site_title)
-    VALUES (?, 'Navelix', 'Navelix · Personal Digital Hub')
+    VALUES (?, 'Navelix', '${DEFAULT_SITE_TITLE}')
   `).run(userId);
 }

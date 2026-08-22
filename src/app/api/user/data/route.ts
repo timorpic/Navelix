@@ -13,6 +13,7 @@ import { emitUserEvent } from "@/lib/events";
 import { isEEAvailable } from "@/lib/ee-bridge";
 import { canAccessFeature } from "@/lib/license";
 import type { SiteLink, SystemConfig } from "@/types";
+import { DEFAULT_SITE_TITLE } from "@/lib/constants";
 
 // GET /api/user/data - Fetch categories, links, and config for current logged-in user
 export async function GET() {
@@ -203,7 +204,7 @@ export async function GET() {
     ? {
         logoText: hasBrandCustom ? configRow.logo_text || "Navelix" : "Navelix",
         logoImage: hasBrandCustom ? configRow.logo_image || "" : "",
-        siteTitle: hasBrandCustom ? configRow.site_title || "Navelix · Personal Digital Hub" : "Navelix · Personal Digital Hub",
+        siteTitle: hasBrandCustom ? configRow.site_title || DEFAULT_SITE_TITLE : DEFAULT_SITE_TITLE,
         showSearchBar: configRow.show_search_bar === 1 || (configRow.show_search_bar as unknown) === true || (configRow.show_search_bar as unknown) === "1",
         maxWidth: configRow.max_width,
         customFooter: configRow.custom_footer,
@@ -250,7 +251,7 @@ export async function GET() {
         aiBaseUrl: "https://api.openai.com/v1",
         aiKeyConfigured: false,
         aiModel: "gpt-4o-mini",
-        siteTitle: "Navelix · Personal Digital Hub",
+        siteTitle: DEFAULT_SITE_TITLE,
         allowPublicAccess: false,
         allowRegistration: false,
         securitySetupDone: false,

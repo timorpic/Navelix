@@ -14,6 +14,12 @@ export interface AiToolCall {
 
 export type AiToolResult =
   | { ok: true; message: string }
+  | { ok: false; error: string }
+  | { needsConfirmation: true; message: string };
+
+/** 已确认执行的删除结果：只可能是成功或失败，不可能是待确认 */
+export type AiToolExecResult =
+  | { ok: true; message: string }
   | { ok: false; error: string };
 
 function todoId(): string {
@@ -36,7 +42,7 @@ function bool(v: unknown): boolean {
   return v === true || v === 1 || v === "1" || v === "true";
 }
 
-function runCreateTodo(userId: string, args: Record<string, unknown>): AiToolResult {
+function runCreateTodo(userId: string, args: Record<string, unknown>): AiToolExecResult {
   const title = str(args.title);
   if (!title) return { ok: false, error: "待办标题不能为空" };
 
@@ -66,7 +72,7 @@ function runCreateTodo(userId: string, args: Record<string, unknown>): AiToolRes
   };
 }
 
-function runUpdateTodo(userId: string, args: Record<string, unknown>): AiToolResult {
+function runUpdateTodo(userId: string, args: Record<string, unknown>): AiToolExecResult {
   const id = str(args.id);
   if (!id) return { ok: false, error: "缺少待办 ID" };
 
@@ -112,7 +118,7 @@ function runUpdateTodo(userId: string, args: Record<string, unknown>): AiToolRes
   return { ok: true, message: "待办已更新。" };
 }
 
-function runDeleteTodo(userId: string, args: Record<string, unknown>): AiToolResult {
+function runDeleteTodo(userId: string, args: Record<string, unknown>): AiToolExecResult {
   const id = str(args.id);
   if (!id) return { ok: false, error: "缺少待办 ID" };
 
@@ -126,7 +132,7 @@ function runDeleteTodo(userId: string, args: Record<string, unknown>): AiToolRes
   return { ok: true, message: `已删除待办「${row.title}」。` };
 }
 
-function runCreateProject(userId: string, args: Record<string, unknown>): AiToolResult {
+function runCreateProject(userId: string, args: Record<string, unknown>): AiToolExecResult {
   const name = str(args.name);
   if (!name) return { ok: false, error: "项目名称不能为空" };
 
@@ -150,7 +156,7 @@ function runCreateProject(userId: string, args: Record<string, unknown>): AiTool
   return { ok: true, message: `已创建项目「${name}」（状态：${status}）。` };
 }
 
-function runUpdateProject(userId: string, args: Record<string, unknown>): AiToolResult {
+function runUpdateProject(userId: string, args: Record<string, unknown>): AiToolExecResult {
   const id = str(args.id);
   if (!id) return { ok: false, error: "缺少项目 ID" };
 
@@ -196,7 +202,7 @@ function runUpdateProject(userId: string, args: Record<string, unknown>): AiTool
   return { ok: true, message: "项目已更新。" };
 }
 
-function runDeleteProject(userId: string, args: Record<string, unknown>): AiToolResult {
+function runDeleteProject(userId: string, args: Record<string, unknown>): AiToolExecResult {
   const id = str(args.id);
   if (!id) return { ok: false, error: "缺少项目 ID" };
 
@@ -213,24 +219,115 @@ function runDeleteProject(userId: string, args: Record<string, unknown>): AiTool
   return { ok: true, message: `已删除项目「${row.name}」及其关联待办。` };
 }
 
-/** 执行单个工具调用 */
-export function executeAiTool(userId: string, call: AiToolCall): AiToolResult {
+/** 执行单个工具调用（非删除类工具直接执行） */
+export function executeAiTool(userId: string, call: AiToolCall): AiToolExecResult {
   switch (call.tool) {
     case "create_todo":
       return runCreateTodo(userId, call.args);
     case "update_todo":
       return runUpdateTodo(userId, call.args);
-    case "delete_todo":
-      return runDeleteTodo(userId, call.args);
     case "create_project":
       return runCreateProject(userId, call.args);
     case "update_project":
       return runUpdateProject(userId, call.args);
-    case "delete_project":
-      return runDeleteProject(userId, call.args);
     default:
       return { ok: false, error: `未知工具：${call.tool}` };
   }
+}
+
+/**
+ * 删除类工具必须二次确认：防止 Prompt Injection 诱导 AI 输出 <TOOL> 造成误删。
+ * 流程：AI 请求删除 → stageDelete 暂存并提示用户 → 用户回复确认 → consumePendingDelete 真正执行。
+ */
+const DESTRUCTIVE_TOOLS = new Set(["delete_todo", "delete_project"]);
+const PENDING_TTL_MS = 5 * 60 * 1000;
+
+interface PendingDelete {
+  userId: string;
+  tool: "delete_todo" | "delete_project";
+  args: Record<string, unknown>;
+  targetName: string;
+  expiresAt: number;
+}
+
+const pendingDeletes = new Map<string, PendingDelete>();
+
+/** 是否是删除类（需二次确认）工具 */
+export function isDestructiveTool(tool: string): boolean {
+  return DESTRUCTIVE_TOOLS.has(tool);
+}
+
+function resolveDeleteTargetName(userId: string, call: AiToolCall): string | null {
+  const id = str(call.args.id);
+  if (!id) return null;
+  if (call.tool === "delete_todo") {
+    const row = db
+      .prepare("SELECT title FROM user_todos WHERE id = ? AND user_id = ?")
+      .get(id, userId) as { title: string } | undefined;
+    return row ? row.title : null;
+  }
+  if (call.tool === "delete_project") {
+    const row = db
+      .prepare("SELECT name FROM projects WHERE id = ? AND user_id = ?")
+      .get(id, userId) as { name: string } | undefined;
+    return row ? row.name : null;
+  }
+  return null;
+}
+
+function runPendingDelete(pending: PendingDelete): AiToolExecResult {
+  if (pending.tool === "delete_todo") {
+    return runDeleteTodo(pending.userId, pending.args);
+  }
+  return runDeleteProject(pending.userId, pending.args);
+}
+
+/**
+ * 暂存删除请求并提示用户确认（不立即执行）。
+ * 返回 needsConfirmation 结果，由前端展示提示，等待用户回复确认。
+ */
+export function stageDelete(userId: string, call: AiToolCall): AiToolResult {
+  const targetName = resolveDeleteTargetName(userId, call);
+  if (targetName === null) {
+    return { ok: false, error: `未找到要删除的目标，或无权删除` };
+  }
+  pendingDeletes.set(userId, {
+    userId,
+    tool: call.tool as "delete_todo" | "delete_project",
+    args: call.args,
+    targetName,
+    expiresAt: Date.now() + PENDING_TTL_MS,
+  });
+  return {
+    needsConfirmation: true,
+    message: `⚠️ 删除操作需要您的确认：将删除「${targetName}」。\n请回复「确认删除」继续执行；若非本人操作，忽略此消息即可。`,
+  };
+}
+
+/**
+ * 尝试消费用户的删除确认消息：若存在待确认的删除请求且用户明确确认，则执行并返回结果。
+ * 匹配到取消意图或未确认时返回 null，交由正常对话流程处理。
+ */
+export function consumePendingDelete(
+  userId: string,
+  userPrompt: string,
+): AiToolExecResult | null {
+  const pending = pendingDeletes.get(userId);
+  if (!pending) return null;
+  if (Date.now() > pending.expiresAt) {
+    pendingDeletes.delete(userId);
+    return null;
+  }
+
+  const affirmative =
+    /确认|确定|是的|同意|执行|删除|好的|yes|confirm|delete/i.test(userPrompt);
+  const negative =
+    /取消|不了|不要|别|撤销|cancel/i.test(userPrompt) ||
+    /\bno\b/i.test(userPrompt);
+  if (!affirmative || negative) return null;
+
+  pendingDeletes.delete(userId);
+  return runPendingDelete(pending);
 }
 
 /** 从 AI 回复文本中解析 <TOOL>...</TOOL> 工具调用块（可多个） */

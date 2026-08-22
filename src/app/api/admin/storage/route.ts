@@ -4,6 +4,7 @@ import fs from "node:fs";
 import { getSessionUser } from "@/lib/auth";
 import { canAccessFeature } from "@/lib/license";
 import { isEEAvailable, CE_PRO_MESSAGE } from "@/lib/ee-bridge";
+import { DEFAULT_SITE_TITLE } from "@/lib/constants";
 import {
   getCloudStorageConfig,
   saveCloudStorageConfig,
@@ -252,7 +253,7 @@ export async function PUT(req: NextRequest) {
             custom_head_scripts = CASE WHEN ? THEN custom_head_scripts ELSE '' END,
             custom_css = CASE WHEN ? THEN custom_css ELSE '' END,
             logo_image = CASE WHEN ? THEN logo_image ELSE '' END,
-            site_title = CASE WHEN ? THEN site_title ELSE 'Navelix · Personal Digital Hub' END,
+            site_title = CASE WHEN ? THEN site_title ELSE '${DEFAULT_SITE_TITLE}' END,
             logo_text = CASE WHEN ? THEN logo_text ELSE 'Navelix' END,
             link_status_enabled = CASE WHEN ? THEN link_status_enabled ELSE 0 END,
             link_status_interval = CASE WHEN ? THEN link_status_interval ELSE 60 END
