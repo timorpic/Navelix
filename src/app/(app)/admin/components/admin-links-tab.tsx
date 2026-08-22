@@ -14,6 +14,7 @@ import {
   type LinkStatus,
 } from "@/hooks/use-link-status";
 import { pushNotification } from "@/lib/notifications";
+import { trackClientEvent } from "@/lib/client-analytics";
 import type { Category, SiteLink } from "@/types";
 
 type AdminTab =
@@ -175,9 +176,13 @@ export default function AdminLinksTab({ activeTab }: AdminLinksTabProps) {
     if (editingLink) {
       updateLink(editingLink.id, data);
       notify("链接管理", "链接修改成功");
+      // 可选遥测：编辑链接（规范 wiki/Analytics §4.1）
+      trackClientEvent("nav.link_edit", { linkId: editingLink.id, categoryId: data.category });
     } else {
       addLink(data);
       notify("链接管理", "链接添加成功");
+      // 可选遥测：新增链接（规范 wiki/Analytics §4.1）
+      trackClientEvent("nav.link_add", { categoryId: data.category });
     }
     setEditingLink(null);
   };
@@ -745,6 +750,8 @@ export default function AdminLinksTab({ activeTab }: AdminLinksTabProps) {
           if (linkToDelete) {
             deleteLink(linkToDelete.id);
             notify("链接管理", "链接已删除");
+            // 可选遥测：删除链接（规范 wiki/Analytics §4.1）
+            trackClientEvent("nav.link_delete", { linkId: linkToDelete.id });
           }
         }}
         onClose={() => setLinkToDelete(null)}

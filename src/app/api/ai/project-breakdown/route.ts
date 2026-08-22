@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
 import { toLocalDateStr, addDaysLocal } from "@/lib/date-utils";
 import { decryptSecret } from "@/lib/secret";
+import { track } from "@/lib/analytics";
 
 const REQUEST_TIMEOUT_MS = 25_000;
 
@@ -223,6 +224,11 @@ export async function POST(req: Request) {
           };
         });
 
+        track("ai.project_breakdown", {
+          userId: user.id,
+          meta: { milestoneCount: validatedTasks.length, adopted: false, source: "ai_model" },
+        });
+
         return NextResponse.json({
           success: true,
           source: "ai_model",
@@ -234,6 +240,10 @@ export async function POST(req: Request) {
     } catch (modelError) {
       console.warn("[AI Project Breakdown] Model call failed, fallback to rule generator:", modelError);
       const fallbackTasks = generateRuleBasedBreakdown(projectName, startDate, defaultAssignee);
+      track("ai.project_breakdown", {
+        userId: user.id,
+        meta: { milestoneCount: fallbackTasks.length, adopted: false, source: "fallback" },
+      });
       return NextResponse.json({
         success: true,
         source: "smart_rules_fallback",

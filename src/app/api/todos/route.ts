@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { emitUserEvent } from "@/lib/events";
+import { track } from "@/lib/analytics";
 import type { TodoItem } from "@/types";
 
 function rowToTodo(
@@ -128,6 +129,8 @@ export async function POST(req: NextRequest) {
     if (assigneeId && assigneeId !== userId) {
       emitUserEvent(assigneeId, "todos:change");
     }
+
+    track("todo.create", { userId, meta: { priority, assignee: Boolean(assigneeId) } });
 
     return NextResponse.json({ success: true, todo: { id } });
   } catch (err) {

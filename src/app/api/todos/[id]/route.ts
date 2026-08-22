@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { emitUserEvent } from "@/lib/events";
+import { track } from "@/lib/analytics";
 
 // PATCH /api/todos/[id] - toggle done / update fields
 export async function PATCH(
@@ -15,8 +16,8 @@ export async function PATCH(
   const { id } = await params;
 
   const todoRow = db
-    .prepare("SELECT user_id, assigned_to, project_id FROM user_todos WHERE id = ?")
-    .get(id) as { user_id: string; assigned_to?: string; project_id?: string } | undefined;
+    .prepare("SELECT user_id, assigned_to, project_id, due_date FROM user_todos WHERE id = ?")
+    .get(id) as { user_id: string; assigned_to?: string; project_id?: string; due_date?: string } | undefined;
 
   if (!todoRow) {
     return NextResponse.json({ error: "待办不存在" }, { status: 404 });
@@ -76,6 +77,18 @@ export async function PATCH(
   // 若关联了项目，同步更新项目的 updated_at
   if (todoRow.project_id) {
     db.prepare("UPDATE projects SET updated_at = ? WHERE id = ?").run(Date.now(), todoRow.project_id);
+  }
+
+  // 可选遥测：完成待办（规范 wiki/Analytics §4.4）
+  if (body.done === true || body.done === 1) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    track("todo.complete", {
+      userId,
+      meta: {
+        overdue: Boolean(todoRow.due_date && todoRow.due_date < todayStr),
+        projectId: todoRow.project_id || undefined,
+      },
+    });
   }
 
   // 触发实时通知，同时通知创建者与被委托人

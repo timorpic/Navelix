@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
+import { track } from "@/lib/analytics";
 
 export async function PATCH(
   req: NextRequest,
@@ -138,6 +139,13 @@ export async function PATCH(
       }
     }
   }
+
+  track("project.update", {
+    userId,
+    meta: {
+      milestoneCount: Array.isArray(body.todos) ? body.todos.length : undefined,
+    },
+  });
 
   return NextResponse.json({ success: true });
 }

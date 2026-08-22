@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
+import { track } from "@/lib/analytics";
 
 export async function GET() {
   const user = await getSessionUser();
@@ -112,6 +113,11 @@ export async function POST(req: NextRequest) {
         },
       );
     }
+
+    track("project.create", {
+      userId,
+      meta: { milestoneCount: Array.isArray(body.todos) ? body.todos.length : 0 },
+    });
 
     return NextResponse.json({
       success: true,

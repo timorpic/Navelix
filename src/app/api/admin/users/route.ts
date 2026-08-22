@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkCSRF, getSessionUser, hashPassword } from "@/lib/auth";
+import { track } from "@/lib/analytics";
 
 function adminCount(): number {
   return (
@@ -96,6 +97,9 @@ export async function POST(req: Request) {
     avatar,
     Date.now()
   );
+
+  // 可选遥测：添加团队成员（规范 wiki/Analytics §4.8）
+  track("team.member_add", { userId: adminUser.id, meta: { role } });
 
   return NextResponse.json({ message: "User created successfully", userId: id }, { status: 201 });
 }

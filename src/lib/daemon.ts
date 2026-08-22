@@ -6,6 +6,7 @@ import { emitUserEvent } from "./events.ts";
 import { safeFetch } from "./ssrf.ts";
 import { sendTelegramNotification } from "./telegram.ts";
 import { isTelegramNotifySystemEnabled } from "./system-settings.ts";
+import { maybeRunWeeklyReport } from "./analytics-report.ts";
 
 // 全局防重入标记（确保 Next.js 开发热重载或多实例时不重复起定时器）
 declare global {
@@ -177,6 +178,27 @@ export function checkDiskUsage(): void {
 }
 
 /**
+ * 递归 setTimeout 定时任务：任务完成后才安排下一次执行，
+ * 避免 setInterval 在异步任务（如云备份上传）超时后产生任务堆积。
+ */
+type DaemonTask = () => Promise<unknown> | void;
+
+function scheduleTask(task: DaemonTask, delayMs: number): NodeJS.Timeout {
+  const timer = setTimeout(() => {
+    Promise.resolve()
+      .then(task)
+      .catch(() => {})
+      .finally(() => {
+        // 仅当任务仍在运行中时才调度下一轮（stop 后不再续期）
+        if (globalThis.__navelix_daemon_started__) {
+          scheduleTask(task, delayMs);
+        }
+      });
+  }, delayMs);
+  return timer;
+}
+
+/**
  * 启动进程内常驻后台守护任务
  */
 export function startBackgroundDaemon(): void {
@@ -201,29 +223,37 @@ export function startBackgroundDaemon(): void {
   }, 10_000);
   globalThis.__navelix_daemon_timers__.push(initTimer);
 
-  // 2. 模型配额定时巡检（每 30 分钟）
-  const modelRefreshInterval = setInterval(() => {
-    refreshAllModelAccounts().catch(() => {});
-  }, 30 * 60 * 1000);
-  globalThis.__navelix_daemon_timers__.push(modelRefreshInterval);
+  // 2. 模型配额定时巡检（每 30 分钟，完成后调度下一轮）
+  globalThis.__navelix_daemon_timers__.push(
+    scheduleTask(() => refreshAllModelAccounts(), 30 * 60 * 1000),
+  );
 
   // 3. 数据库维护任务（每 12 小时）
-  const dbMaintenanceInterval = setInterval(() => {
-    runDatabaseMaintenance();
-  }, 12 * 60 * 60 * 1000);
-  globalThis.__navelix_daemon_timers__.push(dbMaintenanceInterval);
+  globalThis.__navelix_daemon_timers__.push(
+    scheduleTask(() => runDatabaseMaintenance(), 12 * 60 * 60 * 1000),
+  );
 
-  // 4. 每日自动异地云备份检查（每 24 小时）
-  const cloudBackupInterval = setInterval(() => {
-    runCloudBackupSchedule().catch(() => {});
-  }, 24 * 60 * 60 * 1000);
-  globalThis.__navelix_daemon_timers__.push(cloudBackupInterval);
+  // 4. 每日自动异地云备份检查（每 24 小时；上传可能因网络超时，完成后才调度下一轮）
+  globalThis.__navelix_daemon_timers__.push(
+    scheduleTask(() => runCloudBackupSchedule(), 24 * 60 * 60 * 1000),
+  );
 
   // 5. 磁盘占用检查（每 6 小时）
-  const diskCheckInterval = setInterval(() => {
-    checkDiskUsage();
-  }, 6 * 60 * 60 * 1000);
-  globalThis.__navelix_daemon_timers__.push(diskCheckInterval);
+  globalThis.__navelix_daemon_timers__.push(
+    scheduleTask(() => checkDiskUsage(), 6 * 60 * 60 * 1000),
+  );
+
+  // 6. 每周匿名聚合上报（M1 路线 A）：启动 60 秒后先尝试一次（覆盖跨周重启），随后每 24 小时检查一次去重键
+  globalThis.__navelix_daemon_timers__.push(
+    scheduleTask(
+      () => maybeRunWeeklyReport().catch(() => {}),
+      24 * 60 * 60 * 1000,
+    ),
+  );
+  const weeklyReportInit = setTimeout(() => {
+    maybeRunWeeklyReport().catch(() => {});
+  }, 60_000);
+  globalThis.__navelix_daemon_timers__.push(weeklyReportInit);
 }
 
 /**

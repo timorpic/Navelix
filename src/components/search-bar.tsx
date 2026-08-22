@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { trackClientEvent } from "@/lib/client-analytics";
 
 interface SearchBarProps {
   value: string;
@@ -29,6 +30,10 @@ export default function SearchBar({ value, onChange, className = "" }: SearchBar
   const handleSubmit = (e: React.FormEvent) => {
     // 搜索仅限系统内，输入即实时展示结果，提交不做外部跳转
     e.preventDefault();
+    // 可选遥测：全局搜索（规范 wiki/Analytics §4.1）
+    if (value.trim()) {
+      trackClientEvent("nav.search");
+    }
   };
 
   return (

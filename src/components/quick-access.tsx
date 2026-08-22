@@ -3,6 +3,7 @@
 import BrandIcon from "./brand-icon";
 import type { SiteLink } from "@/types";
 import { recordLinkUsage } from "@/lib/link-usage";
+import { trackClientEvent } from "@/lib/client-analytics";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 
 interface QuickAccessProps {
@@ -44,7 +45,15 @@ export default function QuickAccess({ links }: QuickAccessProps) {
             href={item.url}
             target={target}
             rel="noopener noreferrer"
-            onClick={() => recordLinkUsage(item.id)}
+            onClick={() => {
+              recordLinkUsage(item.id);
+              // 可选遥测：点击快捷访问链接（规范 wiki/Analytics §4.1）
+              trackClientEvent("nav.link_click", {
+                linkId: item.id,
+                categoryId: item.category,
+                fromQuickAccess: true,
+              });
+            }}
             className={`group flex flex-col items-center justify-center p-3.5 rounded-xl border hover:border-[#00C776]/30 transition-all duration-200 cursor-pointer ${cardStyle}`}
           >
             <div className="relative mb-2 flex h-8 w-8 items-center justify-center group-hover:scale-110 transition-transform">

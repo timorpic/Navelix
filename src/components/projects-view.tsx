@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { Project, TodoItem, WorkspaceMember } from "@/types";
 import { pushNotification } from "@/lib/notifications";
 import { toLocalDateStr, addDaysLocal } from "@/lib/date-utils";
+import { trackClientEvent } from "@/lib/client-analytics";
 const STATUS_PRESETS = [
   {
     label: "进行中",
@@ -58,6 +59,16 @@ export default function ProjectsView() {
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+
+  // 可选遥测：查看甘特图视图（规范 wiki/Analytics §4.3）
+  useEffect(() => {
+    if (viewTab === "gantt") {
+      trackClientEvent("project.gantt_view", {
+        projectCount: projects.length,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewTab]);
 
   // Form States
   const [name, setName] = useState("");

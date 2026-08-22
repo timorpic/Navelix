@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
+import { ADMIN_PASSWORD_FILE, DATA_DIR_NAME } from "@/lib/constants";
 import { db, SESSION_COOKIE } from "@/lib/db";
 import {
   checkLoginRateLimit,
@@ -14,6 +15,7 @@ import {
 } from "@/lib/auth";
 import { sendTelegramNotification } from "@/lib/telegram";
 import { isTelegramNotifySystemEnabled } from "@/lib/system-settings";
+import { track } from "@/lib/analytics";
 
 /** 登录失败达到该次数后向 Telegram 推送安全告警 */
 const LOGIN_ALERT_THRESHOLD = 3;
@@ -75,7 +77,7 @@ export async function POST(req: Request) {
   // 管理员首次登录成功后自动删除初始密码提示文件
   if (row.role === "admin") {
     try {
-      const pwdFile = path.join(process.cwd(), "data", "navelix-admin-password.txt");
+      const pwdFile = path.join(process.cwd(), DATA_DIR_NAME, ADMIN_PASSWORD_FILE);
       if (fs.existsSync(pwdFile)) fs.unlinkSync(pwdFile);
     } catch {
       // 删除失败不影响登录
@@ -86,5 +88,12 @@ export async function POST(req: Request) {
   const user = toPublicUser(row);
   const res = NextResponse.json({ user });
   res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
+
+  // 可选遥测：登录成功（规范 wiki/Analytics §4.6）
+  track("auth.login", {
+    userId: row.id,
+    meta: { outcome: "success", userRole: row.role },
+  });
+
   return res;
 }

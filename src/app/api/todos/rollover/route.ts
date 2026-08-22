@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { addDaysLocal, toZonedLocalDateStr } from "@/lib/date-utils";
+import { track } from "@/lib/analytics";
 
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
@@ -31,7 +32,6 @@ export async function POST(req: NextRequest) {
         message: "当前没有需要顺延的过期待办事项",
       });
     }
-
     const updateStmt = db.prepare(
       "UPDATE user_todos SET due_date = ? WHERE id = ? AND user_id = ?",
     );
@@ -53,6 +53,11 @@ export async function POST(req: NextRequest) {
         updateStmt.run(targetStr, t.id, user.id);
       });
     }
+
+    track("todo.rollover", {
+      userId: user.id,
+      meta: { mode: action, count: overdueTodos.length },
+    });
 
     return NextResponse.json({
       success: true,

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
+import { trackClientEvent } from "@/lib/client-analytics";
 import type { MonitorAccount } from "./model-monitor-types";
 import { PROVIDER_META } from "./model-monitor-types";
 import { AccountCard } from "./model-monitor-cards";
@@ -37,6 +38,8 @@ export default function ModelMonitorPanel() {
     queueMicrotask(() => {
       load();
     });
+    // 可选遥测：打开额度监控面板（规范 wiki/Analytics §4.7）
+    trackClientEvent("monitor.quota_view", { action: "open" });
   }, [load]);
 
   const connect = async (provider: "antigravity" | "codex") => {

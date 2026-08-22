@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { db, SESSION_COOKIE } from "@/lib/db";
 import { createSession, hashPassword, toPublicUser } from "@/lib/auth";
+import { track } from "@/lib/analytics";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -113,5 +114,9 @@ export async function POST(req: Request) {
     path: "/",
     maxAge: 7 * 24 * 60 * 60,
   });
+
+  // 可选遥测：新用户注册（规范 wiki/Analytics §4.6）
+  track("auth.register", { userId: id, meta: { role } });
+
   return res;
 }

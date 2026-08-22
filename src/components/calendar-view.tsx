@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { TodoItem, Project, WorkspaceMember } from "@/types";
 import { pushNotification } from "@/lib/notifications";
 import { toLocalDateStr } from "@/lib/date-utils";
+import { trackClientEvent } from "@/lib/client-analytics";
 
 type CalendarViewMode = "month" | "week" | "today";
 
@@ -17,6 +18,12 @@ export default function CalendarView() {
   const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
+
+  // 可选遥测：打开日历视图（规范 wiki/Analytics §4.4）
+  useEffect(() => {
+    trackClientEvent("calendar.view", { mode: viewMode });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
       try {

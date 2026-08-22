@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useNavelixData } from "@/hooks/use-navelix-data";
 import { pushNotification } from "@/lib/notifications";
+import { trackClientEvent } from "@/lib/client-analytics";
 import { parseBookmarksHTML } from "@/lib/bookmarks";
 import { parseSunPanelJSON } from "@/lib/sun-panel";
 import type { Category, SiteLink } from "@/types";
@@ -87,8 +88,6 @@ export default function AdminSystemTab({ currentUser }: AdminSystemTabProps = {}
       .catch(() => {});
   }, []);
 
-
-  // ── notify / flash helpers ──
     const [notice, setNotice] = useState("");
     const flash = (msg: string) => {
       setNotice(msg);
@@ -364,6 +363,12 @@ export default function AdminSystemTab({ currentUser }: AdminSystemTabProps = {}
         );
         mergeBookmarks(cats, lnks);
         notify("数据管理", `书签导入成功：合并添加 ${lnks.length} 个链接`);
+        // 可选遥测：书签导入（规范 wiki/Analytics §4.1）
+        trackClientEvent("nav.bookmark_import", {
+          source: "html",
+          linkCount: lnks.length,
+          categoryCount: cats.length,
+        });
       } catch {
         flash("导入失败：无效的书签文件");
       }
@@ -387,6 +392,12 @@ export default function AdminSystemTab({ currentUser }: AdminSystemTabProps = {}
           "数据管理",
           `☀️ Sun-Panel 配置导入成功：解析并合并导入 ${lnks.length} 个链接与 ${cats.length} 个分组`,
         );
+        // 可选遥测：书签导入（规范 wiki/Analytics §4.1）
+        trackClientEvent("nav.bookmark_import", {
+          source: "sunpanel",
+          linkCount: lnks.length,
+          categoryCount: cats.length,
+        });
       } catch {
         flash("导入失败：无效的 Sun-Panel JSON 文件");
       }

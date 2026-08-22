@@ -6,6 +6,8 @@ import { getSessionUser, verifyPassword } from "@/lib/auth";
 import { performDatabaseBackup } from "@/lib/db-backup";
 import { runMigrations } from "@/lib/migrations";
 import { recordAuditLog } from "@/lib/audit";
+import { track } from "@/lib/analytics";
+import { DEFAULT_SITE_TITLE } from "@/lib/constants";
 
 async function requireAdmin(req?: NextRequest) {
   const user = await getSessionUser(req);
@@ -30,6 +32,12 @@ export async function GET(req: NextRequest) {
   const fileBuffer = fs.readFileSync(backupFilePath);
   const nowStr = new Date().toISOString().slice(0, 10);
   const fileName = `navelix-backup-${nowStr}.db`;
+
+  // 可选遥测：手动热备份（规范 wiki/Analytics §4.5）
+  track("backup.create", {
+    userId: adminUser.id,
+    meta: { sizeBytes: fileBuffer.length, destination: "local" },
+  });
 
   return new NextResponse(fileBuffer, {
     status: 200,
@@ -139,7 +147,7 @@ export async function POST(req: NextRequest) {
         custom_head_scripts = CASE WHEN ? THEN custom_head_scripts ELSE '' END,
         custom_css = CASE WHEN ? THEN custom_css ELSE '' END,
         logo_image = CASE WHEN ? THEN logo_image ELSE '' END,
-        site_title = CASE WHEN ? THEN site_title ELSE 'Navelix · Personal Digital Hub' END,
+        site_title = CASE WHEN ? THEN site_title ELSE '${DEFAULT_SITE_TITLE}' END,
         logo_text = CASE WHEN ? THEN logo_text ELSE 'Navelix' END,
         link_status_enabled = CASE WHEN ? THEN link_status_enabled ELSE 0 END,
         link_status_interval = CASE WHEN ? THEN link_status_interval ELSE 60 END
@@ -159,6 +167,9 @@ export async function POST(req: NextRequest) {
       target: "navelix.db",
       details: "管理员执行了数据库物理还原覆盖操作",
     });
+
+    // 可选遥测：数据库还原（规范 wiki/Analytics §4.5）
+    track("backup.restore", { userId: adminUser.id, meta: { source: "upload" } });
 
     return NextResponse.json({
       success: true,

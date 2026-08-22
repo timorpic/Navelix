@@ -6,8 +6,12 @@ import { decryptSecret } from "@/lib/secret";
 import {
   executeAiTool,
   extractToolCalls,
+  isDestructiveTool,
+  stageDelete,
+  consumePendingDelete,
   stripToolCalls,
 } from "@/lib/ai-tools";
+import { track } from "@/lib/analytics";
 
 interface ChatHistoryItem {
   sender?: string;
@@ -147,7 +151,7 @@ ${linkLines}
 - 只有在用户明确表达“创建/修改/删除”意图时才输出工具调用块；普通查询不要输出。
 - 每个工具调用块独立放在一行，可以连续输出多个。
 - 在正文中简要说明你将要执行的操作，再把 <TOOL> 块追加在回复末尾。
-- 删除操作前，请在正文中向用户复述确认要删除的目标，但仍可输出工具调用块（由系统执行）。
+- 删除操作（delete_todo / delete_project）不会被立即执行：系统会先暂存并向用户请求二次确认，用户在回复中明确「确认删除」后才会真正删除。你在正文中只需说明将删除的目标，不需要用户现在回复确认。
 - 不要编造待办或项目的 id；若需要修改/删除特定项，从上方工作区数据中引用其真实 id（若未提供，可要求用户说明要操作的是哪一项）。`;
   } catch (e) {
     console.error("[AI Chat] Failed to build workspace context:", e);
@@ -168,6 +172,16 @@ export async function POST(req: Request) {
 
     if (!prompt) {
       return NextResponse.json({ error: "Missing prompt" }, { status: 400 });
+    }
+
+    // 若用户回复是对上一条删除请求的二次确认，直接执行暂存的删除，不再调用模型
+    const confirmedDelete = consumePendingDelete(user.id, prompt);
+    if (confirmedDelete) {
+      return NextResponse.json({
+        text: confirmedDelete.ok
+          ? `✅ ${confirmedDelete.message}`
+          : `❌ ${confirmedDelete.error}`,
+      });
     }
 
     // Read AI config from the current user's server-side settings
@@ -275,17 +289,35 @@ export async function POST(req: Request) {
       "未获取到有效的模型回复。";
 
     // 解析并执行 AI 请求的写操作工具调用
+    // 删除类工具（delete_*）不直接执行，先暂存等待用户二次确认，防止 Prompt Injection 误删
     const toolCalls = extractToolCalls(replyText);
     const cleanText = stripToolCalls(replyText);
     let toolReport = "";
     if (toolCalls.length > 0) {
       const lines: string[] = [];
       for (const call of toolCalls) {
-        const result = executeAiTool(user.id, call);
-        lines.push(result.ok ? `✅ ${result.message}` : `❌ ${result.error}`);
+        if (isDestructiveTool(call.tool)) {
+          const result = stageDelete(user.id, call);
+          if ("needsConfirmation" in result) {
+            lines.push(`⚠️ ${result.message}`);
+          } else if (result.ok) {
+            lines.push(`✅ ${result.message}`);
+          } else {
+            lines.push(`❌ ${result.error}`);
+          }
+        } else {
+          const result = executeAiTool(user.id, call);
+          lines.push(result.ok ? `✅ ${result.message}` : `❌ ${result.error}`);
+        }
       }
       toolReport = `\n\n${lines.join("\n")}`;
     }
+
+    // 可选遥测：AI 对话（规范 wiki/Analytics §4.2）
+    track("ai.chat_sent", {
+      userId: user.id,
+      meta: { contextSize: systemPromptContent.length > 0 ? 1 : 0, hadError: false },
+    });
 
     return NextResponse.json({
       text: `${cleanText || (toolReport ? "已执行您的请求：" : "未获取到有效的模型回复。")}${toolReport}`,

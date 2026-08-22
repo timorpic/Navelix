@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { emitUserEvent } from "@/lib/events";
+import { track } from "@/lib/analytics";
 
 function normalizeUrl(raw: string): string {
   const url = raw.trim();
@@ -100,6 +101,12 @@ export async function POST(req: NextRequest) {
 
   // 触发实时同步通知（供网页端 / 其他终端秒级感知）
   emitUserEvent(user.id, "links:change", { linkId: id, url, title });
+
+  // 可选遥测：手动新增链接（规范 wiki/Analytics §4.1）
+  track("nav.link_add", {
+    userId: user.id,
+    meta: { categoryId: category, isQuickAccess: Boolean(isQuickAccess) },
+  });
 
   return NextResponse.json(
     { link: { id, title, url, description, icon, category, notes, isQuickAccess }, duplicate: false },

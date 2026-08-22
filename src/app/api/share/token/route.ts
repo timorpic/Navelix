@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { createShareToken } from "@/lib/share";
+import { track } from "@/lib/analytics";
 
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
@@ -43,6 +44,9 @@ export async function POST(req: NextRequest) {
 
   const token = createShareToken(type, id, user.id, days);
   const sharePath = `/share/${type}/${id}?token=${token}`;
+
+  // 可选遥测：创建公开分享（规范 wiki/Analytics §4.8）
+  track("share.create", { userId: user.id, meta: { type } });
 
   return NextResponse.json({
     token,

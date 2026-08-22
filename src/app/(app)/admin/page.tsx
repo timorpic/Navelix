@@ -17,6 +17,7 @@ import ProjectAdminPanel from "@/components/project-admin-panel";
 import ModelMonitorPanel from "@/components/model-monitor-panel";
 import AdminSidebar from "./components/admin-sidebar";
 import AdminLinksTab from "./components/admin-links-tab";
+import AdminAnalyticsTab from "./components/admin-analytics-tab";
 import AdminSystemTab from "./components/admin-system-tab";
 import AdminProTab from "./components/admin-pro-tab";
 import AdminPersonalizationTab from "./components/admin-personalization-tab";
@@ -316,8 +317,8 @@ export default function AdminPage() {
           {activeTab === "schedules" && <ScheduleAdminPanel />}
           {/* TAB 4: 👤 账号管理 */}
           {activeTab === "users" && currentUser?.role === "admin" && <AdminUsersPanel />}
-          {/* TAB 6: 📊 访问统计 */}
-          {activeTab === "analytics" && <AdminLinksTab activeTab={activeTab} />}
+          {/* TAB 6: 📊 访问统计 → 使用统计 */}
+          {activeTab === "analytics" && <AdminAnalyticsTab />}
           {/* TAB 6.5: 🤖 模型监控 */}
           {activeTab === "models" && <ModelMonitorPanel />}
           {/* TAB 7: ⚙️ 系统与数据管理 */}
