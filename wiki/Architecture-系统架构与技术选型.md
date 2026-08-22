@@ -13,7 +13,7 @@
 | **样式体系** | **Tailwind CSS 4** | 现代化原子级 CSS 框架，零运行时开销，原生暗黑模式与流畅响应式布局 |
 | **持久化存储** | **SQLite3 (Node.js 原生 DatabaseSync / WAL 模式)** | 单文件中心化嵌入式数据库，极简部署无外部依赖，WAL 并发读写性能极高 |
 | **安全体系** | **Node.js Crypto / Web Crypto** | 原生安全哈希 (SHA-256 / PBKDF2)、AES-256-GCM 敏感字段加密 |
-| **标准协议** | **RFC 5545 iCalendar / OAuth2 PKCE** | 标准日历订阅协议，通用跨平台日历互通与企业级授权协议 |
+| **标准协议** | **RFC 5545 iCalendar / OAuth2 PKCE** | 标准日历订阅协议，通用跨平台日历互通与标准 OAuth2 授权流程 |
 
 ---
 

@@ -122,7 +122,7 @@ Content-Type: application/json
 }
 ```
 
-### 3.2 创建新待办事项 (支持指派团队负责人)
+### 3.2 创建新待办事项 (支持指派负责人)
 - **请求方式**: `POST /api/todos`
 - **请求头**: `Authorization: Bearer nvx_live_YOUR_TOKEN`
 - **请求体**:
@@ -237,8 +237,8 @@ Content-Type: application/json
 
 ## 5. 🤖 AI 智能中枢与拆解服务 (AI Engine API)
 
-### 5.1 AI 项目拆解与多用户智能指派
-基于大模型与实时团队人员名单，将复杂项目自动拆解为具体可执行的任务、截止时间与责任人。
+### 5.1 AI 项目拆解与智能指派
+基于大模型与当前工作区成员名单，将复杂项目自动拆解为具体可执行的任务、截止时间与责任人。
 - **请求方式**: `POST /api/ai/project-breakdown`
 - **请求体**:
 | 字段 | 类型 | 必填 | 说明 |
@@ -291,9 +291,9 @@ Content-Type: application/json
 
 ---
 
-## 6. 👥 团队成员与工作空间 (Workspace Members API)
+## 6. 👤 工作区成员 (Workspace Members API)
 
-### 6.1 获取当前系统团队成员列表
+### 6.1 获取当前工作区成员列表
 用于在任务指派、AI 拆解或外部系统录入时拉取用户列表。
 - **请求方式**: `GET /api/user/members`
 - **请求头**: `Authorization: Bearer nvx_live_YOUR_TOKEN`
