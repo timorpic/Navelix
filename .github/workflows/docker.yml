@@ -104,8 +104,9 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          no-cache: true
           provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
@@ -248,7 +249,7 @@ jobs:
           docker rm smoke-test-app
 
       - name: Send Telegram Notification
-        if: always()
+        if: ${{ always() && github.event.release != null }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -264,7 +265,7 @@ jobs:
           MESSAGE=$(printf '%s\n' \
             "🐳 Docker 镜像构建完成 [${STATUS}]" \
             "Navelix Docker 镜像版本 (sha-${SHORT_SHA}) 在 GitHub Actions 集中构建与冒烟测试已完成。" \
-            "触发分支: ${{ github.ref_name }}，状态: ${STATUS}。")
+            "发布版本: ${{ github.event.release.tag_name }}，状态: ${STATUS}。")
 
           PAYLOAD_FILE=$(mktemp)
           jq -n \

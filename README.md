@@ -1,13 +1,17 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="public/navelix-logo-dark.svg">
-    <img src="public/navelix-logo.svg" width="520" alt="Navelix · Personal Operating System">
+    <img src="public/navelix-logo.svg" width="520" alt="Navelix · Personal Digital Hub">
   </picture>
 </p>
 
 <p align="center">
   <strong>现代化全栈个人数字工作空间</strong><br>
-  网址导航 · AI 智能助手 · 21天甘特图 · 日历日程 · 跨设备漫游 · 本地优先 SQLite
+  网址导航 · AI 智能助手 · 多尺度甘特图 · 日历日程 · 跨设备漫游 · 本地优先 SQLite
+</p>
+
+<p align="center">
+  🌐 <a href="README.en.md">English</a> · <strong>简体中文</strong>
 </p>
 
 <p align="center">
@@ -15,13 +19,24 @@
   <a href="https://hub.docker.com/r/timorpic/navelix"><img src="https://img.shields.io/docker/pulls/timorpic/navelix?color=00C776&logo=docker" alt="Docker Pulls"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Custom-00C776" alt="License"></a>
   <a href="https://github.com/timorpic/Navelix/wiki"><img src="https://img.shields.io/badge/Wiki-Documentation-00C776?logo=gitbook" alt="Wiki"></a>
+  <a href="https://t.me/+c6qtFiK5Lk9hZDZl"><img src="https://img.shields.io/badge/Telegram-Community-26A5E4?logo=telegram" alt="Telegram"></a>
 </p>
 
 ---
 
-你的个人数字工作空间——网址导航、AI 智能助手、项目管理看板、交互式甘特图、日历日程与效率工具，收进同一个首页。零外部数据库依赖，单容器轻量高效运行。
+## 你的私人数字中枢，收进同一个首页
 
-![Docker Pulls](https://img.shields.io/docker/pulls/timorpic/navelix)
+**Navelix (Personal Digital Hub)** 是专为极客、开发者、独立创作者打造的现代化全功能个人数字工作空间：
+网址导航、AI 智能助手、项目管理看板、交互式甘特图、日历日程与效率工具，全部收进同一个首页。
+
+零外部数据库依赖，单容器轻量运行，数据 100% 留在你自己的机器上。
+
+### 为什么选择 Navelix？
+
+- 🧭 **一站式工作空间**：网址导航、AI 助手、项目看板、甘特图、日历与效率工具，收进同一个首页
+- 🤖 **AI 深度整合**：标准 OpenAI 兼容 API、项目一键拆解为行动清单、每日日程智能规划、账号额度实时监控
+- 📱 **多端协同**：跨设备数据漫游、Chrome 扩展快速采集、PWA / iOS 快捷指令小组件
+- 🔒 **隐私优先 & 本地存储**：单容器零外部依赖、数据留在自己的机器、SQLite 物理热备份、S3 / WebDAV 云容灾、公开/私有访问与防爆破限流
 
 ## 界面预览
 
@@ -36,21 +51,30 @@
   </tr>
 </table>
 
-## 功能特性
+## 核心能力
 
-- 🧭 **网址导航**：链接/分类管理、快捷访问、多引擎搜索、`⌘K` 快速聚焦、Favicon 自动提取、书签多格式导入导出、全站链接健康自动巡检
-- 🤖 **AI 智能助手**：接入标准 OpenAI 兼容 API（DeepSeek / ChatGPT / Ollama / Qwen 等），服务端代理不泄露 Key；项目一键拆解为行动清单、每日日程智能规划、反重力/大模型账号额度实时监控
-- 👥 **团队协作与多端同步**：支持多成员协同、项目公开分享、SSE 实时状态同步、后台定时顺延守护进程（Daemon）
-- 📊 **项目与甘特图**：四维指标看板（进度/任务/风险/更新）、21 天交互式甘特图（周末高亮 / 今日指示线 / 里程碑进度与动作清单）
-- 📅 **日历与效率**：月/周/今日视图、本地时区严格计算与跳日防御、过期待办一键/自动顺延（Rollover）、标准 ICS 日历双向订阅（Apple / Google / Outlook）、番茄钟、天气与指针表盘
-- 📱 **多端生态扩展**：
-  - **Chrome 浏览器扩展**（`/extension`）：品牌化独立 Popup、深浅色主题自适应、一键/右键快速收藏采集、幂等入库
-  - **移动端 PWA & 快捷指令**：离线 Service Worker 缓存壳、`?action` 快速采集入口、iOS 快捷指令与 Scriptable 小组件支持
-- 🔒 **企业级安全体系**：公开/私有两种访问模式、开放/关闭注册、SSRF 回环隔离、CSRF 头防御、防爆破限流、HttpOnly 安全会话、OAuth Secret / Token 敏感字段 AES 加密落库
-- 💾 **备份还原**：SQLite `VACUUM INTO` 物理热备份、`.db` 物理快照一键下载还原、S3 / WebDAV 异地云容灾备份、全量 JSON 导入导出
-- ⚙️ **系统扩展**：自定义搜索引擎（`%s` 模板）、书签实时网络延迟与存活探针、全站品牌与 LOGO 自定义、自定义代码与统计探针注入
-- 🔌 **开放 API**：Personal Access Token（`nvx_live_...`）Bearer 鉴权，完整 [API 文档](wiki/REST-API-开放接口文档.md) 集成脚本与自动化
-- 🛠️ **管理后台**（`/admin`）：链接/项目/用户/Token/会话管理、外观定制、版本自检与在线升级提醒
+| 模块 | 亮点 |
+| :--- | :--- |
+| 🔖 **网址导航** | 链接/分类管理、快捷访问、多引擎搜索、`⌘K` 快速聚焦、书签多格式导入导出、全站链接健康自动巡检 |
+| 📊 **项目与甘特图** | 四维指标看板（进度/任务/风险/更新）、多尺度交互式甘特图（21 天敏捷 / 12 月年度 / 3 年跨年路线图） |
+| 📅 **日历与效率** | 月/周/今日视图、本地时区严格计算、过期待办一键/自动顺延（Rollover）、ICS 日历双向订阅、番茄钟 |
+| 🤖 **AI 智能中枢** | 标准 OpenAI 兼容 API、项目拆解为行动清单、每日日程规划、反重力 / Codex 账号额度实时监控 |
+| 📱 **多端生态** | Chrome 扩展快速采集、PWA / iOS 快捷指令、离线 Service Worker、跨设备漫游 |
+| 🔌 **开放 API** | Personal Access Token（`nvx_live_...`）Bearer 鉴权，完整 [REST API 文档](wiki/REST-API-开放接口文档.md) |
+| 🔒 **安全体系** | 公开/私有访问、SSRF 回环隔离、CSRF 头防御、防爆破限流、敏感字段 AES 加密落库 |
+
+## 文档中心
+
+完整的功能手册、架构说明、安全规范与 API 文档都在 [Wiki](https://github.com/timorpic/Navelix/wiki)：
+
+| 文档 | 内容 |
+| :--- | :--- |
+| [📖 功能使用全手册](wiki/User-Guide-功能使用指南.md) | 书签管理、甘特图、日历日程、AI 拆解、外观定制实战 |
+| [🚀 快速入门指南](wiki/Quick-Start-快速入门.md) | Docker / Compose 一键部署、Node.js 源码部署与首次初始化 |
+| [🏗️ 系统架构与技术选型](wiki/Architecture-系统架构与技术选型.md) | Next.js 16、React 19、SQLite WAL 架构设计与迁移体系 |
+| [🛡️ 安全机制与运维规范](wiki/Security-安全机制与运维规范.md) | 权限、CSRF、SSRF、限流防爆破、物理快照与热备规范 |
+| [🔌 REST API 开放接口规范](wiki/REST-API-开放接口文档.md) | 全量 OpenAPI 规范、Token 鉴权、日历订阅与自动化案例 |
+| [❓ 常见问题与故障排查](wiki/FAQ-常见问题与故障排查.md) | 部署运维、时区日历、备份恢复等高频疑难解答 |
 
 ---
 
