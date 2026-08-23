@@ -1,4 +1,7 @@
 # ── PNPM Workspace Configuration ──
 allowBuilds:
   esbuild: true
+  simple-git-hooks: true
   unrs-resolver: true
+onlyBuiltDependencies:
+  - simple-git-hooks

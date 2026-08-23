@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
-import { ADMIN_PASSWORD_FILE, DATA_DIR_NAME } from "@/lib/constants";
+import { ADMIN_PASSWORD_FILE } from "@/lib/constants";
+import { resolveDataDir } from "@/lib/data-dir";
 import { db, SESSION_COOKIE } from "@/lib/db";
 import {
   checkLoginRateLimit,
@@ -77,7 +78,7 @@ export async function POST(req: Request) {
   // 管理员首次登录成功后自动删除初始密码提示文件
   if (row.role === "admin") {
     try {
-      const pwdFile = path.join(process.cwd(), DATA_DIR_NAME, ADMIN_PASSWORD_FILE);
+      const pwdFile = path.join(resolveDataDir(), ADMIN_PASSWORD_FILE);
       if (fs.existsSync(pwdFile)) fs.unlinkSync(pwdFile);
     } catch {
       // 删除失败不影响登录

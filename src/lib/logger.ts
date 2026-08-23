@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { resolveDataDir } from "./data-dir.ts";
 
 /**
  * 轻量结构化日志：JSON 行写入 data/logs/navelix-YYYY-MM-DD.log（按日期轮转），
@@ -7,7 +8,7 @@ import path from "node:path";
  * 不引入任何第三方依赖，适合自托管零依赖定位。
  */
 
-const LOG_DIR = path.join(process.cwd(), "data", "logs");
+const LOG_DIR = path.join(resolveDataDir(), "logs");
 const RETENTION_DAYS = 14;
 
 function ensureDir(): void {

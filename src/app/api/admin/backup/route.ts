@@ -8,6 +8,7 @@ import { runMigrations } from "@/lib/migrations";
 import { recordAuditLog } from "@/lib/audit";
 import { track } from "@/lib/analytics";
 import { DEFAULT_SITE_TITLE } from "@/lib/constants";
+import { resolveDataDir } from "@/lib/data-dir";
 
 async function requireAdmin(req?: NextRequest) {
   const user = await getSessionUser(req);
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
     performDatabaseBackup();
 
     // 2. 写入临时恢复文件
-    const tempRestorePath = path.join(process.cwd(), "data", `restore-temp-${Date.now()}.db`);
+    const tempRestorePath = path.join(resolveDataDir(), `restore-temp-${Date.now()}.db`);
     fs.writeFileSync(tempRestorePath, buffer);
 
     // 3. 将上传的数据库中的数据无缝同步还原至当前库

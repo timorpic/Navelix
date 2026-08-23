@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/auth";
 import { canAccessFeature } from "@/lib/license";
 import { isEEAvailable, CE_PRO_MESSAGE } from "@/lib/ee-bridge";
 import { DEFAULT_SITE_TITLE } from "@/lib/constants";
+import { resolveDataDir } from "@/lib/data-dir";
 import {
   getCloudStorageConfig,
   saveCloudStorageConfig,
@@ -181,7 +182,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "无效的快照文件名" }, { status: 400 });
     }
 
-    const tempDir = path.join(process.cwd(), "data", "temp_restore");
+    const tempDir = path.join(resolveDataDir(), "temp_restore");
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true, mode: 0o700 });
     }

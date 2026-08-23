@@ -5,8 +5,9 @@ import { recordAuditLog } from "./audit.ts";
 import { logger } from "./logger.ts";
 import { sendTelegramNotification } from "./telegram.ts";
 import { isTelegramNotifyBackupEnabled } from "./system-settings.ts";
+import { resolveDataDir } from "./data-dir.ts";
 
-const BACKUP_DIR = path.join(process.cwd(), "data", "backups");
+const BACKUP_DIR = path.join(resolveDataDir(), "backups");
 const MAX_BACKUPS = 7;
 const BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 

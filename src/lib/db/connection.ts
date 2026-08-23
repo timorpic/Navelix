@@ -4,10 +4,11 @@ import path from "node:path";
 import { migrateLegacyDatabase } from "./legacy-migration.ts";
 import { initSchema } from "./schema.ts";
 import { runMigrations } from "../migrations/index.ts";
+import { resolveDataDir } from "../data-dir.ts";
 
 // Server-only module: never import from client components.
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const DATA_DIR = resolveDataDir();
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
 } else {

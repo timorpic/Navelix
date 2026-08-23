@@ -11,7 +11,14 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters",
     "test": "node --experimental-strip-types --test src/**/*.test.ts",
-    "test:coverage": "node --experimental-strip-types --experimental-test-coverage --test-coverage-lines=60 --test-coverage-functions=55 --test src/**/*.test.ts"
+    "test:coverage": "node --experimental-strip-types --experimental-test-coverage --test-coverage-lines=60 --test-coverage-functions=55 --test src/**/*.test.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install --with-deps chromium",
+    "precommit": "pnpm typecheck && pnpm lint",
+    "postinstall": "simple-git-hooks"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm precommit"
   },
   "engines": {
     "node": ">=22.5.0"
@@ -23,6 +30,7 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.13.3",
     "@types/react": "^19",
@@ -30,6 +38,7 @@
     "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
+    "simple-git-hooks": "^2.13.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

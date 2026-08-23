@@ -6,6 +6,7 @@ import {
 } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { resolveDataDir } from "./data-dir.ts";
 
 const ALGORITHM = "aes-256-gcm";
 const PREFIX = "enc:v1:";
@@ -19,7 +20,7 @@ export function getSecretKey(): Buffer {
     return createHash("sha256").update(process.env.APP_SECRET.trim()).digest();
   }
 
-  const secretFile = path.join(process.cwd(), "data", ".app_secret");
+  const secretFile = path.join(resolveDataDir(), ".app_secret");
   try {
     if (fs.existsSync(secretFile)) {
       const hex = fs.readFileSync(secretFile, "utf8").trim();
@@ -28,7 +29,7 @@ export function getSecretKey(): Buffer {
       }
     }
     const generated = randomBytes(32);
-    const dataDir = path.join(process.cwd(), "data");
+    const dataDir = resolveDataDir();
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 });
     }

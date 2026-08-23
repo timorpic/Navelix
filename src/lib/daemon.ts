@@ -7,6 +7,10 @@ import { safeFetch } from "./ssrf.ts";
 import { sendTelegramNotification } from "./telegram.ts";
 import { isTelegramNotifySystemEnabled } from "./system-settings.ts";
 import { maybeRunWeeklyReport } from "./analytics-report.ts";
+import { isAnalyticsReportEnabled } from "./analytics-report.ts";
+import { resolveDataDir } from "./data-dir.ts";
+
+const DATA_DIR = resolveDataDir();
 
 // 全局防重入标记（确保 Next.js 开发热重载或多实例时不重复起定时器）
 declare global {
@@ -131,12 +135,41 @@ export async function runCloudBackupSchedule(): Promise<void> {
 }
 
 /**
+ * 检查 SQLite WAL 文件大小，超过阈值时发送 Telegram 告警。
+ * WAL 模式下异常膨胀通常意味着写入压力过大或 checkpoint 未及时回收，
+ * 自托管用户最怕"存着存着库爆了不知道"。
+ * 阈值：WAL > 256MB 告警；> 1GB 高优先级告警。
+ */
+export function checkWalSize(): void {
+  try {
+    const walPath = path.join(DATA_DIR, "navelix.db-wal");
+    if (!fs.existsSync(walPath)) return;
+    const size = fs.statSync(walPath).size;
+    const mb = (b: number) => `${(b / (1024 * 1024)).toFixed(1)} MB`;
+
+    if (size > 1024 * 1024 * 1024) {
+      sendTelegramNotification(
+        `🚨 Navelix WAL 文件异常膨胀\n\nnavelix.db-wal：${mb(size)}\n已超过 1GB，请立即检查写入异常或执行 VACUUM / checkpoint。`,
+        isTelegramNotifySystemEnabled(),
+      ).catch(() => {});
+    } else if (size > 256 * 1024 * 1024) {
+      sendTelegramNotification(
+        `⚠️ Navelix WAL 文件偏大\n\nnavelix.db-wal：${mb(size)}\n已超过 256MB，若持续增长建议检查高写入任务。`,
+        isTelegramNotifySystemEnabled(),
+      ).catch(() => {});
+    }
+  } catch {
+    // WAL 检查失败不影响主流程
+  }
+}
+
+/**
  * 检查 data 目录磁盘占用，超过阈值时发送 Telegram 告警。
  * 阈值：数据目录 > 2GB，或备份目录 > 1GB。
  */
 export function checkDiskUsage(): void {
   try {
-    const dataDir = path.join(process.cwd(), "data");
+    const dataDir = DATA_DIR;
     const backupDir = path.join(dataDir, "backups");
     const notify = () => isTelegramNotifySystemEnabled();
 
@@ -210,6 +243,14 @@ export function startBackgroundDaemon(): void {
 
   console.log("[Daemon] Navelix 后台守护任务体系已启动");
 
+  // 隐私透明（Trust & Transparency）：首次启动即在控制台显式告知匿名遥测状态。
+  // 防止「隐私优先」产品在用户无感知时默认开启上报，破坏信任。
+  if (isAnalyticsReportEnabled()) {
+    console.log(
+      "[Navelix] 匿名遥测默认开启（仅聚合计数，不含个人信息），关闭请设置环境变量 NAVELIX_ANALYTICS_REPORT=off 或在管理后台「个人账号与安全」中关闭",
+    );
+  }
+
   // 服务启动通知（系统异常场景：服务重启）
   sendTelegramNotification(
     `🟢 Navelix 服务已启动\n\n${new Date().toLocaleString("zh-CN")}`,
@@ -243,7 +284,12 @@ export function startBackgroundDaemon(): void {
     scheduleTask(() => checkDiskUsage(), 6 * 60 * 60 * 1000),
   );
 
-  // 6. 每周匿名聚合上报（M1 路线 A）：启动 60 秒后先尝试一次（覆盖跨周重启），随后每 24 小时检查一次去重键
+  // 6. SQLite WAL 文件膨胀检查（每 1 小时）
+  globalThis.__navelix_daemon_timers__.push(
+    scheduleTask(() => checkWalSize(), 60 * 60 * 1000),
+  );
+
+  // 7. 每周匿名聚合上报（M1 路线 A）：启动 60 秒后先尝试一次（覆盖跨周重启），随后每 24 小时检查一次去重键
   globalThis.__navelix_daemon_timers__.push(
     scheduleTask(
       () => maybeRunWeeklyReport().catch(() => {}),

@@ -1,9 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { DatabaseSync } from "node:sqlite";
-import { DATA_DIR_NAME, ADMIN_PASSWORD_FILE } from "../constants.ts";
+import { ADMIN_PASSWORD_FILE } from "../constants.ts";
+import { resolveDataDir } from "../data-dir.ts";
 
-export const DATA_DIR = path.join(process.cwd(), DATA_DIR_NAME);
+export const DATA_DIR = resolveDataDir();
 
 /**
  * 记录初始管理员密码（首次生成/轮换时写入 data/ 目录，目录已被 gitignore）
