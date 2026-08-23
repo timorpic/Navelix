@@ -83,6 +83,14 @@ export function getAnalyticsReportToken(): string {
   return getTelemetrySecret()?.token || "";
 }
 
+/** 上报超时（毫秒）：环境变量 NAVELIX_ANALYTICS_TIMEOUT_MS 可覆盖，默认 30 秒（接收端常在海外，跨国链路需放宽） */
+export function getAnalyticsReportTimeoutMs(): number {
+  const raw = (process.env.NAVELIX_ANALYTICS_TIMEOUT_MS || "").trim();
+  const parsed = Number(raw);
+  if (Number.isFinite(parsed) && parsed >= 1000) return parsed;
+  return 30_000;
+}
+
 /** 上一次成功上报的「本周一」日期（YYYY-MM-DD），无则空串 */
 export function getLastReportWeek(): string {
   return getSystemSetting(REPORT_SETTING_LAST_WEEK);
@@ -336,11 +344,12 @@ export async function maybeRunWeeklyReport(): Promise<
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (token) headers["X-Navelix-Token"] = token; // 接收端配置了 TOKEN 时必带，否则 401
 
+    const timeoutMs = getAnalyticsReportTimeoutMs();
     const res = await safeFetch(endpoint, {
       method: "POST",
       headers,
       body: JSON.stringify(payload),
-      timeoutMs: 10_000,
+      timeoutMs,
       allowPrivateIPs: false,
     });
     if (!res.ok) {
