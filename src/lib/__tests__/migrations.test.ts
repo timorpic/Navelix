@@ -1,11 +1,14 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { db } from "../db.ts";
+import { USER_CONFIG_COLUMN_NAMES } from "../user-config-columns.ts";
 
 /**
  * Schema 完整性自测：防止未来迁移把 db.ts 期望的列/外键悄悄改掉
  * （v5 重建表列清单与 db.ts 不同步曾导致外键约束从未生效）。
  * 在本地（真实 data 库）与 CI（无 data 目录时自动新建空库并跑全量迁移）均应通过。
+ * user_configs 期望列由 user-config-columns.ts 元数据自动派生，
+ * 新增配置列只需在该元数据文件追加一行，无需在此维护列清单。
  */
 function tableColumns(table: string): string[] {
   return (
@@ -16,23 +19,7 @@ function tableColumns(table: string): string[] {
 describe("Schema integrity after migrations", () => {
   it("should keep all expected columns across core tables", () => {
     const userCfg = tableColumns("user_configs");
-    for (const col of [
-      "cliproxy_enabled",
-      "cliproxy_url",
-      "cliproxy_key",
-      "model_monitor_enabled",
-      "custom_head_scripts",
-      "custom_css",
-      "weather_api_base_url",
-      "allow_registration",
-      "security_setup_done",
-      "link_open_target",
-      "wallpaper_mode",
-      "custom_wallpaper_url",
-      "glassmorphism",
-      "sidebar_default_state",
-      "clock_widget_mode",
-    ]) {
+    for (const col of USER_CONFIG_COLUMN_NAMES) {
       assert.ok(userCfg.includes(col), `user_configs.${col} should exist`);
     }
 

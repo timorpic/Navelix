@@ -1,4 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
+import { createUserConfigsTableSql } from "../user-config-columns.ts";
 
 /**
  * 初始 Schema：所有 CREATE TABLE / CREATE INDEX 语句（仅在表不存在时创建）。
@@ -70,29 +71,7 @@ export function initSchema(db: DatabaseSync): void {
       PRIMARY KEY (id, user_id)
     );
 
-    CREATE TABLE IF NOT EXISTS user_configs (
-      user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-      logo_text TEXT NOT NULL DEFAULT 'Navelix',
-      logo_image TEXT NOT NULL DEFAULT '',
-      show_search_bar INTEGER NOT NULL DEFAULT 1,
-      max_width TEXT NOT NULL DEFAULT '1200px',
-      custom_footer TEXT NOT NULL DEFAULT '© 2026 Navelix. 保留所有权利。',
-      language TEXT NOT NULL DEFAULT 'zh',
-      theme TEXT NOT NULL DEFAULT 'light',
-      ai_base_url TEXT NOT NULL DEFAULT 'https://api.openai.com/v1',
-      ai_api_key TEXT NOT NULL DEFAULT '',
-      ai_model TEXT NOT NULL DEFAULT 'gpt-4o-mini',
-      site_title TEXT NOT NULL DEFAULT 'Navelix · Personal Digital Hub',
-      link_status_enabled INTEGER NOT NULL DEFAULT 1,
-      link_status_interval INTEGER NOT NULL DEFAULT 60,
-      social_github TEXT NOT NULL DEFAULT '',
-      social_x TEXT NOT NULL DEFAULT '',
-      social_linkedin TEXT NOT NULL DEFAULT '',
-      social_email TEXT NOT NULL DEFAULT '',
-      cliproxy_enabled INTEGER NOT NULL DEFAULT 1,
-      cliproxy_url TEXT NOT NULL DEFAULT 'http://[IP]:8317',
-      cliproxy_key TEXT NOT NULL DEFAULT ''
-    );
+    ${createUserConfigsTableSql()}
 
     CREATE TABLE IF NOT EXISTS notifications (
       id TEXT PRIMARY KEY,

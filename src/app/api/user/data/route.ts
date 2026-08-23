@@ -14,6 +14,10 @@ import { isEEAvailable } from "@/lib/ee-bridge";
 import { canAccessFeature } from "@/lib/license";
 import type { SiteLink, SystemConfig } from "@/types";
 import { DEFAULT_SITE_TITLE } from "@/lib/constants";
+import {
+  defaultUserConfig,
+  mapUserConfigRow,
+} from "@/lib/user-config-columns";
 
 // GET /api/user/data - Fetch categories, links, and config for current logged-in user
 export async function GET() {
@@ -129,48 +133,7 @@ export async function GET() {
   // Fetch config
   const configRow = db
     .prepare("SELECT * FROM user_configs WHERE user_id = ?")
-    .get(userId) as
-    | {
-        logo_text: string;
-        logo_image: string;
-        show_search_bar: number;
-        max_width: "1000px" | "1200px" | "1400px" | "full";
-        custom_footer: string;
-        theme: "light" | "dark" | "system";
-        ai_base_url: string;
-        ai_api_key: string;
-        ai_model: string;
-        site_title: string;
-        link_status_enabled: number;
-        link_status_interval: number;
-        social_github: string;
-        social_x: string;
-        social_linkedin: string;
-        social_email: string;
-        weather_enabled: number;
-        weather_api_key: string;
-        weather_location: string;
-        weather_api_base_url: string;
-        link_open_target: "_blank" | "_self";
-        wallpaper_mode: "none" | "bing" | "custom";
-        custom_wallpaper_url: string;
-        glassmorphism: number;
-        sidebar_default_state: "expanded" | "collapsed";
-        clock_widget_mode: "time" | "weather" | "analog";
-        allow_public_access: number;
-        allow_registration: number;
-        security_setup_done: number;
-        model_monitor_enabled: number;
-        ai_copilot_enabled: number;
-        today_activity_enabled: number;
-        recent_visits_enabled: number;
-        pending_reminders_enabled: number;
-        today_summary_enabled: number;
-        social_links_enabled: number;
-        custom_head_scripts: string;
-        custom_css: string;
-      }
-    | undefined;
+    .get(userId) as Record<string, unknown> | undefined;
 
   let effectiveAllowPublicAccess = configRow
     ? (configRow.allow_public_access === 1 || (configRow.allow_public_access as unknown) === true || (configRow.allow_public_access as unknown) === "1")
@@ -200,85 +163,27 @@ export async function GET() {
   const hasBrandCustom = isEEAvailable() && canAccessFeature("brand_customization");
   const hasProbes = isEEAvailable() && canAccessFeature("link_status_monitor");
 
-  const config: SystemConfig = configRow
-    ? {
-        logoText: hasBrandCustom ? configRow.logo_text || "Navelix" : "Navelix",
-        logoImage: hasBrandCustom ? configRow.logo_image || "" : "",
-        siteTitle: hasBrandCustom ? configRow.site_title || DEFAULT_SITE_TITLE : DEFAULT_SITE_TITLE,
-        showSearchBar: configRow.show_search_bar === 1 || (configRow.show_search_bar as unknown) === true || (configRow.show_search_bar as unknown) === "1",
-        maxWidth: configRow.max_width,
-        customFooter: configRow.custom_footer,
-        theme: configRow.theme,
-        allowPublicAccess: effectiveAllowPublicAccess,
-        allowRegistration: effectiveAllowRegistration,
-        securitySetupDone: configRow.security_setup_done === 1 || (configRow.security_setup_done as unknown) === true || (configRow.security_setup_done as unknown) === "1",
-        modelMonitorEnabled: configRow.model_monitor_enabled === 1 || (configRow.model_monitor_enabled as unknown) === true || (configRow.model_monitor_enabled as unknown) === "1",
-        aiCopilotEnabled: configRow.ai_copilot_enabled === 1 || (configRow.ai_copilot_enabled as unknown) === true || (configRow.ai_copilot_enabled as unknown) === "1",
-        todayActivityEnabled: configRow.today_activity_enabled === 1 || (configRow.today_activity_enabled as unknown) === true || (configRow.today_activity_enabled as unknown) === "1",
-        recentVisitsEnabled: configRow.recent_visits_enabled === 1 || (configRow.recent_visits_enabled as unknown) === true || (configRow.recent_visits_enabled as unknown) === "1",
-        pendingRemindersEnabled: configRow.pending_reminders_enabled === 1 || (configRow.pending_reminders_enabled as unknown) === true || (configRow.pending_reminders_enabled as unknown) === "1",
-        todaySummaryEnabled: configRow.today_summary_enabled === 1 || (configRow.today_summary_enabled as unknown) === true || (configRow.today_summary_enabled as unknown) === "1",
-        socialLinksEnabled: configRow.social_links_enabled === 1 || (configRow.social_links_enabled as unknown) === true || (configRow.social_links_enabled as unknown) === "1",
-        customHeadScripts: hasCodeInject ? configRow.custom_head_scripts || "" : "",
-        customCss: hasCodeInject ? configRow.custom_css || "" : "",
-        aiBaseUrl: configRow.ai_base_url,
-        aiKeyConfigured: Boolean(configRow.ai_api_key),
-        aiModel: configRow.ai_model,
-        linkStatusEnabled: hasProbes ? configRow.link_status_enabled === 1 : false,
-        linkStatusInterval: hasProbes ? configRow.link_status_interval || 60 : 60,
-        socialGithub: configRow.social_github,
-        socialX: configRow.social_x,
-        socialLinkedin: configRow.social_linkedin,
-        socialEmail: configRow.social_email,
-        weatherEnabled: configRow.weather_enabled === 1,
-        weatherKeyConfigured: Boolean(configRow.weather_api_key),
-        weatherLocation: configRow.weather_location,
-        weatherApiBaseUrl: configRow.weather_api_base_url,
-        linkOpenTarget: configRow.link_open_target || "_blank",
-        wallpaperMode: configRow.wallpaper_mode || "none",
-        customWallpaperUrl: configRow.custom_wallpaper_url || "",
-        glassmorphism: configRow.glassmorphism === 1,
-        sidebarDefaultState: configRow.sidebar_default_state || "expanded",
-        clockWidgetMode: configRow.clock_widget_mode || "time",
-      }
-    : {
-        logoText: "Navelix",
-        logoImage: "",
-        showSearchBar: true,
-        maxWidth: "1200px",
-        customFooter: "© 2026 Navelix. 保留所有权利。",
-        theme: "system",
-        aiBaseUrl: "https://api.openai.com/v1",
-        aiKeyConfigured: false,
-        aiModel: "gpt-4o-mini",
-        siteTitle: DEFAULT_SITE_TITLE,
-        allowPublicAccess: false,
-        allowRegistration: false,
-        securitySetupDone: false,
-        modelMonitorEnabled: true,
-        aiCopilotEnabled: true,
-        todayActivityEnabled: true,
-        recentVisitsEnabled: true,
-        pendingRemindersEnabled: false,
-        todaySummaryEnabled: false,
-        socialLinksEnabled: true,
-        linkStatusEnabled: false,
-        linkStatusInterval: 60,
-        socialGithub: "https://github.com",
-        socialX: "https://x.com",
-        socialLinkedin: "https://linkedin.com",
-        socialEmail: "邮箱",
-        weatherEnabled: false,
-        weatherKeyConfigured: false,
-        weatherLocation: "",
-        weatherApiBaseUrl: "https://api.seniverse.com",
-        linkOpenTarget: "_blank",
-        wallpaperMode: "none",
-        customWallpaperUrl: "",
-        glassmorphism: false,
-        sidebarDefaultState: "expanded",
-        clockWidgetMode: "time",
-      };
+  const config: SystemConfig = {
+    ...defaultUserConfig(),
+    ...(configRow ? mapUserConfigRow(configRow) : {}),
+    allowPublicAccess: effectiveAllowPublicAccess,
+    allowRegistration: effectiveAllowRegistration,
+  };
+
+  // EE 门禁：无权限时强制降级为默认值
+  if (!hasBrandCustom) {
+    config.logoText = "Navelix";
+    config.logoImage = "";
+    config.siteTitle = DEFAULT_SITE_TITLE;
+  }
+  if (!hasCodeInject) {
+    config.customHeadScripts = "";
+    config.customCss = "";
+  }
+  if (!hasProbes) {
+    config.linkStatusEnabled = false;
+    config.linkStatusInterval = 60;
+  }
 
   return NextResponse.json({
     categories: categoryRows,

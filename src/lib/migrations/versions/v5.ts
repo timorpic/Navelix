@@ -93,9 +93,6 @@ const REBUILD_SQL = `
     social_x TEXT NOT NULL DEFAULT '',
     social_linkedin TEXT NOT NULL DEFAULT '',
     social_email TEXT NOT NULL DEFAULT '',
-    cliproxy_enabled INTEGER NOT NULL DEFAULT 1,
-    cliproxy_url TEXT NOT NULL DEFAULT 'http://[IP]:8317',
-    cliproxy_key TEXT NOT NULL DEFAULT '',
     weather_enabled INTEGER NOT NULL DEFAULT 0,
     weather_api_key TEXT NOT NULL DEFAULT '',
     weather_location TEXT NOT NULL DEFAULT '',
@@ -115,7 +112,7 @@ const REBUILD_SQL = `
   INSERT OR IGNORE INTO user_configs_new (
     user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme,
     ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval,
-    social_github, social_x, social_linkedin, social_email, cliproxy_enabled, cliproxy_url, cliproxy_key,
+    social_github, social_x, social_linkedin, social_email,
     weather_enabled, weather_api_key, weather_location, weather_api_base_url, link_open_target,
     wallpaper_mode, custom_wallpaper_url, glassmorphism, sidebar_default_state, clock_widget_mode,
     allow_public_access, allow_registration, security_setup_done, custom_head_scripts, custom_css
@@ -123,7 +120,7 @@ const REBUILD_SQL = `
   SELECT
     user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, language, theme,
     ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled, link_status_interval,
-    social_github, social_x, social_linkedin, social_email, cliproxy_enabled, cliproxy_url, cliproxy_key,
+    social_github, social_x, social_linkedin, social_email,
     weather_enabled, weather_api_key, weather_location, weather_api_base_url, link_open_target,
     wallpaper_mode, custom_wallpaper_url, glassmorphism, sidebar_default_state, clock_widget_mode,
     allow_public_access, allow_registration, security_setup_done, custom_head_scripts, custom_css

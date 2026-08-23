@@ -3,9 +3,11 @@ import type { Category, Project, SiteLink, SystemConfig } from "@/types";
 import { encryptSecret } from "./secret.ts";
 import { recordAuditLog } from "./audit.ts";
 import {
-  DEFAULT_SITE_TITLE,
-  DEFAULT_CUSTOM_FOOTER,
-} from "./constants.ts";
+  buildUserConfigsUpsertSql,
+  coerceUserConfigValues,
+  defaultUserConfig,
+  mapUserConfigRow,
+} from "./user-config-columns.ts";
 
 export interface UserDataResult {
   user?: PublicUser | null;
@@ -202,88 +204,12 @@ export function getUserData(userId: string): UserDataResult {
     }
   }
 
-  const config: SystemConfig = configRow
-    ? {
-        logoText: String(configRow.logo_text || "Navelix"),
-        logoImage: String(configRow.logo_image || ""),
-        showSearchBar: configRow.show_search_bar === 1 || configRow.show_search_bar === true || configRow.show_search_bar === "1",
-        maxWidth: (configRow.max_width as SystemConfig["maxWidth"]) || "1200px",
-        customFooter: String(configRow.custom_footer || DEFAULT_CUSTOM_FOOTER),
-        theme: (configRow.theme as SystemConfig["theme"]) || "system",
-        allowPublicAccess: effectiveAllowPublicAccess,
-        allowRegistration: effectiveAllowRegistration,
-        securitySetupDone: configRow.security_setup_done === 1 || configRow.security_setup_done === true || configRow.security_setup_done === "1",
-        customHeadScripts: String(configRow.custom_head_scripts || ""),
-        customCss: String(configRow.custom_css || ""),
-        aiBaseUrl: String(configRow.ai_base_url || "https://api.openai.com/v1"),
-        // 安全：不下发明文密钥，仅返回是否已配置标记
-        aiKeyConfigured: Boolean(configRow.ai_api_key),
-        aiModel: String(configRow.ai_model || "gpt-4o-mini"),
-        siteTitle: String(configRow.site_title || DEFAULT_SITE_TITLE),
-        linkStatusEnabled: configRow.link_status_enabled === 1 || configRow.link_status_enabled === true || configRow.link_status_enabled === "1",
-        linkStatusInterval: Number(configRow.link_status_interval) || 60,
-        socialGithub: String(configRow.social_github || ""),
-        socialX: String(configRow.social_x || ""),
-        socialLinkedin: String(configRow.social_linkedin || ""),
-        socialEmail: String(configRow.social_email || ""),
-        weatherEnabled: configRow.weather_enabled === 1,
-        weatherKeyConfigured: Boolean(configRow.weather_api_key),
-        weatherLocation: String(configRow.weather_location || ""),
-        weatherApiBaseUrl: String(configRow.weather_api_base_url || "https://api.seniverse.com"),
-        linkOpenTarget: (configRow.link_open_target as SystemConfig["linkOpenTarget"]) || "_blank",
-        wallpaperMode: (configRow.wallpaper_mode as SystemConfig["wallpaperMode"]) || "none",
-        customWallpaperUrl: String(configRow.custom_wallpaper_url || ""),
-        glassmorphism: configRow.glassmorphism === 1 || configRow.glassmorphism === true || configRow.glassmorphism === "1",
-        sidebarDefaultState: (configRow.sidebar_default_state as SystemConfig["sidebarDefaultState"]) || "expanded",
-        clockWidgetMode: (configRow.clock_widget_mode as SystemConfig["clockWidgetMode"]) || "time",
-        modelMonitorEnabled: configRow.model_monitor_enabled === 1 || configRow.model_monitor_enabled === true || configRow.model_monitor_enabled === "1",
-        aiCopilotEnabled: configRow.ai_copilot_enabled === 1 || configRow.ai_copilot_enabled === true || configRow.ai_copilot_enabled === "1",
-        todayActivityEnabled: configRow.today_activity_enabled === 1 || configRow.today_activity_enabled === true || configRow.today_activity_enabled === "1",
-        recentVisitsEnabled: configRow.recent_visits_enabled === 1 || configRow.recent_visits_enabled === true || configRow.recent_visits_enabled === "1",
-        pendingRemindersEnabled: configRow.pending_reminders_enabled === 1 || configRow.pending_reminders_enabled === true || configRow.pending_reminders_enabled === "1",
-        todaySummaryEnabled: configRow.today_summary_enabled === 1 || configRow.today_summary_enabled === true || configRow.today_summary_enabled === "1",
-        socialLinksEnabled: configRow.social_links_enabled === 1 || configRow.social_links_enabled === true || configRow.social_links_enabled === "1",
-      }
-    : {
-        logoText: "Navelix",
-        logoImage: "",
-        showSearchBar: true,
-        maxWidth: "1200px",
-        customFooter: DEFAULT_CUSTOM_FOOTER,
-        theme: "system",
-        allowPublicAccess: false,
-        allowRegistration: false,
-        securitySetupDone: false,
-        customHeadScripts: "",
-        customCss: "",
-        aiBaseUrl: "https://api.openai.com/v1",
-        aiKeyConfigured: false,
-        aiModel: "gpt-4o-mini",
-        siteTitle: DEFAULT_SITE_TITLE,
-        linkStatusEnabled: false,
-        linkStatusInterval: 60,
-        socialGithub: "",
-        socialX: "",
-        socialLinkedin: "",
-        socialEmail: "",
-        weatherEnabled: false,
-        weatherKeyConfigured: false,
-        weatherLocation: "",
-        weatherApiBaseUrl: "https://api.seniverse.com",
-        linkOpenTarget: "_blank",
-        wallpaperMode: "none",
-        customWallpaperUrl: "",
-        glassmorphism: false,
-        sidebarDefaultState: "expanded",
-        clockWidgetMode: "time",
-        modelMonitorEnabled: true,
-        aiCopilotEnabled: true,
-        todayActivityEnabled: true,
-        recentVisitsEnabled: true,
-        pendingRemindersEnabled: false,
-        todaySummaryEnabled: false,
-        socialLinksEnabled: true,
-      };
+  const config: SystemConfig = {
+    ...defaultUserConfig(),
+    ...(configRow ? mapUserConfigRow(configRow) : {}),
+    allowPublicAccess: effectiveAllowPublicAccess,
+    allowRegistration: effectiveAllowRegistration,
+  };
 
   const result: UserDataResult = { user, categories: categoryRows as Category[], links, projects, config };
   // SQLite 返回的行对象原型非标准（null 原型），
@@ -522,7 +448,11 @@ export function saveUserTodos(userId: string, items: TodoInput[]): void {
 /** 配置输入（宽松对象，运行期逐字段校验；密钥字段留空 = 保持不变） */
 export type ConfigInput = Record<string, unknown>;
 
-/** 保存用户配置：仅更新传入字段，未传字段沿用当前库内值；密钥留空不覆盖 */
+/**
+ * 保存用户配置：仅更新传入字段，未传字段沿用当前库内值；密钥留空不覆盖。
+ * 列定义 / 类型转换 / upsert SQL 全部由 user-config-columns.ts 元数据驱动，
+ * 新增配置项只需在元数据文件中追加一行。
+ */
 export function saveUserConfigs(
   userId: string,
   cfg: ConfigInput,
@@ -531,187 +461,29 @@ export function saveUserConfigs(
     .prepare("SELECT * FROM user_configs WHERE user_id = ?")
     .get(userId) as Record<string, unknown> | undefined;
 
-  const str =
-    (cfgKey: string, column: string, fallback: string) =>
-    (typeof cfg[cfgKey] === "string" ? (cfg[cfgKey] as string) : String(currentRow?.[column] ?? fallback));
-  const bool =
-    (cfgKey: string, column: string, fallback: number) =>
-    typeof cfg[cfgKey] === "boolean"
-      ? cfg[cfgKey]
-        ? 1
-        : 0
-      : Number(currentRow?.[column] ?? fallback);
-  const num =
-    (cfgKey: string, column: string, fallback: number) =>
-    typeof cfg[cfgKey] === "number"
-      ? (cfg[cfgKey] as number)
-      : Number(currentRow?.[column] ?? fallback);
-  /** API Key 类字段：传入非空字符串才更新，否则沿用旧值（实现"留空不变"） */
-  const secret =
-    (cfgKey: string, column: string) =>
-    typeof cfg[cfgKey] === "string" && (cfg[cfgKey] as string).trim() !== ""
-      ? (cfg[cfgKey] as string).trim()
-      : String(currentRow?.[column] || "");
-
-  const logoText = str("logoText", "logo_text", "Navelix");
-  const logoImage = str("logoImage", "logo_image", "");
-  const showSearchBar = bool("showSearchBar", "show_search_bar", 1);
-  const maxWidth = str("maxWidth", "max_width", "1200px");
-  const customFooter = str("customFooter", "custom_footer", DEFAULT_CUSTOM_FOOTER);
-  const theme = str("theme", "theme", "system");
-  const aiBaseUrl = str("aiBaseUrl", "ai_base_url", "https://api.openai.com/v1");
-  const aiApiKey = secret("aiApiKey", "ai_api_key");
-  const aiModel = str("aiModel", "ai_model", "gpt-4o-mini");
-  const siteTitle = str("siteTitle", "site_title", DEFAULT_SITE_TITLE);
-  const linkStatusEnabled = bool("linkStatusEnabled", "link_status_enabled", 0);
-  const linkStatusInterval = num("linkStatusInterval", "link_status_interval", 60);
-  const socialGithub = str("socialGithub", "social_github", "");
-  const socialX = str("socialX", "social_x", "");
-  const socialLinkedin = str("socialLinkedin", "social_linkedin", "");
-  const socialEmail = str("socialEmail", "social_email", "");
-  const weatherEnabled = bool("weatherEnabled", "weather_enabled", 0);
-  const weatherApiKey = secret("weatherApiKey", "weather_api_key");
-  const weatherLocation = str("weatherLocation", "weather_location", "");
-  const weatherApiBaseUrl = str("weatherApiBaseUrl", "weather_api_base_url", "https://api.seniverse.com");
-  const linkOpenTarget = str("linkOpenTarget", "link_open_target", "_blank");
-  const wallpaperMode = str("wallpaperMode", "wallpaper_mode", "none");
-  const customWallpaperUrl = str("customWallpaperUrl", "custom_wallpaper_url", "");
-  const glassmorphism = bool("glassmorphism", "glassmorphism", 0);
-  const sidebarDefaultState = str("sidebarDefaultState", "sidebar_default_state", "expanded");
-  const clockWidgetMode = str("clockWidgetMode", "clock_widget_mode", "time");
-  const modelMonitorEnabled = bool("modelMonitorEnabled", "model_monitor_enabled", 1);
-  const aiCopilotEnabled = bool("aiCopilotEnabled", "ai_copilot_enabled", 1);
-  const todayActivityEnabled = bool("todayActivityEnabled", "today_activity_enabled", 1);
-  const recentVisitsEnabled = bool("recentVisitsEnabled", "recent_visits_enabled", 1);
-  const pendingRemindersEnabled = bool("pendingRemindersEnabled", "pending_reminders_enabled", 0);
-  const todaySummaryEnabled = bool("todaySummaryEnabled", "today_summary_enabled", 0);
-  const socialLinksEnabled = bool("socialLinksEnabled", "social_links_enabled", 1);
   const userRow = db.prepare("SELECT role FROM users WHERE id = ?").get(userId) as { role?: string } | undefined;
   const isAdmin = userRow?.role === "admin";
-  const allowPublicAccess = isAdmin
-    ? bool("allowPublicAccess", "allow_public_access", 0)
-    : Number(currentRow?.allow_public_access ?? 0);
-  const allowRegistration = isAdmin
-    ? bool("allowRegistration", "allow_registration", 0)
-    : Number(currentRow?.allow_registration ?? 0);
-  const securitySetupDone = bool("securitySetupDone", "security_setup_done", 0);
-  const customHeadScripts = str("customHeadScripts", "custom_head_scripts", "");
-  const customCss = str("customCss", "custom_css", "");
-
-  // 对敏感密钥字段应用 AES-256-GCM 静态落盘加密
-  const encryptedAiApiKey = encryptSecret(aiApiKey);
-  const encryptedWeatherApiKey = encryptSecret(weatherApiKey);
 
   // 安全告警：自定义脚本/CSS 会绕过 CSP 直接注入到所有访客页面。
   // 此处仅记录日志供运维审计；写入权限已由 POST /api/user/data 的 admin 角色门禁收口。
-  if (customHeadScripts.trim() !== "") {
+  if (typeof cfg.customHeadScripts === "string" && cfg.customHeadScripts.trim() !== "") {
     console.warn(
       "[Security] user_configs.custom_head_scripts 已写入非空内容，将以 dangerouslySetInnerHTML 注入页面（绕过 CSP），请确保来源可信且仅管理员可配置。",
     );
   }
-  if (customCss.trim() !== "") {
+  if (typeof cfg.customCss === "string" && cfg.customCss.trim() !== "") {
     console.warn(
       "[Security] user_configs.custom_css 已写入非空内容，将以 <style> 注入页面（绕过 CSP style-src），请确保来源可信且仅管理员可配置。",
     );
   }
 
-  db.prepare(`
-    INSERT INTO user_configs (
-      user_id, logo_text, logo_image, show_search_bar, max_width, custom_footer, theme,
-      ai_base_url, ai_api_key, ai_model, site_title, link_status_enabled,
-      link_status_interval, social_github, social_x, social_linkedin, social_email,
-      weather_enabled, weather_api_key, weather_location, weather_api_base_url,
-      link_open_target, wallpaper_mode, custom_wallpaper_url, glassmorphism,
-      sidebar_default_state, clock_widget_mode, allow_public_access, allow_registration,
-      security_setup_done, model_monitor_enabled,
-      ai_copilot_enabled, today_activity_enabled, recent_visits_enabled,
-      pending_reminders_enabled, today_summary_enabled, social_links_enabled,
-      custom_head_scripts, custom_css
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(user_id) DO UPDATE SET
-      logo_text = excluded.logo_text,
-      logo_image = excluded.logo_image,
-      show_search_bar = excluded.show_search_bar,
-      max_width = excluded.max_width,
-      custom_footer = excluded.custom_footer,
-      theme = excluded.theme,
-      ai_base_url = excluded.ai_base_url,
-      ai_api_key = excluded.ai_api_key,
-      ai_model = excluded.ai_model,
-      site_title = excluded.site_title,
-      link_status_enabled = excluded.link_status_enabled,
-      link_status_interval = excluded.link_status_interval,
-      social_github = excluded.social_github,
-      social_x = excluded.social_x,
-      social_linkedin = excluded.social_linkedin,
-      social_email = excluded.social_email,
-      weather_enabled = excluded.weather_enabled,
-      weather_api_key = excluded.weather_api_key,
-      weather_location = excluded.weather_location,
-      weather_api_base_url = excluded.weather_api_base_url,
-      link_open_target = excluded.link_open_target,
-      wallpaper_mode = excluded.wallpaper_mode,
-      custom_wallpaper_url = excluded.custom_wallpaper_url,
-      glassmorphism = excluded.glassmorphism,
-      sidebar_default_state = excluded.sidebar_default_state,
-      clock_widget_mode = excluded.clock_widget_mode,
-      allow_public_access = excluded.allow_public_access,
-      allow_registration = excluded.allow_registration,
-      security_setup_done = excluded.security_setup_done,
-      model_monitor_enabled = excluded.model_monitor_enabled,
-      ai_copilot_enabled = excluded.ai_copilot_enabled,
-      today_activity_enabled = excluded.today_activity_enabled,
-      recent_visits_enabled = excluded.recent_visits_enabled,
-      pending_reminders_enabled = excluded.pending_reminders_enabled,
-      today_summary_enabled = excluded.today_summary_enabled,
-      social_links_enabled = excluded.social_links_enabled,
-      custom_head_scripts = excluded.custom_head_scripts,
-      custom_css = excluded.custom_css
-  `).run(
-    userId,
-    logoText,
-    logoImage,
-    showSearchBar,
-    maxWidth,
-    customFooter,
-    theme,
-    aiBaseUrl,
-    encryptedAiApiKey,
-    aiModel,
-    siteTitle,
-    linkStatusEnabled,
-    linkStatusInterval,
-    socialGithub,
-    socialX,
-    socialLinkedin,
-    socialEmail,
-    weatherEnabled,
-    encryptedWeatherApiKey,
-    weatherLocation,
-    weatherApiBaseUrl,
-    linkOpenTarget,
-    wallpaperMode,
-    customWallpaperUrl,
-    glassmorphism,
-    sidebarDefaultState,
-    clockWidgetMode,
-    allowPublicAccess,
-    allowRegistration,
-    securitySetupDone,
-    modelMonitorEnabled,
-    aiCopilotEnabled,
-    todayActivityEnabled,
-    recentVisitsEnabled,
-    pendingRemindersEnabled,
-    todaySummaryEnabled,
-    socialLinksEnabled,
-    customHeadScripts,
-    customCss,
-  );
+  const values = coerceUserConfigValues(cfg, currentRow, isAdmin, encryptSecret);
+
+  db.prepare(buildUserConfigsUpsertSql()).run(userId, ...values);
 
   // 记录关键配置变更安全审计日志
-  if (aiApiKey && aiApiKey !== String(currentRow?.ai_api_key || "")) {
+  const incomingAiKey = typeof cfg.aiApiKey === "string" ? cfg.aiApiKey.trim() : "";
+  if (incomingAiKey !== "" && incomingAiKey !== String(currentRow?.ai_api_key || "")) {
     recordAuditLog({
       userId,
       action: "config.ai_key.update",
