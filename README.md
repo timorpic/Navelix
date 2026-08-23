@@ -59,9 +59,17 @@
 | 📊 **项目与甘特图** | 四维指标看板（进度/任务/风险/更新）、多尺度交互式甘特图（21 天敏捷 / 12 月年度 / 3 年跨年路线图） |
 | 📅 **日历与效率** | 月/周/今日视图、本地时区严格计算、过期待办一键/自动顺延（Rollover）、ICS 日历双向订阅、番茄钟 |
 | 🤖 **AI 智能中枢** | 标准 OpenAI 兼容 API、项目拆解为行动清单、每日日程规划、反重力 / Codex 账号额度实时监控 |
-| 📱 **多端生态** | Chrome 扩展快速采集、PWA / iOS 快捷指令、离线 Service Worker、跨设备漫游 |
+| 📱 **多端生态** | [⬇️ 下载扩展 zip](https://github.com/timorpic/Navelix/releases/download/extension-v1.1.0/navelix-extension-v1.1.0.zip) · Chrome 扩展快速采集、PWA / iOS 快捷指令、离线 Service Worker、跨设备漫游 |
 | 🔌 **开放 API** | Personal Access Token（`nvx_live_...`）Bearer 鉴权，完整 [REST API 文档](wiki/REST-API-开放接口文档.md) |
 | 🔒 **安全体系** | 公开/私有访问、SSRF 回环隔离、CSRF 头防御、防爆破限流、敏感字段 AES 加密落库 |
+
+## 浏览器扩展（Chrome / Edge）
+
+一键收藏网页到你的 Navelix 库：
+
+- **下载**：[⬇️ navelix-extension-v1.1.0.zip](https://github.com/timorpic/Navelix/releases/download/extension-v1.1.0/navelix-extension-v1.1.0.zip)（约 25 KB）
+- **安装**：解压后，在 `chrome://extensions`（或 `edge://extensions`）开启「开发者模式」→「加载已解压的扩展程序」→ 选择解压后的文件夹
+- **配置**：点击工具栏扩展图标 →「设置」→ 填写实例地址与 API 令牌（后台 → API 令牌 → 新建）
 
 ## 文档中心
 
