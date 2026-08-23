@@ -8,11 +8,13 @@
 - 🖱️ **右键收藏**：在页面任意处右键「收藏当前页」、在链接上右键「收藏此链接」。
 - ⚙️ **配置全部内联在扩展里**：popup「设置」Tab 内即可填地址/令牌并测试连接；无独立设置网页，也不改动 Chrome 新标签页。
 
-## 安装（开发者模式加载解压扩展）
+## 下载安装
 
-1. 下载/克隆本仓库的 `extension/` 目录。
+[⬇️ 下载 navelix-extension-v1.1.0.zip](https://github.com/timorpic/Navelix/releases/download/extension-v1.1.0/navelix-extension-v1.1.0.zip)（约 25 KB）
+
+1. 下载 zip 文件并解压到本地文件夹。
 2. Chrome/Edge 打开 `chrome://extensions`（或 `edge://extensions`）。
-3. 右上角开启「开发者模式」→「加载已解压的扩展程序」→ 选择 `extension/` 目录。
+3. 右上角开启「开发者模式」→「加载已解压的扩展程序」→ 选择解压后的文件夹。
 4. 首次使用：点击工具栏扩展图标 → 切到「设置」→ 填写：
    - **实例地址**：你的 Navelix 地址，如 `https://navelix.example.com` 或 `http://[IP]:3721`
    - **API 令牌**：后台 → API 令牌 → 新建，得到 `nvx_live_xxx`
