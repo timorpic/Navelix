@@ -127,6 +127,7 @@ docker compose up -d
 | `NAVELIX_COOKIE_SECURE` | `false` | Cookie Secure 属性；HTTP 保持 `false`，HTTPS 设为 `true` |
 | `TRUST_PROXY` | `false` | 是否信任反向代理 `X-Forwarded-For` 标头 |
 | `NAVELIX_IMAGE_REPO` | `timorpic/navelix` | 版本更新检测使用的镜像仓库 |
+| `NAVELIX_ANALYTICS_REPORT` | `on` | 匿名遥测周报总开关；`off` 关闭（也可在管理后台「个人账号与安全」页一键开关） |
 | `TZ` | `Asia/Shanghai` | 容器运行时时区配置 |
 
 ---
@@ -134,6 +135,8 @@ docker compose up -d
 ## 数据与隐私
 
 所有数据存储在本地 SQLite（`data/navelix.db`）。AI API Key / 天气 Key 仅保存在本地数据库且由服务端安全代理，导出配置时不会泄露。系统具备内置物理热备份与快速数据恢复。
+
+**匿名遥测说明**：Navelix 默认开启匿名周报（仅功能使用聚合计数，不含任何个人信息），帮助作者改进产品。首次启动时控制台会显式打印告知。关闭方式：管理后台「个人账号与安全」→「匿名遥测」卡片一键关闭，或设置环境变量 `NAVELIX_ANALYTICS_REPORT=off`。
 
 ---
 

@@ -76,6 +76,10 @@ export default function AdminProfileTab() {
   const [tgBotTokenInput, setTgBotTokenInput] = useState("");
   const [tgTesting, setTgTesting] = useState(false);
 
+  // ── 匿名遥测上报（隐私透明开关）──
+  const [reportEnabled, setReportEnabled] = useState(true);
+  const [reportEndpointConfigured, setReportEndpointConfigured] = useState(false);
+
   // Flash / notify helpers
   const [notice, setNotice] = useState("");
   const flash = (msg: string) => {
@@ -305,6 +309,19 @@ export default function AdminProfileTab() {
     }
   };
 
+  const fetchReportConfig = async () => {
+    try {
+      const res = await fetch("/api/admin/analytics/report");
+      const data = await res.json();
+      if (data && typeof data.enabled === "boolean") {
+        setReportEnabled(data.enabled);
+        setReportEndpointConfigured(Boolean(data.endpointConfigured));
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   // Initial load + sync form inputs from user
   useEffect(() => {
     queueMicrotask(() => {
@@ -318,6 +335,7 @@ export default function AdminProfileTab() {
       fetchSessions();
       fetchApiTokens();
       fetchTelegramConfig();
+      fetchReportConfig();
     });
   }, []);
 
@@ -373,6 +391,30 @@ export default function AdminProfileTab() {
       flash("❌ 网络请求失败");
     } finally {
       setTgTesting(false);
+    }
+  };
+
+  // 匿名遥测上报开关（隐私透明）：POST /api/admin/analytics/report { enabled }
+  const reportSave = async (next: boolean) => {
+    try {
+      const res = await fetch("/api/admin/analytics/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setReportEnabled(Boolean(data.enabled));
+        flash(
+          next
+            ? "✅ 匿名遥测已开启（仅聚合计数，不含个人信息）"
+            : "已关闭匿名遥测上报",
+        );
+      } else {
+        flash(`❌ ${data.error || "保存失败"}`);
+      }
+    } catch {
+      flash("❌ 网络请求失败");
     }
   };
 
@@ -935,6 +977,54 @@ export default function AdminProfileTab() {
                 )}
               </div>
             </div>
+
+            {/* 卡片 6：📡 匿名遥测（隐私透明开关，仅管理员可见） */}
+            {currentUser?.role === "admin" && (
+            <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
+              <div>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                  <span>📡</span>
+                  <span>匿名遥测（帮助改进 Navelix）</span>
+                </h3>
+                <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
+                  每周上报一次匿名聚合统计（功能使用计数，不含任何个人信息），用于改进产品
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
+                <div>
+                  <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
+                    匿名遥测周报
+                  </p>
+                  <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
+                    关闭后不再发送任何匿名统计数据（仅聚合计数，无个人数据）
+                  </p>
+                  {!reportEndpointConfigured && reportEnabled && (
+                    <p className="text-[10px] text-amber-500 dark:text-amber-400 mt-0.5">
+                      ⚠️ 未配置接收端点（EE 字节码未注入或环境变量为空），实际不会外发
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => reportSave(!reportEnabled)}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                    reportEnabled
+                      ? "bg-[#00C776] text-white"
+                      : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
+                  }`}
+                >
+                  {reportEnabled ? "已开启" : "已关闭"}
+                </button>
+              </div>
+
+              <p className="text-[10px] text-gray-400 dark:text-slate-500 leading-relaxed">
+                🔒 隐私承诺：匿名遥测<b>仅上报聚合计数与枚举值</b>，绝不包含用户 ID、IP、URL、
+                对话内容、Token 或 API Key。接收端点由 EE 字节码注入，公共源码不含任何默认端点；
+                可通过环境变量 <code className="font-mono">NAVELIX_ANALYTICS_ENDPOINT</code> 自建接收端。
+              </p>
+            </div>
+            )}
           </div>
         </div>
       </div>
