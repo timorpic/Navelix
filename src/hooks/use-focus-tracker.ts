@@ -8,6 +8,7 @@ export interface FocusStatsData {
   dailyAverage: number;
   isPositive: boolean;
   weeklyData: number[]; // 7 days: Mon - Sun in hours
+  todayMinutes: number;
 }
 
 const STORAGE_KEY = "navelix.focus.tracker.v1";
@@ -40,6 +41,7 @@ export function useFocusTracker() {
       dailyAverage: 0,
       isPositive: true,
       weeklyData: [0, 0, 0, 0, 0, 0, 0],
+      todayMinutes: 0,
     };
   });
 
@@ -98,12 +100,16 @@ export function useFocusTracker() {
       const daysPassedSoFar = getDayIndex(now) + 1;
       const dailyAverage = parseFloat((totalHours / daysPassedSoFar).toFixed(1));
 
+      // 今日专注分钟数（秒→向下取整分钟，确保刚专注即能实时反映）
+      const todayMinutes = Math.floor((history[getLocalDateStr(now)] || 0) / 60);
+
       const newStats: FocusStatsData = {
         totalHours,
         weeklyChange,
         dailyAverage,
         isPositive,
         weeklyData: thisWeekData,
+        todayMinutes,
       };
 
       setStats(newStats);

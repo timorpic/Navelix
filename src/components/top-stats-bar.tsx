@@ -17,18 +17,18 @@ export default function TopStatsBar({
   categories,
   onSelectCategory,
 }: TopStatsBarProps) {
-  const { weeklyData } = useFocusTracker();
+  const { weeklyData, todayMinutes } = useFocusTracker();
   const currentDayIdx = (new Date().getDay() + 6) % 7;
   const todayFocusHours = weeklyData[currentDayIdx] || 0;
   const yesterdayFocusHours = weeklyData[(currentDayIdx + 6) % 7] || 0;
 
   const focusTrend = useMemo(() => {
-    if (yesterdayFocusHours === 0) return todayFocusHours > 0 ? "↑ 良好" : "— 待开始";
+    if (yesterdayFocusHours === 0) return todayMinutes > 0 ? "↑ 良好" : "— 待开始";
     const diff = ((todayFocusHours - yesterdayFocusHours) / yesterdayFocusHours) * 100;
     if (diff > 0) return `↑ ${Math.round(diff)}%`;
     if (diff < 0) return `↓ ${Math.abs(Math.round(diff))}%`;
     return "= 持平";
-  }, [todayFocusHours, yesterdayFocusHours]);
+  }, [todayFocusHours, yesterdayFocusHours, todayMinutes]);
 
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -84,14 +84,11 @@ export default function TopStatsBar({
   // Derived metrics for Actionable Cockpit
   // 1. 进行中项目数
   const inProgressProjectsCount = useMemo(() => {
-    const inProg = projects.filter(
-      (p) =>
-        (p.status || "").includes("进行") ||
-        (p.status || "").includes("开发") ||
-        (p.status || "").includes("研究") ||
-        (p.status || "").toLowerCase().includes("progress"),
-    ).length;
-    return inProg || (projects.length > 0 ? 1 : 0);
+    return projects.filter((p) => {
+      const status = (p.status || "").trim();
+      if (!status) return true;
+      return status.includes("进行") || status.includes("开发") || status.includes("研究") || status.toLowerCase().includes("progress");
+    }).length;
   }, [projects]);
 
   // 2. 待处理任务数
@@ -197,14 +194,14 @@ export default function TopStatsBar({
           </div>
           <div className="my-1">
             <span className="text-xl font-extrabold text-gray-900 dark:text-white">
-              {todayFocusHours}
+              {todayMinutes}
             </span>
             <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400 ml-1">
-              h
+              分钟
             </span>
           </div>
           <p className="text-[10px] text-gray-400 dark:text-slate-500">
-            专注时长
+            今日专注时长
           </p>
         </div>
 

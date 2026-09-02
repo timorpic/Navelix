@@ -19,11 +19,10 @@ export default function DashboardView({
   config,
 }: DashboardViewProps) {
   // 1. 专注追踪数据 (Focus Tracker)
-  const { totalHours, weeklyChange, dailyAverage, isPositive, weeklyData } =
+  const { totalHours, weeklyChange, dailyAverage, isPositive, weeklyData, todayMinutes } =
     useFocusTracker();
 
   const currentDayIdx = (new Date().getDay() + 6) % 7;
-  const todayFocus = weeklyData[currentDayIdx] || 0;
   const weekdaysLabels = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
   const maxWeeklyHours = Math.max(...weeklyData, 4);
 
@@ -266,7 +265,7 @@ export default function DashboardView({
             </span>
           </div>
           <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-1">
-            今日投入 {todayFocus}h · 日均 {dailyAverage}h
+            今日投入 {todayMinutes} 分钟 · 日均 {dailyAverage}h
           </p>
         </div>
 
