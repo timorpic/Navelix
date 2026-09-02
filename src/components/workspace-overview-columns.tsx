@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import type { Category, Project, SiteLink, TodoItem } from "@/types";
+import React, { useState, useEffect, useMemo } from "react";
+import type { Category, SiteLink, TodoItem } from "@/types";
+import { useNavelixData } from "@/hooks/use-navelix-data";
 import { pushNotification } from "@/lib/notifications";
 import { toLocalDateStr, addDaysLocal } from "@/lib/date-utils";
 
@@ -17,13 +18,12 @@ export default function WorkspaceOverviewColumns({
   links,
   onSelectCategory,
 }: WorkspaceOverviewColumnsProps) {
-  // 1. Projects Data State
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [projectsLoading, setProjectsLoading] = useState(true);
+  // 1. Projects & Todos — 从 NavelixProvider 统一读取
+  const { projects, todos, refreshData, hydrated } = useNavelixData();
+  const projectsLoading = !hydrated;
+  const todosLoading = !hydrated;
 
-  // 2. Todos Data State
-  const [todos, setTodos] = useState<TodoItem[]>([]);
-  const [todosLoading, setTodosLoading] = useState(true);
+  // 2. Quick-add states
   const [quickTodoTitle, setQuickTodoTitle] = useState("");
   const [quickTodoPriority, setQuickTodoPriority] = useState<
     "high" | "medium" | "low"
@@ -46,53 +46,6 @@ export default function WorkspaceOverviewColumns({
       })
       .catch(() => {});
   }, []);
-
-  // Load Projects
-  const fetchProjects = useCallback(async () => {
-    try {
-      const res = await fetch("/api/projects");
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.projects)) setProjects(data.projects);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setProjectsLoading(false);
-    }
-  }, []);
-
-  // Load Todos
-  const fetchTodos = useCallback(async () => {
-    try {
-      const res = await fetch("/api/todos");
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.todos)) setTodos(data.todos);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setTodosLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      fetchProjects();
-      fetchTodos();
-    });
-    const handleUpdate = () => {
-      fetchProjects();
-      fetchTodos();
-    };
-    window.addEventListener("navelix-workspace-updated", handleUpdate);
-    window.addEventListener("focus", handleUpdate);
-    return () => {
-      window.removeEventListener("navelix-workspace-updated", handleUpdate);
-      window.removeEventListener("focus", handleUpdate);
-    };
-  }, [fetchProjects, fetchTodos]);
 
   const todayStr = useMemo(() => toLocalDateStr(), []);
 
@@ -118,7 +71,7 @@ export default function WorkspaceOverviewColumns({
         setQuickTodoTitle("");
         setQuickTodoAssigneeId("");
         window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
-        fetchTodos();
+        refreshData();
         pushNotification("📅 新增日程事项", addedTitle, "calendar");
       }
     } catch {
@@ -135,7 +88,7 @@ export default function WorkspaceOverviewColumns({
         body: JSON.stringify({ done: !done }),
       });
       window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
-      fetchTodos();
+      refreshData();
     } catch {
       // ignore
     }
@@ -152,7 +105,7 @@ export default function WorkspaceOverviewColumns({
         body: JSON.stringify({ dueDate: newDueDate }),
       });
       window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
-      fetchTodos();
+      refreshData();
       pushNotification("⏩ 日程已顺延1天", `${item.title} -> ${newDueDate}`, "calendar");
     } catch {
       // ignore

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavelixConfig } from "@/hooks/use-navelix-config";
 import { useNavelixData } from "@/hooks/use-navelix-data";
-import type { AIChatMessage, Project, TodoItem } from "@/types";
+import type { AIChatMessage } from "@/types";
 import ModelMonitorWidget from "./model-monitor-widget";
 import TodayActivityWidget from "./today-activity-widget";
 import PendingRemindersWidget from "./pending-reminders-widget";
@@ -17,55 +17,17 @@ export default function RightSidebar({
   onToggle?: () => void;
 }) {
   const { config } = useNavelixConfig();
-  const { user } = useNavelixData();
+  const { user, projects, todos } = useNavelixData();
 
   // 1. 用户与工作区实时数据
   const userName = user?.displayName || user?.username || config.logoText || "朋友";
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [todos, setTodos] = useState<TodoItem[]>([]);
-  const [dataLoaded, setDataLoaded] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
   }, []);
 
-  // 2. 加载工作区上下文
-  const loadWorkspaceData = useCallback(async () => {
-    try {
-      const [pRes, tRes] = await Promise.all([
-        fetch("/api/projects").catch(() => null),
-        fetch("/api/todos").catch(() => null),
-      ]);
-      if (pRes && pRes.ok) {
-        const p = await pRes.json();
-        if (Array.isArray(p.projects)) setProjects(p.projects);
-      }
-      if (tRes && tRes.ok) {
-        const t = await tRes.json();
-        if (Array.isArray(t.todos)) setTodos(t.todos);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setDataLoaded(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      loadWorkspaceData();
-    });
-    const handleUpdate = () => loadWorkspaceData();
-    window.addEventListener("navelix-workspace-updated", handleUpdate);
-    window.addEventListener("focus", handleUpdate);
-    return () => {
-      window.removeEventListener("navelix-workspace-updated", handleUpdate);
-      window.removeEventListener("focus", handleUpdate);
-    };
-  }, [loadWorkspaceData]);
-
-  // 3. 构建 Copilot 专属主动洞察与日程建议
+  // 2. 构建 Copilot 专属主动洞察与日程建议
   const copilotInsight = useMemo(() => {
     const now = new Date();
     const hour = now.getHours();
@@ -138,6 +100,7 @@ export default function RightSidebar({
   const [isTyping, setIsTyping] = useState(false);
 
   const handleSendChat = async (textToSend?: string) => {
+    if (isTyping) return;
     const text = (textToSend || chatInput).trim();
     if (!text) return;
 
@@ -312,7 +275,7 @@ export default function RightSidebar({
           </div>
 
           {/* Copilot 主动感知 Briefing 卡片（无对话或展示在顶部） */}
-          {dataLoaded && chatMessages.length === 0 && (
+          {mounted && chatMessages.length === 0 && (
             <div className="p-3 rounded-xl bg-white/90 dark:bg-slate-900/70 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-2.5 text-xs">
               <div>
                 <p className="font-bold text-gray-900 dark:text-white">
@@ -399,14 +362,19 @@ export default function RightSidebar({
               type="text"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                  handleSendChat();
+                }
+              }}
               aria-label="向 AI Copilot 提问或指示"
               placeholder="指示 Copilot 安排任务、拆解或检索..."
               className="w-full pl-3 pr-9 py-2 bg-white/90 dark:bg-slate-900 rounded-xl border border-gray-200/80 dark:border-slate-700 text-xs text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 focus:border-[#00C776]"
             />
             <button
               onClick={() => handleSendChat()}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#00C776] hover:text-[#009a5a] transition-colors cursor-pointer"
+              disabled={isTyping}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#00C776] hover:text-[#009a5a] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               title="发送指令"
             >
               <svg className="w-4 h-4 transform rotate-90" fill="currentColor" viewBox="0 0 24 24">

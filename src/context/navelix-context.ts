@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { Category, Project, SiteLink, SystemConfig } from "@/types";
+import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
 import { DEFAULT_SITE_TITLE, DEFAULT_CUSTOM_FOOTER } from "@/lib/constants";
 
 export const defaultConfig: SystemConfig = {
@@ -60,7 +60,9 @@ export interface NavelixDataApi {
   categories: Category[];
   links: SiteLink[];
   projects: Project[];
+  todos: TodoItem[];
   hydrated: boolean;
+  refreshData: () => void;
   saveProjects: (projects: Project[]) => void;
   addCategory: (name: string, icon: string, isTeamShared?: boolean) => void;
   deleteCategory: (id: string) => void;

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import type { Project, TodoItem } from "@/types";
+import { useState } from "react";
+import type { Project } from "@/types";
+import { useNavelixData } from "@/hooks/use-navelix-data";
 
 const STATUS_OPTIONS = [
   { label: "进行中", color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400" },
@@ -11,35 +12,13 @@ const STATUS_OPTIONS = [
 ];
 
 export default function ProjectAdminPanel() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [todos, setTodos] = useState<TodoItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { projects, todos, refreshData } = useNavelixData();
   const [name, setName] = useState("");
   const [status, setStatus] = useState("进行中");
   const [url, setUrl] = useState("");
   const [color, setColor] = useState("#00C776");
   const [editing, setEditing] = useState<Project | null>(null);
   const [error, setError] = useState("");
-
-  const load = useCallback(async () => {
-    try {
-      const [pRes, tRes] = await Promise.all([fetch("/api/projects"), fetch("/api/todos")]);
-      const pData = await pRes.json();
-      const tData = await tRes.json();
-      if (pData.projects) setProjects(pData.projects);
-      if (tData.todos) setTodos(tData.todos);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      load();
-    });
-  }, [load]);
 
   const resetForm = () => {
     setName("");
@@ -68,7 +47,7 @@ export default function ProjectAdminPanel() {
         });
       }
       resetForm();
-      load();
+      refreshData();
     } catch {
       setError("保存失败");
     }
@@ -76,7 +55,7 @@ export default function ProjectAdminPanel() {
 
   const remove = async (id: string) => {
     await fetch(`/api/projects/${id}`, { method: "DELETE" });
-    load();
+    refreshData();
   };
 
   const startEdit = (p: Project) => {
@@ -234,9 +213,7 @@ export default function ProjectAdminPanel() {
 
       {/* Project list */}
       <div>
-        {loading ? (
-          <p className="py-8 text-center text-xs text-gray-400 dark:text-slate-400">加载项目列表中…</p>
-        ) : projects.length === 0 ? (
+        {projects.length === 0 ? (
           <p className="py-8 text-center text-xs text-gray-400 dark:text-slate-400">
             暂无项目，在上方新建一个开始规划吧
           </p>

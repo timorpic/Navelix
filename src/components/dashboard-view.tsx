@@ -1,22 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
+import { useState, useEffect, useMemo } from "react";
+import type { Category, SiteLink, SystemConfig } from "@/types";
 import { toLocalDateStr } from "@/lib/date-utils";
 import { useFocusTracker } from "@/hooks/use-focus-tracker";
-import { useLinkStatus, getStatusType } from "@/hooks/use-link-status";
+import { useNavelixData } from "@/hooks/use-navelix-data";
+import type { LinkProbeInfo } from "@/hooks/use-link-status";
+import { getStatusType } from "@/hooks/use-link-status";
 import FocusStatsWidget from "./focus-stats-widget";
 
 interface DashboardViewProps {
   categories: Category[];
   links: SiteLink[];
   config: SystemConfig;
+  statuses: Record<string, LinkProbeInfo>;
 }
 
 export default function DashboardView({
   categories,
   links,
   config,
+  statuses,
 }: DashboardViewProps) {
   // 1. 专注追踪数据 (Focus Tracker)
   const { totalHours, weeklyChange, dailyAverage, isPositive, weeklyData, todayMinutes } =
@@ -26,48 +30,12 @@ export default function DashboardView({
   const weekdaysLabels = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
   const maxWeeklyHours = Math.max(...weeklyData, 4);
 
-  // 2. 项目与待办数据 (Projects & Todos)
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [todos, setTodos] = useState<TodoItem[]>([]);
-
-  const fetchWorkspaceData = useCallback(async () => {
-    try {
-      const [pRes, tRes] = await Promise.all([
-        fetch("/api/projects").catch(() => null),
-        fetch("/api/todos").catch(() => null),
-      ]);
-      if (pRes && pRes.ok) {
-        const pData = await pRes.json();
-        if (Array.isArray(pData.projects)) setProjects(pData.projects);
-      }
-      if (tRes && tRes.ok) {
-        const tData = await tRes.json();
-        if (Array.isArray(tData.todos)) setTodos(tData.todos);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      fetchWorkspaceData();
-    });
-    const handleUpdate = () => fetchWorkspaceData();
-    window.addEventListener("navelix-workspace-updated", handleUpdate);
-    window.addEventListener("focus", handleUpdate);
-    return () => {
-      window.removeEventListener("navelix-workspace-updated", handleUpdate);
-      window.removeEventListener("focus", handleUpdate);
-    };
-  }, [fetchWorkspaceData]);
+  // 2. 项目与待办数据 (Projects & Todos) — 从 NavelixProvider 统一读取
+  const { projects, todos, refreshData } = useNavelixData();
 
   // 3. 链路探针与服务健康度检测 (Link Status & Services)
-  const { statuses } = useLinkStatus(
-    config.linkStatusEnabled ? links : [],
-    (config.linkStatusInterval || 60) * 1000,
-  );
-
+  // statuses 由 page.tsx 统一实例化 useLinkStatus 并通过 props 注入，
+  // 避免多份轮询对 /api/link-status 造成重复探测。
   const serviceHealth = useMemo(() => {
     const probedLinks = links.filter((l) => l.url.startsWith("http"));
     let online = 0;
@@ -202,7 +170,7 @@ export default function DashboardView({
         body: JSON.stringify({ done: !done }),
       });
       window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
-      fetchWorkspaceData();
+      refreshData();
     } catch {
       // ignore
     }
@@ -227,7 +195,7 @@ export default function DashboardView({
 
         <button
           type="button"
-          onClick={() => fetchWorkspaceData()}
+          onClick={() => refreshData()}
           className="px-3.5 py-1.5 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold border border-gray-200/80 dark:border-slate-700 transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
         >
           <span>🔄</span>

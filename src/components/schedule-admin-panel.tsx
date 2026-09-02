@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import type { TodoItem, Project } from "@/types";
+import React, { useState, useMemo } from "react";
+import type { TodoItem } from "@/types";
+import { useNavelixData } from "@/hooks/use-navelix-data";
 import { toLocalDateStr } from "@/lib/date-utils";
 import ConfirmDialog from "./confirm-dialog";
 
 export default function ScheduleAdminPanel() {
-  const [schedules, setSchedules] = useState<TodoItem[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { todos: schedules, projects, refreshData } = useNavelixData();
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -24,32 +23,6 @@ export default function ScheduleAdminPanel() {
 
   // Delete Confirm Dialog State
   const [scheduleToDelete, setScheduleToDelete] = useState<TodoItem | null>(null);
-
-  // Fetch Schedules & Projects from Backend API
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [tRes, pRes] = await Promise.all([fetch("/api/todos"), fetch("/api/projects")]);
-      if (tRes.ok) {
-        const tData = await tRes.json();
-        setSchedules(tData.todos || []);
-      }
-      if (pRes.ok) {
-        const pData = await pRes.json();
-        setProjects(pData.projects || []);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      fetchData();
-    });
-  }, [fetchData]);
 
   // Open Modal for Create or Edit
   const handleOpenModal = (item?: TodoItem) => {
@@ -93,7 +66,7 @@ export default function ScheduleAdminPanel() {
         });
         if (res.ok) {
           setShowModal(false);
-          fetchData();
+          refreshData();
         } else {
           setFormNotice("修改日程失败");
         }
@@ -111,7 +84,7 @@ export default function ScheduleAdminPanel() {
         });
         if (res.ok) {
           setShowModal(false);
-          fetchData();
+          refreshData();
         } else {
           setFormNotice("新建日程失败");
         }
@@ -124,17 +97,14 @@ export default function ScheduleAdminPanel() {
   // Toggle Schedule Done Status
   const handleToggleDone = async (item: TodoItem) => {
     try {
-      const nextDone = !item.done;
-      setSchedules((prev) =>
-        prev.map((s) => (s.id === item.id ? { ...s, done: nextDone } : s))
-      );
       await fetch(`/api/todos/${item.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: nextDone }),
+        body: JSON.stringify({ done: !item.done }),
       });
+      refreshData();
     } catch {
-      fetchData();
+      // ignore
     }
   };
 
@@ -146,7 +116,7 @@ export default function ScheduleAdminPanel() {
         method: "DELETE",
       });
       if (res.ok) {
-        setSchedules((prev) => prev.filter((s) => s.id !== scheduleToDelete.id));
+        refreshData();
       }
     } catch {
       // ignore
@@ -253,9 +223,7 @@ export default function ScheduleAdminPanel() {
       </div>
 
       {/* Schedules Table */}
-      {loading ? (
-        <div className="py-12 text-center text-xs text-gray-400">加载日程列表中...</div>
-      ) : filteredSchedules.length === 0 ? (
+      {filteredSchedules.length === 0 ? (
         <div className="py-12 text-center text-xs text-gray-400 bg-gray-50/50 dark:bg-slate-900/40 rounded-xl border border-dashed border-gray-200 dark:border-slate-800">
           暂无匹配的日程安排
         </div>

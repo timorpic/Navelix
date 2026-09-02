@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import type { TodoItem } from "@/types";
+import { useNavelixData } from "@/hooks/use-navelix-data";
 
 const PRIORITY_LABEL: Record<TodoItem["priority"], string> = {
   high: "高",
@@ -10,31 +11,12 @@ const PRIORITY_LABEL: Record<TodoItem["priority"], string> = {
 };
 
 export default function TodoAdminPanel() {
-  const [todos, setTodos] = useState<TodoItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { todos, refreshData } = useNavelixData();
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<TodoItem["priority"]>("medium");
   const [dueDate, setDueDate] = useState("");
   const [editing, setEditing] = useState<TodoItem | null>(null);
   const [error, setError] = useState("");
-
-  const loadTodos = useCallback(async () => {
-    try {
-      const res = await fetch("/api/todos");
-      const data = await res.json();
-      if (data.todos) setTodos(data.todos);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      loadTodos();
-    });
-  }, [loadTodos]);
 
   const resetForm = () => {
     setTitle("");
@@ -65,7 +47,7 @@ export default function TodoAdminPanel() {
         });
       }
       resetForm();
-      loadTodos();
+      refreshData();
     } catch {
       setError("保存失败，请重试");
     }
@@ -77,12 +59,12 @@ export default function TodoAdminPanel() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ done: !todo.done }),
     });
-    loadTodos();
+    refreshData();
   };
 
   const remove = async (id: string) => {
     await fetch(`/api/todos/${id}`, { method: "DELETE" });
-    loadTodos();
+    refreshData();
   };
 
   const startEdit = (todo: TodoItem) => {
@@ -184,9 +166,7 @@ export default function TodoAdminPanel() {
 
       {/* Todo List */}
       <div>
-        {loading ? (
-          <p className="py-8 text-center text-xs text-gray-400 dark:text-slate-400">加载中…</p>
-        ) : todos.length === 0 ? (
+        {todos.length === 0 ? (
           <p className="py-8 text-center text-xs text-gray-400 dark:text-slate-400">
             暂无待办，添加一条开始吧
           </p>

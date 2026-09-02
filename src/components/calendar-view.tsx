@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import type { TodoItem, Project, WorkspaceMember } from "@/types";
+import type { TodoItem, WorkspaceMember } from "@/types";
+import { useNavelixData } from "@/hooks/use-navelix-data";
 import { pushNotification } from "@/lib/notifications";
 import { toLocalDateStr } from "@/lib/date-utils";
 import { trackClientEvent } from "@/lib/client-analytics";
@@ -43,10 +44,8 @@ export default function CalendarView() {
     } catch {}
   };
 
-  const [todos, setTodos] = useState<TodoItem[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const { todos, projects, refreshData, hydrated } = useNavelixData();
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Quick add form state
   const [newTitle, setNewTitle] = useState("");
@@ -76,44 +75,23 @@ export default function CalendarView() {
   // Rollover state
   const [rollingOver, setRollingOver] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchMembers = useCallback(async () => {
     try {
-      const [tRes, pRes, mRes] = await Promise.all([
-        fetch("/api/todos"),
-        fetch("/api/projects"),
-        fetch("/api/user/members"),
-      ]);
-      if (tRes.ok) {
-        const tData = await tRes.json();
-        if (Array.isArray(tData.todos)) setTodos(tData.todos);
-      }
-      if (pRes.ok) {
-        const pData = await pRes.json();
-        if (Array.isArray(pData.projects)) setProjects(pData.projects);
-      }
+      const mRes = await fetch("/api/user/members");
       if (mRes.ok) {
         const mData = await mRes.json();
         if (Array.isArray(mData.members)) setMembers(mData.members);
       }
     } catch {
       // ignore
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     queueMicrotask(() => {
-      fetchData();
+      fetchMembers();
     });
-    const handleUpdate = () => fetchData();
-    window.addEventListener("navelix-workspace-updated", handleUpdate);
-    window.addEventListener("focus", handleUpdate);
-    return () => {
-      window.removeEventListener("navelix-workspace-updated", handleUpdate);
-      window.removeEventListener("focus", handleUpdate);
-    };
-  }, [fetchData]);
+  }, [fetchMembers]);
 
   const todayStr = useMemo(() => toLocalDateStr(new Date()), []);
   const selectedDateStr = toLocalDateStr(selectedDate);
@@ -142,7 +120,7 @@ export default function CalendarView() {
           data.message || `已成功处理 ${data.count} 项待办任务！`,
           "calendar",
         );
-        fetchData();
+        refreshData();
       }
     } catch {
       // ignore
@@ -227,7 +205,7 @@ export default function CalendarView() {
         setNewTitle("");
         setNewProjectId("");
         window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
-        fetchData();
+        refreshData();
         pushNotification("📅 日程新建成功", newTitle.trim(), "calendar");
       }
     } catch {
@@ -243,7 +221,7 @@ export default function CalendarView() {
         body: JSON.stringify({ done: !done }),
       });
       window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
-      fetchData();
+      refreshData();
     } catch {
       // ignore
     }
@@ -253,7 +231,7 @@ export default function CalendarView() {
     try {
       await fetch(`/api/todos/${id}`, { method: "DELETE" });
       window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
-      fetchData();
+      refreshData();
       if (showModal) setShowModal(false);
     } catch {
       // ignore
@@ -292,7 +270,7 @@ export default function CalendarView() {
       if (res.ok) {
         setShowModal(false);
         window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
-        fetchData();
+        refreshData();
       }
     } catch {
       // ignore
@@ -445,7 +423,7 @@ export default function CalendarView() {
       );
 
       setShowAiScheduleModal(false);
-      fetchData();
+      refreshData();
     } catch {
       alert("写入日历失败，请稍后重试。");
     } finally {
@@ -570,7 +548,7 @@ export default function CalendarView() {
       )}
 
       {/* ── 3. 视图渲染区 ── */}
-      {loading ? (
+      {!hydrated ? (
         <div className="py-16 text-center text-xs text-gray-400">
           加载日程数据中...
         </div>
@@ -1036,7 +1014,7 @@ export default function CalendarView() {
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedDate(new Date(dateStr));
+                      setSelectedDate(new Date(dateStr + "T00:00:00"));
                       const input = prompt(`为 ${dateStr} 添加新待办事项:`);
                       if (input?.trim()) {
                         fetch("/api/todos", {
@@ -1047,7 +1025,7 @@ export default function CalendarView() {
                             priority: "medium",
                             dueDate: dateStr,
                           }),
-                        }).then(() => fetchData());
+                        }).then(() => refreshData());
                       }
                     }}
                     className="w-full py-1 mt-2 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-gray-200/50 dark:border-slate-700/60 text-[10px] font-bold text-gray-500 hover:text-[#00C776] transition-all cursor-pointer"

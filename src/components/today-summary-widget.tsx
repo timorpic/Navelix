@@ -1,71 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-
-interface TodaySummaryData {
-  totalTodos: number;
-  doneTodos: number;
-  pendingTodos: number;
-  totalProjects: number;
-  inProgressProjects: number;
-}
+import { useNavelixData } from "@/hooks/use-navelix-data";
 
 /** 右侧侧边栏小组件：今日摘要（待办完成度与项目进度概览） */
 export default function TodaySummaryWidget() {
-  const [data, setData] = useState<TodaySummaryData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { todos, projects } = useNavelixData();
 
-  const load = useCallback(async () => {
-    try {
-      const [tRes, pRes] = await Promise.all([
-        fetch("/api/todos").catch(() => null),
-        fetch("/api/projects").catch(() => null),
-      ]);
-      let todos: Array<{ done?: boolean }> = [];
-      let projects: Array<{ status?: string }> = [];
-      if (tRes && tRes.ok) {
-        const t = await tRes.json();
-        todos = Array.isArray(t.todos) ? t.todos : [];
-      }
-      if (pRes && pRes.ok) {
-        const p = await pRes.json();
-        projects = Array.isArray(p.projects) ? p.projects : [];
-      }
+  const done = todos.filter((t) => t.done).length;
+  const inProgress = projects.filter((p) =>
+    ["进行", "开发", "研究", "progress"].some((k) =>
+      (p.status || "").toLowerCase().includes(k),
+    ),
+  ).length;
 
-      const done = todos.filter((t) => t.done).length;
-      const inProgress = projects.filter((p) =>
-        ["进行", "开发", "研究", "progress"].some((k) =>
-          (p.status || "").toLowerCase().includes(k),
-        ),
-      ).length;
-
-      setData({
-        totalTodos: todos.length,
-        doneTodos: done,
-        pendingTodos: todos.length - done,
-        totalProjects: projects.length,
-        inProgressProjects: inProgress,
-      });
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      load();
-    });
-    const handle = () => load();
-    window.addEventListener("navelix-workspace-updated", handle);
-    return () => window.removeEventListener("navelix-workspace-updated", handle);
-  }, [load]);
+  const data = {
+    totalTodos: todos.length,
+    doneTodos: done,
+    pendingTodos: todos.length - done,
+    totalProjects: projects.length,
+    inProgressProjects: inProgress,
+  };
 
   const donePct =
-    data && data.totalTodos > 0
-      ? Math.round((data.doneTodos / data.totalTodos) * 100)
-      : 0;
+    data.totalTodos > 0 ? Math.round((data.doneTodos / data.totalTodos) * 100) : 0;
 
   return (
     <div className="rounded-2xl p-4 bg-white/90 dark:bg-slate-900/70 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-3 transition-colors">
@@ -74,9 +31,7 @@ export default function TodaySummaryWidget() {
         <h3 className="text-xs font-black text-gray-900 dark:text-white tracking-wide">今日摘要</h3>
       </div>
 
-      {loading ? (
-        <p className="py-3 text-center text-[10px] text-gray-400 dark:text-slate-500">加载中…</p>
-      ) : !data ? (
+      {!data.totalTodos && !data.totalProjects ? (
         <p className="py-3 text-center text-[10px] text-gray-400 dark:text-slate-500">暂无数据</p>
       ) : (
         <div className="space-y-3">

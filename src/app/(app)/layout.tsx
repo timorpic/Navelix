@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getUserData } from "@/lib/user-data";
 import { db } from "@/lib/db";
 import { NavelixProvider } from "@/components/navelix-provider";
+import ErrorBoundary from "@/components/error-boundary";
 
 export default async function AppLayout({
   children,
@@ -53,7 +54,7 @@ export default async function AppLayout({
     }
     return (
       <NavelixProvider initialData={initialData}>
-        {children}
+        <ErrorBoundary>{children}</ErrorBoundary>
       </NavelixProvider>
     );
   }
@@ -75,7 +76,7 @@ export default async function AppLayout({
 
   return (
     <NavelixProvider initialData={initialData}>
-      {children}
+      <ErrorBoundary>{children}</ErrorBoundary>
     </NavelixProvider>
   );
 }

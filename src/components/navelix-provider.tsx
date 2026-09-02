@@ -12,7 +12,7 @@ import {
   categories as seedCategories,
   siteLinks as seedLinks,
 } from "@/data/links";
-import type { Category, Project, SiteLink, SystemConfig } from "@/types";
+import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
 import type { UserDataResult } from "@/lib/user-data";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 
@@ -56,6 +56,7 @@ export function NavelixProvider({
   const [projects, setProjects] = useState<Project[]>(
     initialData?.projects ?? [],
   );
+  const [todos, setTodos] = useState<TodoItem[]>(initialData?.todos ?? []);
   const [config, setConfig] = useState<SystemConfig>(
     initialData?.config ?? defaultConfig,
   );
@@ -152,6 +153,7 @@ export function NavelixProvider({
         if (Array.isArray(data.categories)) setCategories(data.categories);
         if (Array.isArray(data.links)) setLinks(data.links);
         if (Array.isArray(data.projects)) setProjects(data.projects);
+        if (Array.isArray(data.todos)) setTodos(data.todos);
         if (data.config) {
           const localTheme = localStorage.getItem("navelix_theme");
           const activeTheme =
@@ -226,7 +228,12 @@ export function NavelixProvider({
             applyThemeToDom(parsed.theme);
           }
         } catch {}
-      } else {
+      } else if (
+        e.key === "navelix.user.categories" ||
+        e.key === "navelix.user.links"
+      ) {
+        // 仅对本 Provider 自己持久化的数据 key 触发全量同步，
+        // 避免 focus-tracker 等高频写入（每 5s 一次）造成 storage 事件风暴
         loadData();
       }
     };
@@ -242,6 +249,19 @@ export function NavelixProvider({
     onTodosChange: loadData,
     enabled: hydrated,
   });
+
+  // 6.1 统一数据刷新：监听工作台数据变更事件（各组件改完后广播），
+  // 由 Provider 作为唯一数据源统一重载，避免每个组件各自独立 fetch 造成重复请求。
+  const refreshData = useCallback(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    const handleWorkspaceUpdate = () => refreshData();
+    window.addEventListener("navelix-workspace-updated", handleWorkspaceUpdate);
+    return () =>
+      window.removeEventListener("navelix-workspace-updated", handleWorkspaceUpdate);
+  }, [refreshData]);
 
   // 6. 系统主题变动监听器（当 config.theme === 'system' 时响应系统级浅色/深色切换）
   useEffect(() => {
@@ -455,7 +475,9 @@ export function NavelixProvider({
     categories,
     links,
     projects,
+    todos,
     hydrated,
+    refreshData,
     saveProjects,
     addCategory,
     deleteCategory,

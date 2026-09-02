@@ -93,24 +93,16 @@ export default function GlobalSearchResults({
   onNavigate,
   onClear,
 }: GlobalSearchResultsProps) {
-  const { categories, links, projects } = useNavelixData();
+  const { categories, links, projects, todos } = useNavelixData();
   const { config } = useNavelixConfig();
-  const [todos, setTodos] = useState<TodoItem[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  const loadData = useCallback(async () => {
+  const loadNotifications = useCallback(async () => {
     try {
-      const [tRes, nRes] = await Promise.all([
-        fetch("/api/todos"),
-        fetch("/api/notifications"),
-      ]);
-      if (tRes.ok) {
-        const tData = await tRes.json();
-        if (Array.isArray(tData.todos)) setTodos(tData.todos);
-      }
+      const nRes = await fetch("/api/notifications");
       if (nRes.ok) {
         const nData = await nRes.json();
         if (Array.isArray(nData.notifications))
@@ -125,15 +117,15 @@ export default function GlobalSearchResults({
 
   // 挂载拉取 + 切回标签页 / 数据变更后刷新，保证搜索时效性
   useEffect(() => {
-    queueMicrotask(() => loadData());
-    const handleUpdate = () => loadData();
+    queueMicrotask(() => loadNotifications());
+    const handleUpdate = () => loadNotifications();
     window.addEventListener("navelix-workspace-updated", handleUpdate);
     window.addEventListener("focus", handleUpdate);
     return () => {
       window.removeEventListener("navelix-workspace-updated", handleUpdate);
       window.removeEventListener("focus", handleUpdate);
     };
-  }, [loadData]);
+  }, [loadNotifications]);
 
   const keywords = useMemo(
     () =>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { Project, TodoItem, WorkspaceMember } from "@/types";
+import { useNavelixData } from "@/hooks/use-navelix-data";
 import { pushNotification } from "@/lib/notifications";
 import { toLocalDateStr, addDaysLocal } from "@/lib/date-utils";
 import { trackClientEvent } from "@/lib/client-analytics";
@@ -54,10 +55,8 @@ interface GanttColumn {
 
 export default function ProjectsView() {
   const [viewTab, setViewTab] = useState<ProjectViewTab>("cards");
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [todos, setTodos] = useState<TodoItem[]>([]);
+  const { projects, todos, refreshData, hydrated } = useNavelixData();
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
 
   // 可选遥测：查看甘特图视图（规范 wiki/Analytics §4.3）
@@ -158,40 +157,23 @@ export default function ProjectsView() {
     } catch {}
   };
 
-    const fetchProjects = useCallback(async () => {
+    const fetchMembers = useCallback(async () => {
     try {
-      const [pRes, tRes, mRes] = await Promise.all([
-        fetch("/api/projects"),
-        fetch("/api/todos"),
-        fetch("/api/user/members"),
-      ]);
-      const pData = await pRes.json();
-      const tData = await tRes.json();
-      if (pData.projects) setProjects(pData.projects);
-      if (tData.todos) setTodos(tData.todos);
+      const mRes = await fetch("/api/user/members");
       if (mRes.ok) {
         const mData = await mRes.json();
         if (Array.isArray(mData.members)) setMembers(mData.members);
       }
     } catch {
       // ignore
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     queueMicrotask(() => {
-      fetchProjects();
+      fetchMembers();
     });
-    const handleUpdate = () => fetchProjects();
-    window.addEventListener("navelix-workspace-updated", handleUpdate);
-    window.addEventListener("focus", handleUpdate);
-    return () => {
-      window.removeEventListener("navelix-workspace-updated", handleUpdate);
-      window.removeEventListener("focus", handleUpdate);
-    };
-  }, [fetchProjects]);
+  }, [fetchMembers]);
 
   const resetForm = () => {
     setName("");
@@ -206,8 +188,8 @@ export default function ProjectsView() {
   };
 
   // 触发 AI 拆解任务
-  const handleAiBreakdown = async () => {
-    const trimmedName = name.trim();
+  const handleAiBreakdown = async (overrideName?: string) => {
+    const trimmedName = (overrideName ?? name).trim();
     if (!trimmedName) {
       alert("请先输入项目名称，再让 AI 帮您拆解！");
       return;
@@ -312,7 +294,7 @@ export default function ProjectsView() {
     try {
       if (editingId) {
         // 编辑模式：将项目基本信息与拆解/修改后的里程碑 todos 原子提交更新
-        await fetch(`/api/projects/${editingId}`, {
+        const res = await fetch(`/api/projects/${editingId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -323,6 +305,11 @@ export default function ProjectsView() {
             todos: brokenTasks,
           }),
         });
+
+        if (!res.ok) {
+          pushNotification("❌ 项目更新失败", "服务器未能保存本次修改，请稍后重试。", "project");
+          return;
+        }
 
         pushNotification(
           "🗂️ 项目与阶段任务已更新",
@@ -354,7 +341,12 @@ export default function ProjectsView() {
           body: JSON.stringify(payload),
         });
 
-        if (res.ok && syncToCalendar && brokenTasks.length > 0) {
+        if (!res.ok) {
+          pushNotification("❌ 项目创建失败", "服务器未能保存该项目，请稍后重试。", "project");
+          return;
+        }
+
+        if (syncToCalendar && brokenTasks.length > 0) {
           pushNotification(
             "🗂️ 项目与日程创建成功",
             `项目「${n}」已建立，并自动规划了 ${brokenTasks.length} 项日程待办投射至日历！`,
@@ -364,9 +356,9 @@ export default function ProjectsView() {
       }
       window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
       resetForm();
-      fetchProjects();
+      refreshData();
     } catch {
-      // ignore
+      pushNotification("❌ 保存失败", "网络异常，项目未能保存，请稍后重试。", "project");
     }
   };
 
@@ -401,8 +393,9 @@ export default function ProjectsView() {
     setShowAdd(true);
 
     if (triggerAi) {
+      const titleForAi = p.name;
       setTimeout(() => {
-        handleAiBreakdown();
+        handleAiBreakdown(titleForAi);
       }, 100);
     }
   };
@@ -410,11 +403,15 @@ export default function ProjectsView() {
   const handleDelete = async (id: string) => {
     if (!confirm("确认删除该项目？关联待办也将一并清理。")) return;
     try {
-      await fetch(`/api/projects/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        pushNotification("❌ 删除失败", "服务器未能删除该项目，请稍后重试。", "project");
+        return;
+      }
       window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
-      fetchProjects();
+      refreshData();
     } catch {
-      // ignore
+      pushNotification("❌ 删除失败", "网络异常，请稍后重试。", "project");
     }
   };
 
@@ -427,7 +424,7 @@ export default function ProjectsView() {
         body: JSON.stringify({ done: !done }),
       });
       window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
-      fetchProjects();
+      refreshData();
     } catch {
       // ignore
     }
@@ -699,7 +696,7 @@ export default function ProjectsView() {
                 />
                 <button
                   type="button"
-                  onClick={handleAiBreakdown}
+                  onClick={() => handleAiBreakdown()}
                   disabled={aiLoading}
                   className="px-3 py-2 bg-gradient-to-r from-[#00C776] to-teal-500 hover:from-[#00B068] hover:to-teal-600 text-white text-xs font-black rounded-xl transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                   title="让 AI 自动拆分阶段任务、责任人与截止日期"
@@ -962,7 +959,7 @@ export default function ProjectsView() {
       )}
 
       {/* ── 视图模式渲染：卡片看板 vs 甘特图视界 ── */}
-      {loading ? (
+      {!hydrated ? (
         <div className="py-16 text-center text-xs text-gray-400">
           加载项目与排期数据中...
         </div>

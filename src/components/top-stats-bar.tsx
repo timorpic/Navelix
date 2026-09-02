@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import type { Category, Project, SiteLink, TodoItem } from "@/types";
+import React, { useState, useMemo } from "react";
+import type { Category, SiteLink } from "@/types";
 import { useNavelixData } from "@/hooks/use-navelix-data";
 import { useFocusTracker } from "@/hooks/use-focus-tracker";
 import { toLocalDateStr } from "@/lib/date-utils";
@@ -30,8 +30,7 @@ export default function TopStatsBar({
     return "= 持平";
   }, [todayFocusHours, yesterdayFocusHours, todayMinutes]);
 
-  const [todos, setTodos] = useState<TodoItem[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const { todos, projects, refreshData, addLink } = useNavelixData();
   const [showAddLinkModal, setShowAddLinkModal] = useState(false);
 
   // Quick Action Modal States
@@ -47,39 +46,6 @@ export default function TopStatsBar({
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
   const [taskNotice, setTaskNotice] = useState("");
-
-  // Load Todos & Projects
-  const fetchMetrics = useCallback(async () => {
-    try {
-      const [tRes, pRes] = await Promise.all([
-        fetch("/api/todos"),
-        fetch("/api/projects"),
-      ]);
-      if (tRes.ok) {
-        const tData = await tRes.json();
-        if (Array.isArray(tData.todos)) setTodos(tData.todos);
-      }
-      if (pRes.ok) {
-        const pData = await pRes.json();
-        if (Array.isArray(pData.projects)) setProjects(pData.projects);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      fetchMetrics();
-    });
-    const handleUpdate = () => fetchMetrics();
-    window.addEventListener("navelix-workspace-updated", handleUpdate);
-    window.addEventListener("focus", handleUpdate);
-    return () => {
-      window.removeEventListener("navelix-workspace-updated", handleUpdate);
-      window.removeEventListener("focus", handleUpdate);
-    };
-  }, [fetchMetrics]);
 
   // Derived metrics for Actionable Cockpit
   // 1. 进行中项目数
@@ -162,7 +128,7 @@ export default function TopStatsBar({
       if (res.ok) {
         setTaskNotice("待办创建成功！");
         setTaskTitle("");
-        fetchMetrics();
+        refreshData();
         setTimeout(() => {
           setTaskNotice("");
           setShowTaskModal(false);
@@ -172,8 +138,6 @@ export default function TopStatsBar({
       setTaskNotice("创建失败");
     }
   };
-
-  const { addLink } = useNavelixData();
 
   return (
     <div className="flex flex-col gap-2 mb-0">

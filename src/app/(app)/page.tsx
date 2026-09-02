@@ -213,7 +213,12 @@ function HomeContent() {
           ) : activeCategory === "feature-projects" ? (
             <ProjectsView />
           ) : activeCategory === "feature-dashboard" ? (
-            <DashboardView categories={categories} links={links} config={config} />
+            <DashboardView
+              categories={categories}
+              links={links}
+              config={config}
+              statuses={statuses}
+            />
           ) : activeCategory === "feature-activities" ? (
             <RecentActivitiesCard links={links} />
           ) : (

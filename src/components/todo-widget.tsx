@@ -1,33 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import type { TodoItem, Project } from "@/types";
+import { useState } from "react";
+import type { TodoItem } from "@/types";
+import { useNavelixData } from "@/hooks/use-navelix-data";
 
 export default function TodoWidget() {
-  const [todos, setTodos] = useState<TodoItem[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { todos, projects, refreshData } = useNavelixData();
   const [newTitle, setNewTitle] = useState("");
-
-  const loadTodos = useCallback(async () => {
-    try {
-      const [tRes, pRes] = await Promise.all([fetch("/api/todos"), fetch("/api/projects")]);
-      const tData = await tRes.json();
-      const pData = await pRes.json();
-      if (tData.todos) setTodos(tData.todos);
-      if (pData.projects) setProjects(pData.projects);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      loadTodos();
-    });
-  }, [loadTodos]);
 
   const addTodo = async () => {
     const title = newTitle.trim();
@@ -39,7 +18,7 @@ export default function TodoWidget() {
         body: JSON.stringify({ title }),
       });
       setNewTitle("");
-      loadTodos();
+      refreshData();
     } catch {
       // ignore
     }
@@ -52,7 +31,7 @@ export default function TodoWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ done: !todo.done }),
       });
-      loadTodos();
+      refreshData();
     } catch {
       // ignore
     }
@@ -61,7 +40,7 @@ export default function TodoWidget() {
   const deleteTodo = async (id: string) => {
     try {
       await fetch(`/api/todos/${id}`, { method: "DELETE" });
-      loadTodos();
+      refreshData();
     } catch {
       // ignore
     }
@@ -128,11 +107,7 @@ export default function TodoWidget() {
 
       {/* Todo List */}
       <div className="flex flex-col gap-1 max-h-52 overflow-y-auto pr-1">
-        {loading ? (
-          <p className="py-4 text-center text-[11px] text-gray-400 dark:text-slate-400">
-            加载中…
-          </p>
-        ) : todos.length === 0 ? (
+        {todos.length === 0 ? (
           <p className="py-4 text-center text-[11px] text-gray-400 dark:text-slate-400">
             暂无待办
           </p>

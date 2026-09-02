@@ -1,5 +1,5 @@
 import { db, seedUserData, type PublicUser } from "./db.ts";
-import type { Category, Project, SiteLink, SystemConfig } from "@/types";
+import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
 import { encryptSecret } from "./secret.ts";
 import { recordAuditLog } from "./audit.ts";
 import {
@@ -14,6 +14,7 @@ export interface UserDataResult {
   categories: Category[];
   links: SiteLink[];
   projects: Project[];
+  todos: TodoItem[];
   config: SystemConfig;
 }
 
@@ -173,6 +174,40 @@ export function getUserData(userId: string): UserDataResult {
     updatedAt: p.updated_at ?? undefined,
   }));
 
+  // Fetch todos/schedules
+  const todoRows = db
+    .prepare(
+      `SELECT id, title, priority, done, due_date, project_id, assignee_id, assignee_name, created_at, sort_order
+       FROM user_todos
+       WHERE user_id = ?
+       ORDER BY done ASC, sort_order ASC, created_at ASC`,
+    )
+    .all(userId) as Array<{
+    id: string;
+    title: string;
+    priority: string;
+    done: number;
+    due_date: string;
+    project_id: string;
+    assignee_id: string;
+    assignee_name: string;
+    created_at: number;
+    sort_order: number;
+  }>;
+
+  const todos: TodoItem[] = todoRows.map((t) => ({
+    id: t.id,
+    title: t.title,
+    priority: (t.priority as TodoItem["priority"]) || "medium",
+    done: t.done === 1,
+    dueDate: t.due_date || undefined,
+    projectId: t.project_id || undefined,
+    assigneeId: t.assignee_id || undefined,
+    assigneeName: t.assignee_name || undefined,
+    createdAt: t.created_at,
+    sortOrder: t.sort_order,
+  }));
+
   // Fetch config
   const isAdmin = user?.role === "admin";
 
@@ -211,7 +246,7 @@ export function getUserData(userId: string): UserDataResult {
     allowRegistration: effectiveAllowRegistration,
   };
 
-  const result: UserDataResult = { user, categories: categoryRows as Category[], links, projects, config };
+  const result: UserDataResult = { user, categories: categoryRows as Category[], links, projects, todos, config };
   // SQLite 返回的行对象原型非标准（null 原型），
   // Next.js 要求传给客户端组件的数据必须是纯对象，深拷贝处理。
   return JSON.parse(JSON.stringify(result)) as UserDataResult;
