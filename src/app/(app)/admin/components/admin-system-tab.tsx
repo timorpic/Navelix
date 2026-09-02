@@ -644,7 +644,7 @@ export default function AdminSystemTab({ currentUser }: AdminSystemTabProps = {}
               当前版本：
               {updateResult?.local?.version
                 ? (updateResult.local.version.startsWith("v") ? updateResult.local.version : `v${updateResult.local.version}`)
-                : "v2.8.13"}
+                : "v2.9.1"}
               {updateResult?.local?.buildDate
                 ? ` · ${new Date(updateResult.local.buildDate).toLocaleString("zh-CN")}`
                 : ""}
