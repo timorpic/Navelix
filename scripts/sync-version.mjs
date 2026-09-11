@@ -44,6 +44,7 @@ const touch = rawVersion.length > 0;
 // 校验版本号格式 vX.Y.Z
 if (touch && !/^\d+\.\d+\.\d+$/.test(version)) {
   fail(`无效版本号格式 "${version}"，应为 vX.Y.Z 或 X.Y.Z`);
+  process.exit(1);
 }
 
 let hasMismatch = false;
