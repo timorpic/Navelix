@@ -6,7 +6,8 @@ import { cookies, headers } from "next/headers.js";
 import {
   db,
   SESSION_COOKIE,
-  SESSION_TTL_MS,
+  SESSION_IDLE_TTL_MS,
+  SESSION_MAX_TTL_MS,
   type PublicUser,
   type UserRow,
 } from "../db.ts";
@@ -41,12 +42,39 @@ export async function createSession(userId: string, req?: Request): Promise<stri
 
   db.prepare(
     "INSERT INTO sessions (token_hash, user_id, user_agent, ip_address, last_active_at, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-  ).run(hashToken(token), userId, userAgent, ipAddress, now, now + SESSION_TTL_MS, now);
+  ).run(hashToken(token), userId, userAgent, ipAddress, now, now + SESSION_IDLE_TTL_MS, now);
   return token;
 }
 
 export async function destroySession(token: string): Promise<void> {
   db.prepare("DELETE FROM sessions WHERE token_hash = ?").run(hashToken(token));
+}
+
+/**
+ * 续期当前浏览器会话，但绝不超过首次登录后 30 天的绝对上限。
+ * 已被注销、已过期或超出硬上限的 token 不会被重新激活。
+ */
+export function renewSession(token: string): { expiresAt: number; renewed: boolean } | null {
+  const now = Date.now();
+  const tokenHash = hashToken(token);
+  const session = db
+    .prepare(
+      `SELECT created_at, expires_at FROM sessions
+       WHERE token_hash = ? AND expires_at > ? AND created_at + ? > ?`,
+    )
+    .get(tokenHash, now, SESSION_MAX_TTL_MS, now) as
+    | { created_at: number; expires_at: number }
+    | undefined;
+
+  if (!session) return null;
+
+  const expiresAt = Math.min(now + SESSION_IDLE_TTL_MS, session.created_at + SESSION_MAX_TTL_MS);
+  const renewed = expiresAt > session.expires_at;
+  if (renewed) {
+    db.prepare("UPDATE sessions SET expires_at = ?, last_active_at = ? WHERE token_hash = ?")
+      .run(expiresAt, now, tokenHash);
+  }
+  return { expiresAt: renewed ? expiresAt : session.expires_at, renewed };
 }
 
 export async function getSessionUser(req?: Request): Promise<PublicUser | null> {
@@ -103,13 +131,14 @@ export async function getSessionUser(req?: Request): Promise<PublicUser | null> 
       `SELECT u.id, u.username, u.password_hash, u.display_name, u.email, u.bio, u.role, u.avatar, u.created_at
        FROM sessions s
        JOIN users u ON u.id = s.user_id
-       WHERE s.token_hash = ? AND s.expires_at > ?`,
+       WHERE s.token_hash = ? AND s.expires_at > ? AND s.created_at + ? > ?`,
     )
-    .get(tokenHash, now) as UserRow | undefined;
+    .get(tokenHash, now, SESSION_MAX_TTL_MS, now) as UserRow | undefined;
 
   if (!row) return null;
 
   db.prepare("UPDATE sessions SET last_active_at = ? WHERE token_hash = ?").run(now, tokenHash);
-  db.prepare("DELETE FROM sessions WHERE expires_at <= ?").run(now);
+  db.prepare("DELETE FROM sessions WHERE expires_at <= ? OR created_at + ? <= ?")
+    .run(now, SESSION_MAX_TTL_MS, now);
   return toPublicUser(row);
 }

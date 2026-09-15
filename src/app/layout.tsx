@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { cookies } from "next/headers";
 import Script from "next/script";
 import { PWARegister } from "@/components/pwa-register";
+import { SessionKeepalive } from "@/components/session-keepalive";
 import { DEFAULT_SITE_TITLE } from "@/lib/constants";
 import "./globals.css";
 
@@ -61,6 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="min-h-full flex flex-col">
         {children}
+        <SessionKeepalive />
         <PWARegister />
       </body>
     </html>

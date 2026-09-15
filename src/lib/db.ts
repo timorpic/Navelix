@@ -4,12 +4,13 @@
 // - schema.ts           初始 CREATE TABLE / CREATE INDEX DDL
 // - seed.ts             seedUserData（首次创建用户时的种子数据）
 // - legacy-migration.ts 旧库 nexus.db → navelix.db 自动迁移
-// - types.ts            常量与类型（SESSION_COOKIE / SESSION_TTL_MS / UserRow / PublicUser）
+// - types.ts            常量与类型（SESSION_COOKIE / SESSION_IDLE_TTL_MS / SESSION_MAX_TTL_MS / UserRow / PublicUser）
 export { db } from "./db/connection.ts";
 export { seedUserData } from "./db/seed.ts";
 export {
   SESSION_COOKIE,
-  SESSION_TTL_MS,
+  SESSION_IDLE_TTL_MS,
+  SESSION_MAX_TTL_MS,
   type UserRow,
   type PublicUser,
 } from "./db/types.ts";

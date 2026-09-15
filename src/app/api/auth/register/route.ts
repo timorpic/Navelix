@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { db, SESSION_COOKIE } from "@/lib/db";
-import { createSession, hashPassword, toPublicUser } from "@/lib/auth";
+import { createSession, hashPassword, sessionCookieOptions, toPublicUser } from "@/lib/auth";
 import { track } from "@/lib/analytics";
 
 export async function POST(req: Request) {
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const token = await createSession(id);
+  const token = await createSession(id, req);
   const user = toPublicUser({
     id,
     username,
@@ -107,13 +107,7 @@ export async function POST(req: Request) {
   });
 
   const res = NextResponse.json({ user }, { status: 201 });
-  res.cookies.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NAVELIX_COOKIE_SECURE === "true",
-    path: "/",
-    maxAge: 7 * 24 * 60 * 60,
-  });
+  res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
 
   // 可选遥测：新用户注册（规范 wiki/Analytics §4.6）
   track("auth.register", { userId: id, meta: { role } });

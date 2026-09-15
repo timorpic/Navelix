@@ -10,6 +10,7 @@ export {
   toPublicUser,
   createSession,
   destroySession,
+  renewSession,
   getSessionUser,
 } from "./auth/session.ts";
 export {
