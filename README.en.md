@@ -75,6 +75,7 @@ Full user guide, architecture, security specs and API docs live in the [Wiki](ht
 | [🛡️ Security & Ops](wiki/Security-安全机制与运维规范.md) | Permissions, CSRF, SSRF, rate limiting, hot-snapshot & backup rules |
 | [🔌 REST API Reference](wiki/REST-API-开放接口文档.md) | Full OpenAPI spec, token auth, calendar subscription & automation |
 | [❓ FAQ & Troubleshooting](wiki/FAQ-常见问题与故障排查.md) | Deployment, timezone/calendar, backup-restore and common issues |
+| [📋 Changelog](CHANGELOG.md) | Version history and release notes (synced to GitHub Releases) |
 
 ---
 
