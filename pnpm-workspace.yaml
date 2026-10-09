@@ -8,3 +8,5 @@ onlyBuiltDependencies:
 
 overrides:
   js-yaml: 4.3.2
+  # 安全修复 GHSA-q2hr-2g5m-vwhr：<5.0.12 存在 CPU DoS；minimatch@10 允许 ^5.0.8，显式固定 5.x 线
+  "brace-expansion@^5.0.0": 5.0.12
