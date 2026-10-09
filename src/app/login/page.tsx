@@ -281,7 +281,10 @@ function LoginForm() {
                       ① 普通账号：请联系管理员，在后台「账号管理」中重置你的密码；
                     </p>
                     <p className="mt-1">
-                      ② 管理员账号：通过环境变量 <code className="font-mono text-[10px] text-[#009a5a]">NAVELIX_ADMIN_PASSWORD</code> 设置新密码并重启应用，即可重置初始管理员密码。
+                      ② 管理员账号：无自助找回入口。环境变量 <code className="font-mono text-[10px] text-[#009a5a]">NAVELIX_ADMIN_PASSWORD</code> 只在首次初始化（库中无用户）或密码仍为 <code className="font-mono text-[10px] text-[#009a5a]">admin123</code> 时生效，并非通用改密开关。
+                    </p>
+                    <p className="mt-1">
+                      可行路径：查看数据目录下的 <code className="font-mono text-[10px] text-[#009a5a]">navelix-admin-password.txt</code>（改过密码后即失效），或用一份你知道密码时期的 <code className="font-mono text-[10px] text-[#009a5a]">.db</code> 备份还原。
                     </p>
                   </div>
                 </details>

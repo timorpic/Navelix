@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AddLinkModal from "./add-link-modal";
+import AddTodoModal from "./add-todo-modal";
 import type { Category } from "@/types";
 
 /**
- * 响应 PWA 快捷方式 / 外部链接的 `?action=quick-add-bookmark` 等快速采集。
+ * 响应 PWA 快捷方式 / 外部链接的 `?action=quick-add-bookmark`、`?action=quick-add-todo` 快速采集。
  * 挂载在 HomeContent 中，根据 URL 参数自动弹出对应模态框。
  * 首次触发后自动清除 URL 中的 action 参数，避免刷新后重复弹窗。
  */
@@ -26,6 +27,7 @@ export function QuickCaptureLayer({
   const router = useRouter();
   const action = searchParams.get("action");
   const [showBookmark, setShowBookmark] = useState(false);
+  const [showTodo, setShowTodo] = useState(false);
 
   const cleanupAction = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -39,22 +41,34 @@ export function QuickCaptureLayer({
   useEffect(() => {
     if (action === "quick-add-bookmark") {
       queueMicrotask(() => setShowBookmark(true));
+    } else if (action === "quick-add-todo") {
+      queueMicrotask(() => setShowTodo(true));
     }
   }, [action]);
 
   return (
-    <AddLinkModal
-      open={showBookmark}
-      categories={categories}
-      onClose={() => {
-        setShowBookmark(false);
-        cleanupAction();
-      }}
-      onAdd={(data) => {
-        setShowBookmark(false);
-        cleanupAction();
-        onAdd(data);
-      }}
-    />
+    <>
+      <AddLinkModal
+        open={showBookmark}
+        categories={categories}
+        onClose={() => {
+          setShowBookmark(false);
+          cleanupAction();
+        }}
+        onAdd={(data) => {
+          setShowBookmark(false);
+          cleanupAction();
+          onAdd(data);
+        }}
+      />
+      <AddTodoModal
+        key={showTodo ? "todo-open" : "todo-closed"}
+        open={showTodo}
+        onClose={() => {
+          setShowTodo(false);
+          cleanupAction();
+        }}
+      />
+    </>
   );
 }
