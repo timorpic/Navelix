@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "请提供密钥名称" }, { status: 400 });
   }
 
-  // 生成 Token 密钥 (前缀 nvx_live_ + 32字节 hex)
+  // 生成 Token 密钥 (前缀 nvx_live_ + 24 字节随机数的 hex 表示，共 48 位)
   const secretPart = randomBytes(24).toString("hex");
   const rawToken = `nvx_live_${secretPart}`;
   const tokenPrefix = `nvx_live_${secretPart.slice(0, 4)}...${secretPart.slice(-4)}`;
@@ -96,7 +96,7 @@ export async function DELETE(req: Request) {
   const tokenId = body?.id;
 
   if (!tokenId) {
-    return NextResponse.json({ error: "缺少 tokenId 参数" }, { status: 400 });
+    return NextResponse.json({ error: "缺少 id 参数" }, { status: 400 });
   }
 
   db.prepare("DELETE FROM api_tokens WHERE id = ? AND user_id = ?").run(

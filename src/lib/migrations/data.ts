@@ -9,7 +9,7 @@ import { DEFAULT_CUSTOM_FOOTER } from "../constants.ts";
 
 /**
  * 非版本化的始终执行数据修复与初装引导。
- * 版本化迁移见 ./versions/（v1~v12，结构与业务数据分离）。
+ * 版本化迁移见 ./versions/（v1~v13，结构与业务数据分离）。
  */
 
 /**

@@ -49,5 +49,5 @@ try {
 
 initSchema(db);
 
-// 迁移逻辑已抽离至 src/lib/migrations/index.ts（Schema 版本 v1~v6 + 数据修复）
+// 迁移逻辑已抽离至 src/lib/migrations/index.ts（Schema 版本 v1~v13 + 数据修复）
 runMigrations(db);
