@@ -7,7 +7,7 @@
 ## 💻 系统环境要求 (System Requirements)
 
 - **Docker 运行环境**（推荐）：Docker Engine 20.10+ 及 Docker Compose v2+
-- **源码运行环境**（可选）：Node.js 20.x 或 22.x+，pnpm 9.x+
+- **源码运行环境**（可选）：Node.js **22.5+**（必须，依赖内置 `node:sqlite`）、pnpm **11.x**（仓库锁定 `pnpm@11.16.0`）
 - **默认服务端口**：**`3721`**（如需映射为 80/443 或其他端口，可在命令或 Compose 中修改）
 - **硬件配置**：
   - 内存：最低 256MB（推荐 512MB 以上）
@@ -40,8 +40,6 @@ docker run -d \
 在项目目录中创建 `docker-compose.yml` 文件：
 
 ```yaml
-version: '3.8'
-
 services:
   navelix:
     image: timorpic/navelix:latest
@@ -67,6 +65,8 @@ services:
       start_period: 10s
 ```
 
+> 💡 提示：仓库自带 `docker-compose.yml` 的容器名与卷路径与此示例不同，运维命令请以你实际部署的 `container_name` 为准。
+
 启动命令：
 ```bash
 docker compose up -d
@@ -91,8 +91,10 @@ pnpm install
 pnpm build
 
 # 4. 启动服务 (项目默认监听 3721 端口)
-PORT=3721 pnpm start
+pnpm start
 ```
+
+> 💡 提示：源码部署请直接使用 `pnpm start`。`package.json` 的 start 脚本为 `next start -p 3721`，CLI 的 `-p` 优先于 `PORT` 环境变量，因此 `PORT=3721 pnpm start` 不会生效；如需更换端口，请修改 `package.json` 的 start 脚本，或直接使用 `npx next start -p <端口>`。
 
 ---
 
@@ -105,8 +107,13 @@ PORT=3721 pnpm start
 | `NAVELIX_ADMIN_PASSWORD` | *(自动生成随机强密码)* | 否 | 首次初始化时默认管理员 `admin` 的初始密码（若未配置，系统会自动生成并输出到控制台与 `data/navelix-admin-password.txt`） |
 | `NAVELIX_COOKIE_SECURE` | `false` | 否 | 认证 Cookie 是否强制 `Secure` 标头（局域网 HTTP 保持 `false`；使用域名并启用 HTTPS 反代时设为 `true`） |
 | `TRUST_PROXY` | `false` | 否 | 是否信任上游反向代理的 `X-Forwarded-For` 真实 IP 标头（若前置部署了 Nginx/Caddy/Cloudflare，**务必设为 `true`** 以启用精准限流） |
-| `DATABASE_PATH` | `/app/data/navelix.db` | 否 | SQLite 主数据库文件存储路径 |
-| `TZ` | `Asia/Shanghai` | 否 | 容器运行时区设置 |
+| `NAVELIX_DATA_DIR` | `/app/data` | 否 | 数据存储目录（SQLite 库、备份、日志与初始密码文件）；Docker 镜像内为 `/app/data`，源码部署默认为 `<cwd>/data` |
+| `NAVELIX_LICENSE_KEY` | *(留空)* | 否 | 商业版 License Key；容器启动时注入激活，也可在管理后台网页激活 |
+| `NAVELIX_GITHUB_REPO` | `timorpic/Navelix` | 否 | 版本更新检测使用的 GitHub 仓库（`owner/repo`）；fork 后可指向自己的仓库 |
+| `NAVELIX_ANALYTICS` | `on` | 否 | 本地使用统计开关（数据仅写入本机 SQLite、永不外发）；`off` 关闭（也可在管理后台「访问统计」页关闭） |
+| `NAVELIX_ANALYTICS_REPORT` | `on` | 否 | 匿名遥测周报开关；`off` 关闭（也可在管理后台「个人账号与安全」页一键开关） |
+| `NAVELIX_ANALYTICS_ENDPOINT` | *(内置端点)* | 否 | 自建匿名遥测接收端；配套 `NAVELIX_ANALYTICS_TOKEN`、`NAVELIX_ANALYTICS_TIMEOUT_MS`，一般无需设置 |
+| `TZ` | `UTC` | 否 | 容器运行时时区；镜像未设默认值（UTC），示例 Compose 中设为 `Asia/Shanghai`，需要本地时区请显式传入 |
 
 ---
 

@@ -55,9 +55,9 @@ Zero external database dependencies, single lightweight container, and 100% of y
 
 | Module | Highlights |
 | :--- | :--- |
-| 🔖 **Bookmark hub** | Link/category management, quick access, multi-engine search, `⌘K` quick focus, multi-format bookmark import/export, link health monitoring |
+| 🔖 **Bookmark hub** | Link/category management, quick access, in-app universal search, `⌘K` quick focus, multi-format bookmark import/export, Markdown notes with AI summaries, link liveness & latency probe (Pro) |
 | 📊 **Projects & Gantt** | 4-dimension dashboard (progress/tasks/risk/updates), multi-scale interactive Gantt (21-day agile / 12-month yearly / 3-year roadmap) |
-| 📅 **Calendar & productivity** | Month/week/today views, strict local-timezone handling, overdue auto-rollover, ICS calendar two-way subscription, pomodoro |
+| 📅 **Calendar & productivity** | Month/week/today views, strict local-timezone handling, overdue rollover (to today or spread across the week), ICS calendar export (subscribe-ready), focus-time tracking |
 | 🤖 **AI hub** | Standard OpenAI-compatible API, project breakdown into action lists, daily schedule planning, Antigravity / Codex quota monitoring |
 | 📱 **Multi-device ecosystem** | Chrome extension capture, PWA / iOS Shortcuts, offline Service Worker, cross-device roaming |
 | 🔌 **Open API** | Personal Access Token (`nvx_live_...`) Bearer auth, full [REST API docs](wiki/REST-API-开放接口文档.md) |
@@ -91,7 +91,6 @@ On first launch an admin `admin` is created automatically; a random password is 
 ### Docker deploy (recommended)
 
 ```yaml
-version: '3.8'
 services:
   navelix:
     image: timorpic/navelix:latest
@@ -108,6 +107,8 @@ services:
     volumes:
       - ./data:/app/data
 ```
+
+> 💡 Note: the `docker-compose.yml` shipped in this repo uses a different container name and volume path than this example — for ops commands, always use the `container_name` you actually deployed.
 
 Run it:
 
@@ -127,14 +128,21 @@ docker compose up -d
 | `NAVELIX_ADMIN_PASSWORD` | *(empty)* | Initial admin password; if empty a strong one is auto-generated |
 | `NAVELIX_COOKIE_SECURE` | `false` | Cookie Secure attribute; keep `false` on HTTP, set `true` behind HTTPS |
 | `TRUST_PROXY` | `false` | Whether to trust the `X-Forwarded-For` header from a reverse proxy |
-| `NAVELIX_IMAGE_REPO` | `timorpic/navelix` | Image repo used for update checks |
-| `TZ` | `Asia/Shanghai` | Container timezone |
+| `NAVELIX_DATA_DIR` | `/app/data` | Data directory (SQLite DB, backups, logs and initial password file); `/app/data` inside the Docker image, `<cwd>/data` for source deploys |
+| `NAVELIX_LICENSE_KEY` | *(empty)* | Commercial license key; inject it at container start to activate, or activate later from the admin console |
+| `NAVELIX_GITHUB_REPO` | `timorpic/Navelix` | GitHub repo (`owner/repo`) used for version update checks; point it at your own repo after forking |
+| `NAVELIX_ANALYTICS` | `on` | Local usage-analytics switch; data is written only to the local SQLite database and never leaves your machine (can also be disabled in the admin console) |
+| `NAVELIX_ANALYTICS_REPORT` | `on` | Anonymous weekly telemetry switch; `off` disables it (also toggleable under "Personal Account & Security" in the admin console) |
+| `NAVELIX_ANALYTICS_ENDPOINT` | *(built-in endpoint)* | Self-hosted anonymous telemetry receiver; pairs with `NAVELIX_ANALYTICS_TOKEN` and `NAVELIX_ANALYTICS_TIMEOUT_MS`, normally not needed |
+| `TZ` | `UTC` | Container timezone; the image sets no default (UTC) and the example Compose sets `Asia/Shanghai` — pass `TZ` explicitly for your local timezone |
 
 ---
 
 ## Data & Privacy
 
 All data is stored in local SQLite (`data/navelix.db`). AI / weather API keys live only in the local database and are proxied server-side; they are never leaked when exporting config. Built-in physical hot backup and fast restore are included.
+
+**Anonymous telemetry**: Navelix enables an anonymous weekly report by default (aggregate feature-usage counts only, with no personal information) to help the author improve the product. On first launch the console prints an explicit notice. To turn it off: use the "Anonymous Telemetry" card under "Personal Account & Security" in the admin console, or set the environment variable `NAVELIX_ANALYTICS_REPORT=off`.
 
 ---
 

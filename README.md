@@ -55,9 +55,9 @@
 
 | 模块 | 亮点 |
 | :--- | :--- |
-| 🔖 **网址导航** | 链接/分类管理、快捷访问、多引擎搜索、`⌘K` 快速聚焦、书签多格式导入导出、全站链接健康自动巡检 |
+| 🔖 **网址导航** | 链接/分类管理、快捷访问、系统内全类型搜索、`⌘K` 快速聚焦、书签多格式导入导出、Markdown 笔记与 AI 摘要、链接存活与延迟探针（Pro） |
 | 📊 **项目与甘特图** | 四维指标看板（进度/任务/风险/更新）、多尺度交互式甘特图（21 天敏捷 / 12 月年度 / 3 年跨年路线图） |
-| 📅 **日历与效率** | 月/周/今日视图、本地时区严格计算、过期待办一键/自动顺延（Rollover）、ICS 日历双向订阅、番茄钟 |
+| 📅 **日历与效率** | 月/周/今日视图、本地时区严格计算、过期待办一键/按周平摊（Rollover）、ICS 日历导出（可订阅）、专注时长统计 |
 | 🤖 **AI 智能中枢** | 标准 OpenAI 兼容 API、项目拆解为行动清单、每日日程规划、反重力 / Codex 账号额度实时监控 |
 | 📱 **多端生态** | [⬇️ 下载扩展 zip](https://github.com/timorpic/Navelix/releases/download/extension-v1.1.0/navelix-extension-v1.1.0.zip) · Chrome 扩展快速采集、PWA / iOS 快捷指令、离线 Service Worker、跨设备漫游 |
 | 🔌 **开放 API** | Personal Access Token（`nvx_live_...`）Bearer 鉴权，完整 [REST API 文档](wiki/REST-API-开放接口文档.md) |
@@ -99,7 +99,6 @@ pnpm dev          # 本地开发，http://localhost:3721
 ### Docker 部署（推荐）
 
 ```yaml
-version: '3.8'
 services:
   navelix:
     image: timorpic/navelix:latest
@@ -116,6 +115,8 @@ services:
     volumes:
       - ./data:/app/data
 ```
+
+> 💡 提示：仓库自带 `docker-compose.yml` 的容器名与卷路径与此示例不同，运维命令请以你实际部署的 `container_name` 为准。
 
 运行命令：
 
@@ -135,9 +136,13 @@ docker compose up -d
 | `NAVELIX_ADMIN_PASSWORD` | *(留空)* | 初始管理员密码，留空则自动生成强密码 |
 | `NAVELIX_COOKIE_SECURE` | `false` | Cookie Secure 属性；HTTP 保持 `false`，HTTPS 设为 `true` |
 | `TRUST_PROXY` | `false` | 是否信任反向代理 `X-Forwarded-For` 标头 |
-| `NAVELIX_IMAGE_REPO` | `timorpic/navelix` | 版本更新检测使用的镜像仓库 |
+| `NAVELIX_DATA_DIR` | `/app/data` | 数据存储目录（SQLite 库、备份、日志与初始密码文件）；Docker 镜像内为 `/app/data`，源码部署默认为 `<cwd>/data` |
+| `NAVELIX_LICENSE_KEY` | *(留空)* | 商业版 License Key；容器启动时注入激活，也可在管理后台网页激活 |
+| `NAVELIX_GITHUB_REPO` | `timorpic/Navelix` | 版本更新检测使用的 GitHub 仓库（`owner/repo`）；fork 后可指向自己的仓库 |
+| `NAVELIX_ANALYTICS` | `on` | 本地使用统计开关；数据仅写入本机 SQLite、永不外发（也可在管理后台「访问统计」页关闭） |
 | `NAVELIX_ANALYTICS_REPORT` | `on` | 匿名遥测周报总开关；`off` 关闭（也可在管理后台「个人账号与安全」页一键开关） |
-| `TZ` | `Asia/Shanghai` | 容器运行时时区配置 |
+| `NAVELIX_ANALYTICS_ENDPOINT` | *(内置端点)* | 自建匿名遥测接收端；配套 `NAVELIX_ANALYTICS_TOKEN`、`NAVELIX_ANALYTICS_TIMEOUT_MS`，一般无需设置 |
+| `TZ` | `UTC` | 容器运行时时区；镜像未设默认值（UTC），示例 Compose 中设为 `Asia/Shanghai`，需要本地时区请显式传入 |
 
 ---
 
