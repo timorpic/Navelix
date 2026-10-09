@@ -22,6 +22,10 @@
 /out/
 /build
 
+# ── Package Manager ──
+node_modules/
+/.pnpm-store/
+
 # ── Local SQLite Data & Passwords ──
 /data/
 *.db

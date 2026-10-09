@@ -5,7 +5,7 @@ services:
   # Navelix 个人数字工作空间主服务
   navelix:
     image: registry-1.docker.io/timorpic/navelix:latest
-    container_name: rA9-timorpic-navelix
+    container_name: navelix
     restart: unless-stopped
     ports:
       - "3721:3721"

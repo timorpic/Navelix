@@ -9,6 +9,7 @@ import { isTelegramNotifySystemEnabled } from "./system-settings.ts";
 import { maybeRunWeeklyReport } from "./analytics-report.ts";
 import { isAnalyticsReportEnabled } from "./analytics-report.ts";
 import { resolveDataDir } from "./data-dir.ts";
+import { scheduleAutoBackup } from "./db-backup.ts";
 
 const DATA_DIR = resolveDataDir();
 
@@ -279,17 +280,23 @@ export function startBackgroundDaemon(): void {
     scheduleTask(() => runCloudBackupSchedule(), 24 * 60 * 60 * 1000),
   );
 
-  // 5. 磁盘占用检查（每 6 小时）
+  // 5. 本地自动备份（每 24 小时检查一次；目录内已有 24 小时内的快照则跳过，
+  //    因此与上面的云备份共享同一份快照，不会在同一天重复 VACUUM INTO）
+  globalThis.__navelix_daemon_timers__.push(
+    scheduleTask(() => scheduleAutoBackup(), 24 * 60 * 60 * 1000),
+  );
+
+  // 6. 磁盘占用检查（每 6 小时）
   globalThis.__navelix_daemon_timers__.push(
     scheduleTask(() => checkDiskUsage(), 6 * 60 * 60 * 1000),
   );
 
-  // 6. SQLite WAL 文件膨胀检查（每 1 小时）
+  // 7. SQLite WAL 文件膨胀检查（每 1 小时）
   globalThis.__navelix_daemon_timers__.push(
     scheduleTask(() => checkWalSize(), 60 * 60 * 1000),
   );
 
-  // 7. 每周匿名聚合上报（M1 路线 A）：启动 60 秒后先尝试一次（覆盖跨周重启），随后每 24 小时检查一次去重键
+  // 8. 每周匿名聚合上报（M1 路线 A）：启动 60 秒后先尝试一次（覆盖跨周重启），随后每 24 小时检查一次去重键
   globalThis.__navelix_daemon_timers__.push(
     scheduleTask(
       () => maybeRunWeeklyReport().catch(() => {}),
