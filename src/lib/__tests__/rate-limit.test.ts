@@ -18,6 +18,33 @@ describe("Login Rate Limit & Proxy IP Trust Protection", () => {
     assert.equal(getClientId(req2), "direct-client");
   });
 
+  it("should NOT trust X-Real-IP by default when TRUST_PROXY is not set", () => {
+    delete process.env.TRUST_PROXY;
+
+    const req1 = new Request("http://localhost/api/auth/login", {
+      headers: { "x-real-ip": "1.1.1.1" },
+    });
+    const req2 = new Request("http://localhost/api/auth/login", {
+      headers: { "x-real-ip": "2.2.2.2" },
+    });
+
+    // 伪造 X-Real-IP 不能换来新的限流桶，否则爆破锁定与失败告警都会被绕过
+    assert.equal(getClientId(req1), "direct-client");
+    assert.equal(getClientId(req2), "direct-client");
+  });
+
+  it("should trust X-Real-IP when TRUST_PROXY=true", () => {
+    process.env.TRUST_PROXY = "true";
+
+    const req = new Request("http://localhost/api/auth/login", {
+      headers: { "x-real-ip": "10.0.0.7" },
+    });
+
+    assert.equal(getClientId(req), "10.0.0.7");
+
+    delete process.env.TRUST_PROXY;
+  });
+
   it("should trust X-Forwarded-For when TRUST_PROXY=true", () => {
     process.env.TRUST_PROXY = "true";
 
