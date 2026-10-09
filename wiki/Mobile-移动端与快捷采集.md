@@ -20,7 +20,7 @@
 | 快捷方式 | 行为 |
 | --- | --- |
 | **存书签** | 打开应用并自动弹出「添加书签」弹窗（`?action=quick-add-bookmark`） |
-| **记待办** | 打开应用日历视图，可直接新建待办 |
+| **快速记待办** | ⚠️ 当前版本**尚未接线**：manifest 已声明 `?action=quick-add-todo`，但前端没有对应处理分支，点击后只会打开首页、不弹任何窗口。录入待办请改用 [§3.1 的 iOS 快捷指令](#31-快捷记待办1-个-http-动作)。 |
 
 ## 3. 🍎 iOS 快捷指令（Shortcuts）模板
 
@@ -40,15 +40,28 @@
 
 > 进阶：配合「快捷指令 → 显示输入框」接收文本，或接入"共享菜单"把网页链接转为待办标题。
 
-### 3.2 快捷存书签（2 个 HTTP 动作）
+### 3.2 快捷存书签（1 个 HTTP 动作）
 
-书签走全量快照接口 `/api/user/data`，因此快捷指令需要"先读后写"：
+`POST /api/links` 是**幂等**的书签写入接口（同 URL 重复提交会返回既有记录并带 `duplicate: true`），因此不再需要"先读后写"：
 
-1. **读取**：「获取 URL 内容」`<BASE>/api/user/data`（GET，`Authorization: Bearer`）→ 存入变量 `data`
-2. **追加**：「Get Dictionary Value」`links` →「Count」+ 程序化追加一条记录（`title`/`url`）
-3. **写回**：「获取 URL 内容」`<BASE>/api/user/data`（POST，Bearer），请求体为 `{ "links": <更新后的列表> }`
+1. 「获取 URL 内容」：
+   - URL：`<BASE>/api/links`
+   - 方法：POST
+   - 头：`Authorization: Bearer 你的令牌`、`Content-Type: application/json`
+   - 请求体（JSON）：
+     ```json
+     {
+       "url": "https://example.com",
+       "title": "可选，缺省取域名",
+       "description": "可选",
+       "category": "可选，缺省 favorites",
+       "notes": "可选，Markdown 笔记",
+       "isQuickAccess": false
+     }
+     ```
+2. 「显示结果」查看返回的书签对象。
 
-> 快捷指令的 JSON 编辑较繁琐；若日常以"手动添加待办"为主，建议优先用 **3.1 记待办**。
+> 仅接受 `http` / `https` 链接。旧写法（GET `/api/user/data` 取全量快照 → 追加 → POST 写回）已无必要。
 
 ### 3.3 查看模型额度
 

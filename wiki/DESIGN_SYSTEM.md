@@ -19,7 +19,7 @@
 | 角色 Token | HEX 颜色值 | RGBA / Tailwind 映射 | 核心用途与场景 |
 | :--- | :--- | :--- | :--- |
 | **Primary (主品牌绿)** | `#00C776` | `bg-[#00C776]`, `text-[#00C776]` | 主按钮、选中态、进度条、品牌 Logo、关键链接 |
-| **Primary Hover (悬浮深绿)** | `#00B368` | `hover:bg-[#00B368]` | 按钮 Hover、激活按压反馈（加深约 10%） |
+| **Primary Hover (悬浮深绿)** | `#00B068` | `hover:bg-[#00B068]` | 按钮 Hover、激活按压反馈（加深约 10%） |
 | **Primary Glow (光晕/发光)** | `rgba(0,199,118,0.12)` | `bg-[#00C776]/10`, `shadow-[#00C776]/20` | 顶部背景光斑、选中卡片外发光、轻量背景 |
 | **Primary Dark Bg (深底对比)**| `#0D4A2A` | `dark:bg-[#0D4A2A]` | 暗黑模式下的标签底色、进度底槽（防刺眼） |
 
@@ -53,7 +53,7 @@
 | `--card-border` | `#2A2530` | `dark:border-[#2A2530]` (`slate-700`) | 深色容器描边、分割线 |
 | `--card-hover` | `#24202B` | `dark:hover:bg-[#24202B]` | 交互卡片 Hover / Active 态 |
 | `--input-bg` | `#151218` | `dark:bg-slate-900` | 输入框、搜索栏内嵌下沉底色 |
-| `--foreground` | `#FFFFFF` | `dark:text-white` | 一级高光标题、核心数值 |
+| `--foreground` | `#6D6B75` | `dark:text-white` | 一级高光标题、核心数值 |
 | `--text-muted` | `#6D6B75` | `dark:text-[#6D6B75]` (`slate-400/500`) | 正文、弱化说明、通用图标颜色 |
 
 ---
@@ -75,7 +75,7 @@
 - **外层卡片 / 主工作台**：`rounded-2xl` (`16px`)
 - **按钮 / 输入框 / 小卡片**：`rounded-xl` (`12px`)
 - **胶囊标签 / 状态徽章**：`rounded-full`
-- **大型模态弹窗 (Modal)**：`rounded-3xl` (`24px`)
+- **大型模态弹窗 (Modal)**：`rounded-2xl` (`16px`)
 
 ### 🌫️ 毛玻璃与阴影 (Glassmorphism & Shadows)
 - **浅色毛玻璃**：`bg-white/90 backdrop-blur-md border border-gray-200/80 shadow-2xs`
@@ -93,8 +93,9 @@
   --foreground: #111827;
   --card-bg: #ffffff;
   --card-border: #f1f5f9;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #f1f5f9;
   --text-muted: #6b7280;
-  --brand-primary: #00c776;
 }
 
 html.dark,
@@ -103,8 +104,9 @@ body.dark {
   --foreground: #6d6b75;
   --card-bg: #1c1920;
   --card-border: #2a2530;
+  --sidebar-bg: #151218;
+  --sidebar-border: #1c1920;
   --text-muted: #6d6b75;
-  --brand-primary: #00c776;
 }
 
 /* 覆盖深色下的 Slate 色阶，统一定制为微紫黑极客调 */
@@ -119,6 +121,12 @@ body.dark {
   --color-slate-700: #2a2530;
   --color-slate-800: #1c1920;
   --color-slate-900: #151218;
+
+  /* teal → 新辅助色 #00C776 系（实色，避免与 /NN 透明度叠加） */
+  --color-teal-400: #00C776;
+  --color-teal-800: #0d4a2a;
+  --color-teal-900: #0a3d24;
+  --color-teal-950: #072d1a;
 }
 
 body {
@@ -146,7 +154,7 @@ body {
   <p class="text-xs text-gray-500 dark:text-[#6D6B75] leading-relaxed">
     这里是卡片正文说明内容，在深浅色模式下具备极佳的对比度与可读性。
   </p>
-  <button class="mt-4 w-full py-2 px-4 rounded-xl font-bold text-xs text-white bg-[#00C776] hover:bg-[#00B368] active:scale-[0.98] transition-all shadow-xs cursor-pointer">
+  <button class="mt-4 w-full py-2 px-4 rounded-xl font-bold text-xs text-white bg-[#00C776] hover:bg-[#00B068] active:scale-[0.98] transition-all shadow-xs cursor-pointer">
     立即操作
   </button>
 </div>
