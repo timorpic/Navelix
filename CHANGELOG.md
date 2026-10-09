@@ -18,6 +18,14 @@
 
 ### 文档
 - wiki FAQ 新增「仓库维护与依赖升级」章节：记录 Dependabot PR 触发 pnpm 供应链门禁（`ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`）的排查与修复流程
+- README 文档表格补充 CHANGELOG 入口
+- **全量文档与代码一致性修订**（根目录 + wiki 共 14 份）：
+  - **移除已不存在的功能描述**：番茄钟（实际只有被动式专注时长统计）、自定义/多引擎搜索（搜索配置已在迁移 v10 删除，现为系统内全类型搜索）、前台书签星标按钮、日历 Webcal 订阅 UI（界面只有下载，且为单向导出）、FAQ 中的「(✓ 服务端已保存)」密码框
+  - **修正失效指引**：管理员密码恢复（`NAVELIX_ADMIN_PASSWORD` 仅在初装或密码仍为 `admin123` 时生效）、主密钥轮换 SOP（系统无「全库重新加密」工具，换钥会导致凭据静默失效）、`NAVELIX_IMAGE_REPO` → `NAVELIX_GITHUB_REPO`、`DATABASE_PATH` → `NAVELIX_DATA_DIR`、源码部署的 Node/pnpm 版本要求
+  - **REST API 文档**：修正 `rollover` 响应字段（`count` 而非 `updatedCount`）、移除不存在的 `daysOffset`、`done` 为布尔值、`/api/user/data` 补 `todos`、通知接口改为 `PATCH /api/notifications/{id}`、补充 CSRF/Origin 约束与 Bearer 自我续期风险，并新增「扩展接口一览」
+  - **安全文档**：按实现修正限流范围（仅 2 个接口）与 `X-Real-IP` 绕过风险、SSRF 对 favicon/AI 端点放行私有网段、CSRF 豁免只校验头部存在性、注入字段无 HTML 净化且 SSR 路径不脱敏
+  - **架构文档**：密码哈希更正为 scrypt、代理层职责更正（仅 `/api/**`、不鉴权限流）、补全 14 张表、迁移「无损」表述改为如实描述
+  - 补齐此前未记载的能力：消息通知中心、Telegram 告警、数据看板、专注统计、Copilot 工具调用、书签笔记与 AI 摘要、Pro 门禁说明
 
 ---
 
