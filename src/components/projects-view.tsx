@@ -59,7 +59,7 @@ export default function ProjectsView() {
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
   const [showAdd, setShowAdd] = useState(false);
 
-  // 可选遥测：查看甘特图视图（规范 wiki/Analytics §4.3）
+  // 可选遥测：查看甘特图视图
   useEffect(() => {
     if (viewTab === "gantt") {
       trackClientEvent("project.gantt_view", {

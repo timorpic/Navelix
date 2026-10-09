@@ -15,6 +15,16 @@
 ### 安全
 - 升级 `next` 16.3.4 → 16.3.8，修复 next/og ImageResponse 远程代码执行漏洞（critical）及多项安全公告
 - 升级 `sharp` → 0.35.5（librsvg CVE-2026-96889）、`source-map-js` → 1.2.2、`brace-expansion` → 1.1.21 / 5.0.12，清除全部依赖告警
+- **修复登录限流可被伪造 `X-Real-IP` 绕过**：未开启 `TRUST_PROXY` 时不再采信任何客户端可伪造的 IP 头。此前攻击者每次请求换一个 `X-Real-IP` 即可获得全新限流桶，使登录锁定与失败告警同时失效
+
+### 修复
+- **PWA「快速记待办」快捷方式失效**：`manifest.ts` 声明的 `?action=quick-add-todo` 此前无任何处理分支，点击无反应。新增 `AddTodoModal` 并接入快速采集层
+- **登录页密码恢复文案错误**：原文案称设置 `NAVELIX_ADMIN_PASSWORD` 并重启即可重置，实际该变量仅在首次初始化或密码仍为 `admin123` 时生效
+- **`docker-compose.yml` 容器名与 watchtower 不匹配**：`container_name` 为 `rA9-timorpic-navelix` 而 watchtower 参数为 `navelix`，导致自动更新静默失效；现统一为 `navelix`
+- **自动备份调度器为死代码**：`scheduleAutoBackup()` 无任何调用方，免费版实际没有定时备份。现接入守护进程每 24 小时检查一次，节流依据改为磁盘上最新快照的 mtime（避免备份失败被静默吞掉、并与云备份共享同一份快照）
+
+### 变更
+- **测试门禁此前形同虚设**：`src/**/*.test.ts` 的 glob 在 bash/zsh（`globstar` 默认关闭）下只展开一层，25 个测试文件里仅执行 1 个，覆盖率阈值从未生效。改为引号包裹交由 Node 原生展开，并加 `--test-concurrency=1`（测试共用同一 SQLite 库，并行会竞争）。现在实际执行 **107 个测试**，覆盖率 81.7% 行 / 77.5% 函数
 
 ### 文档
 - wiki FAQ 新增「仓库维护与依赖升级」章节：记录 Dependabot PR 触发 pnpm 供应链门禁（`ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`）的排查与修复流程

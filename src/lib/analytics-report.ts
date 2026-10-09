@@ -26,7 +26,7 @@ function isDockerRuntime(): boolean {
 }
 
 /**
- * M1 每周匿名聚合上报（规范：wiki/Analytics-使用统计与埋点规范.md §10）。
+ * M1 每周匿名聚合上报。
  *
  * 设计要点：
  *   - 只上报聚合计数，绝不包含用户 ID / IP / 时间戳明细 / meta 载荷
@@ -52,8 +52,8 @@ export const REPORT_SETTING_LAST_WEEK = "analytics_last_report_week";
 /**
  * 匿名周报开关：默认开启（每周自动上报匿名聚合统计到接收端点，帮助作者改进产品）。
  * 优先级：DB → 环境变量 → 默认 true。
- * 关闭方式：环境变量 NAVELIX_ANALYTICS_REPORT=off/0/false。
- * 界面不提供任何开关入口（保持用户无感），由部署方通过环境变量控制。
+ * 关闭方式：环境变量 NAVELIX_ANALYTICS_REPORT=off/0/false，
+ * 或在管理后台「个人账号与安全」页的匿名遥测卡片一键关闭。
  */
 export function isAnalyticsReportEnabled(): boolean {
   const raw = getSystemSetting(REPORT_SETTING_ENABLED);

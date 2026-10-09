@@ -25,6 +25,7 @@
 ### Q2: 前置 Nginx/Cloudflare 反向代理后，登录提示“尝试过多被锁定”？
 - **原因**：反向代理未传递真实客户端 IP，导致所有用户请求被判定为同一代理 IP。
 - **解决方案**：在容器环境变量中配置 `TRUST_PROXY=true`，并在 Nginx 配置中确保传递 `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`。
+- **原理**：未开启 `TRUST_PROXY` 时系统不采信任何客户端可伪造的 IP 头，所有请求都归入同一个 `direct-client` 桶，因此反代后的所有用户会共享限流计数。开启后才会按真实客户端 IP 分别计数。
 
 ---
 

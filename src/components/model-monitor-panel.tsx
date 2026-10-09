@@ -38,7 +38,7 @@ export default function ModelMonitorPanel() {
     queueMicrotask(() => {
       load();
     });
-    // 可选遥测：打开额度监控面板（规范 wiki/Analytics §4.7）
+    // 可选遥测：打开额度监控面板
     trackClientEvent("monitor.quota_view", { action: "open" });
   }, [load]);
 

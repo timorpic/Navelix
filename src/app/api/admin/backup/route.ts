@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   const nowStr = new Date().toISOString().slice(0, 10);
   const fileName = `navelix-backup-${nowStr}.db`;
 
-  // 可选遥测：手动热备份（规范 wiki/Analytics §4.5）
+  // 可选遥测：手动热备份
   track("backup.create", {
     userId: adminUser.id,
     meta: { sizeBytes: fileBuffer.length, destination: "local" },
@@ -169,7 +169,7 @@ export async function POST(req: NextRequest) {
       details: "管理员执行了数据库物理还原覆盖操作",
     });
 
-    // 可选遥测：数据库还原（规范 wiki/Analytics §4.5）
+    // 可选遥测：数据库还原
     track("backup.restore", { userId: adminUser.id, meta: { source: "upload" } });
 
     return NextResponse.json({

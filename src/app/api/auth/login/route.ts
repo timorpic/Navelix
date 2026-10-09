@@ -90,7 +90,7 @@ export async function POST(req: Request) {
   const res = NextResponse.json({ user });
   res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
 
-  // 可选遥测：登录成功（规范 wiki/Analytics §4.6）
+  // 可选遥测：登录成功
   track("auth.login", {
     userId: row.id,
     meta: { outcome: "success", userRole: row.role },

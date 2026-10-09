@@ -3,7 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 /**
  * v13：一次性迁移 —— 创建 analytics_events 表（可选遥测事件采集）。
  * 纯新增表，无破坏性变更，无需 performDatabaseBackup（ADR-005 仅限删列/删表）。
- * 规范见 wiki/Analytics-使用统计与埋点规范.md §3。
+ * 可选遥测事件口径以 lib/analytics.ts 常量为准。
  */
 export function migrateV13(db: DatabaseSync): void {
   db.exec(`

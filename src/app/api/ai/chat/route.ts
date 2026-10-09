@@ -313,7 +313,7 @@ export async function POST(req: Request) {
       toolReport = `\n\n${lines.join("\n")}`;
     }
 
-    // 可选遥测：AI 对话（规范 wiki/Analytics §4.2）
+    // 可选遥测：AI 对话
     track("ai.chat_sent", {
       userId: user.id,
       meta: { contextSize: systemPromptContent.length > 0 ? 1 : 0, hadError: false },

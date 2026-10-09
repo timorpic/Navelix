@@ -15,7 +15,7 @@ const DEFAULT_VERSION = "2.9.5";
  * 优先级：
  * 1. 物理磁盘打包烘焙的 public/build-info.json (免疫 Docker/Watchtower 环境变量继承覆盖)
  * 2. 运行时环境变量 (NAVELIX_SOURCE_SHA, NAVELIX_BUILD_DATE, NAVELIX_VERSION)
- * 3. 默认回退 (package.json 默认版本 1.0.6)
+ * 3. 默认回退 (DEFAULT_VERSION，与 package.json 版本同步，由 scripts/sync-version.mjs 维护)
  */
 export function getBuildInfo(): AppBuildInfo {
   let fileInfo: Partial<AppBuildInfo> | null = null;

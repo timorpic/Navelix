@@ -5,7 +5,9 @@ import { getSystemSetting, setSystemSetting } from "./system-settings.ts";
 /**
  * 可选遥测（Opt-in Analytics）核心库。
  *
- * 规范：wiki/Analytics-使用统计与埋点规范.md
+ * 事件口径以本文件常量与 track() 调用点为准。
+ * （作者另有一份不随仓库分发的私有埋点规范，故此处不引用外部文档。）
+ *
  * 设计原则：
  *   - 默认开启（env NAVELIX_ANALYTICS=on|off，DB 开关可覆盖，均默认 on）
  *   - 数据仅存本机 SQLite analytics_events 表，永不外发

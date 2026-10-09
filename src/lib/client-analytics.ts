@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 客户端 fire-and-forget 埋点（规范：wiki/Analytics-使用统计与埋点规范.md）。
+ * 客户端 fire-and-forget 埋点。
  * 失败静默、不阻塞 UI；服务端 track() 内部亦保证幂等与静默。
  */
 export function trackClientEvent(event: string, meta?: Record<string, unknown>): void {

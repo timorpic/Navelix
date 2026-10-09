@@ -109,7 +109,7 @@ export async function POST(req: Request) {
   const res = NextResponse.json({ user }, { status: 201 });
   res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
 
-  // 可选遥测：新用户注册（规范 wiki/Analytics §4.6）
+  // 可选遥测：新用户注册
   track("auth.register", { userId: id, meta: { role } });
 
   return res;

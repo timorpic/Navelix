@@ -79,7 +79,7 @@ export async function PATCH(
     db.prepare("UPDATE projects SET updated_at = ? WHERE id = ?").run(Date.now(), todoRow.project_id);
   }
 
-  // 可选遥测：完成待办（规范 wiki/Analytics §4.4）
+  // 可选遥测：完成待办
   if (body.done === true || body.done === 1) {
     const todayStr = new Date().toISOString().slice(0, 10);
     track("todo.complete", {

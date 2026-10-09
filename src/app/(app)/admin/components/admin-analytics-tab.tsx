@@ -2,12 +2,11 @@
 
 /**
  * ============================================================================
- * 📊 Navelix 管理后台「使用统计」Tab —— UI 原型（代码草稿）
+ * 📊 Navelix 管理后台「使用统计」Tab
  * ============================================================================
  *
- * 状态：PROTOTYPE（原型阶段，未接入 admin/page.tsx，不影响现有功能）
- * 规范依据：wiki/Analytics-使用统计与埋点规范.md §7
- * 依赖 API（落地阶段实现）：
+ * 状态：已接入（admin/page.tsx 的 "analytics" tab 渲染本组件）
+ * 依赖 API：
  *   GET  /api/admin/analytics/summary   → AnalyticsSummary（聚合一次性返回）
  *   GET  /api/admin/analytics/settings  → { enabled: boolean }
  *   POST /api/admin/analytics/settings  → { enabled? } | { action: "clear" }

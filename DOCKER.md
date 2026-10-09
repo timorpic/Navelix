@@ -49,7 +49,7 @@ docker compose up -d
 ```
 
 > 📌 **容器名与数据卷路径请以你实际部署的为准。**
-> 上面的示例命名为 `navelix`、卷为 `./data`；而仓库自带的 `docker-compose.yml` 使用的是 `container_name: rA9-timorpic-navelix` 与绝对路径卷。
+> 上面的示例命名为 `navelix`、卷为 `./data`；仓库自带的 `docker-compose.yml` 同样使用 `container_name: navelix`，但卷路径是绝对路径。运维命令请以你实际部署的 `container_name` 为准。
 > 下文所有 `docker stop navelix` 之类的运维命令，都请替换成你自己 compose 里的 `container_name`。
 
 ### 方式二：Docker CLI 直接运行
@@ -116,10 +116,10 @@ docker run --rm -v /volume1/docker/navelix:/src:ro -v "$(pwd)":/dst alpine \
 ```
 
 > **关于自动备份**：`data/backups/*.db` 目录最多保留最近 **7 份**，超出会自动清理。
-> 但请注意触发来源 —— **免费版本没有定时自动备份**（后台的手动备份、迁移前的自动快照，以及 Pro 版的每日云端备份才会生成快照）。
-> 因此升级前请务必按上面的方式自行做整卷快照。
+> 后台守护进程会**每 24 小时检查一次**，若目录内已有 24 小时内的快照则跳过 —— 因此它与 Pro 版的每日云端备份共享同一份快照，不会重复备份。
+> 后台的手动备份、迁移前的自动快照也写入同一目录，同样受此节流约束。
 > Watchtower 用户：建议将 Watchtower 改用手动触发或公告窗口，先快照再 `watchtower --run-once`。
-> （仓库自带的 `docker-compose.yml` 已内置 watchtower 服务，但请注意其 `--cleanup` 参数指向的容器名与实际的 `container_name` 不一致，自动更新可能不生效，使用前请先核对。）
+> （仓库自带的 `docker-compose.yml` 已内置 watchtower 服务，其 `--cleanup navelix` 与 `container_name: navelix` 一致，可正常自动更新。）
 
 ### 🔑 主加密密钥（APP_SECRET / .app_secret）说明
 

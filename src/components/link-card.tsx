@@ -72,7 +72,7 @@ export default function LinkCard({ link, status }: LinkCardProps) {
       rel="noopener noreferrer"
       onClick={() => {
         recordLinkUsage(link.id);
-        // 可选遥测：点击导航链接（规范 wiki/Analytics §4.1）
+        // 可选遥测：点击导航链接
         trackClientEvent("nav.link_click", {
           linkId: link.id,
           categoryId: link.category,

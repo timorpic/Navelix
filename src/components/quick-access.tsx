@@ -47,7 +47,7 @@ export default function QuickAccess({ links }: QuickAccessProps) {
             rel="noopener noreferrer"
             onClick={() => {
               recordLinkUsage(item.id);
-              // 可选遥测：点击快捷访问链接（规范 wiki/Analytics §4.1）
+              // 可选遥测：点击快捷访问链接
               trackClientEvent("nav.link_click", {
                 linkId: item.id,
                 categoryId: item.category,
