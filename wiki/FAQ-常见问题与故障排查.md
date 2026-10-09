@@ -10,6 +10,7 @@
 - [3. 📊 模型账号额度监控问题](#3--模型账号额度监控问题)
 - [4. 📅 时区与日历订阅同步问题](#4--时区与日历订阅同步问题)
 - [5. 💾 数据备份与恢复注意事项](#5--数据备份与恢复注意事项)
+- [6. 🔧 仓库维护与依赖升级（维护者）](#6--仓库维护与依赖升级维护者)
 
 ---
 
@@ -77,6 +78,26 @@
 ### Q2: 升级后数据还在吗？数据库文件名怎么从 `nexus.db` 变成了 `navelix.db`？
 - **解释**：新版本主数据库更名为 `navelix.db`。升级后首次启动时系统会自动检测旧的 `data/nexus.db` 并迁移为新库，**数据完整保留，无需手动操作**。
 - **注意**：迁移完成后旧的 `data/nexus.db` 会保留在挂载卷中作为备份，确认数据正常后可以手动删除，释放磁盘空间。
+
+---
+
+## 6. 🔧 仓库维护与依赖升级（维护者）
+
+### Q1: Dependabot 的依赖升级 PR 两个 CI job 全红，报 `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`？
+- **原因**：这不是代码问题，而是 pnpm 11 起的**供应链门禁**：`minimumReleaseAge` 默认 **1440 分钟（24 小时）**，任何发布不满 24 小时的包版本都会被拒绝安装。Dependabot 为升级 `next` 等直接依赖重新生成 `pnpm-lock.yaml` 时，会顺带把传递依赖解析到当前最新版（例如 `baseline-browser-mapping@2.11.28` 在其发布仅 2 小时时被写入 lockfile），CI 在 `pnpm install` 阶段即被拦下。单纯重跑 CI 通常仍会失败，直到所有过新的条目都过了冷却期。
+- **解决方案**（保留 bot 对 `package.json` 的版本升级，只重新生成 lockfile）：
+  1. 用项目锁定的 pnpm 版本在容器内重新生成（本机无需安装 Node/pnpm）：
+     ```bash
+     mkdir -p /tmp/lockcheck && cp package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc /tmp/lockcheck/
+     docker run --rm -v /tmp/lockcheck:/w -w /w node:22-alpine sh -c \
+       'corepack enable && corepack prepare pnpm@11.16.0 --activate && cd /w && pnpm install --lockfile-only'
+     ```
+     重新解析会自动选择「冷却期外的最新版」，因此不会写入未满 24 小时的条目，同时只改动必要的依赖树。
+  2. 核对差异收敛：正常情况下应只看到目标包（如 `next` 与 `@next/*` 平台二进制），传递依赖保持原版本、无额外漂移。
+  3. 容器内跑一遍 CI 等价的全量验证：`pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build`（`--frozen-lockfile` 会重新执行供应链策略检查，通过即代表门禁不再拦截）。
+  4. 把修正提交推回 dependabot 分支，等 PR 的 CI（含 Playwright E2E）转绿后再合并。
+- **注意**：不要用 `minimumReleaseAgeExclude` 或调低 `minimumReleaseAge` 来「放行」被拦的版本——那等于关闭供应链门禁；正确做法是让解析器选出冷却期内可用的版本。
+- **补充**：若需要的修复版**已过冷却期**、却因 pnpm 保留「范围已满足」的旧解析而未被抬升，可在 `pnpm-workspace.yaml` 的 `overrides` 中显式固定该版本线（参考既有 `js-yaml`、`brace-expansion@^5.0.0` 两条条目）。
 
 ---
 
