@@ -55,6 +55,19 @@ CI 配置见 `.github/workflows/ci.yml`。本地 Hook 仅执行类型与 lint，
 
 当前组件随应用代码一起交付，没有独立组件发布命令。新增或修改组件需完成调用点接入、类型、样式及必要的交互验证，随应用版本发布。浏览器扩展有独立 `extension/manifest.json` 和说明，不能用应用版本号覆盖其版本策略。
 
+## README Logo 动画资源
+
+中英文 README 使用 `public/navelix-logo.gif` 和 `public/navelix-logo-dark.gif`，按系统主题选择。`prefers-reduced-motion: reduce` 时使用原有 SVG。动画基于对应 SVG 源文件，4 秒循环、40 帧、透明背景；Navelix 字标及其绿色点缀沿竖轴左右翻转一圈，前后短暂停留，下方标语保持静止，白色圆球沿轨道环绕，徽标中央静态圆球为黄棕色 `#B8860B`，并伴随徽标轻微呼吸。
+
+重建工具独立安装，不加入应用依赖或构建流程：
+
+```bash
+npm install --prefix /tmp/navelix-logo-tools --no-save --package-lock=false sharp@0.35.5 gifenc@1.0.3 opentype.js@2.0.0 @fontsource/inter@5.3.0
+NAVELIX_LOGO_TOOLS=/tmp/navelix-logo-tools node scripts/render-readme-logo.mjs
+```
+
+脚本将 Inter 字形转为轮廓后渲染，不依赖系统安装字体；输出覆盖上述两张 GIF。GIF 仅支持单级透明度，边缘按 GitHub 浅色白底与深色 `#0D1117` 做抗锯齿处理；修改源 Logo 后需重建并检查两种主题和文字裁切。字体来自 `@fontsource/inter`（SIL OFL 1.1）。静态 SVG 仍用于网站与减少动态效果的场景。
+
 ## 应用发布
 
 版本真源为 `package.json`，更新日志真源为根目录 `CHANGELOG.md`。本地维护步骤：

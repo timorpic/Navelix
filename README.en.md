@@ -1,7 +1,9 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="public/navelix-logo-dark.svg">
-    <img src="public/navelix-logo.svg" width="520" alt="Navelix · Personal Digital Hub">
+    <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="public/navelix-logo-dark.svg">
+    <source media="(prefers-reduced-motion: reduce)" srcset="public/navelix-logo.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="public/navelix-logo-dark.gif">
+    <img src="public/navelix-logo.gif" width="520" alt="Navelix · Personal Digital Hub">
   </picture>
 </p>
 

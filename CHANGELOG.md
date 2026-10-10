@@ -72,6 +72,7 @@
 - **`api_tokens` / `user_category_subscriptions` 建表语句去重**：`db/schema.ts` 与 `migrations/schema.ts` 此前各持一份逐字相同的 DDL，现抽为共享常量（与 `user-config-columns.ts` 的元数据驱动同一思路）
 
 ### 文档
+- 中英文 README Logo 改为深浅色自适应的透明循环 GIF，包含白色轨道圆球、黄棕色静态圆球、徽标呼吸与 Navelix 文字左右翻转动画，增加减少动态效果时的 SVG 回退和独立重建脚本。
 - 补齐项目协作规范、Claude Code 上下文、视觉设计与开发计划，以及 `docs/` 下的产品规格、架构、组件、页面、开发发布、构建分发和部署说明；README 增加开发文档导航与环境要求，明确当前无独立组件 registry。
 - wiki FAQ 新增「仓库维护与依赖升级」章节：记录 Dependabot PR 触发 pnpm 供应链门禁（`ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`）的排查与修复流程
 - pre-commit Hook 改为走 `scripts/pre-commit.sh`：钩子此前硬编码 `pnpm precommit`，在无 Node/pnpm 的环境以 127 失败，只能 `SKIP_SIMPLE_GIT_HOOKS=1` 整体跳过门禁。现本机有 pnpm 时照常执行，没有而有 Docker 时回退到 `node:22-alpine` 容器执行同一组检查（复用仓库内 `node_modules`），两者都没有才失败；`DEVELOPMENT.md` 补充说明与绕过方式
