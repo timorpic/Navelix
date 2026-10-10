@@ -23,6 +23,7 @@ import {
   FOCUS_TRACKER_KEY,
   LINK_USAGE_KEY,
   QUICK_NOTES_KEY,
+  FALLBACK_VERSION,
 } from "../admin-system.ts";
 
 /**
@@ -46,10 +47,13 @@ function createStorage(initial: Record<string, string> = {}) {
 }
 
 describe("versionLabel", () => {
-  test("缺少版本号时回退内置默认版本 v2.9.5", () => {
-    assert.equal(versionLabel(null), "v2.9.5");
-    assert.equal(versionLabel(undefined), "v2.9.5");
-    assert.equal(versionLabel(""), "v2.9.5");
+  // 断言引用 FALLBACK_VERSION 而非硬编码字面量：该常量由 sync-version.mjs 同步，
+  // 写死会让每次发版都失败一次（v2.9.5 → v2.10.0 时即如此）。
+  test("缺少版本号时回退内置默认版本", () => {
+    assert.equal(versionLabel(null), FALLBACK_VERSION);
+    assert.equal(versionLabel(undefined), FALLBACK_VERSION);
+    assert.equal(versionLabel(""), FALLBACK_VERSION);
+    assert.match(FALLBACK_VERSION, /^v\d+\.\d+\.\d+$/, "兜底版本号应为带 v 前缀的语义化版本");
   });
 
   test("缺少 v 前缀时补齐，已有前缀保持原样", () => {

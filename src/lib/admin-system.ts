@@ -34,8 +34,8 @@ export interface UpdateCheckResult {
   error: string | null;
 }
 
-/** 服务端未回传版本号时展示的内置默认版本。 */
-const FALLBACK_VERSION = "v2.9.5";
+/** 服务端未回传版本号时展示的内置默认版本。由 scripts/sync-version.mjs 同步。 */
+export const FALLBACK_VERSION = "v2.10.0";
 
 /** 版本号展示：缺失时回退内置默认版本，缺少 `v` 前缀时补上。 */
 export function versionLabel(version?: string | null): string {

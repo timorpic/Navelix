@@ -79,10 +79,10 @@ node scripts/sync-changelog.mjs
 node scripts/sync-changelog.mjs --print
 ```
 
-第一条中的 `X.Y.Z` 应替换为实际目标版本，会修改脚本列出的版本位置；随后将 `[未发布]` 内容整理到相应版本章节，写明发布日期，再运行校验。锁文件如出现版本相关差异也需检查。
+第一条中的 `X.Y.Z` 应替换为实际目标版本，会修改脚本列出的版本位置（`package.json`、`Dockerfile` 的 `NAVELIX_VERSION`、`build-info.ts` 的 `DEFAULT_VERSION`、`admin-system.ts` 的 `FALLBACK_VERSION`）；随后将 `[未发布]` 内容整理到相应版本章节，写明发布日期，再运行校验。锁文件如出现版本相关差异也需检查。
 
-当前工作区重构后，版本脚本仍匹配 `admin-system-tab.tsx` 中的旧版本字面量位置，而回退版本已迁移至 `src/lib/admin-system.ts` 的 `FALLBACK_VERSION`。发布前需核对并更新脚本目标；不要忽略校验失败或假定版本同步已经覆盖新的显示入口。
+版本位置的清单以 `scripts/sync-version.mjs` 的 `PATTERNS` 为准，组件拆分或版本展示入口迁移后需同步更新该数组（含校验分支），否则校验会静默跳过。不要忽略校验失败。
 
-发布操作：`node scripts/sync-changelog.mjs --publish` 会创建或编辑 GitHub Release，需要维护者授权和已登录的 `gh`。Release tag 必须与应用版本一致（允许 `v` 前缀），且应指向准备发布的提交。
+发布操作：`node scripts/sync-changelog.mjs --publish` 会创建或编辑 GitHub Release，需要维护者授权和已登录的 `gh`。**该脚本只操作 Release，不会创建 git tag**——需先 `git tag vX.Y.Z` 并推送，否则 Docker 工作流的版本一致性闸门（Release tag == `package.json` version）会直接失败。tag 应指向准备发布的提交。
 
 发布 Release 将触发 Docker 工作流的镜像推送和冒烟检查；扩展 Release 使用独立 tag，但当前 Docker 工作流未按 tag 排除扩展发布，安排扩展发布前需核对触发策略，避免应用版本校验失败。构建分发见 [REGISTRY](REGISTRY.md)，运行与回滚见 [DEPLOYMENT](DEPLOYMENT.md)。

@@ -10,7 +10,7 @@
 
 ---
 
-## [未发布]
+## [2.10.0] - 2026-10-10
 
 ### 安全
 - 升级 `next` 16.3.4 → 16.3.8，修复 next/og ImageResponse 远程代码执行漏洞（critical）及多项安全公告
@@ -32,9 +32,10 @@
 - **待办改换项目时项目时间戳不刷新**：`PATCH /api/todos/[id]` 只在**原**项目非空时刷新那一个项目的 `updated_at` —— 待办从项目甲移到项目乙后，乙的时间戳不动，甲却无谓地变了。现同时刷新新旧两个项目
 - **待办/项目写路径缺事务**：`PATCH /api/todos/[id]`（更新待办 + 刷新项目时间戳）与 `DELETE /api/projects/[id]`（删项目 + 删子任务）原为多条裸写语句逐条提交，中途失败会留下半改状态；「AI 拆解一键保存」的里程碑同步（增/改/删）同样如此。三处一并下沉至 `lib/todos-projects.ts` 并用 `BEGIN IMMEDIATE` 事务包裹
 - **个人资料修改缺事务**：`PATCH /api/auth/profile` 把「改密码」与「改资料」写成两组独立 UPDATE —— 密码已改而资料更新失败时会留下半改状态，且失败响应会让人以为什么都没变。现下沉至 `lib/profile.ts` 并包入事务；校验（头像协议 / 原密码 / 长度）全部前移到写入之前，校验失败不再产生任何副作用
+- **单测硬编码版本号导致每次发版失败一次**：`admin-system.test.ts` 断言 `versionLabel(null) === "v2.9.5"`，而该兜底值由 `sync-version.mjs` 同步（本次发版改为 `v2.10.0`），断言随之失败。改为引用 `FALLBACK_VERSION` 常量并加格式校验，此后发版不再需要手改测试
 
 ### 变更
-- **测试门禁此前形同虚设**：`src/**/*.test.ts` 的 glob 在 bash/zsh（`globstar` 默认关闭）下只展开一层，25 个测试文件里仅执行 1 个，覆盖率阈值从未生效。改为引号包裹交由 Node 原生展开，并加 `--test-concurrency=1`（测试共用同一 SQLite 库，并行会竞争）。测试数从 107 增至 **491**，覆盖率 88.9% 行 / 88.4% 函数；E2E 从 2 个用例增至 7 个
+- **测试门禁此前形同虚设**：`src/**/*.test.ts` 的 glob 在 bash/zsh（`globstar` 默认关闭）下只展开一层，25 个测试文件里仅执行 1 个，覆盖率阈值从未生效。改为引号包裹交由 Node 原生展开，并加 `--test-concurrency=1`（测试共用同一 SQLite 库，并行会竞争）。测试数从 107 增至 **495**，覆盖率 89.0% 行 / 87.2% 分支 / 85.2% 函数；E2E 从 2 个用例增至 7 个
 - **抽共享门禁 `lib/ee-gate.ts`**：同一套 Pro 降级规则此前在 5 处各写一遍，现收敛为 `getProFeatureFlags()` + `applyEEGateToConfig()` 两个入口（写/还原路径保留各自的 SQL 级实现，仅取用共享标志位）
 - **`GET /api/user/data` 改为复用 `getUserData()`**：此前该 handler 用 175 行逐表重写了 `lib/user-data.ts` 已有的查询，而**同一文件的 POST 却正确复用了 `saveUserXxx`**。现两条路径共用同一实现；返回值随之补齐 `user` 字段与订阅团队分类（`src/types` 中这些字段均为可选，前端兼容）
 - **抽 `lib/auth/guard.ts`**：`requireAdmin` 此前在 5 个 admin 路由各自定义一遍（其中 `admin/users` 版本返回 `false` 而非 `null`，签名不一致），另有 11 处内联角色判断。现统一为单一实现，沿用 `csrf.ts` 的约定（lib 层不构造 `NextResponse`，文案与状态码留在调用点，因此各路由的差异化错误文案保持不变）
