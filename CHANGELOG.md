@@ -18,6 +18,7 @@
 - **修复登录限流可被伪造 `X-Real-IP` 绕过**：未开启 `TRUST_PROXY` 时不再采信任何客户端可伪造的 IP 头。此前攻击者每次请求换一个 `X-Real-IP` 即可获得全新限流桶，使登录锁定与失败告警同时失效
 
 ### 修复
+- **加载 EE 字节码会连带初始化整个数据库**：`ee/index.ts` 为取一个公钥常量从 `src/lib/license.ts` 导入，而 `license.ts → db.ts → db/connection.ts` 在模块顶层执行 `initSchema` + `runMigrations`，esbuild 因此把 DB 层与 13 个迁移一并打进 `bundle.jsc`。实测仅 require 一次字节码就会建库、跑完全部迁移并写出初始密码文件（`data/` 下多出 `navelix.db`、`navelix-admin-password.txt` 等），同时产生第二个 SQLite 连接；字节码还封存了编译当日的迁移树，新增迁移后会出现「Next 侧跑 v14、字节码内仍在跑 v13」的两套逻辑并存。公钥拆到零依赖的 `src/lib/license-public-key.ts`，`license.ts` 改为 re-export 保持外部契约不变。字节码依赖图从 39 个模块降至 9 个，`bundle.jsc` 从 102 KB 降至 40 KB。新增 `ee-import-isolation.test.ts` 遍历依赖图并端到端验证加载字节码不触碰数据目录
 - **EE 字节码加载失败时静默退回 CE**：`ee/dist/bundle.jsc` 是 V8 字节码，与编译时的 Node/V8 版本强绑定，跨版本加载会抛 `cachedDataRejected`。此前该错误只打印一句与「本就没有 EE 制品」几乎相同的 warning 就继续运行，运维无法分辨「CE 构建」与「带了 EE 制品但加载失败」。现两种情况分别给出日志，加载失败时额外点名版本不匹配与重新编译方法
 - **PWA「快速记待办」快捷方式失效**：`manifest.ts` 声明的 `?action=quick-add-todo` 此前无任何处理分支，点击无反应。新增 `AddTodoModal` 并接入快速采集层
 - **登录页密码恢复文案错误**：原文案称设置 `NAVELIX_ADMIN_PASSWORD` 并重启即可重置，实际该变量仅在首次初始化或密码仍为 `admin123` 时生效

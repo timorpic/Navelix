@@ -2,14 +2,11 @@ import crypto from "node:crypto";
 import { db } from "./db.ts";
 import { getMachineFingerprint } from "./fingerprint.ts";
 import { getOfficialEELicenseKey, isEEAvailable } from "./ee-bridge/index.ts";
+// 公钥常量本体在零依赖模块中：ee/index.ts 必须从这里取，原因见该文件顶部注释。
+// 此处 re-export 以保持既有导入路径（`../license.ts`）不变。
+import { OFFICIAL_PUBLIC_KEY as PUBLIC_KEY } from "./license-public-key.ts";
 
-/**
- * 官方离线验证公钥（SPKI 格式）
- * 优先从 EE 商业模块或环境变量读取
- */
-export const OFFICIAL_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEA5KmNs4oeMLfDOmh8QMttBdk7KSrSQYi+Ir93lBosS6g=
------END PUBLIC KEY-----`;
+export { OFFICIAL_PUBLIC_KEY } from "./license-public-key.ts";
 
 export interface LicensePayload {
   licenseId: string;
@@ -38,7 +35,7 @@ export function getPublicKey(): string {
   if (eeKey && eeKey.trim().includes("PUBLIC KEY")) {
     return eeKey.trim();
   }
-  return OFFICIAL_PUBLIC_KEY;
+  return PUBLIC_KEY;
 }
 
 /**

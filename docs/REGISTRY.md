@@ -27,6 +27,8 @@
 - `ee/dist/bundle.jsc` 是 V8 字节码，与编译时的 Node/V8 版本强绑定，跨版本加载会抛 `cachedDataRejected`。镜像构建在同一 `node:22-alpine` 内完成编译与运行，两阶段同源；在镜像外预编译的制品必须用目标运行版本重编（`node ee/compile.mjs`），否则会静默退回 CE。
 - 遥测配置可由驱动制品注入，读取逻辑不等同于 Pro 授权判断；隐私说明需区分本地统计和匿名周报。
 
+`ee/index.ts` 的**运行时依赖图必须保持精简**：esbuild 会把它的整条依赖链打进 `bundle.jsc`，而字节码在 `instrumentation.ts` 里被 require 时其顶层语句立即执行。曾因从 `src/lib/license.ts` 取公钥常量，而 `license.ts → db.ts → db/connection.ts` 顶层会 `initSchema` + `runMigrations`，导致仅加载字节码就建库、跑完全部迁移、写出初始密码文件，并产生第二个 SQLite 连接；字节码还封存了编译当日的迁移树，新增迁移后会出现两套逻辑并存。公钥因此拆到零依赖的 `src/lib/license-public-key.ts`。新增 EE 依赖前先确认它不引入 `db.ts`、`migrations/` 或 `license.ts`——`src/lib/__tests__/ee-import-isolation.test.ts` 会遍历依赖图拦截回归。
+
 这是服务端驱动注册机制，不是前端组件分发服务。客户端不能直接依赖商业私有实现。
 
 ## 校验与镜像发布

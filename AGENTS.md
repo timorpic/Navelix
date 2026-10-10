@@ -34,7 +34,7 @@ Navelix 是可自托管的个人数字工作空间，包含网址导航、项目
 - 数据查询和写入必须检查用户归属，系统级操作校验管理员身份。进入 `/admin` 只代表已登录，不代表拥有全部管理员权限。
 - 复用 `getSessionUser()`、`requireAdmin()`、CSRF 与 SSRF 工具；不要绕过 `src/proxy.ts` 的写请求保护。
 - 外部请求检查 `src/lib/ssrf.ts` 的安全入口，API Key 只在服务端解密和使用；响应、日志、导出与文档示例不得泄露密钥。
-- Pro 功能同时考虑服务端读取、写入与 SSR 路径，复用 `src/lib/ee-gate.ts` 和 `ee-bridge/`，不能只隐藏前端按钮。
+- Pro 功能同时考虑服务端读取、写入与 SSR 路径，复用 `src/lib/ee-gate.ts` 和 `ee-bridge/`，不能只隐藏前端按钮。`ee/` 的依赖图须保持精简：字节码在进程启动时立即执行顶层语句，禁止引入 `db.ts`、`migrations/` 或 `license.ts`。
 - Schema 修改同步更新首次建表与升级迁移，并验证历史库兼容性。避免在底层迁移模块引入 `db.ts` 单例造成导入环。
 - 不提交 `data/`、`.env`、数据库、备份、初始密码、授权凭据或 EE 私有制品。遵守 [LICENSE](LICENSE)。
 
