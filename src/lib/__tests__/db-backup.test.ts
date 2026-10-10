@@ -1,8 +1,9 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { performDatabaseBackup } from "../db-backup.ts";
-import { createPhysicalBackup } from "../db-backup-core.ts";
+import path from "node:path";
+import { performDatabaseBackup, scheduleAutoBackup } from "../db-backup.ts";
+import { createPhysicalBackup, listBackupFiles, BACKUP_INTERVAL_MS } from "../db-backup-core.ts";
 import { db } from "../db.ts";
 
 describe("SQLite Automatic Backup Module", () => {
@@ -71,5 +72,70 @@ describe("SQLite Automatic Backup Module", () => {
         // ignore
       }
     }
+  });
+
+  it("scheduleAutoBackup 按最新快照 mtime 决定是否备份（启动补检查依赖该语义）", () => {
+    // 守护进程在启动约 90 秒后补跑一次 scheduleAutoBackup，以覆盖「每天重启、
+    // 连续运行不足 24 小时」的实例（否则首次备份要等满 24 小时，永远不执行）。
+    // 该补跑之所以安全、不会产生冗余快照，正是因为它按 mtime 幂等判断——
+    // 这里固定住这个前提：快照新鲜则跳过，过期或无快照则备份。
+    const before = listBackupFiles().length;
+
+    // ① 无「新鲜」快照时：应执行备份（写出一条审计日志即证明真的备份了）
+    const backupDir = path.join(process.env.NAVELIX_DATA_DIR || path.join(process.cwd(), "data"), "backups");
+    const stashed: { path: string; mtime: number }[] = [];
+    if (fs.existsSync(backupDir)) {
+      for (const f of listBackupFiles()) {
+        stashed.push({ path: f.path, mtime: f.mtime });
+        // 把 mtime 改到很久以前，模拟「最近快照已过期」
+        const old = new Date(Date.now() - BACKUP_INTERVAL_MS - 60_000);
+        fs.utimesSync(f.path, old, old);
+      }
+    }
+
+    const countAudit = () =>
+      (
+        db
+          .prepare("SELECT COUNT(*) AS c FROM audit_logs WHERE action = 'database.backup.created'")
+          .get() as { c: number }
+      ).c;
+
+    const auditBefore = countAudit();
+    scheduleAutoBackup();
+    assert.equal(
+      countAudit(),
+      auditBefore + 1,
+      "最新快照已过期（或不存在）时，scheduleAutoBackup 应执行备份",
+    );
+
+    // ② 快照刚生成（新鲜）时：应直接返回、不再产生新快照
+    const auditAfterBackup = countAudit();
+    scheduleAutoBackup();
+    assert.equal(
+      countAudit(),
+      auditAfterBackup,
+      "目录内已有新鲜快照时应跳过，避免每天重复 VACUUM INTO",
+    );
+
+    // ③ 清理本次测试新建的快照（保留测试前就存在的，并还原其 mtime）
+    const keep = new Set(stashed.map((s) => s.path));
+    for (const f of listBackupFiles()) {
+      if (!keep.has(f.path)) {
+        try {
+          fs.unlinkSync(f.path);
+        } catch {
+          // ignore
+        }
+      }
+    }
+    for (const s of stashed) {
+      try {
+        const d = new Date(s.mtime);
+        fs.utimesSync(s.path, d, d);
+      } catch {
+        // ignore
+      }
+    }
+    assert.ok(listBackupFiles().length <= before + 1, "清理后不应残留大量测试快照");
   });
 });

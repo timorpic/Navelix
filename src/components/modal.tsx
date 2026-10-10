@@ -5,14 +5,22 @@ interface ModalProps {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  /**
+   * 层级。默认 `z-50`，与同类弹窗平级——此时**后渲染的覆盖先渲染的**。
+   *
+   * 若弹窗需要在另一个弹窗之上打开（如备份列表弹窗内触发还原确认框），
+   * 必须显式传更高的层级，否则会被后者盖住、用户无法操作。
+   * `ConfirmDialog` 即以 `elevated` 使用本组件。
+   */
+  elevated?: boolean;
 }
 
-export default function Modal({ open, title, onClose, children }: ModalProps) {
+export default function Modal({ open, title, onClose, children, elevated = false }: ModalProps) {
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm animate-fadeIn"
+      className={`fixed inset-0 ${elevated ? "z-[60]" : "z-50"} flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm animate-fadeIn`}
       onClick={onClose}
     >
       <div

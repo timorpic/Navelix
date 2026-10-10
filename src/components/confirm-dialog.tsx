@@ -39,7 +39,10 @@ export default function ConfirmDialog({
   };
 
   return (
-    <Modal open={open} title={title} onClose={handleCancel}>
+    // elevated：确认框常由弹窗内触发（如云端快照列表里点「一键还原」）。
+    // 普通弹窗同为 z-50，同层级下后渲染者覆盖先渲染者，确认框会被列表盖住
+    // 而无法点击。此处提升到 z-[60]，保证确认层始终浮在触发它的弹窗之上。
+    <Modal open={open} title={title} onClose={handleCancel} elevated>
       <p className="text-sm leading-relaxed text-gray-600">{message}</p>
       <div className="mt-6 flex justify-end gap-3">
         <button

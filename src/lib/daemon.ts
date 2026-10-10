@@ -98,9 +98,23 @@ export function startBackgroundDaemon(): void {
 
   // 5. 本地自动备份（每 24 小时检查一次；目录内已有 24 小时内的快照则跳过，
   //    因此与上面的云备份共享同一份快照，不会在同一天重复 VACUUM INTO）
+  //
+  //    启动后 90 秒补检查一次：scheduleTask 的首次执行也在 delayMs 之后，
+  //    若只保留下面这行，进程需连续运行满 24 小时才会首次备份 —— 每天重启
+  //    的实例（如定时重建容器的部署）将永远不做本地自动备份，即使磁盘上
+  //    最近的快照早已过期。scheduleAutoBackup 本身按快照 mtime 判断，过期
+  //    才备份、否则直接返回，因此补跑是幂等的、不会产生重复快照。
   globalThis.__navelix_daemon_timers__.push(
     scheduleTask(() => scheduleAutoBackup(), 24 * 60 * 60 * 1000),
   );
+  const autoBackupInit = setTimeout(() => {
+    try {
+      scheduleAutoBackup();
+    } catch {
+      // 与 scheduleTask 的 catch 一致：单次失败不影响后续定时轮次
+    }
+  }, 90_000);
+  globalThis.__navelix_daemon_timers__.push(autoBackupInit);
 
   // 6. 磁盘占用检查（每 6 小时）
   globalThis.__navelix_daemon_timers__.push(
