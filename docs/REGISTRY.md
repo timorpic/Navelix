@@ -24,6 +24,7 @@
 - 存储与探针驱动由相应 getter 获取；缺失时使用 `stubs.ts` 的 CE 降级实现。
 - `isEEAvailable()` 检查存储与探针驱动是否存在；驱动存在与许可有效是不同条件。
 - `src/instrumentation.ts` 尝试加载 `ee/dist/bundle.jsc` 并注册商业能力，缺失或加载失败则继续 CE 运行。
+- `ee/dist/bundle.jsc` 是 V8 字节码，与编译时的 Node/V8 版本强绑定，跨版本加载会抛 `cachedDataRejected`。镜像构建在同一 `node:22-alpine` 内完成编译与运行，两阶段同源；在镜像外预编译的制品必须用目标运行版本重编（`node ee/compile.mjs`），否则会静默退回 CE。
 - 遥测配置可由驱动制品注入，读取逻辑不等同于 Pro 授权判断；隐私说明需区分本地统计和匿名周报。
 
 这是服务端驱动注册机制，不是前端组件分发服务。客户端不能直接依赖商业私有实现。

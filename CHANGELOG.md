@@ -18,6 +18,7 @@
 - **修复登录限流可被伪造 `X-Real-IP` 绕过**：未开启 `TRUST_PROXY` 时不再采信任何客户端可伪造的 IP 头。此前攻击者每次请求换一个 `X-Real-IP` 即可获得全新限流桶，使登录锁定与失败告警同时失效
 
 ### 修复
+- **EE 字节码加载失败时静默退回 CE**：`ee/dist/bundle.jsc` 是 V8 字节码，与编译时的 Node/V8 版本强绑定，跨版本加载会抛 `cachedDataRejected`。此前该错误只打印一句与「本就没有 EE 制品」几乎相同的 warning 就继续运行，运维无法分辨「CE 构建」与「带了 EE 制品但加载失败」。现两种情况分别给出日志，加载失败时额外点名版本不匹配与重新编译方法
 - **PWA「快速记待办」快捷方式失效**：`manifest.ts` 声明的 `?action=quick-add-todo` 此前无任何处理分支，点击无反应。新增 `AddTodoModal` 并接入快速采集层
 - **登录页密码恢复文案错误**：原文案称设置 `NAVELIX_ADMIN_PASSWORD` 并重启即可重置，实际该变量仅在首次初始化或密码仍为 `admin123` 时生效
 - **`docker-compose.yml` 容器名与 watchtower 不匹配**：`container_name` 为 `rA9-timorpic-navelix` 而 watchtower 参数为 `navelix`，导致自动更新静默失效；现统一为 `navelix`
@@ -73,6 +74,7 @@
 ### 文档
 - 补齐项目协作规范、Claude Code 上下文、视觉设计与开发计划，以及 `docs/` 下的产品规格、架构、组件、页面、开发发布、构建分发和部署说明；README 增加开发文档导航与环境要求，明确当前无独立组件 registry。
 - wiki FAQ 新增「仓库维护与依赖升级」章节：记录 Dependabot PR 触发 pnpm 供应链门禁（`ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`）的排查与修复流程
+- pre-commit Hook 改为走 `scripts/pre-commit.sh`：钩子此前硬编码 `pnpm precommit`，在无 Node/pnpm 的环境以 127 失败，只能 `SKIP_SIMPLE_GIT_HOOKS=1` 整体跳过门禁。现本机有 pnpm 时照常执行，没有而有 Docker 时回退到 `node:22-alpine` 容器执行同一组检查（复用仓库内 `node_modules`），两者都没有才失败；`DEVELOPMENT.md` 补充说明与绕过方式
 - README 文档表格补充 CHANGELOG 入口
 - **全量文档与代码一致性修订**（根目录 + wiki 共 14 份）：
   - **移除已不存在的功能描述**：番茄钟（实际只有被动式专注时长统计）、自定义/多引擎搜索（搜索配置已在迁移 v10 删除，现为系统内全类型搜索）、前台书签星标按钮、日历 Webcal 订阅 UI（界面只有下载，且为单向导出）、FAQ 中的「(✓ 服务端已保存)」密码框

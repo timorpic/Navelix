@@ -18,7 +18,7 @@
     "postinstall": "simple-git-hooks"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm precommit"
+    "pre-commit": "sh scripts/pre-commit.sh"
   },
   "engines": {
     "node": ">=22.5.0"

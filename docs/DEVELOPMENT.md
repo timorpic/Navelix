@@ -30,6 +30,8 @@ pnpm dev
 | `pnpm start` | 启动已构建应用，端口 3721 |
 | `pnpm precommit` | 类型检查与 lint；本地 pre-commit Hook 使用 |
 
+pre-commit Hook 由 `simple-git-hooks` 生成，指向 `scripts/pre-commit.sh`。该脚本优先使用本机 `pnpm precommit`；本机没有 Node/pnpm 而存在 Docker 时，回退到 `node:22-alpine` 容器执行同一组检查（复用仓库内已安装的 `node_modules`，约半分钟）。两者都不可用时钩子以非零码失败，而不是静默放过——门禁默认为开，需要临时绕过时用 `SKIP_SIMPLE_GIT_HOOKS=1 git commit`。
+
 Node 测试的 `src/**/*.test.ts` glob 已在脚本中加引号，由 Node 展开；不要去掉引号造成部分测试漏跑。测试使用串行配置以避免共享 SQLite 竞争。运行本地测试可先用系统临时目录隔离数据：
 
 ```bash
