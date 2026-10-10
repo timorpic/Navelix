@@ -39,7 +39,7 @@ curl --fail http://localhost:3721/api/healthz
 
 ## 源码部署
 
-准备与 `package.json` 匹配的 Node 22 和 pnpm：
+准备与 `package.json` 匹配的 Node 24 和 pnpm：
 
 ```bash
 corepack enable

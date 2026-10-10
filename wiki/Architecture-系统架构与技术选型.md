@@ -12,7 +12,7 @@
 | **UI 视图库** | **React 19** | 最新的 React 核心，优秀的并发渲染与客户端组件状态流转 |
 | **样式体系** | **Tailwind CSS 4** | 现代化原子级 CSS 框架，零运行时开销，原生暗黑模式与流畅响应式布局 |
 | **持久化存储** | **SQLite3 (Node.js 原生 DatabaseSync / WAL 模式)** | 单文件中心化嵌入式数据库，极简部署无外部依赖，WAL 并发读写性能极高 |
-| **运行时** | **Node.js ≥ 22.5**（镜像为 `node:22-alpine`） | 依赖内置 `node:sqlite`（`DatabaseSync`），**Node 20 无法运行**；包管理器锁定 `pnpm@11.16.0` |
+| **运行时** | **Node.js ≥ 24.0**（镜像为 `node:24-alpine`） | 依赖内置 `node:sqlite`（`DatabaseSync`），**Node 20 无法运行**；包管理器锁定 `pnpm@11.16.0` |
 | **安全体系** | **`node:crypto`** | 密码哈希使用 **scrypt**（配定时安全比较）；SHA-256 用于会话 / API Token 摘要；**AES-256-GCM** 加密敏感字段 |
 | **标准协议** | **RFC 5545 iCalendar / OAuth2** | 标准日历导出（`text/calendar`）与 OAuth2 授权流程。**PKCE（S256）目前仅 Codex 使用**，反重力走传统 `client_secret` 授权码流程 |
 

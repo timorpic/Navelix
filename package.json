@@ -1,6 +1,6 @@
 {
   "name": "navelix",
-  "version": "2.10.1",
+  "version": "2.10.2",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
@@ -21,7 +21,7 @@
     "pre-commit": "sh scripts/pre-commit.sh"
   },
   "engines": {
-    "node": ">=22.5.0"
+    "node": ">=24.0.0"
   },
   "dependencies": {
     "bytenode": "^1.6.0",

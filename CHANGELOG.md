@@ -10,6 +10,14 @@
 
 ---
 
+## [2.10.2] - 2026-10-10
+
+### 变更
+- **应用构建、测试与运行环境统一升级至 Node.js 24**：CI 单元测试/E2E、Docker 各阶段、提交检查容器及 EE 编译目标统一为 Node.js 24，最低版本调整为 `24.0.0`，同步源码部署与开发文档；已有 EE 字节码需使用目标 Node/V8 版本重新编译。
+- **GitHub Actions 升级至 Node.js 24 运行时**：升级 CI 与 Docker 工作流中的 checkout、setup-node、cache、upload-artifact、pnpm 安装、Docker 构建/登录/元数据及 Docker Hub 描述同步 action，消除 Node.js 20 弃用警告。
+
+---
+
 ## [2.10.1] - 2026-10-10
 
 ### 修复

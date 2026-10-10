@@ -2,7 +2,7 @@
 
 ## 环境准备
 
-以 `package.json` 的 engines 和 packageManager 为准：Node.js 至少 `22.5.0`，项目使用 `pnpm@11.16.0`。建议使用持续更新的 Node 22 补丁版，以兼容内置 SQLite、Node 测试与 TypeScript 类型擦除参数；CI 使用 Node 22。
+以 `package.json` 的 engines 和 packageManager 为准：Node.js 至少 `24.0.0`，项目使用 `pnpm@11.16.0`。建议使用持续更新的 Node 24 补丁版，以兼容内置 SQLite、Node 测试与 TypeScript 类型擦除参数；CI 使用 Node 24。
 
 ```bash
 corepack enable
@@ -30,7 +30,7 @@ pnpm dev
 | `pnpm start` | 启动已构建应用，端口 3721 |
 | `pnpm precommit` | 类型检查与 lint；本地 pre-commit Hook 使用 |
 
-pre-commit Hook 由 `simple-git-hooks` 生成，指向 `scripts/pre-commit.sh`。该脚本优先使用本机 `pnpm precommit`；本机没有 Node/pnpm 而存在 Docker 时，回退到 `node:22-alpine` 容器执行同一组检查（复用仓库内已安装的 `node_modules`，约半分钟）。两者都不可用时钩子以非零码失败，而不是静默放过——门禁默认为开，需要临时绕过时用 `SKIP_SIMPLE_GIT_HOOKS=1 git commit`。
+pre-commit Hook 由 `simple-git-hooks` 生成，指向 `scripts/pre-commit.sh`。该脚本优先使用本机 `pnpm precommit`；本机没有 Node/pnpm 而存在 Docker 时，回退到 `node:24-alpine` 容器执行同一组检查（复用仓库内已安装的 `node_modules`，约半分钟）。两者都不可用时钩子以非零码失败，而不是静默放过——门禁默认为开，需要临时绕过时用 `SKIP_SIMPLE_GIT_HOOKS=1 git commit`。
 
 Node 测试的 `src/**/*.test.ts` glob 已在脚本中加引号，由 Node 展开；不要去掉引号造成部分测试漏跑。测试使用串行配置以避免共享 SQLite 竞争。运行本地测试可先用系统临时目录隔离数据：
 
@@ -49,7 +49,7 @@ Playwright 配置自行创建临时数据目录，使用端口 3722 和专用初
 5. 按变更运行相关检查。提交代码前完成类型和 lint；合并前满足 CI 的覆盖率、构建及 E2E 检查。纯文档变更检查链接、路径和命令即可。
 6. 更新相关文档、TODO 与 `[未发布]`，说明验证结果和已知限制，不改写历史发布事实。
 
-CI 配置见 `.github/workflows/ci.yml`。本地 Hook 仅执行类型与 lint，不代表完整 CI 已通过。
+CI 配置见 `.github/workflows/ci.yml`，镜像发布与冒烟测试见 `.github/workflows/docker.yml`。两条工作流中的 JavaScript action 均使用 Node.js 24 运行时，应用构建与测试由 `actions/setup-node` 配置为 Node.js 24；action 运行时版本与应用 Node.js 版本独立。本地 Hook 仅执行类型与 lint，不代表完整 CI 已通过。
 
 ## 组件交付
 

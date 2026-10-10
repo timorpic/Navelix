@@ -103,7 +103,7 @@
   1. 用项目锁定的 pnpm 版本在容器内重新生成（本机无需安装 Node/pnpm）：
      ```bash
      mkdir -p /tmp/lockcheck && cp package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc /tmp/lockcheck/
-     docker run --rm -v /tmp/lockcheck:/w -w /w node:22-alpine sh -c \
+     docker run --rm -v /tmp/lockcheck:/w -w /w node:24-alpine sh -c \
        'corepack enable && corepack prepare pnpm@11.16.0 --activate && cd /w && pnpm install --lockfile-only'
      ```
      重新解析会自动选择「冷却期外的最新版」，因此不会写入未满 24 小时的条目，同时只改动必要的依赖树。

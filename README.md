@@ -107,7 +107,7 @@
 
 ## 快速开始
 
-需要 Node.js 22（至少 22.5.0，建议使用最新补丁版）和 `package.json` 声明的 pnpm 版本。完整环境与验证流程见 [开发说明](docs/DEVELOPMENT.md)。
+需要 Node.js 24（至少 24.0.0，建议使用最新补丁版）和 `package.json` 声明的 pnpm 版本。完整环境与验证流程见 [开发说明](docs/DEVELOPMENT.md)。
 
 ```bash
 corepack enable

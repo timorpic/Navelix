@@ -1,5 +1,5 @@
 # ── Navelix Multi-Stage Production Dockerfile ──
-FROM node:22-alpine AS base
+FROM node:24-alpine AS base
 
 # Stage 1: Dependencies
 FROM base AS deps
@@ -15,7 +15,7 @@ WORKDIR /app
 
 ARG SOURCE_SHA=unknown
 ARG BUILD_DATE=unknown
-ARG NAVELIX_VERSION=2.10.1
+ARG NAVELIX_VERSION=2.10.2
 ENV NAVELIX_SOURCE_SHA=$SOURCE_SHA
 ENV NAVELIX_BUILD_DATE=$BUILD_DATE
 ENV NAVELIX_VERSION=$NAVELIX_VERSION
@@ -40,7 +40,7 @@ RUN if [ -f "ee/index.ts" ]; then \
           bundle: true, \
           platform: 'node', \
           format: 'cjs', \
-          target: 'node22', \
+          target: 'node24', \
           outfile: 'ee/dist/bundle.cjs', \
           minify: true, \
           treeShaking: true, \
@@ -99,7 +99,7 @@ ENV HOSTNAME=0.0.0.0
 # 构建元数据：用于应用内自检更新（由 GitHub Actions 通过 build-args 注入）
 ARG SOURCE_SHA=unknown
 ARG BUILD_DATE=unknown
-ARG NAVELIX_VERSION=2.10.1
+ARG NAVELIX_VERSION=2.10.2
 ENV NAVELIX_SOURCE_SHA=$SOURCE_SHA
 ENV NAVELIX_BUILD_DATE=$BUILD_DATE
 ENV NAVELIX_VERSION=$NAVELIX_VERSION

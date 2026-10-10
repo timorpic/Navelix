@@ -7,7 +7,7 @@
 ## 💻 系统环境要求 (System Requirements)
 
 - **Docker 运行环境**（推荐）：Docker Engine 20.10+ 及 Docker Compose v2+
-- **源码运行环境**（可选）：Node.js **22.5+**（必须，依赖内置 `node:sqlite`）、pnpm **11.x**（仓库锁定 `pnpm@11.16.0`）
+- **源码运行环境**（可选）：Node.js **24.0+**（必须，依赖内置 `node:sqlite`）、pnpm **11.x**（仓库锁定 `pnpm@11.16.0`）
 - **默认服务端口**：**`3721`**（如需映射为 80/443 或其他端口，可在命令或 Compose 中修改）
 - **硬件配置**：
   - 内存：最低 256MB（推荐 512MB 以上）
