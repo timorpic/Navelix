@@ -2,21 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionUser, verifyPassword } from "@/lib/auth";
+import { requireAdmin, verifyPassword } from "@/lib/auth";
 import { performDatabaseBackup } from "@/lib/db-backup";
 import { runMigrations } from "@/lib/migrations";
 import { recordAuditLog } from "@/lib/audit";
 import { track } from "@/lib/analytics";
 import { DEFAULT_SITE_TITLE } from "@/lib/constants";
 import { resolveDataDir } from "@/lib/data-dir";
-
-async function requireAdmin(req?: NextRequest) {
-  const user = await getSessionUser(req);
-  if (!user || user.role !== "admin") {
-    return null;
-  }
-  return user;
-}
 
 // GET: 下载当前 SQLite 数据库的物理快照备份文件 (.db)
 export async function GET(req: NextRequest) {
@@ -57,13 +49,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "无权访问，仅管理员可恢复数据库" }, { status: 403 });
   }
 
+  // 解析上传体单独处理：Content-Type 不对时 req.formData() 会抛错，
+  // 若与还原逻辑共用一个 catch，客户端错误会被报成 500「数据库恢复失败」。
+  let formData: FormData;
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-    if (!file) {
-      return NextResponse.json({ error: "请上传有效的 .db 备份文件" }, { status: 400 });
-    }
+    formData = await req.formData();
+  } catch {
+    return NextResponse.json(
+      { error: "请求格式错误，请以 multipart/form-data 上传 .db 备份文件" },
+      { status: 400 },
+    );
+  }
 
+  const file = formData.get("file") as File | null;
+  if (!file) {
+    return NextResponse.json({ error: "请上传有效的 .db 备份文件" }, { status: 400 });
+  }
+
+  try {
     // 二次确认：恢复操作会整体覆盖数据库，必须验证当前管理员密码，
     // 防止管理员会话被盗后（但密码未泄露）被攻击者直接覆写数据库。
     const confirmPassword = String(formData.get("confirmPassword") || "");
@@ -137,30 +140,51 @@ export async function POST(req: NextRequest) {
     runMigrations(db);
 
     // 5. 数据还原后的 Pro 商业字段合规性清洗与防护（防止在 CE/未授权环境下通过导入 .db 白嫖 Pro 特性）
-    const { canAccessFeature } = await import("@/lib/license");
-    const { isEEAvailable } = await import("@/lib/ee-bridge");
-    const hasCodeInject = isEEAvailable() && canAccessFeature("custom_code_injection");
-    const hasBrandCustom = isEEAvailable() && canAccessFeature("brand_customization");
-    const hasProbes = isEEAvailable() && canAccessFeature("link_status_monitor");
+    // 注：这是**还原后清洗**，与读路径的降级目的不同，故保留 SQL 级实现；仅标志位取自共享门禁。
+    //
+    // 清洗刻意放在上面的 COMMIT 与 runMigrations 之后：迁移可能重建 user_configs 表，
+    // 清洗必须先于迁移会失效。代价是此步失败时数据已落库 —— 因此单独捕获，
+    // 明确告知「已还原但未完成门禁清洗」，而不是让用户以为还原没生效（那会误导他重试）。
+    try {
+      const { getProFeatureFlags } = await import("@/lib/ee-gate");
+      const { hasCodeInject, hasBrandCustom, hasProbes } = getProFeatureFlags();
 
-    db.prepare(`
-      UPDATE user_configs SET
-        custom_head_scripts = CASE WHEN ? THEN custom_head_scripts ELSE '' END,
-        custom_css = CASE WHEN ? THEN custom_css ELSE '' END,
-        logo_image = CASE WHEN ? THEN logo_image ELSE '' END,
-        site_title = CASE WHEN ? THEN site_title ELSE '${DEFAULT_SITE_TITLE}' END,
-        logo_text = CASE WHEN ? THEN logo_text ELSE 'Navelix' END,
-        link_status_enabled = CASE WHEN ? THEN link_status_enabled ELSE 0 END,
-        link_status_interval = CASE WHEN ? THEN link_status_interval ELSE 60 END
-    `).run(
-      hasCodeInject ? 1 : 0,
-      hasCodeInject ? 1 : 0,
-      hasBrandCustom ? 1 : 0,
-      hasBrandCustom ? 1 : 0,
-      hasBrandCustom ? 1 : 0,
-      hasProbes ? 1 : 0,
-      hasProbes ? 1 : 0,
-    );
+      db.prepare(`
+        UPDATE user_configs SET
+          custom_head_scripts = CASE WHEN ? THEN custom_head_scripts ELSE '' END,
+          custom_css = CASE WHEN ? THEN custom_css ELSE '' END,
+          logo_image = CASE WHEN ? THEN logo_image ELSE '' END,
+          site_title = CASE WHEN ? THEN site_title ELSE '${DEFAULT_SITE_TITLE}' END,
+          logo_text = CASE WHEN ? THEN logo_text ELSE 'Navelix' END,
+          link_status_enabled = CASE WHEN ? THEN link_status_enabled ELSE 0 END,
+          link_status_interval = CASE WHEN ? THEN link_status_interval ELSE 60 END
+      `).run(
+        hasCodeInject ? 1 : 0,
+        hasCodeInject ? 1 : 0,
+        hasBrandCustom ? 1 : 0,
+        hasBrandCustom ? 1 : 0,
+        hasBrandCustom ? 1 : 0,
+        hasProbes ? 1 : 0,
+        hasProbes ? 1 : 0,
+      );
+    } catch (gateErr) {
+      console.error("[Database Restore] Pro 门禁清洗失败（数据已还原）:", gateErr);
+      recordAuditLog({
+        userId: adminUser.id,
+        action: "database.restore.gate_failed",
+        target: "navelix.db",
+        details: `还原成功但 Pro 字段清洗失败：${
+          gateErr instanceof Error ? gateErr.message : String(gateErr)
+        }`,
+      });
+      return NextResponse.json(
+        {
+          error:
+            "数据库已还原，但 Pro 门禁字段清洗失败，未授权环境下的商业特性可能仍然生效，请检查服务端日志后重试或手工清理。",
+        },
+        { status: 500 },
+      );
+    }
 
     recordAuditLog({
       userId: adminUser.id,

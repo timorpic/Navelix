@@ -42,12 +42,20 @@ export function getPublicKey(): string {
 }
 
 /**
- * 校验并解析 License Token
- * 格式：<base64url(payload)>.<base64url(signature)>
+ * 验签结果缓存 —— 仅缓存**成功**的验签。
+ *
+ * 动机：`getUserData()` 每次 SSR 渲染都会走门禁 → canAccessFeature → getLicenseStatus
+ * → verifyLicenseKey，而 Ed25519 验签是纯 CPU 开销。这里缓存有效令牌的验签结果，
+ * 因为验签是 token 的纯函数，无需任何失效逻辑。
+ *
+ * 只缓存成功结果有两个好处：
+ * 1. 正常实例只有一个有效 token，缓存天然有界；
+ * 2. 攻击者伪造的大量无效 token 不会被写入，避免缓存膨胀。
  */
-export function verifyLicenseKey(
-  token: string,
-): LicenseVerificationResult {
+const VERIFIED_TOKEN_CACHE = new Map<string, LicensePayload>();
+const VERIFIED_TOKEN_CACHE_MAX = 8;
+
+function verifyLicenseKeyUncached(token: string): LicenseVerificationResult {
   if (!token || typeof token !== "string" || !token.includes(".")) {
     return { valid: false, error: "许可证格式无效（必须包含有效签名载荷）" };
   }
@@ -120,6 +128,41 @@ export function verifyLicenseKey(
       error: `签名校验异常: ${err instanceof Error ? err.message : "未知错误"}`,
     };
   }
+}
+
+/**
+ * 校验并解析 License Token
+ * 格式：<base64url(payload)>.<base64url(signature)>
+ */
+export function verifyLicenseKey(
+  token: string,
+): LicenseVerificationResult {
+  const cached = VERIFIED_TOKEN_CACHE.get(token);
+  if (cached) {
+    // 缓存命中也必须复检到期时间：年费授权可能在进程存活期间到期。
+    // 指纹校验无需复检（进程存活期内不会变化）。
+    if (cached.expiresAt > 0 && Date.now() > cached.expiresAt) {
+      VERIFIED_TOKEN_CACHE.delete(token);
+      return {
+        valid: false,
+        payload: cached,
+        error: `许可证已于 ${new Date(cached.expiresAt).toLocaleDateString()} 到期`,
+      };
+    }
+    return { valid: true, payload: cached };
+  }
+
+  const res = verifyLicenseKeyUncached(token);
+
+  if (res.valid && res.payload) {
+    if (VERIFIED_TOKEN_CACHE.size >= VERIFIED_TOKEN_CACHE_MAX) {
+      const oldest = VERIFIED_TOKEN_CACHE.keys().next().value;
+      if (oldest !== undefined) VERIFIED_TOKEN_CACHE.delete(oldest);
+    }
+    VERIFIED_TOKEN_CACHE.set(token, res.payload);
+  }
+
+  return res;
 }
 
 /**

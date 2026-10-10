@@ -73,6 +73,22 @@
 
 ## 文档中心
 
+### 项目开发文档
+
+| 文档 | 内容 |
+| :--- | :--- |
+| [协作规范](AGENTS.md) · [Claude Code 上下文](CLAUDE.md) | 通用开发约定与工具入口 |
+| [技术栈与架构](docs/ARCHITECTURE.md) | Next.js 16、React 19、Tailwind CSS 4、TypeScript 与 Node SQLite；目录和数据流 |
+| [产品规格](docs/PROJECT-SPEC.md) | 项目定位、目标用户与功能边界 |
+| [视觉设计](DESIGN.md) · [组件规范](docs/COMPONENT-GUIDELINES.md) | 主题、布局、交互、依赖与无障碍 |
+| [页面结构](docs/PAGE-STRUCTURE.md) | 页面路由、首页视图与后台功能区 |
+| [开发与发布](docs/DEVELOPMENT.md) | 本地开发、测试、数据库变更与版本维护 |
+| [构建与分发](docs/REGISTRY.md) | 应用产物、镜像校验与 EE 驱动注册；当前无独立组件 registry |
+| [构建与部署](docs/DEPLOYMENT.md) | Docker、源码部署、持久化、升级与回滚 |
+| [开发计划](TODO.md) · [更新日志](CHANGELOG.md) | 当前进度、待办与版本历史 |
+
+### 用户与运维手册
+
 完整的功能手册、架构说明、安全规范与 API 文档都在 [Wiki](https://github.com/timorpic/Navelix/wiki)：
 
 | 文档 | 内容 |
@@ -89,8 +105,11 @@
 
 ## 快速开始
 
+需要 Node.js 22（至少 22.5.0，建议使用最新补丁版）和 `package.json` 声明的 pnpm 版本。完整环境与验证流程见 [开发说明](docs/DEVELOPMENT.md)。
+
 ```bash
-pnpm install
+corepack enable
+pnpm install --frozen-lockfile
 pnpm dev          # 本地开发，http://localhost:3721
 ```
 
@@ -116,7 +135,7 @@ services:
       - ./data:/app/data
 ```
 
-> 💡 提示：仓库自带 `docker-compose.yml` 的容器名与卷路径与此示例不同，运维命令请以你实际部署的 `container_name` 为准。
+> 💡 提示：仓库自带 `docker-compose.yml` 使用 `/volume1/docker/navelix` 挂载数据，并包含可选 Watchtower 服务；请按实际主机调整路径和自动更新策略。
 
 运行命令：
 

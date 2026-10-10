@@ -1,9 +1,16 @@
 import type { DatabaseSync } from "node:sqlite";
 import { createUserConfigsTableSql } from "../user-config-columns.ts";
+import {
+  API_TOKENS_TABLE_SQL,
+  CATEGORY_SUBSCRIPTIONS_TABLE_SQL,
+} from "../migrations/schema.ts";
 
 /**
  * 初始 Schema：所有 CREATE TABLE / CREATE INDEX 语句（仅在表不存在时创建）。
  * 历史版本升级走 ../migrations/，本模块只负责初次建表。
+ *
+ * 其中 api_tokens / user_category_subscriptions 的 DDL 与
+ * ../migrations/schema.ts 共用常量，避免两处逐字重复。
  */
 export function initSchema(db: DatabaseSync): void {
   db.exec(`
@@ -29,15 +36,7 @@ export function initSchema(db: DatabaseSync): void {
       created_at INTEGER NOT NULL
     );
 
-    CREATE TABLE IF NOT EXISTS api_tokens (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      name TEXT NOT NULL,
-      token_hash TEXT NOT NULL,
-      token_prefix TEXT NOT NULL,
-      created_at INTEGER NOT NULL,
-      last_used_at INTEGER
-    );
+    ${API_TOKENS_TABLE_SQL}
 
     CREATE TABLE IF NOT EXISTS user_categories (
       id TEXT NOT NULL,
@@ -50,13 +49,7 @@ export function initSchema(db: DatabaseSync): void {
       PRIMARY KEY (id, user_id)
     );
 
-    CREATE TABLE IF NOT EXISTS user_category_subscriptions (
-      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      category_id TEXT NOT NULL,
-      owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      created_at INTEGER NOT NULL,
-      PRIMARY KEY (user_id, category_id, owner_id)
-    );
+    ${CATEGORY_SUBSCRIPTIONS_TABLE_SQL}
 
     CREATE TABLE IF NOT EXISTS user_links (
       id TEXT NOT NULL,

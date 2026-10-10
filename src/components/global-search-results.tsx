@@ -2,10 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TodoItem } from "@/types";
-import { useNavelixConfig } from "@/hooks/use-navelix-config";
-import { useNavelixData } from "@/hooks/use-navelix-data";
-import type { NotificationItem } from "@/lib/notifications";
-import { formatRelativeTime } from "@/lib/notifications";
+import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
+import type { NotificationItem } from "@/lib/client/notifications";
+import { formatRelativeTime } from "@/lib/client/notifications";
 import { toLocalDateStr } from "@/lib/date-utils";
 
 interface GlobalSearchResultsProps {

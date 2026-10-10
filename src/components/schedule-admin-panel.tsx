@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import type { TodoItem } from "@/types";
-import { useNavelixData } from "@/hooks/use-navelix-data";
+import { useNavelixData } from "@/context/navelix-context";
 import { toLocalDateStr } from "@/lib/date-utils";
 import ConfirmDialog from "./confirm-dialog";
 

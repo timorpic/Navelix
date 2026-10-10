@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Project } from "@/types";
-import { useNavelixData } from "@/hooks/use-navelix-data";
+import { useNavelixData } from "@/context/navelix-context";
 
 const STATUS_OPTIONS = [
   { label: "进行中", color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400" },

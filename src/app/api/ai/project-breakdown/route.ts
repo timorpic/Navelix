@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
 import { toLocalDateStr, addDaysLocal } from "@/lib/date-utils";
-import { decryptSecret } from "@/lib/secret";
+import { resolveAIConfig } from "@/lib/ai-provider";
 import { track } from "@/lib/analytics";
 
 const REQUEST_TIMEOUT_MS = 25_000;
@@ -98,21 +98,8 @@ export async function POST(req: Request) {
     const defaultAssignee = { id: user.id, name: currentUserName };
 
     // 1. 读取当前用户的 AI 配置
-    const configRow = db
-      .prepare(
-        "SELECT ai_base_url, ai_api_key, ai_model FROM user_configs WHERE user_id = ?",
-      )
-      .get(user.id) as
-      | {
-          ai_base_url: string;
-          ai_api_key: string;
-          ai_model: string;
-        }
-      | undefined;
-
-    const apiKey = decryptSecret(configRow?.ai_api_key?.trim() || "");
-    const baseUrl = configRow?.ai_base_url?.trim() || "https://api.openai.com/v1";
-    const modelName = configRow?.ai_model?.trim() || "gpt-4o-mini";
+    // AI 配置统一解析（见 lib/ai-provider.ts）
+    const { apiKey, modelName, targetUrl } = resolveAIConfig(user.id);
 
     // 若未配置 API Key，直接使用智能工程规则拆解
     if (!apiKey) {
@@ -126,10 +113,6 @@ export async function POST(req: Request) {
     }
 
     // 2. 调用大模型进行深度任务拆解与排期
-    const cleanBaseUrl = baseUrl.replace(/\/+$/, "");
-    const targetUrl = cleanBaseUrl.endsWith("/chat/completions")
-      ? cleanBaseUrl
-      : `${cleanBaseUrl}/chat/completions`;
 
     const membersDesc = members.map((m) => m.displayName || m.username).join("、");
 

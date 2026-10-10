@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { trackClientEvent } from "@/lib/client-analytics";
+import { trackClientEvent } from "@/lib/client/analytics";
 
 interface SearchBarProps {
   value: string;

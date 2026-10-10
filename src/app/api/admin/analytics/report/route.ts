@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { checkCSRF } from "@/lib/csrf";
 import {
   buildReportPayload,
@@ -17,8 +17,8 @@ import {
  * POST body: { enabled?: boolean } | { action: "send_now" } | { action: "preview" }
  */
 export async function GET(req: NextRequest) {
-  const user = await getSessionUser(req);
-  if (!user || user.role !== "admin") {
+  const user = await requireAdmin(req);
+  if (!user) {
     return NextResponse.json(
       { error: "无权访问，仅管理员可查看上报设置" },
       { status: 403 },
@@ -38,8 +38,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const user = await getSessionUser(req);
-  if (!user || user.role !== "admin") {
+  const user = await requireAdmin(req);
+  if (!user) {
     return NextResponse.json(
       { error: "无权访问，仅管理员可修改上报设置" },
       { status: 403 },

@@ -20,93 +20,21 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Toast from "@/components/toast";
+import { useToast } from "@/hooks/use-toast";
+import {
+  EMPTY_SUMMARY,
+  EVENT_LABELS,
+  MODULES,
+  VALUE_MOMENT_EVENT_COUNT,
+  buildOverviewCards,
+  trendScale,
+  type AnalyticsSummary,
+} from "@/lib/analytics-dashboard";
 
 /* ──────────────────────────────────────────────────────────────
  * 类型定义（与后端 /api/admin/analytics/summary 约定）
  * ────────────────────────────────────────────────────────────── */
-interface AnalyticsSummary {
-  enabled: boolean;
-  collectedSince: number | null; // 首次开始采集时间（ms）
-  stats: {
-    todayValueMoments: number; // 今日价值时刻数
-    wau: number; // 本周活跃用户（7 天去重）
-    activationRate: number | null; // 本月激活率（%），样本不足为 null
-    totalEvents: number; // 事件总数
-  };
-  trend7d: Array<{ date: string; count: number }>; // 近 7 日价值时刻
-  topEvents: Array<{ event: string; count: number; label: string; module: string }>; // 功能 Top 榜（降序）
-  moduleBreakdown: Array<{ module: string; count: number; percent: number }>; // 8 大模块分布
-  retention: Array<{
-    cohortDate: string; // 注册日（YYYY-MM-DD）
-    sampleSize: number;
-    d1: number | null; // D1 留存 %，样本 < 3 为 null
-    d7: number | null; // D7 留存 %，样本 < 3 为 null
-  }>; // 最近 5 个注册日群组
-}
-
-/* ──────────────────────────────────────────────────────────────
- * 事件中文名映射（与 wiki §4 事件清单一一对应）
- * ────────────────────────────────────────────────────────────── */
-const EVENT_LABELS: Record<string, { label: string; module: string }> = {
-  // 导航
-  "nav.link_click": { label: "点击导航链接", module: "导航" },
-  "nav.search": { label: "全局搜索", module: "导航" },
-  "nav.bookmark_import": { label: "书签导入", module: "导航" },
-  "nav.link_add": { label: "新增链接", module: "导航" },
-  "nav.link_edit": { label: "编辑链接", module: "导航" },
-  "nav.link_delete": { label: "删除链接", module: "导航" },
-  // AI
-  "ai.chat_sent": { label: "AI 对话", module: "AI" },
-  "ai.project_breakdown": { label: "AI 项目拆解", module: "AI" },
-  "ai.daily_schedule": { label: "AI 日程规划", module: "AI" },
-  // 项目
-  "project.create": { label: "创建项目", module: "项目" },
-  "project.update": { label: "编辑项目", module: "项目" },
-  "project.gantt_view": { label: "查看甘特图", module: "项目" },
-  // 日历 / 待办
-  "todo.create": { label: "创建待办", module: "日历" },
-  "todo.complete": { label: "完成待办", module: "日历" },
-  "todo.rollover": { label: "逾期顺延", module: "日历" },
-  "calendar.view": { label: "查看日历", module: "日历" },
-  // 备份
-  "backup.create": { label: "手动备份", module: "备份" },
-  "backup.restore": { label: "数据恢复", module: "备份" },
-  // 账户
-  "auth.register": { label: "用户注册", module: "账户" },
-  "auth.login": { label: "用户登录", module: "账户" },
-  "auth.logout": { label: "退出登录", module: "账户" },
-  // 监控
-  "monitor.quota_view": { label: "额度监控", module: "监控" },
-  // 协作
-  "team.member_add": { label: "添加成员", module: "协作" },
-  "share.create": { label: "创建分享", module: "协作" },
-};
-
-/** 价值时刻事件集合（wiki §6.2）——由后端 summary 统计，此处保留清单便于对照 */
-const VALUE_MOMENT_EVENTS = new Set([
-  "nav.link_click",
-  "ai.chat_sent",
-  "calendar.view",
-  "project.gantt_view",
-  "todo.complete",
-  "nav.link_add",
-  "nav.link_edit",
-  "backup.create",
-]);
-const VALUE_MOMENT_EVENT_COUNT = VALUE_MOMENT_EVENTS.size;
-
-const MODULES = ["导航", "AI", "项目", "日历", "备份", "账户", "监控", "协作"];
-
-const EMPTY_SUMMARY: AnalyticsSummary = {
-  enabled: true, // 本地统计默认开启（数据仅存本机）；fetch 失败时按默认态展示
-  collectedSince: null,
-  stats: { todayValueMoments: 0, wau: 0, activationRate: null, totalEvents: 0 },
-  trend7d: [],
-  topEvents: [],
-  moduleBreakdown: [],
-  retention: [],
-};
-
 /* ──────────────────────────────────────────────────────────────
  * 主组件
  * ────────────────────────────────────────────────────────────── */
@@ -114,14 +42,9 @@ export default function AdminAnalyticsTab() {
   const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<AnalyticsSummary>(EMPTY_SUMMARY);
-  const [notice, setNotice] = useState("");
   const [confirmClear, setConfirmClear] = useState(false);
   const [clearing, setClearing] = useState(false);
-
-  const flash = useCallback((msg: string) => {
-    setNotice(msg);
-    window.setTimeout(() => setNotice(""), 2800);
-  }, []);
+  const { notice, flash } = useToast();
 
   /** 拉取汇总 */
   const loadSummary = useCallback(async () => {
@@ -188,51 +111,10 @@ export default function AdminAnalyticsTab() {
   const { stats, trend7d, topEvents, moduleBreakdown, retention } = summary;
 
   /* ── 7 日趋势图数据（内联 SVG 柱状） ── */
-  const trend = useMemo(() => {
-    const max = Math.max(1, ...trend7d.map((d) => d.count));
-    return { max, data: trend7d };
-  }, [trend7d]);
+  const trend = useMemo(() => trendScale(trend7d), [trend7d]);
 
   /* ── 概览卡数据 ── */
-  const cards = useMemo(
-    () => [
-      {
-        label: "今日价值时刻",
-        value: stats.todayValueMoments,
-        suffix: "次",
-        icon: "⚡",
-        color: "text-[#00C776] bg-teal-50 dark:bg-teal-950/60",
-        hint: "点击/对话/勾选等关键动作",
-      },
-      {
-        label: "本周活跃用户",
-        value: stats.wau,
-        suffix: "人",
-        icon: "👥",
-        color: "text-sky-500 bg-sky-50 dark:bg-sky-950/60",
-        hint: "近 7 天产生价值时刻的去重用户",
-      },
-      {
-        label: "本月激活率",
-        value: stats.activationRate === null ? "—" : `${stats.activationRate}%`,
-        suffix: "",
-        icon: "🎯",
-        color: "text-purple-500 bg-purple-50 dark:bg-purple-950/60",
-        hint: stats.activationRate === null ? "样本不足，暂不计算" : "首次登录 7 天内达成激活",
-      },
-      {
-        label: "累计事件",
-        value: stats.totalEvents,
-        suffix: "条",
-        icon: "📈",
-        color: "text-amber-500 bg-amber-50 dark:bg-amber-950/60",
-        hint: summary.collectedSince
-          ? `自 ${new Date(summary.collectedSince).toLocaleDateString()} 起`
-          : "暂无采集",
-      },
-    ],
-    [stats, summary.collectedSince],
-  );
+  const cards = useMemo(() => buildOverviewCards(summary), [summary]);
 
   /* ── 渲染 ── */
   if (loading) {
@@ -262,11 +144,7 @@ export default function AdminAnalyticsTab() {
         </div>
       </div>
 
-      {notice && (
-        <div className="rounded-xl border border-[#00C776]/30 bg-[#00C776]/10 px-4 py-2.5 text-xs font-semibold text-[#009a5a] dark:text-emerald-400 shadow-2xs">
-          {notice}
-        </div>
-      )}
+      <Toast message={notice} className="dark:text-emerald-400" />
 
       {/* ═══════════════════════════════════════════════════════════════
           卡片 1：采集状态与开关（启用横幅 / 状态 + 清空）

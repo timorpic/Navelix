@@ -1,6 +1,6 @@
 "use client";
 
-import { useNavelixConfig } from "@/hooks/use-navelix-config";
+import { useNavelixConfig } from "@/context/navelix-context";
 import BrandLogo from "./brand-logo";
 
 interface LogoMarkProps {

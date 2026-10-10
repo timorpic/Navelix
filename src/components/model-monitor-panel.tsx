@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useNavelixConfig } from "@/hooks/use-navelix-config";
-import { trackClientEvent } from "@/lib/client-analytics";
+import { useNavelixConfig } from "@/context/navelix-context";
+import { trackClientEvent } from "@/lib/client/analytics";
 import type { MonitorAccount } from "./model-monitor-types";
 import { PROVIDER_META } from "./model-monitor-types";
 import { AccountCard } from "./model-monitor-cards";

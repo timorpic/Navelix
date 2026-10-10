@@ -1,71 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type {
+  CodexUsageWindow,
+  MonitorAccount,
+} from "./model-monitor-types";
+import { codexLimitText, codexWindowLabel } from "./model-monitor-utils";
 
-interface QuotaWindowBar {
-  key: "5h" | "weekly";
-  label: string;
-  remainingFraction: number | null;
-  resetTime: string;
-}
-
-interface QuotaGroup {
-  name: string;
-  shortName: string;
-  windows: QuotaWindowBar[];
-}
-
-interface QuotaStatus {
-  paidTierId: string;
-  paidTierName: string;
-  currentTierId: string;
-  googleOneActive: boolean;
-}
-
-interface CodexUsageWindow {
-  usedPercent: number | null;
-  windowSeconds: number | null;
-  resetAfterSeconds: number | null;
-  resetAt: number | null;
-}
-
-interface CodexUsage {
-  planType: string;
-  allowed: boolean;
-  limitReached: boolean;
-  primaryWindow: CodexUsageWindow | null;
-  secondaryWindow: CodexUsageWindow | null;
-  codeReviewRateLimit: CodexUsageWindow | null;
-  additionalRateLimits: CodexUsageWindow[];
-  credits: {
-    hasCredits: boolean;
-    unlimited: boolean;
-    balance: number | null;
-    approxLocalMessages: number | null;
-    approxCloudMessages: number | null;
-  };
-  fetchedAt: number;
-}
-
-interface WidgetAccount {
-  id: string;
-  provider: "antigravity" | "codex";
-  label: string;
-  email: string;
-  planType: string;
-  subscriptionUntil: string;
-  creditsKnown: boolean;
-  creditsAvailable: boolean;
-  quotaSummary: {
-    groups: QuotaGroup[];
-    status?: QuotaStatus;
-  } | null;
-  codexUsage: CodexUsage | null;
-  lastError: string;
-}
+// 类型与格式化函数统一取自同目录的 model-monitor-types / model-monitor-utils，
+// 避免此前在本文件内逐字段重复定义。
+// 注：MonitorAccount 是 WidgetAccount 的超集，本组件只读取其中 11 个字段。
 
 export default function ModelMonitorWidget() {
-  const [accounts, setAccounts] = useState<WidgetAccount[]>([]);
+  const [accounts, setAccounts] = useState<MonitorAccount[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -274,26 +221,6 @@ function MiniBarChart({
       })}
     </div>
   );
-}
-
-function codexWindowLabel(seconds: number | null): string {
-  if (!seconds || seconds <= 0) return "窗口";
-  const days = seconds / 86400;
-  if (Math.abs(days - 365) < 1) return "1Y";
-  if (Math.abs(days - 30) < 1) return "30D";
-  if (Math.abs(days - 7) < 1) return "7D";
-  if (Math.abs(days - 1) < 0.1) return "24H";
-  const hours = seconds / 3600;
-  if (Math.abs(hours - 5) < 0.1) return "5H";
-  if (days >= 1) return `${Math.round(days)}D`;
-  return `${Math.round(hours)}H`;
-}
-
-function codexLimitText(usage: CodexUsage): string {
-  const label = codexWindowLabel(usage.primaryWindow?.windowSeconds ?? null);
-  if (label === "30D") return "月耗尽";
-  if (label === "7D") return "周耗尽";
-  return "已耗尽";
 }
 
 function codexRemainingPct(window: CodexUsageWindow): number {

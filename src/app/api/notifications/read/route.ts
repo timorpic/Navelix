@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
+import { markAllRead } from "@/lib/notification-store";
 
 // POST /api/notifications/read - 将当前用户全部通知标记为已读
 export async function POST() {
@@ -9,6 +9,6 @@ export async function POST() {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
-  db.prepare("UPDATE notifications SET read = 1 WHERE user_id = ?").run(user.id);
+  markAllRead(user.id);
   return NextResponse.json({ ok: true });
 }

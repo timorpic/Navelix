@@ -1,7 +1,9 @@
-import { db, seedUserData, type PublicUser } from "./db.ts";
+import { db, seedUserData, type PublicUser, type UserRow } from "./db.ts";
+import { toPublicUser } from "./auth/session.ts";
 import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
 import { encryptSecret } from "./secret.ts";
 import { recordAuditLog } from "./audit.ts";
+import { applyEEGateToConfig } from "./ee-gate.ts";
 import {
   buildUserConfigsUpsertSql,
   coerceUserConfigValues,
@@ -31,19 +33,10 @@ export function getUserData(userId: string): UserDataResult {
   // Fetch current user details
   const userRow = db
     .prepare("SELECT id, username, display_name, email, bio, role, avatar FROM users WHERE id = ?")
-    .get(userId) as Record<string, unknown> | undefined;
+    .get(userId) as UserRow | undefined;
 
-  const user: PublicUser | null = userRow
-    ? {
-        id: String(userRow.id),
-        username: String(userRow.username),
-        displayName: String(userRow.display_name || userRow.username),
-        email: String(userRow.email || ""),
-        bio: String(userRow.bio || ""),
-        role: userRow.role === "admin" ? "admin" : "user",
-        avatar: String(userRow.avatar || ""),
-      }
-    : null;
+  // 复用 auth/session.ts 的映射，避免与此前手工重写的版本漂移
+  const user: PublicUser | null = userRow ? toPublicUser(userRow) : null;
 
   // Fetch categories (own + subscribed team shared categories)
   const ownCategoryRows = db
@@ -245,6 +238,10 @@ export function getUserData(userId: string): UserDataResult {
     allowPublicAccess: effectiveAllowPublicAccess,
     allowRegistration: effectiveAllowRegistration,
   };
+
+  // EE 门禁：无 Pro 授权时强制降级品牌定制 / 代码注入 / 探针开关。
+  // 这是 SSR 与 API 两条读取路径的统一收口（见 ee-gate.ts）。
+  applyEEGateToConfig(config);
 
   const result: UserDataResult = { user, categories: categoryRows as Category[], links, projects, todos, config };
   // SQLite 返回的行对象原型非标准（null 原型），

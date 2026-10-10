@@ -1,25 +1,9 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { checkCSRF, getSessionUser, hashPassword } from "@/lib/auth";
+import { checkCSRF, hashPassword, requireAdmin } from "@/lib/auth";
+import { adminCount, deleteUserCascade, updateUser, UserUpdateError } from "@/lib/admin-users";
 import { track } from "@/lib/analytics";
-
-function adminCount(): number {
-  return (
-    db.prepare("SELECT COUNT(*) AS c FROM users WHERE role = 'admin'").get() as {
-      c: number;
-    }
-  ).c;
-}
-
-// Middleware helper: check if session user is Admin
-async function requireAdmin() {
-  const user = await getSessionUser();
-  if (!user || user.role !== "admin") {
-    return false;
-  }
-  return user;
-}
 
 // GET: Fetch list of all registered users
 export async function GET() {
@@ -41,7 +25,7 @@ export async function GET() {
 
 // POST: Create a new user from Admin Console
 export async function POST(req: Request) {
-  const adminUser = await requireAdmin();
+  const adminUser = await requireAdmin(req);
   if (!adminUser) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
   }
@@ -106,7 +90,7 @@ export async function POST(req: Request) {
 
 // PATCH: Update user role / password / display name
 export async function PATCH(req: Request) {
-  const adminUser = await requireAdmin();
+  const adminUser = await requireAdmin(req);
   if (!adminUser) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
   }
@@ -137,82 +121,37 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  // Prevent demoting the last admin or demoting one's own logged-in account.
-  if (targetUser.id === adminUser.id && role === "user") {
+  // 密码长度在路由层校验（哈希前的明文检查），其余校验在 updateUser 事务内进行
+  if (typeof password === "string" && password.length > 0 && password.length < 6) {
     return NextResponse.json(
-      { error: "You cannot demote your own admin account" },
+      { error: "Password must be at least 6 characters" },
       { status: 400 }
     );
   }
 
-  if (typeof username === "string") {
-    const newUsername = username.trim().toLowerCase();
-    if (!/^[a-z0-9_]{3,20}$/.test(newUsername)) {
-      return NextResponse.json(
-        { error: "Username must be 3-20 characters (letters, numbers, underscore)" },
-        { status: 400 }
-      );
+  try {
+    // 单事务应用全部修改；校验失败整体回滚（见 lib/admin-users.ts）
+    updateUser(
+      id,
+      {
+        role,
+        username,
+        displayName,
+        avatar,
+        passwordHash:
+          typeof password === "string" && password.length > 0
+            ? hashPassword(password)
+            : undefined,
+      },
+      { actorId: adminUser.id, targetRole: targetUser.role },
+    );
+  } catch (err) {
+    if (err instanceof UserUpdateError) {
+      // 用户名冲突沿用既有的 409 语义
+      const status = err.message === "Username already taken" ? 409 : 400;
+      return NextResponse.json({ error: err.message }, { status });
     }
-    const existing = db
-      .prepare("SELECT id FROM users WHERE username = ? AND id != ?")
-      .get(newUsername, id);
-    if (existing) {
-      return NextResponse.json(
-        { error: "Username already taken" },
-        { status: 409 }
-      );
-    }
-    db.prepare("UPDATE users SET username = ? WHERE id = ?").run(
-      newUsername,
-      id
-    );
-  }
-  if (targetUser.role === "admin" && role === "user" && adminCount() <= 1) {
-    return NextResponse.json(
-      { error: "Cannot demote the last remaining admin account" },
-      { status: 400 }
-    );
-  }
-
-  if (role && (role === "admin" || role === "user")) {
-    db.prepare("UPDATE users SET role = ? WHERE id = ?").run(role, id);
-  }
-
-  if (typeof displayName === "string") {
-    db.prepare("UPDATE users SET display_name = ? WHERE id = ?").run(
-      displayName.trim(),
-      id
-    );
-  }
-
-  if (typeof avatar === "string") {
-    const trimmedAvatar = avatar.trim();
-    if (
-      trimmedAvatar &&
-      !/^(preset:|https?:\/\/|data:image\/)/i.test(trimmedAvatar)
-    ) {
-      return NextResponse.json(
-        { error: "Avatar must be an http(s) URL or an image data URL" },
-        { status: 400 }
-      );
-    }
-    db.prepare("UPDATE users SET avatar = ? WHERE id = ?").run(
-      trimmedAvatar,
-      id
-    );
-  }
-
-  if (typeof password === "string" && password.length > 0) {
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "Password must be at least 6 characters" },
-        { status: 400 }
-      );
-    }
-    db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(
-      hashPassword(password),
-      id
-    );
+    throw err;
   }
 
   return NextResponse.json({ message: "User updated successfully" });
@@ -220,7 +159,7 @@ export async function PATCH(req: Request) {
 
 // DELETE: Remove a user account
 export async function DELETE(req: Request) {
-  const adminUser = await requireAdmin();
+  const adminUser = await requireAdmin(req);
   if (!adminUser) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 403 });
   }
@@ -255,16 +194,8 @@ export async function DELETE(req: Request) {
     );
   }
 
-  db.prepare("DELETE FROM users WHERE id = ?").run(id);
-  db.prepare("DELETE FROM sessions WHERE user_id = ?").run(id);
-  db.prepare("DELETE FROM user_categories WHERE user_id = ?").run(id);
-  db.prepare("DELETE FROM user_links WHERE user_id = ?").run(id);
-  db.prepare("DELETE FROM user_configs WHERE user_id = ?").run(id);
-  db.prepare("DELETE FROM projects WHERE user_id = ?").run(id);
-  db.prepare("DELETE FROM user_todos WHERE user_id = ?").run(id);
-  db.prepare("DELETE FROM notifications WHERE user_id = ?").run(id);
-  db.prepare("DELETE FROM api_tokens WHERE user_id = ?").run(id);
-  db.prepare("DELETE FROM model_accounts WHERE user_id = ?").run(id);
+  // 单事务级联删除（见 lib/admin-users.ts）；audit_logs 刻意保留为合规证据
+  deleteUserCascade(id);
 
   return NextResponse.json({ message: "User deleted successfully" });
 }

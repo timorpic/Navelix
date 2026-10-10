@@ -1,6 +1,6 @@
 "use client";
 
-import { useNavelixData } from "@/hooks/use-navelix-data";
+import { useNavelixData } from "@/context/navelix-context";
 
 interface PendingTodo {
   id: string;

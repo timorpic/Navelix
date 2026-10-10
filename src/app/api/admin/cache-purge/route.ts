@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionUser } from "@/lib/auth";
-
-async function requireAdmin(req?: NextRequest) {
-  const user = await getSessionUser(req);
-  if (!user || user.role !== "admin") {
-    return null;
-  }
-  return user;
-}
+import { requireAdmin } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const adminUser = await requireAdmin(req);

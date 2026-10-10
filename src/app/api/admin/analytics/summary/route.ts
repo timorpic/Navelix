@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { getAnalyticsSummary } from "@/lib/analytics";
 
 /**
@@ -7,8 +7,8 @@ import { getAnalyticsSummary } from "@/lib/analytics";
  * 管理后台「使用统计」汇总数据（仅管理员）。
  */
 export async function GET(req: NextRequest) {
-  const user = await getSessionUser(req);
-  if (!user || user.role !== "admin") {
+  const user = await requireAdmin(req);
+  if (!user) {
     return NextResponse.json(
       { error: "无权访问，仅管理员可查看使用统计" },
       { status: 403 },

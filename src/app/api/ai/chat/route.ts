@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
-import { decryptSecret } from "@/lib/secret";
+import { resolveAIConfig, validateAIBaseUrl } from "@/lib/ai-provider";
 import {
   executeAiTool,
   extractToolCalls,
@@ -185,46 +185,18 @@ export async function POST(req: Request) {
     }
 
     // Read AI config from the current user's server-side settings
-    const configRow = db
-      .prepare(
-        "SELECT ai_base_url, ai_api_key, ai_model FROM user_configs WHERE user_id = ?",
-      )
-      .get(user.id) as
-      | {
-          ai_base_url: string;
-          ai_api_key: string;
-          ai_model: string;
-        }
-      | undefined;
-
-    const apiKey = decryptSecret(configRow?.ai_api_key?.trim() || "");
+    // （统一解析见 lib/ai-provider.ts）
+    const { apiKey, baseUrl, modelName, targetUrl } = resolveAIConfig(user.id);
     if (!apiKey) {
       return NextResponse.json({
         text: "💡 提示：您尚未在后台配置 AI API Key。\n请前往「后台管理控制台 -> 👤 个人账号与安全 -> AI Copilot 配置」填入您的 BaseURL、API Key 与模型名称，即可开启真实大语言模型对话功能！",
       });
     }
 
-    const baseUrl = configRow?.ai_base_url?.trim() || "https://api.openai.com/v1";
-    const modelName = configRow?.ai_model?.trim() || "gpt-4o-mini";
-
-    let parsedBaseUrl: URL;
-    try {
-      parsedBaseUrl = new URL(baseUrl);
-    } catch {
-      return NextResponse.json({
-        text: "⚠️ 后台配置的 BaseURL 格式不正确，请检查后重试。",
-      });
+    const baseUrlError = validateAIBaseUrl(baseUrl);
+    if (baseUrlError) {
+      return NextResponse.json({ text: baseUrlError });
     }
-    if (parsedBaseUrl.protocol !== "http:" && parsedBaseUrl.protocol !== "https:") {
-      return NextResponse.json({
-        text: "⚠️ BaseURL 仅支持 http/https 协议，请检查后台配置。",
-      });
-    }
-
-    const cleanBaseUrl = baseUrl.replace(/\/+$/, "");
-    const targetUrl = cleanBaseUrl.endsWith("/chat/completions")
-      ? cleanBaseUrl
-      : `${cleanBaseUrl}/chat/completions`;
 
     // 动态生成注入了当前用户真实项目/待办/书签的系统上下文
     const systemPromptContent = buildWorkspaceContext(user.id);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { checkCSRF } from "@/lib/csrf";
 import {
   getTelegramConfigStatus,
@@ -11,12 +11,6 @@ import {
   setTelegramNotifySystemEnabled,
 } from "@/lib/system-settings";
 import { sendTelegramMessage } from "@/lib/telegram";
-
-async function requireAdmin(req?: NextRequest) {
-  const user = await getSessionUser(req);
-  if (!user || user.role !== "admin") return null;
-  return user;
-}
 
 export async function GET(req: NextRequest) {
   const adminUser = await requireAdmin(req);

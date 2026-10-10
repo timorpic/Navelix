@@ -2,10 +2,11 @@
 
 import React, { useState, useMemo } from "react";
 import type { Category, SiteLink } from "@/types";
-import { useNavelixData } from "@/hooks/use-navelix-data";
+import { useNavelixData } from "@/context/navelix-context";
 import { useFocusTracker } from "@/hooks/use-focus-tracker";
 import { toLocalDateStr } from "@/lib/date-utils";
 import AddLinkModal from "./add-link-modal";
+import Overlay from "./overlay";
 
 interface TopStatsBarProps {
   categories: Category[];
@@ -328,7 +329,7 @@ export default function TopStatsBar({
 
       {/* Quick Note Modal */}
       {showQuickNoteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <Overlay>
           <div className="w-full max-w-sm rounded-xl bg-white dark:bg-slate-900 p-4 shadow-xl border border-gray-100 dark:border-slate-800">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
               💡 记录想法 / 随记
@@ -362,12 +363,12 @@ export default function TopStatsBar({
               </div>
             </form>
           </div>
-        </div>
+        </Overlay>
       )}
 
       {/* Create Task Modal */}
       {showTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <Overlay>
           <div className="w-full max-w-sm rounded-xl bg-white dark:bg-slate-900 p-4 shadow-xl border border-gray-100 dark:border-slate-800">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
               ☑️ 创建待办任务
@@ -401,12 +402,12 @@ export default function TopStatsBar({
               </div>
             </form>
           </div>
-        </div>
+        </Overlay>
       )}
 
       {/* AI Ask Modal */}
       {showAiModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <Overlay>
           <div className="w-full max-w-md rounded-xl bg-white dark:bg-slate-900 p-4 shadow-xl border border-gray-100 dark:border-slate-800">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
               🤖 快速咨询 AI Copilot
@@ -446,7 +447,7 @@ export default function TopStatsBar({
               </div>
             </form>
           </div>
-        </div>
+        </Overlay>
       )}
     </div>
   );

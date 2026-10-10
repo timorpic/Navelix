@@ -1,7 +1,4 @@
-import {
-  createHash,
-  randomBytes,
-} from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { cookies, headers } from "next/headers.js";
 import {
   db,
@@ -12,10 +9,8 @@ import {
   type UserRow,
 } from "../db.ts";
 import { getClientId } from "./client-id.ts";
-
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
-}
+// Token 摘要算法与 API Token 管理共用同一实现，避免两处各自定义导致摘要不一致
+import { hashToken, API_TOKEN_PREFIX } from "./api-tokens.ts";
 
 export function toPublicUser(row: UserRow): PublicUser {
   return {
@@ -93,7 +88,7 @@ export async function getSessionUser(req?: Request): Promise<PublicUser | null> 
 
   if (authHeader && authHeader.startsWith("Bearer ")) {
     const rawToken = authHeader.slice(7).trim();
-    if (rawToken.startsWith("nvx_live_")) {
+    if (rawToken.startsWith(API_TOKEN_PREFIX)) {
       const tokenHash = hashToken(rawToken);
       const tokenRow = db
         .prepare(

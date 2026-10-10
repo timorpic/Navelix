@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useNavelixConfig } from "@/hooks/use-navelix-config";
-import { useNavelixData } from "@/hooks/use-navelix-data";
+import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
 import SearchBar from "./search-bar";
 import LogoMark from "./logo-mark";
 

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
-import { decryptSecret } from "@/lib/secret";
+import { resolveAIConfig } from "@/lib/ai-provider";
 
 const REQUEST_TIMEOUT_MS = 20_000;
 
@@ -83,22 +82,8 @@ export async function POST(req: Request) {
         : `页面抓取失败：${err instanceof Error ? err.message : "网络异常"}`;
     }
 
-    // 2. 读取 AI 配置
-    const configRow = db
-      .prepare(
-        "SELECT ai_base_url, ai_api_key, ai_model FROM user_configs WHERE user_id = ?",
-      )
-      .get(user.id) as
-      | {
-          ai_base_url: string;
-          ai_api_key: string;
-          ai_model: string;
-        }
-      | undefined;
-
-    const apiKey = decryptSecret(configRow?.ai_api_key?.trim() || "");
-    const baseUrl = configRow?.ai_base_url?.trim() || "https://api.openai.com/v1";
-    const modelName = configRow?.ai_model?.trim() || "gpt-4o-mini";
+    // 2. 读取 AI 配置（统一解析见 lib/ai-provider.ts）
+    const { apiKey, modelName, targetUrl } = resolveAIConfig(user.id);
 
     // 3. AI 生成 Markdown 摘要（无 Key 或抓取失败时回退为纯文本摘要）
     const makeFallbackNotes = (): string => {
@@ -116,7 +101,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ notes: makeFallbackNotes(), title: pageTitle });
     }
 
-    const targetUrl = baseUrl.replace(/\/+$/, "").replace(/\/chat\/completions$/, "") + "/chat/completions";
     const systemPrompt = `你是一个网页内容摘要助手。请阅读下面抓取的网页正文，用简洁的中文 Markdown 格式输出要点摘要。
 要求：
 - 以「- 」要点列表呈现 3~6 条核心内容，涵盖页面主题、关键信息

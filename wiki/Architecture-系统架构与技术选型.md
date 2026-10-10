@@ -97,6 +97,7 @@ Navelix 内置了基于 `PRAGMA user_version` 的**自动数据库迁移引擎**
 - **商业能力（Pro）**以 **bytenode 字节码**（`*.jsc`）形式在启动时加载，源码仓库与 Docker 镜像内均**不包含 EE 的 `.ts` 源码**（镜像构建阶段会显式剔除 `ee/` 与残留 `.ts`）；
 - 许可证使用 **Ed25519 验签**；未安装 EE 驱动时，相关能力由空实现兜底并返回 `EE_DRIVER_MISSING` / `PRO_REQUIRED`；
 - 受此门禁的能力包括：链接存活与延迟探针、S3 / WebDAV 云端容灾、品牌与 Logo 定制、自定义代码注入等。
+- 门禁判定收敛在 `src/lib/ee-gate.ts`：`getProFeatureFlags()` 返回三项特性授权状态，`applyEEGateToConfig()` 把降级规则应用到 config。SSR 读取路径（`(app)/layout.tsx` → `lib/user-data.ts` 的 `getUserData()`）与 `GET /api/user/data` 共用同一实现，两条路径行为一致。
 
 ---
 
@@ -105,6 +106,28 @@ Navelix 内置了基于 `PRAGMA user_version` 的**自动数据库迁移引擎**
 - 本地埋点表 `analytics_events` **默认开启**：事件仅写入**本机 SQLite**（事件名 / 用户 ID / 实例 ID / 聚合 meta / 时间戳），明细**永不外发**；
 - 每周可选的**匿名聚合周报**同样默认开启，内容为功能使用分布、版本、实例计数等聚合数据，不含个人信息；
 - 关闭方式：`NAVELIX_ANALYTICS=off`（本地统计）/ `NAVELIX_ANALYTICS_REPORT=off`（周报），或在后台对应页面关闭。
+
+---
+
+## 📁 源码分层约定 (Source Layout)
+
+```
+src/
+├── app/           路由层：页面与 API handler，只做鉴权 + 参数校验 + 组装响应
+│   └── api/       handler 内不写多步业务逻辑，下沉到 lib/
+├── lib/           领域逻辑（服务端）
+│   └── client/    带 "use client" 的浏览器侧模块（埋点、localStorage 访问、通知推送）
+├── hooks/         React 状态与副作用；纯算法再下沉到 lib/
+└── components/    展示组件：接收 props，不自行取数
+```
+
+**三条约定**：
+
+1. **`lib/` 层不构造 `NextResponse`** —— 返回结果对象，由路由决定状态码与文案。各路由的差异化错误文案因此得以保留。
+2. **多步写操作必须有事务**，且事务边界放在 `lib/`（如 `admin-users.ts`、`todos-projects.ts` 的 `BEGIN IMMEDIATE`），不放在路由里。
+3. **巨石组件按「算法 → hook → 展示组件 → 拼装层」四层拆解**：纯函数进 `lib/`（可单测）、状态进 `hooks/`、界面拆为只收 props 的展示组件，原文件退化为拼装层。`projects-view.tsx`（1501 → 709 行）与 `admin-profile-tab.tsx`（1219 → 100 行）是两个范例。
+
+**测试策略**：`lib/` 的纯函数用 `node:test` 直接单测；展示组件通过 `src/lib/__tests__/helpers/tsx-loader.ts` 在运行时用 esbuild 编译后配 jsdom 渲染（测试进程本身不转换 JSX）；跨页面的真实交互由 `e2e/` 的 Playwright 覆盖。
 
 ---
 

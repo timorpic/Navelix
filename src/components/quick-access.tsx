@@ -2,9 +2,9 @@
 
 import BrandIcon from "./brand-icon";
 import type { SiteLink } from "@/types";
-import { recordLinkUsage } from "@/lib/link-usage";
-import { trackClientEvent } from "@/lib/client-analytics";
-import { useNavelixConfig } from "@/hooks/use-navelix-config";
+import { recordLinkUsage } from "@/lib/client/link-usage";
+import { trackClientEvent } from "@/lib/client/analytics";
+import { useNavelixConfig } from "@/context/navelix-context";
 
 interface QuickAccessProps {
   links: SiteLink[];

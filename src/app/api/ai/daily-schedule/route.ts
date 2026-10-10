@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
 import { toLocalDateStr } from "@/lib/date-utils";
-import { decryptSecret } from "@/lib/secret";
+import { resolveAIConfig } from "@/lib/ai-provider";
 import { track } from "@/lib/analytics";
 
 const REQUEST_TIMEOUT_MS = 25_000;
@@ -39,22 +39,8 @@ export async function POST(req: Request) {
       )
       .all(user.id) as Array<{ name: string; status: string }>;
 
-    // 2. 读取当前用户的 AI 配置
-    const configRow = db
-      .prepare(
-        "SELECT ai_base_url, ai_api_key, ai_model FROM user_configs WHERE user_id = ?",
-      )
-      .get(user.id) as
-      | {
-          ai_base_url: string;
-          ai_api_key: string;
-          ai_model: string;
-        }
-      | undefined;
-
-    const apiKey = decryptSecret(configRow?.ai_api_key?.trim() || "");
-    const baseUrl = configRow?.ai_base_url?.trim() || "https://api.openai.com/v1";
-    const modelName = configRow?.ai_model?.trim() || "gpt-4o-mini";
+    // 2. 读取当前用户的 AI 配置（统一解析见 lib/ai-provider.ts）
+    const { apiKey, modelName, targetUrl } = resolveAIConfig(user.id);
 
     // 规则智能生成器 (保障无 Key 或网络故障时 100% 顺畅工作)
     const generateFallback = () => {
@@ -102,10 +88,6 @@ export async function POST(req: Request) {
     }
 
     // 3. 调用 AI 大模型进行结构化排程
-    const cleanBaseUrl = baseUrl.replace(/\/+$/, "");
-    const targetUrl = cleanBaseUrl.endsWith("/chat/completions")
-      ? cleanBaseUrl
-      : `${cleanBaseUrl}/chat/completions`;
 
     const systemPrompt = `你是一位高阶时间管理教练与敏捷日程架构师。
 请针对指定目标日期（${targetDate}），结合用户当前正在进行的项目与待办，规划 3 到 4 项按精力时段递进的今日执行任务。

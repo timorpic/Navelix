@@ -1,5 +1,8 @@
 "use client";
 
+// 相对时间格式化统一由 lib/date-utils.ts 提供（保持此导出以兼容既有导入）
+export { formatRelativeTime } from "../date-utils.ts";
+
 export interface NotificationItem {
   id: string;
   title: string;
@@ -31,14 +34,3 @@ export async function pushNotification(
   }
 }
 
-export function formatRelativeTime(timestamp: number): string {
-  const diff = Date.now() - timestamp;
-  const minute = 60_000;
-  const hour = 60 * minute;
-  const day = 24 * hour;
-  if (diff < minute) return "刚刚";
-  if (diff < hour) return `${Math.floor(diff / minute)} 分钟前`;
-  if (diff < day) return `${Math.floor(diff / hour)} 小时前`;
-  if (diff < 30 * day) return `${Math.floor(diff / day)} 天前`;
-  return new Date(timestamp).toLocaleDateString("zh-CN");
-}

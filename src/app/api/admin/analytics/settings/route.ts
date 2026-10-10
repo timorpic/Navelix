@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { checkCSRF } from "@/lib/csrf";
 import {
   clearAnalyticsEvents,
@@ -13,8 +13,8 @@ import {
  * 仅管理员。
  */
 export async function GET(req: NextRequest) {
-  const user = await getSessionUser(req);
-  if (!user || user.role !== "admin") {
+  const user = await requireAdmin(req);
+  if (!user) {
     return NextResponse.json(
       { error: "无权访问，仅管理员可查看使用统计设置" },
       { status: 403 },
@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const user = await getSessionUser(req);
-  if (!user || user.role !== "admin") {
+  const user = await requireAdmin(req);
+  if (!user) {
     return NextResponse.json(
       { error: "无权访问，仅管理员可修改使用统计设置" },
       { status: 403 },

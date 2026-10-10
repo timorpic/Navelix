@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import {
   getLicenseStatus,
   saveLicenseKey,
@@ -10,8 +10,8 @@ import { getMachineFingerprint } from "@/lib/fingerprint";
 import { getBuildInfo } from "@/lib/build-info";
 
 export async function GET() {
-  const user = await getSessionUser();
-  if (!user || user.role !== "admin") {
+  const user = await requireAdmin();
+  if (!user) {
     return NextResponse.json({ error: "需要管理员权限" }, { status: 403 });
   }
 
@@ -26,8 +26,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const user = await getSessionUser();
-  if (!user || user.role !== "admin") {
+  const user = await requireAdmin();
+  if (!user) {
     return NextResponse.json({ error: "需要管理员权限" }, { status: 403 });
   }
 
@@ -65,8 +65,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE() {
-  const user = await getSessionUser();
-  if (!user || user.role !== "admin") {
+  const user = await requireAdmin();
+  if (!user) {
     return NextResponse.json({ error: "需要管理员权限" }, { status: 403 });
   }
 

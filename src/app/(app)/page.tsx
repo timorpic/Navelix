@@ -15,10 +15,12 @@ import CalendarView from "@/components/calendar-view";
 import ProjectsView from "@/components/projects-view";
 import DashboardView from "@/components/dashboard-view";
 import { QuickCaptureLayer } from "@/components/quick-capture-layer";
-import { useNavelixData } from "@/hooks/use-navelix-data";
-import { useNavelixConfig } from "@/hooks/use-navelix-config";
+import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
 import { useLinkStatus } from "@/hooks/use-link-status";
 import SecuritySetupBanner from "@/components/security-setup-banner";
+import Toast from "@/components/toast";
+import { useToast } from "@/hooks/use-toast";
+import { copyShareLink } from "@/lib/share-link";
 
 function HomeContent() {
   const { categories, links, hydrated, addLink } = useNavelixData();
@@ -32,6 +34,8 @@ function HomeContent() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [notice, setNotice] = useState("");
+  // 分享链接复制等一次性操作提示（与上方常驻的 notice 横幅是两回事）
+  const { notice: actionNotice, flash: flashAction } = useToast();
 
   // 左右侧边栏收起状态：初始均由服务端 SSR Cookie/配置注入，确保首帧 100% 零闪烁与零跳动
   const [leftCollapsed, setLeftCollapsed] = useState<boolean>(
@@ -189,6 +193,7 @@ function HomeContent() {
       {/* 2. Center Workspace Main Area */}
       <main className="relative z-10 flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-6">
         <div className={`${maxWidthClass} mx-auto flex flex-col gap-3.5`}>
+          <Toast message={actionNotice} className="mb-1" />
           {notice && (
             <div className="flex items-center justify-between p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs font-semibold text-amber-800 animate-fadeIn shadow-2xs">
               <div className="flex items-center gap-2">
@@ -252,19 +257,12 @@ function HomeContent() {
                     <div className="flex items-center gap-2.5">
                       <button
                         onClick={async () => {
-                          try {
-                            const res = await fetch("/api/share/token", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ type: "category", id: activeCategory }),
-                            });
-                            if (!res.ok) throw new Error("获取失败");
-                            const data = await res.json();
-                            await navigator.clipboard.writeText(`${window.location.origin}${data.sharePath}`);
-                            alert(`已复制「${categories.find((c) => c.id === activeCategory)?.name || "当前分类"}」免登录分享链接至剪贴板！可以直接发送给朋友或同事查看。`);
-                          } catch {
-                            alert("生成分享链接失败");
-                          }
+                          const r = await copyShareLink(
+                            "category",
+                            activeCategory,
+                            categories.find((c) => c.id === activeCategory)?.name || "当前分类",
+                          );
+                          flashAction(r.message);
                         }}
                         className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:border-[#00C776] hover:text-[#00C776] dark:hover:border-[#00C776] transition-colors cursor-pointer"
                         title="复制该分类的免登录公开分享链接"

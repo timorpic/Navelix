@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { formatRelativeTime } from "@/lib/date-utils";
 
 interface TodayActivityItem {
   id: string;
@@ -9,16 +10,6 @@ interface TodayActivityItem {
   ts: number;
 }
 
-function formatAgo(ts: number): string {
-  const diff = Date.now() - ts;
-  const min = 60_000;
-  const hour = 60 * min;
-  const day = 24 * hour;
-  if (diff < min) return "刚刚";
-  if (diff < hour) return `${Math.floor(diff / min)}m`;
-  if (diff < day) return `${Math.floor(diff / hour)}h`;
-  return `${Math.floor(diff / day)}d`;
-}
 
 /** 右侧侧边栏小组件：今日动态（最近通知与系统活动预览） */
 export default function TodayActivityWidget() {
@@ -80,7 +71,7 @@ export default function TodayActivityWidget() {
                 {item.text}
               </span>
               <span className="text-[9px] text-gray-400 dark:text-slate-500 shrink-0">
-                {formatAgo(item.ts)}
+                {formatRelativeTime(item.ts, { style: "compact", fallbackAfterDays: Infinity })}
               </span>
             </div>
           ))}

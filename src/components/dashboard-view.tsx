@@ -2,12 +2,17 @@
 
 import { useState, useEffect, useMemo } from "react";
 import type { Category, SiteLink, SystemConfig } from "@/types";
-import { toLocalDateStr } from "@/lib/date-utils";
 import { useFocusTracker } from "@/hooks/use-focus-tracker";
-import { useNavelixData } from "@/hooks/use-navelix-data";
+import { useNavelixData } from "@/context/navelix-context";
 import type { LinkProbeInfo } from "@/hooks/use-link-status";
 import { getStatusType } from "@/hooks/use-link-status";
 import FocusStatsWidget from "./focus-stats-widget";
+import {
+  computeLinkAnalytics,
+  computeProjectMetrics,
+  computeServiceHealth,
+  computeTodoMetrics,
+} from "@/lib/dashboard-metrics";
 
 interface DashboardViewProps {
   categories: Category[];
@@ -36,32 +41,10 @@ export default function DashboardView({
   // 3. 链路探针与服务健康度检测 (Link Status & Services)
   // statuses 由 page.tsx 统一实例化 useLinkStatus 并通过 props 注入，
   // 避免多份轮询对 /api/link-status 造成重复探测。
-  const serviceHealth = useMemo(() => {
-    const probedLinks = links.filter((l) => l.url.startsWith("http"));
-    let online = 0;
-    let offline = 0;
-    let pending = 0;
-
-    for (const l of probedLinks) {
-      const s = getStatusType(statuses[l.id]);
-      if (s === "online" || s === "slow") online++;
-      else if (s === "offline") offline++;
-      else pending++;
-    }
-
-    const uptimeRate = config.linkStatusEnabled
-      ? Math.round((online / (online + offline || 1)) * 100)
-      : 100;
-
-    return {
-      totalProbed: probedLinks.length,
-      online,
-      offline,
-      pending,
-      uptimeRate,
-      probedList: probedLinks.slice(0, 8),
-    };
-  }, [links, statuses, config.linkStatusEnabled]);
+  const serviceHealth = useMemo(
+    () => computeServiceHealth(links, statuses, Boolean(config.linkStatusEnabled)),
+    [links, statuses, config.linkStatusEnabled],
+  );
 
   // 4. 书签点击使用统计 (Usage Analytics)
   const [mounted, setMounted] = useState(false);
@@ -79,87 +62,16 @@ export default function DashboardView({
             }
           }, []);
 
-  const analytics = useMemo(() => {
-    const map = mounted ? usageMap : {};
-    const totalClicks = Object.values(map).reduce(
-      (sum, u) => sum + u.count,
-      0,
-    );
-
-    const rankedLinks = links
-      .map((l) => ({
-        link: l,
-        clicks: map[l.id]?.count || 0,
-        lastUsed: map[l.id]?.lastUsed || 0,
-      }))
-      .sort((a, b) => b.clicks - a.clicks);
-
-    const quickAccessCount = links.filter((l) => l.isQuickAccess).length;
-
-    return {
-      totalClicks,
-      rankedLinks,
-      quickAccessCount,
-    };
-  }, [links, mounted, usageMap]);
+  const analytics = useMemo(
+    () => computeLinkAnalytics(links, usageMap, mounted),
+    [links, mounted, usageMap],
+  );
 
   // 5. 待办完成闭环率与即将到期预警 (Todos & Upcoming Deadlines)
-  const todoMetrics = useMemo(() => {
-    const completed = todos.filter((t) => t.done).length;
-    const pending = todos.filter((t) => !t.done).length;
-    const total = todos.length || 1;
-    const rate = Math.round((completed / total) * 100);
-
-    const todayStr = toLocalDateStr();
-    const urgentOrUpcoming = todos
-      .filter((t) => !t.done)
-      .sort((a, b) => {
-        if (a.priority === "high" && b.priority !== "high") return -1;
-        if (b.priority === "high" && a.priority !== "high") return 1;
-        if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
-        return 0;
-      })
-      .slice(0, 5);
-
-    return {
-      completed,
-      pending,
-      rate,
-      urgentOrUpcoming,
-      todayStr,
-    };
-  }, [todos]);
+  const todoMetrics = useMemo(() => computeTodoMetrics(todos), [todos]);
 
   // 6. 项目交付比率与生命周期分布 (Project Delivery & Distribution)
-  const projectMetrics = useMemo(() => {
-    const total = projects.length || 1;
-    const inProgress = projects.filter(
-      (p) =>
-        (p.status || "").includes("进行") ||
-        (p.status || "").includes("开发") ||
-        (p.status || "").toLowerCase().includes("progress"),
-    ).length;
-    const completed = projects.filter(
-      (p) => p.status === "已完成" || (p.status || "").includes("完成"),
-    ).length;
-    const research = projects.filter(
-      (p) => p.status === "研究中" || (p.status || "").includes("研究"),
-    ).length;
-    const maintenance = projects.filter(
-      (p) => p.status === "维护中" || (p.status || "").includes("维护"),
-    ).length;
-
-    const deliveryRate = Math.round((completed / total) * 100);
-
-    return {
-      total: projects.length,
-      inProgress,
-      completed,
-      research,
-      maintenance,
-      deliveryRate,
-    };
-  }, [projects]);
+  const projectMetrics = useMemo(() => computeProjectMetrics(projects), [projects]);
 
   // 切换待办完成状态
   const handleToggleTodo = async (id: string, done: boolean) => {

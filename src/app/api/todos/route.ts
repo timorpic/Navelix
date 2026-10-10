@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { emitUserEvent } from "@/lib/events";
 import { track } from "@/lib/analytics";
+import { createTodo } from "@/lib/todos-projects";
 import type { TodoItem } from "@/types";
 
 function rowToTodo(
@@ -83,47 +84,22 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const title = String(body.title || "").trim();
-    if (!title)
+    if (!title) {
       return NextResponse.json({ error: "待办内容不能为空" }, { status: 400 });
-    const id = `todo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const priority: TodoItem["priority"] =
-      body.priority === "high" || body.priority === "low"
-        ? body.priority
-        : "medium";
-    const dueDate = body.dueDate ? String(body.dueDate).slice(0, 10) : "";
-    const projectId = body.projectId ? String(body.projectId).trim() : "";
-    const assigneeId = body.assigneeId ? String(body.assigneeId).trim() : "";
-    const assigneeName = body.assigneeName
-      ? String(body.assigneeName).trim()
-      : "";
-
-    const maxSort = db
-      .prepare(
-        "SELECT COALESCE(MAX(sort_order), -1) AS m FROM user_todos WHERE user_id = ? AND done = 0",
-      )
-      .get(userId) as { m: number };
-
-    db.prepare(
-      `INSERT INTO user_todos (
-        id, user_id, title, priority, done, due_date, project_id, assigned_to, assignee_id, assignee_name, created_at, sort_order
-      ) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)`,
-    ).run(
-      id,
-      userId,
-      title,
-      priority,
-      dueDate,
-      projectId,
-      assigneeId,
-      assigneeId,
-      assigneeName,
-      Date.now(),
-      maxSort.m + 1,
-    );
-
-    if (projectId) {
-      db.prepare("UPDATE projects SET updated_at = ? WHERE id = ?").run(Date.now(), projectId);
     }
+
+    const id = createTodo(userId, {
+      title,
+      priority: body.priority,
+      dueDate: body.dueDate,
+      projectId: body.projectId,
+      assigneeId: body.assigneeId,
+      assigneeName: body.assigneeName,
+    });
+
+    const priority =
+      body.priority === "high" || body.priority === "low" ? body.priority : "medium";
+    const assigneeId = body.assigneeId ? String(body.assigneeId).trim() : "";
 
     emitUserEvent(userId, "todos:change");
     if (assigneeId && assigneeId !== userId) {

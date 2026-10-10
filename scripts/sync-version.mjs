@@ -24,10 +24,11 @@ const PATTERNS = [
   ["package.json", /"version"\s*:\s*"[^"]*"/, () => `"version": "${version}"`],
   ["Dockerfile", /(ARG NAVELIX_VERSION=)\d+\.\d+\.\d+/g, () => `ARG NAVELIX_VERSION=${version}`], // builder & runner 两处
   ["src/lib/build-info.ts", /DEFAULT_VERSION = "\d+\.\d+\.\d+"/, () => `DEFAULT_VERSION = "${version}"`],
+  // 版本号兜底展示自 admin-system-tab 拆分后迁至 lib/admin-system.ts 的 FALLBACK_VERSION
   [
-    "src/app/(app)/admin/components/admin-system-tab.tsx",
-    /: "v\d+\.\d+\.\d+"/,
-    () => `: "v${version}"`,
+    "src/lib/admin-system.ts",
+    /FALLBACK_VERSION = "v\d+\.\d+\.\d+"/,
+    () => `FALLBACK_VERSION = "v${version}"`,
   ],
 ];
 
@@ -71,6 +72,9 @@ function verifyAll() {
       consistent = matches.length === 2 && matches.every((m) => m === `ARG NAVELIX_VERSION=${expected}`);
     } else if (relPath === "src/lib/build-info.ts") {
       cur = content.match(/DEFAULT_VERSION = "(\d+\.\d+\.\d+)"/)?.[1] ?? "";
+      consistent = cur === expected;
+    } else if (relPath === "src/lib/admin-system.ts") {
+      cur = content.match(/FALLBACK_VERSION = "v(\d+\.\d+\.\d+)"/)?.[1] ?? "";
       consistent = cur === expected;
     } else {
       cur = content.match(/: "v(\d+\.\d+\.\d+)"/)?.[1] ?? "";

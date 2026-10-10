@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import Modal from "./modal";
+import Toast from "./toast";
 import type { Category } from "@/types";
+import { copyShareLink } from "@/lib/share-link";
+import { useToast } from "@/hooks/use-toast";
 
 const EMOJI_OPTIONS = [
   "📁",
@@ -39,6 +42,7 @@ export default function AddCategoryModal({
   const [icon, setIcon] = useState(category?.icon ?? "📁");
   const [isTeamShared, setIsTeamShared] = useState(category?.isTeamShared ?? false);
   const [error, setError] = useState("");
+  const { notice, flash } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,25 +117,14 @@ export default function AddCategoryModal({
         </div>
 
         {error && <p className="text-xs text-red-500">{error}</p>}
+        <Toast message={notice} className="mb-3" />
         <div className="flex items-center justify-between gap-3 pt-2">
           {isEdit && category ? (
             <button
               type="button"
               onClick={async () => {
-                try {
-                  const res = await fetch("/api/share/token", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ type: "category", id: category.id }),
-                  });
-                  if (!res.ok) throw new Error("获取分享链接失败");
-                  const data = await res.json();
-                  const fullUrl = `${window.location.origin}${data.sharePath}`;
-                  await navigator.clipboard.writeText(fullUrl);
-                  alert("已复制免登录分享链接到剪贴板！可以直接发送给朋友或同事查看该分类书签。");
-                } catch {
-                  alert("生成分享链接失败，请重试");
-                }
+                const r = await copyShareLink("category", category.id, category.name);
+                flash(r.message);
               }}
               className="inline-flex items-center gap-1 text-xs text-[#00C776] hover:text-[#009a5a] font-medium py-1 px-2 rounded hover:bg-[#00C776]/10 transition-colors"
             >

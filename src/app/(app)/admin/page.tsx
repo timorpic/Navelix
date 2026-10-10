@@ -3,13 +3,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/components/confirm-dialog";
-import { useNavelixData } from "@/hooks/use-navelix-data";
-import { useNavelixConfig } from "@/hooks/use-navelix-config";
-import {
-  formatRelativeTime,
-  pushNotification,
-  type NotificationItem,
-} from "@/lib/notifications";
+import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
+import { formatRelativeTime, type NotificationItem } from "@/lib/client/notifications";
+import Toast from "@/components/toast";
+import { useToast } from "@/hooks/use-toast";
 import { resolveAvatar } from "@/lib/avatars";
 import AdminUsersPanel from "./admin-users";
 import ScheduleAdminPanel from "@/components/schedule-admin-panel";
@@ -61,19 +58,11 @@ export default function AdminPage() {
   const [adminUnreadCount, setAdminUnreadCount] = useState(0);
   const [showAdminUserMenu, setShowAdminUserMenu] = useState(false);
   const [showReset, setShowReset] = useState(false);
-  const [notice, setNotice] = useState("");
   const adminNotifRef = useRef<HTMLDivElement>(null);
 
   const adminUnread = adminUnreadCount > 0;
 
-  const flash = (msg: string) => {
-    setNotice(msg);
-    window.setTimeout(() => setNotice(""), 2800);
-  };
-  const notify = (title: string, msg: string) => {
-    flash(msg);
-    pushNotification(title, msg);
-  };
+  const { notice, notify } = useToast();
 
   const handleOpenAdminNotifications = async () => {
     const nextState = !showAdminNotifications;
@@ -268,9 +257,7 @@ export default function AdminPage() {
         </div>
 
         <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
-          {notice && (
-            <div className="mb-4 rounded-xl border border-[#00C776]/30 bg-[#00C776]/10 px-4 py-2.5 text-xs font-semibold text-[#009a5a] shadow-2xs">{notice}</div>
-          )}
+          <Toast message={notice} className="mb-4" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100/90 dark:border-slate-700 shadow-2xs flex items-start justify-between transition-colors">

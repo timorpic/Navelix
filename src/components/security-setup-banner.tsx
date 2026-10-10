@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useNavelixData } from "@/hooks/use-navelix-data";
-import { useNavelixConfig } from "@/hooks/use-navelix-config";
+import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
 
 export default function SecuritySetupBanner() {
   const { user } = useNavelixData();

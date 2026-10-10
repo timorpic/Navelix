@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import type { Category, SiteLink } from "@/types";
-import { recordLinkUsage } from "@/lib/link-usage";
+import { recordLinkUsage } from "@/lib/client/link-usage";
 
 // Color palette for glowing orb nodes
 const ORB_COLORS = [

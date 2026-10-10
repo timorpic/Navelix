@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { checkCSRF } from "@/lib/csrf";
 import {
   getAntigravityClientSecret,
   isCustomAntigravityClientSecretConfigured,
   setAntigravityClientSecret,
 } from "@/lib/system-settings";
-
-async function requireAdmin(req?: NextRequest) {
-  const user = await getSessionUser(req);
-  if (!user || user.role !== "admin") return null;
-  return user;
-}
 
 export async function GET(req: NextRequest) {
   const adminUser = await requireAdmin(req);
@@ -49,4 +43,4 @@ export async function PUT(req: NextRequest) {
     antigravityClientSecretConfigured: getAntigravityClientSecret().length > 0,
     isCustomSecret: isCustomAntigravityClientSecretConfigured(),
   });
-}
+}

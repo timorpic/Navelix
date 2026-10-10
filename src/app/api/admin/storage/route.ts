@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "node:path";
 import fs from "node:fs";
-import { getSessionUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { canAccessFeature } from "@/lib/license";
 import { isEEAvailable, CE_PRO_MESSAGE } from "@/lib/ee-bridge";
+import { getProFeatureFlags } from "@/lib/ee-gate";
 import { DEFAULT_SITE_TITLE } from "@/lib/constants";
 import { resolveDataDir } from "@/lib/data-dir";
 import {
@@ -20,8 +21,8 @@ import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit";
 
 export async function GET() {
-  const user = await getSessionUser();
-  if (!user || user.role !== "admin") {
+  const user = await requireAdmin();
+  if (!user) {
     return NextResponse.json({ error: "需要管理员权限" }, { status: 403 });
   }
 
@@ -42,8 +43,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const user = await getSessionUser();
-  if (!user || user.role !== "admin") {
+  const user = await requireAdmin();
+  if (!user) {
     return NextResponse.json({ error: "需要管理员权限" }, { status: 403 });
   }
 
@@ -103,8 +104,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const user = await getSessionUser();
-  if (!user || user.role !== "admin") {
+  const user = await requireAdmin();
+  if (!user) {
     return NextResponse.json({ error: "需要管理员权限" }, { status: 403 });
   }
 
@@ -242,12 +243,13 @@ export async function PUT(req: NextRequest) {
             // 容错：个别非核心可选表不存在时跳过
           }
         }
-        db.exec("COMMIT;");
-
         // 还原后的 Pro 商业特权字段合规性清洗与原子置空（防止通过导入云端快照白嫖 Pro 特性）
-        const hasCodeInject = isEEAvailable() && canAccessFeature("custom_code_injection");
-        const hasBrandCustom = isEEAvailable() && canAccessFeature("brand_customization");
-        const hasProbes = isEEAvailable() && canAccessFeature("link_status_monitor");
+        // 注：这是**还原后清洗**，与读路径的降级目的不同，故保留 SQL 级实现；仅标志位取自共享门禁。
+        //
+        // 必须与上面的表拷贝同处一个事务：此前 COMMIT 在清洗之前，一旦清洗失败，
+        // 快照已经落库且未清洗，而 catch 里的 ROLLBACK 因无活动事务会再抛
+        // "cannot rollback - no transaction is active"，把真实错误盖掉。
+        const { hasCodeInject, hasBrandCustom, hasProbes } = getProFeatureFlags();
 
         db.prepare(`
           UPDATE user_configs SET
@@ -267,6 +269,8 @@ export async function PUT(req: NextRequest) {
           hasProbes ? 1 : 0,
           hasProbes ? 1 : 0,
         );
+
+        db.exec("COMMIT;");
       } catch (txnErr) {
         db.exec("ROLLBACK;");
         throw txnErr;

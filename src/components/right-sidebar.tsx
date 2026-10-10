@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useNavelixConfig } from "@/hooks/use-navelix-config";
-import { useNavelixData } from "@/hooks/use-navelix-data";
+import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
 import type { AIChatMessage } from "@/types";
 import ModelMonitorWidget from "./model-monitor-widget";
 import TodayActivityWidget from "./today-activity-widget";

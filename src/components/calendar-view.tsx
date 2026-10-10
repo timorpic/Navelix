@@ -2,18 +2,16 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { TodoItem, WorkspaceMember } from "@/types";
-import { useNavelixData } from "@/hooks/use-navelix-data";
-import { pushNotification } from "@/lib/notifications";
+import { useNavelixData } from "@/context/navelix-context";
+import { pushNotification } from "@/lib/client/notifications";
 import { toLocalDateStr } from "@/lib/date-utils";
-import { trackClientEvent } from "@/lib/client-analytics";
+import { trackClientEvent } from "@/lib/client/analytics";
+import IcalExportModal from "./ical-export-modal";
+import AiScheduleModal from "./ai-schedule-modal";
+import ScheduleEditModal from "./schedule-edit-modal";
+import { useAiSchedule } from "@/hooks/use-ai-schedule";
 
 type CalendarViewMode = "month" | "week" | "today";
-
-interface AiScheduledTask {
-  title: string;
-  priority: "high" | "medium" | "low";
-  dueDate: string;
-}
 
 export default function CalendarView() {
   const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
@@ -52,25 +50,14 @@ export default function CalendarView() {
   const [newPriority, setNewPriority] = useState<"high" | "medium" | "low">("medium");
   const [newProjectId, setNewProjectId] = useState("");
 
-  // Edit modal state
-  const [showModal, setShowModal] = useState(false);
+  // Edit modal state —— 表单字段由 ScheduleEditModal 自持，此处只保留"编辑哪一条"
   const [editingSchedule, setEditingSchedule] = useState<TodoItem | null>(null);
-  const [formTitle, setFormTitle] = useState("");
-  const [formDueDate, setFormDueDate] = useState("");
-  const [formPriority, setFormPriority] = useState<"high" | "medium" | "low">("medium");
-  const [formProjectId, setFormProjectId] = useState("");
-  const [formAssigneeId, setFormAssigneeId] = useState("");
 
   // iCal Export Modal State
   const [showIcalModal, setShowIcalModal] = useState(false);
 
-  // AI Schedule Modal State
-  const [showAiScheduleModal, setShowAiScheduleModal] = useState(false);
-  const [aiAdvice, setAiAdvice] = useState("");
-  const [aiTasks, setAiTasks] = useState<AiScheduledTask[]>([]);
-  const [selectedAiIndices, setSelectedAiIndices] = useState<Set<number>>(new Set());
-  const [aiPlanning, setAiPlanning] = useState(false);
-  const [aiApplying, setAiApplying] = useState(false);
+  // AI 排程：状态与操作全部由 hook 持有（原先散落在本组件里的 6 个 state + 6 个 handler）
+  const ai = useAiSchedule();
 
   // Rollover state
   const [rollingOver, setRollingOver] = useState(false);
@@ -227,54 +214,14 @@ export default function CalendarView() {
     }
   };
 
-  const handleDeleteTodo = async (id: string) => {
-    try {
-      await fetch(`/api/todos/${id}`, { method: "DELETE" });
-      window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
-      refreshData();
-      if (showModal) setShowModal(false);
-    } catch {
-      // ignore
-    }
-  };
-
   const handleOpenEditModal = (item: TodoItem) => {
     setEditingSchedule(item);
-    setFormTitle(item.title);
-    setFormDueDate(item.dueDate || selectedDateStr);
-    setFormPriority(item.priority || "medium");
-    setFormProjectId(item.projectId || "");
-    setFormAssigneeId(item.assigneeId || "");
-    setShowModal(true);
   };
 
-  const handleSaveModal = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingSchedule || !formTitle.trim()) return;
-    try {
-      const matchedMember = members.find((m) => m.id === formAssigneeId);
-      const res = await fetch(`/api/todos/${editingSchedule.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: formTitle.trim(),
-          dueDate: formDueDate,
-          priority: formPriority,
-          projectId: formProjectId,
-          assigneeId: formAssigneeId,
-          assigneeName: matchedMember
-            ? matchedMember.displayName || matchedMember.username
-            : "",
-        }),
-      });
-      if (res.ok) {
-        setShowModal(false);
-        window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
-        refreshData();
-      }
-    } catch {
-      // ignore
-    }
+  /** 弹窗内保存/删除成功后统一收口：刷新数据并广播工作区更新 */
+  const handleScheduleModalSaved = () => {
+    window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
+    refreshData();
   };
 
   // 6. 精力时段分块 (Energy Blocks) 计算
@@ -299,136 +246,6 @@ export default function CalendarView() {
     if (count <= 3) return { label: "适中", badge: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400", dot: "bg-emerald-500" };
     if (count <= 6) return { label: "饱满", badge: "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400", dot: "bg-amber-500" };
     return { label: "超载", badge: "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 font-bold animate-pulse", dot: "bg-rose-500" };
-  };
-
-  // ── AI 智能排程：生成与结构化注入 ──
-  const handleGenerateAiDailySchedule = async () => {
-    setAiPlanning(true);
-    setAiAdvice("");
-    setAiTasks([]);
-    setSelectedAiIndices(new Set());
-    setShowAiScheduleModal(true);
-
-    try {
-      const res = await fetch("/api/ai/daily-schedule", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date: selectedDateStr,
-        }),
-      });
-      const data = await res.json();
-      if (data.success && Array.isArray(data.tasks)) {
-        setAiAdvice(data.advice || "已为您规划今日精力时段与执行任务。");
-        setAiTasks(data.tasks);
-        // 默认全选
-        setSelectedAiIndices(new Set(data.tasks.map((_: AiScheduledTask, idx: number) => idx)));
-      } else {
-        setAiAdvice("未获取到排程结果，请手动规划日程。");
-      }
-    } catch {
-      setAiAdvice("请求 AI 排程服务失败，请稍后重试。");
-    } finally {
-      setAiPlanning(false);
-    }
-  };
-
-  const handleToggleAiTaskIndex = (index: number) => {
-    setSelectedAiIndices((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
-      }
-      return next;
-    });
-  };
-
-  const handleUpdateAiTaskTitle = (index: number, newTitle: string) => {
-    setAiTasks((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], title: newTitle };
-      return next;
-    });
-  };
-
-  const handleUpdateAiTaskPriority = (
-    index: number,
-    priority: "high" | "medium" | "low",
-  ) => {
-    setAiTasks((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], priority };
-      return next;
-    });
-  };
-
-  const handleDeleteAiTaskItem = (index: number) => {
-    setAiTasks((prev) => prev.filter((_, idx) => idx !== index));
-    setSelectedAiIndices((prev) => {
-      const next = new Set<number>();
-      Array.from(prev).forEach((val) => {
-        if (val < index) next.add(val);
-        else if (val > index) next.add(val - 1);
-      });
-      return next;
-    });
-  };
-
-  const handleAddCustomAiTaskItem = () => {
-    setAiTasks((prev) => {
-      const newIdx = prev.length;
-      setSelectedAiIndices((s) => new Set([...s, newIdx]));
-      return [
-        ...prev,
-        {
-          title: "新规划执行任务",
-          priority: "medium",
-          dueDate: selectedDateStr,
-        },
-      ];
-    });
-  };
-
-  // 一键采纳并写入日历
-  const handleApplyAiScheduleToCalendar = async () => {
-    const tasksToWrite = aiTasks.filter((_, idx) => selectedAiIndices.has(idx));
-    if (tasksToWrite.length === 0) {
-      alert("请至少勾选一项任务以写入日历！");
-      return;
-    }
-
-    setAiApplying(true);
-    try {
-      await Promise.all(
-        tasksToWrite.map((t) =>
-          fetch("/api/todos", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              title: t.title,
-              priority: t.priority,
-              dueDate: t.dueDate || selectedDateStr,
-            }),
-          }),
-        ),
-      );
-
-      window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
-      pushNotification(
-        "🎉 AI 智能排程已写入日历",
-        `已成功将 ${tasksToWrite.length} 项日程任务写入 ${selectedDateStr} 日历中枢！`,
-        "calendar",
-      );
-
-      setShowAiScheduleModal(false);
-      refreshData();
-    } catch {
-      alert("写入日历失败，请稍后重试。");
-    } finally {
-      setAiApplying(false);
-    }
   };
 
   return (
@@ -492,7 +309,7 @@ export default function CalendarView() {
 
           <button
             type="button"
-            onClick={handleGenerateAiDailySchedule}
+            onClick={() => ai.generate(selectedDateStr)}
             className="px-3 py-1.5 bg-gradient-to-r from-[#00C776] to-teal-500 text-white rounded-xl text-xs font-bold hover:from-[#00B068] hover:to-teal-600 shadow-2xs flex items-center gap-1.5 cursor-pointer"
           >
             <span>✨</span>
@@ -1123,333 +940,40 @@ export default function CalendarView() {
       )}
 
       {/* ── 4. iCal Export / Subscribe Modal ── */}
-      {showIcalModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-xl border border-gray-100 dark:border-slate-800 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
-                <span>📲</span>
-                <span>外部日历订阅与导出 (iCal / .ics)</span>
-              </h3>
-              <button
-                onClick={() => setShowIcalModal(false)}
-                className="text-xs text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed">
-              您可以将 Navelix 中的数字化项目里程碑与待办日程无缝同步至手机
-              （Apple 日历、Google 日历、Outlook 等）。
-            </p>
-
-            <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 space-y-2">
-              <span className="block text-[11px] font-bold text-gray-500 dark:text-slate-400">
-                标准 iCalendar 文件下载：
-              </span>
-              <a
-                href="/api/calendar/export"
-                download="navelix-schedule.ics"
-                className="w-full py-2 bg-[#00C776] hover:bg-[#00B068] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
-              >
-                <span>📥</span>
-                <span>下载 navelix-schedule.ics 文件</span>
-              </a>
-            </div>
-
-            <div className="text-[11px] text-gray-400 space-y-1">
-              <p>💡 手机使用方法：</p>
-              <p>• iOS: 点击下载后在「文件」中打开，点击「全部添加到日历」；</p>
-              <p>• Google/Outlook: 在日历设置中选择「导入日历」即可。</p>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setShowIcalModal(false)}
-                className="px-4 py-1.5 bg-gray-100 dark:bg-slate-800 text-xs font-bold rounded-xl"
-              >
-                关闭
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <IcalExportModal
+        open={showIcalModal}
+        onClose={() => setShowIcalModal(false)}
+      />
 
       {/* ── 5. AI Schedule Suggestion Modal (支持一键写入日历) ── */}
-      {showAiScheduleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-xl border border-gray-100 dark:border-slate-800 space-y-4 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <span className="text-base">✨</span>
-                <div>
-                  <h3 className="text-sm font-black text-gray-900 dark:text-white">
-                    AI Copilot 智能排程建议
-                  </h3>
-                  <p className="text-[11px] text-gray-400">
-                    针对 {selectedDateStr} 智能规划精力时段与执行里程碑
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowAiScheduleModal(false)}
-                className="text-xs text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-
-            {aiPlanning ? (
-              <div className="py-12 flex flex-col items-center justify-center gap-3 text-gray-400">
-                <span className="animate-spin text-2xl">⏳</span>
-                <span className="text-xs font-bold">
-                  AI Copilot 正在深度分析您的工作区与项目状态，规划排期中...
-                </span>
-              </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto space-y-3.5 pr-1">
-                {/* 建议策略 */}
-                {aiAdvice && (
-                  <div className="p-3 rounded-xl bg-[#00C776]/10 border border-[#00C776]/30 text-xs text-gray-800 dark:text-slate-200">
-                    <p className="font-semibold">{aiAdvice}</p>
-                  </div>
-                )}
-
-                {/* 任务清单 */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-slate-300">
-                    <span>
-                      规划任务列表 (已选 {selectedAiIndices.size}/{aiTasks.length})
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleAddCustomAiTaskItem}
-                      className="text-xs text-[#00C776] hover:underline font-bold cursor-pointer"
-                    >
-                      + 补充任务
-                    </button>
-                  </div>
-
-                  {aiTasks.map((task, idx) => {
-                    const isChecked = selectedAiIndices.has(idx);
-                    return (
-                      <div
-                        key={idx}
-                        className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all ${
-                          isChecked
-                            ? "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 shadow-2xs"
-                            : "bg-gray-50/50 dark:bg-slate-900/40 border-gray-100 dark:border-slate-800 opacity-60"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => handleToggleAiTaskIndex(idx)}
-                          className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
-                        />
-
-                        {/* 任务名称 */}
-                        <input
-                          type="text"
-                          name="aiTaskTitle"
-                          value={task.title}
-                          onChange={(e) =>
-                            handleUpdateAiTaskTitle(idx, e.target.value)
-                          }
-                          className="flex-1 px-2 py-1 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-gray-800 dark:text-white"
-                        />
-
-                        {/* 优先级 */}
-                        <select
-                          name="aiTaskPriority"
-                          value={task.priority}
-                          onChange={(e) =>
-                            handleUpdateAiTaskPriority(
-                              idx,
-                              e.target.value as "high" | "medium" | "low",
-                            )
-                          }
-                          className="px-2 py-1 text-xs font-bold bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg cursor-pointer"
-                        >
-                          <option value="high">🌅 高优</option>
-                          <option value="medium">☀️ 中优</option>
-                          <option value="low">🌙 普通</option>
-                        </select>
-
-                        {/* 删除 */}
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteAiTaskItem(idx)}
-                          className="p-1 text-gray-400 hover:text-rose-500 text-xs"
-                          title="移除此项"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-slate-800">
-              <span className="text-[11px] text-gray-400">
-                采纳后将自动同步写入系统待办并投射至日历
-              </span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAiScheduleModal(false)}
-                  className="px-3.5 py-1.5 text-xs text-gray-500 hover:text-gray-700 font-bold"
-                >
-                  取消
-                </button>
-                <button
-                  type="button"
-                  disabled={aiPlanning || aiApplying || selectedAiIndices.size === 0}
-                  onClick={handleApplyAiScheduleToCalendar}
-                  className="px-4 py-1.5 bg-[#00C776] hover:bg-[#00B068] text-white text-xs font-black rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  <span>{aiApplying ? "写入中..." : "一键采纳并写入日历 🗓️"}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <AiScheduleModal
+        open={ai.open}
+        onClose={() => ai.setOpen(false)}
+        dateLabel={selectedDateStr}
+        advice={ai.advice}
+        warning={ai.warning}
+        tasks={ai.tasks}
+        selectedIndices={ai.selectedIndices}
+        planning={ai.planning}
+        applying={ai.applying}
+        onToggleIndex={ai.toggleIndex}
+        onUpdateTitle={ai.updateTaskTitle}
+        onUpdatePriority={ai.updateTaskPriority}
+        onDeleteTask={ai.deleteTask}
+        onAddCustomTask={() => ai.addCustomTask(selectedDateStr)}
+        onApply={() => ai.applyToCalendar(selectedDateStr)}
+      />
 
       {/* ── 6. Edit Modal ── */}
-      {showModal && editingSchedule && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-xl border border-gray-100 dark:border-slate-800 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-black text-gray-900 dark:text-white">
-                编辑日程事项
-              </h3>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-xs text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveModal} className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-bold text-gray-500 mb-1">
-                  事项标题 *
-                </label>
-                <input
-                  type="text"
-                  required
-                  name="formTitle"
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-500 mb-1">
-                    截止日期
-                  </label>
-                  <input
-                    type="date"
-                    name="formDueDate"
-                    value={formDueDate}
-                    onChange={(e) => setFormDueDate(e.target.value)}
-                    className="w-full px-2 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-500 mb-1">
-                    精力与优先级
-                  </label>
-                  <select
-                    name="formPriority"
-                    value={formPriority}
-                    onChange={(e) =>
-                      setFormPriority(e.target.value as "high" | "medium" | "low")
-                    }
-                    className="w-full px-2 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-gray-800 dark:text-white"
-                  >
-                    <option value="high">🌅 高优 (上午深度)</option>
-                    <option value="medium">☀️ 中优 (下午推进)</option>
-                    <option value="low">🌙 普通 (晚上收尾)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-500 mb-1">
-                    关联项目
-                  </label>
-                  <select
-                    name="formProjectId"
-                    value={formProjectId}
-                    onChange={(e) => setFormProjectId(e.target.value)}
-                    className="w-full px-2 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white"
-                  >
-                    <option value="">未关联项目</option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-500 mb-1">
-                    指派责任人
-                  </label>
-                  <select
-                    name="formAssigneeId"
-                    value={formAssigneeId}
-                    onChange={(e) => setFormAssigneeId(e.target.value)}
-                    className="w-full px-2 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-gray-800 dark:text-white"
-                  >
-                    <option value="">未指派 (自己)</option>
-                    {members.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        👤 {m.displayName || m.username}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => handleDeleteTodo(editingSchedule.id)}
-                  className="text-xs text-rose-500 hover:underline font-bold"
-                >
-                  删除事项
-                </button>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700"
-                  >
-                    取消
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-1.5 bg-[#00C776] text-white text-xs font-bold rounded-xl hover:bg-[#00B068]"
-                  >
-                    保存更新
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
+      {editingSchedule && (
+        <ScheduleEditModal
+          item={editingSchedule}
+          projects={projects}
+          members={members}
+          defaultDateStr={selectedDateStr}
+          onClose={() => setEditingSchedule(null)}
+          onSaved={handleScheduleModalSaved}
+        />
       )}
     </div>
   );

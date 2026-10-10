@@ -1,42 +1,30 @@
 "use client";
 
-import { useNavelixConfig } from "@/hooks/use-navelix-config";
+import { useNavelixConfig } from "@/context/navelix-context";
+import {
+  blurStatusText,
+  buildWidgetToggles,
+  isGlassmorphismEnabled,
+  previewWidthClass,
+  resolveWallpaperMode,
+  wallpaperStatusText,
+} from "@/lib/admin-personalization";
 
 export default function AdminPersonalizationTab() {
   const { config, updateConfig } = useNavelixConfig();
 
-  // 预览宽度图计算
-  const getPreviewWidthPercent = () => {
-    switch (config.maxWidth) {
-      case "1000px":
-        return "w-[60%]";
-      case "1200px":
-        return "w-[72%]";
-      case "1400px":
-        return "w-[84%]";
-      case "full":
-        return "w-full";
-      default:
-        return "w-[72%]";
-    }
-  };
+  // 派生值统一由 lib/admin-personalization.ts 提供（纯函数，可单测）
+  const getPreviewWidthPercent = () => previewWidthClass(config.maxWidth);
+  const wallpaperMode = resolveWallpaperMode(config);
+  const glassmorphism = isGlassmorphismEnabled(config);
+  const getWallpaperStatusText = () => wallpaperStatusText(wallpaperMode);
+  const getBlurStatusText = () => blurStatusText(glassmorphism);
+  const widgetToggles = buildWidgetToggles(config);
 
-  const wallpaperMode = (config.wallpaperMode as "bing" | "custom" | "none") || "bing";
-  const glassmorphism = config.glassmorphism !== false;
   const sidebarState = (config.sidebarDefaultState as "expanded" | "collapsed") || "expanded";
   const clockWidgetMode = (config.clockWidgetMode as "time" | "weather" | "analog") || "time";
   const maxWidth = config.maxWidth || "1200px";
   const linkOpenTarget = config.linkOpenTarget || "_blank";
-
-  const getWallpaperStatusText = () => {
-    if (wallpaperMode === "bing") return "无线统背景 (Bing)";
-    if (wallpaperMode === "custom") return "自定义 URL 背景";
-    return "纯色背景";
-  };
-
-  const getBlurStatusText = () => {
-    return glassmorphism ? "毛玻璃已启用" : "未开启毛玻璃";
-  };
 
   return (
     <div className="space-y-6 pb-12 animate-fadeIn select-none">
@@ -439,56 +427,7 @@ export default function AdminPersonalizationTab() {
 
         {/* 6 个组件卡片网格 */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 pt-2">
-          {[
-            {
-              id: "aiCopilot",
-              title: "AI Copilot",
-              desc: "智能助手状态面板",
-              icon: "🤖",
-              enabled: config.aiCopilotEnabled !== false,
-              toggle: () => updateConfig({ aiCopilotEnabled: config.aiCopilotEnabled === false }),
-            },
-            {
-              id: "todayActivity",
-              title: "今日动态",
-              desc: "今日工作动态与事件",
-              icon: "⚡",
-              enabled: config.todayActivityEnabled !== false,
-              toggle: () => updateConfig({ todayActivityEnabled: config.todayActivityEnabled === false }),
-            },
-            {
-              id: "modelMonitor",
-              title: "模型监控",
-              desc: "账号与调用额度监控",
-              icon: "🧠",
-              enabled: config.modelMonitorEnabled !== false,
-              toggle: () => updateConfig({ modelMonitorEnabled: config.modelMonitorEnabled === false }),
-            },
-            {
-              id: "linkStatus",
-              title: "连接状态",
-              desc: "第三方服务连接状态",
-              icon: "🔗",
-              enabled: config.linkStatusEnabled !== false,
-              toggle: () => updateConfig({ linkStatusEnabled: config.linkStatusEnabled === false }),
-            },
-            {
-              id: "quickAccess",
-              title: "快捷访问",
-              desc: "常用快捷链接访问",
-              icon: "⭐",
-              enabled: config.recentVisitsEnabled !== false,
-              toggle: () => updateConfig({ recentVisitsEnabled: config.recentVisitsEnabled === false }),
-            },
-            {
-              id: "pendingReminders",
-              title: "待处理提醒",
-              desc: "待办事项与提醒",
-              icon: "🔔",
-              enabled: config.pendingRemindersEnabled !== false,
-              toggle: () => updateConfig({ pendingRemindersEnabled: config.pendingRemindersEnabled === false }),
-            },
-          ].map((item) => (
+          {widgetToggles.map((item) => (
             <div
               key={item.id}
               className="p-3.5 rounded-2xl bg-gray-50/80 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-800 flex flex-col justify-between gap-3 transition-all hover:border-gray-200 dark:hover:border-slate-700"
@@ -509,7 +448,9 @@ export default function AdminPersonalizationTab() {
               <div className="flex justify-end pt-1">
                 <button
                   type="button"
-                  onClick={item.toggle}
+                  onClick={() =>
+                    updateConfig({ [item.configKey]: item.toggleValue })
+                  }
                   className={`h-6 px-2 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 transition-all cursor-pointer ${
                     item.enabled
                       ? "bg-[#00C776] text-white shadow-2xs"

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import type { SiteLink } from "@/types";
+import type { SiteLink } from "@/types"
+import { formatRelativeTime } from "@/lib/date-utils";
 
 interface ActivityItem {
   id: string;
@@ -11,17 +12,6 @@ interface ActivityItem {
   ts: number;
 }
 
-function formatAgo(ts: number): string {
-  const diff = Date.now() - ts;
-  const min = 60_000,
-    hour = 60 * min,
-    day = 24 * hour;
-  if (diff < min) return "刚刚";
-  if (diff < hour) return `${Math.floor(diff / min)}m`;
-  if (diff < day) return `${Math.floor(diff / hour)}h`;
-  if (diff < 7 * day) return `${Math.floor(diff / day)}d`;
-  return new Date(ts).toLocaleDateString("zh-CN");
-}
 
 export default function ActivityFeed({
   links,
@@ -162,7 +152,7 @@ export default function ActivityFeed({
                 {item.text}
               </span>
               <span className="text-[9px] text-gray-400 dark:text-slate-500 shrink-0">
-                {formatAgo(item.ts)}
+                {formatRelativeTime(item.ts, { style: "compact", fallbackAfterDays: 7 })}
               </span>
             </div>
           ))}

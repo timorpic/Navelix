@@ -1,214 +1,30 @@
-import { db } from "./db.ts";
-import fs from "node:fs";
-import path from "node:path";
-import { refreshMonitorAccount } from "./monitor/accounts.ts";
-import { emitUserEvent } from "./events.ts";
-import { safeFetch } from "./ssrf.ts";
 import { sendTelegramNotification } from "./telegram.ts";
 import { isTelegramNotifySystemEnabled } from "./system-settings.ts";
 import { maybeRunWeeklyReport } from "./analytics-report.ts";
 import { isAnalyticsReportEnabled } from "./analytics-report.ts";
-import { resolveDataDir } from "./data-dir.ts";
 import { scheduleAutoBackup } from "./db-backup.ts";
+import { runDatabaseMaintenance } from "./daemon/maintenance.ts";
+import { refreshAllModelAccounts } from "./daemon/model-refresh.ts";
+import { checkDiskUsage, checkWalSize } from "./daemon/disk.ts";
+import { runCloudBackupSchedule } from "./daemon/cloud-backup.ts";
 
-const DATA_DIR = resolveDataDir();
+/**
+ * 进程内常驻后台守护任务 —— **编排层**。
+ *
+ * 各任务实现已按类型拆分至 `./daemon/` 子目录：
+ * - maintenance.ts   数据库自维护（清理过期会话）
+ * - model-refresh.ts 模型配额预拉取 + 书签健康巡检
+ * - cloud-backup.ts  Pro 授权下的每日异地云备份
+ * - disk.ts          磁盘占用与 WAL 膨胀阈值告警
+ *
+ * 本文件只负责定时编排与生命周期（启动/停止/防重入）。
+ * 公开 API 保持不变，外部仍从 `@/lib/daemon` 导入。
+ */
 
 // 全局防重入标记（确保 Next.js 开发热重载或多实例时不重复起定时器）
 declare global {
   var __navelix_daemon_started__: boolean | undefined;
   var __navelix_daemon_timers__: NodeJS.Timeout[] | undefined;
-}
-
-/**
- * 后台静默刷新所有已授权的模型监控账号（Antigravity / Codex）
- * 预拉取 5H/7D 配额与剩余天数存入 SQLite，并触发 SSE 推送，
- * 使得用户打开模型监控大盘时直接毫秒级秒开，无需等待 3~5 秒。
- */
-export async function refreshAllModelAccounts(): Promise<number> {
-  let refreshedCount = 0;
-  try {
-    const rows = db
-      .prepare(
-        "SELECT id, user_id, provider, email FROM model_accounts",
-      )
-      .all() as Array<{ id: string; user_id: string; provider: string; email: string }>;
-
-    for (const row of rows) {
-      try {
-        await refreshMonitorAccount(row.user_id, row.id);
-        emitUserEvent(row.user_id, "monitor:update", {
-          accountId: row.id,
-          provider: row.provider,
-        });
-        refreshedCount++;
-      } catch (err) {
-        console.warn(`[Daemon] 刷新模型账号失败 [${row.provider}:${row.email}]:`, err);
-      }
-    }
-  } catch (err) {
-    console.warn("[Daemon] 查询模型账号异常:", err);
-  }
-  return refreshedCount;
-}
-
-/**
- * 后台静默巡检书签健康状态（仅在启用探针驱动时工作）
- */
-export async function checkBookmarksHealth(): Promise<void> {
-  try {
-    const { isEEAvailable } = await import("./ee-bridge/index.ts");
-    const { canAccessFeature } = await import("./license.ts");
-    if (!isEEAvailable() || !canAccessFeature("link_status_monitor")) return;
-
-    const links = db
-      .prepare("SELECT id, user_id, title, url FROM user_links LIMIT 50")
-      .all() as Array<{ id: string; user_id: string; title: string; url: string }>;
-
-    for (const link of links) {
-      if (!/^https?:\/\//i.test(link.url)) continue;
-      try {
-        await safeFetch(link.url, {
-          method: "HEAD",
-          timeoutMs: 5000,
-          allowPrivateIPs: false,
-        });
-      } catch {
-        // 忽略单次网络波动
-      }
-    }
-  } catch {
-    // 静默忽略
-  }
-}
-
-/**
- * 数据库自维护清理任务
- */
-export function runDatabaseMaintenance(): void {
-  try {
-    const now = Date.now();
-    // 清理过期 sessions
-    const sessionRes = db.prepare("DELETE FROM sessions WHERE expires_at < ?").run(now);
-    if (sessionRes.changes > 0) {
-      console.log(`[Daemon] 已自动清理 ${sessionRes.changes} 条过期会话`);
-    }
-  } catch (err) {
-    console.warn("[Daemon] 数据库维护失败:", err);
-  }
-}
-
-/**
- * 自动异地云备份任务（每天定时触发）
- */
-export async function runCloudBackupSchedule(): Promise<void> {
-  try {
-    const { isEEAvailable } = await import("./ee-bridge/index.ts");
-    const { canAccessFeature } = await import("./license.ts");
-    if (!isEEAvailable() || !canAccessFeature("s3_backup")) return;
-
-    const { getCloudStorageConfig, uploadBackupToStorage } = await import("./storage-provider.ts");
-    const cfg = getCloudStorageConfig();
-    if (!cfg.enabled || !cfg.autoBackupDaily || cfg.type === "none") return;
-
-    const { performDatabaseBackup } = await import("./db-backup.ts");
-    const localSnapshot = performDatabaseBackup("daemon-auto-cloud-backup");
-    if (!localSnapshot) return;
-
-    const path = await import("node:path");
-    const fileName = path.basename(localSnapshot);
-    const res = await uploadBackupToStorage(cfg, localSnapshot, fileName);
-    if (res.success) {
-      console.log(`[Daemon] 成功完成每日自动异地云备份: ${fileName}`);
-      sendTelegramNotification(
-        `✅ Navelix 云备份成功\n\n文件：${fileName}\n位置：${cfg.type} 存储`,
-        isTelegramNotifySystemEnabled(),
-      ).catch(() => {});
-    } else {
-      console.warn(`[Daemon] 自动异地云备份上传失败:`, res.error);
-      sendTelegramNotification(
-        `❌ Navelix 云备份上传失败\n\n错误：${res.error || "未知错误"}`,
-        isTelegramNotifySystemEnabled(),
-      ).catch(() => {});
-    }
-  } catch (err) {
-    console.warn("[Daemon] 自动异地云备份异常:", err);
-  }
-}
-
-/**
- * 检查 SQLite WAL 文件大小，超过阈值时发送 Telegram 告警。
- * WAL 模式下异常膨胀通常意味着写入压力过大或 checkpoint 未及时回收，
- * 自托管用户最怕"存着存着库爆了不知道"。
- * 阈值：WAL > 256MB 告警；> 1GB 高优先级告警。
- */
-export function checkWalSize(): void {
-  try {
-    const walPath = path.join(DATA_DIR, "navelix.db-wal");
-    if (!fs.existsSync(walPath)) return;
-    const size = fs.statSync(walPath).size;
-    const mb = (b: number) => `${(b / (1024 * 1024)).toFixed(1)} MB`;
-
-    if (size > 1024 * 1024 * 1024) {
-      sendTelegramNotification(
-        `🚨 Navelix WAL 文件异常膨胀\n\nnavelix.db-wal：${mb(size)}\n已超过 1GB，请立即检查写入异常或执行 VACUUM / checkpoint。`,
-        isTelegramNotifySystemEnabled(),
-      ).catch(() => {});
-    } else if (size > 256 * 1024 * 1024) {
-      sendTelegramNotification(
-        `⚠️ Navelix WAL 文件偏大\n\nnavelix.db-wal：${mb(size)}\n已超过 256MB，若持续增长建议检查高写入任务。`,
-        isTelegramNotifySystemEnabled(),
-      ).catch(() => {});
-    }
-  } catch {
-    // WAL 检查失败不影响主流程
-  }
-}
-
-/**
- * 检查 data 目录磁盘占用，超过阈值时发送 Telegram 告警。
- * 阈值：数据目录 > 2GB，或备份目录 > 1GB。
- */
-export function checkDiskUsage(): void {
-  try {
-    const dataDir = DATA_DIR;
-    const backupDir = path.join(dataDir, "backups");
-    const notify = () => isTelegramNotifySystemEnabled();
-
-    const dirSize = (dir: string): number => {
-      if (!fs.existsSync(dir)) return 0;
-      let total = 0;
-      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        const p = path.join(dir, entry.name);
-        try {
-          if (entry.isDirectory()) total += dirSize(p);
-          else total += fs.statSync(p).size;
-        } catch {
-          // ignore
-        }
-      }
-      return total;
-    };
-
-    const mb = (b: number) => `${(b / (1024 * 1024)).toFixed(1)} MB`;
-
-    const dataSize = dirSize(dataDir);
-    const backupSize = dirSize(backupDir);
-
-    if (dataSize > 2 * 1024 * 1024 * 1024) {
-      sendTelegramNotification(
-        `⚠️ Navelix 数据目录占用过高\n\ndata/ 目录：${mb(dataSize)}\n请及时清理无用数据。`,
-        notify(),
-      ).catch(() => {});
-    }
-    if (backupSize > 1024 * 1024 * 1024) {
-      sendTelegramNotification(
-        `⚠️ Navelix 备份目录占用过高\n\nbackups/ 目录：${mb(backupSize)}\n请及时清理旧备份。`,
-        notify(),
-      ).catch(() => {});
-    }
-  } catch {
-    // 磁盘检查失败不影响主流程
-  }
 }
 
 /**
@@ -322,3 +138,9 @@ export function stopBackgroundDaemon(): void {
   }
   globalThis.__navelix_daemon_started__ = false;
 }
+
+// 保持既有公开 API：外部（含测试）仍可从 @/lib/daemon 取到各任务函数
+export { runDatabaseMaintenance } from "./daemon/maintenance.ts";
+export { checkBookmarksHealth, refreshAllModelAccounts } from "./daemon/model-refresh.ts";
+export { checkDiskUsage, checkWalSize } from "./daemon/disk.ts";
+export { runCloudBackupSchedule } from "./daemon/cloud-backup.ts";

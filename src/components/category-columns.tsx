@@ -1,8 +1,11 @@
 "use client";
 
 import BrandIcon from "./brand-icon";
+import Toast from "./toast";
 import type { Category, SiteLink } from "@/types";
-import { recordLinkUsage } from "@/lib/link-usage";
+import { recordLinkUsage } from "@/lib/client/link-usage";
+import { copyShareLink } from "@/lib/share-link";
+import { useToast } from "@/hooks/use-toast";
 
 interface CategoryColumnsProps {
   categories: Category[];
@@ -17,8 +20,11 @@ export default function CategoryColumns({
 }: CategoryColumnsProps) {
   // 展示用户创建的所有分类卡片
   const displayCategories = categories;
+  const { notice, flash } = useToast();
 
   return (
+    <>
+    <Toast message={notice} className="mb-4" />
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 my-6">
       {displayCategories.map((cat) => {
         const catLinks = links.filter((l) => l.category === cat.id);
@@ -39,19 +45,8 @@ export default function CategoryColumns({
               <div className="flex items-center gap-1">
                 <button
                   onClick={async () => {
-                    try {
-                      const res = await fetch("/api/share/token", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ type: "category", id: cat.id }),
-                      });
-                      if (!res.ok) throw new Error("获取失败");
-                      const data = await res.json();
-                      await navigator.clipboard.writeText(`${window.location.origin}${data.sharePath}`);
-                      alert(`已复制「${cat.name}」只读分享链接至剪贴板！可以直接发送给朋友或同事查看。`);
-                    } catch {
-                      alert("生成分享链接失败");
-                    }
+                    const r = await copyShareLink("category", cat.id, cat.name);
+                    flash(r.message);
                   }}
                   className="text-gray-400 dark:text-slate-400 hover:text-[#00C776] dark:hover:text-[#00C776] p-1 rounded-md transition-colors text-xs"
                   title="复制免登录分享链接"
@@ -106,5 +101,6 @@ export default function CategoryColumns({
         );
       })}
     </div>
+    </>
   );
 }

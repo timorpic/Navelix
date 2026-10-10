@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { TodoItem } from "@/types";
-import { useNavelixData } from "@/hooks/use-navelix-data";
+import { useNavelixData } from "@/context/navelix-context";
 
 const PRIORITY_LABEL: Record<TodoItem["priority"], string> = {
   high: "高",

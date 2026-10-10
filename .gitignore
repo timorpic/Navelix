@@ -66,5 +66,5 @@ next-env.d.ts
 IDEA.md
 /temp/
 .agents/
-AGENTS.md
+# 项目通用协作规范需要随仓库分发；仅保留本地 AI 状态文件忽略规则。
 MEMORY.md
