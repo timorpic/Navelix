@@ -10,6 +10,13 @@
 
 ---
 
+## [未发布]
+
+### 修复
+- **通知列表在 `created_at` 并列时顺序颠倒**：`listNotifications` 仅 `ORDER BY created_at DESC`，而 `created_at` 是毫秒精度的 `Date.now()`，同一毫秒写入的多条通知该列完全相同。SQLite 此时沿 `idx_notifications_user(user_id, created_at DESC)` 扫描，并列行按索引内顺序（= rowid 升序）返回，「最新在前」在并列时恰好反向；`id` 为随机十六进制，不能用作次序依据。现补 `rowid DESC` 作为 tiebreaker（SQLite 隐式自增列，等于插入顺序）。该缺陷自通知功能引入即存在（重构前的路由版本同样是裸 `ORDER BY created_at DESC`），并非本轮重构引入；此前仅表现为 CI 偶发失败，实为确定性错误——已在实测中固定复现。回归用例直接写入相同 `created_at` 强制并列，而非依赖循环撞上同一毫秒
+
+---
+
 ## [2.10.0] - 2026-10-10
 
 ### 安全

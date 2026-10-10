@@ -38,14 +38,21 @@ export function toPublicNotification(row: NotificationRow): PublicNotification {
   };
 }
 
-/** 当前用户的操作记录，最新在前（上限 50 条，与前端列表容量一致）。 */
+/**
+ * 当前用户的操作记录，最新在前（上限 50 条，与前端列表容量一致）。
+ *
+ * `created_at` 由 `Date.now()` 生成，只有毫秒精度：同一毫秒内写入的多条通知
+ * 该列完全相同，而 SQLite 对并列行不保证稳定顺序（实测会让「最新在前」偶发
+ * 颠倒，界面上的顺序也会跳变）。`id` 是随机十六进制、不可用作次序依据，因此
+ * 以 `rowid`（SQLite 隐式自增，等于插入顺序）作为并列时的 tiebreaker。
+ */
 export function listNotifications(userId: string): PublicNotification[] {
   const rows = db
     .prepare(
       `SELECT id, title, content, source, created_at, read
        FROM notifications
        WHERE user_id = ?
-       ORDER BY created_at DESC
+       ORDER BY created_at DESC, rowid DESC
        LIMIT 50`,
     )
     .all(userId) as unknown as NotificationRow[];

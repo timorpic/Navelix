@@ -89,6 +89,28 @@ describe("listNotifications / countUnread", () => {
     assert.equal(listNotifications(other).length, 1);
   });
 
+  it("同一毫秒写入的多条通知仍按插入顺序倒序（rowid tiebreaker）", () => {
+    // created_at 只有毫秒精度，同批写入的多条通知该列完全相同。
+    // 仅 ORDER BY created_at DESC 时，SQLite 沿 idx_notifications_user
+    // (user_id, created_at DESC) 扫描，并列行按索引内顺序（= rowid 升序）
+    // 返回，即「最新在前」在并列时恰好颠倒。这里直接写入相同 created_at
+    // 强制并列，做确定性复现（不依赖循环撞上同一毫秒）。
+    const uid = seedUser();
+    const ids = Array.from({ length: 8 }, (_, i) => `tie-${Date.now()}-${i}`);
+    const SAME_TS = 1_700_000_000_000;
+    const insert = db.prepare(
+      `INSERT INTO notifications (id, user_id, title, content, source, created_at, read)
+       VALUES (?, ?, ?, '', 'system', ?, 0)`,
+    );
+    ids.forEach((id, i) => insert.run(id, uid, `并列-${i}`, SAME_TS));
+
+    assert.deepEqual(
+      listNotifications(uid).map((n) => n.id),
+      [...ids].reverse(),
+      "created_at 并列时也必须严格按插入顺序倒序",
+    );
+  });
+
   it("countUnread 只计未读", () => {
     const uid = seedUser();
     createNotification(uid, { title: "a" });
