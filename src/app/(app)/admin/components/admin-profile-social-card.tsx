@@ -3,7 +3,7 @@
 import { useNavelixConfig } from "@/context/navelix-context";
 
 /**
- * 「个人账号与安全」Tab 的卡片 2：🌐 个人社交媒体与外部主页。
+ * 「个人账号与安全」Tab 的卡片 2：🌐 站点社交媒体与外部主页。
  *
  * 从 `admin-profile-tab.tsx`（原 1219 行）抽出 —— 四个输入框直接读写
  * `useNavelixConfig()` 的社交链接字段，本身不持有 state，是文件里
@@ -17,7 +17,7 @@ export default function AdminProfileSocialCard() {
       <div>
         <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
           <span>🌐</span>
-          <span>个人社交与外部主页链接</span>
+          <span>站点社交与外部主页链接</span>
         </h3>
         <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
           配置您的 GitHub / X / LinkedIn 主页链接，实时呈现在前台底部

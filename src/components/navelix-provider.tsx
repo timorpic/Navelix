@@ -14,6 +14,7 @@ import {
 } from "@/data/links";
 import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
 import type { UserDataResult } from "@/lib/user-data";
+import { configForBrowser } from "@/lib/config-persistence";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 
 function readJson<T>(key: string): T | null {
@@ -62,6 +63,14 @@ export function NavelixProvider({
 
   const [resolvedDark, setResolvedDark] = useState<boolean>(false);
 
+  // Purge historical cached plaintext even when SSR skips the fallback loader.
+  useEffect(() => {
+    const cached = readJson<Partial<SystemConfig>>("navelix.user.config");
+    if (cached && (Object.hasOwn(cached, "aiApiKey") || Object.hasOwn(cached, "weatherApiKey"))) {
+      try { localStorage.setItem("navelix.user.config", JSON.stringify(configForBrowser(cached))); } catch { /* cache is optional */ }
+    }
+  }, []);
+
   // Refs mirror the latest state so mutations can compute the next snapshot
   const categoriesRef = useRef(categories);
   const linksRef = useRef(links);
@@ -101,11 +110,13 @@ export function NavelixProvider({
   }, []);
 
   // 2. 配置服务端与 LocalStorage 持久化保存
-  const saveConfigToServer = useCallback((nextCfg: SystemConfig) => {
+  const saveConfigToServer = useCallback((nextCfg: SystemConfig, patch: Partial<SystemConfig>) => {
     fetch("/api/user/data", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ config: nextCfg }),
+      body: JSON.stringify({ config: patch }),
+    }).then(response => {
+      if (!response.ok) throw new Error("保存配置失败");
     }).catch((e) => console.warn("[Navelix] 保存失败", e));
 
     try {
@@ -120,7 +131,7 @@ export function NavelixProvider({
   // 3. 统一更新配置方法：即时触发 DOM 改变 + 存储 + 状态更新
   const updateConfig = useCallback(
     (patch: Partial<SystemConfig>) => {
-      const next = { ...configRef.current, ...patch };
+      const next = { ...configRef.current, ...configForBrowser(patch) };
       configRef.current = next;
       setConfig(next);
 
@@ -130,7 +141,7 @@ export function NavelixProvider({
           localStorage.setItem("navelix_theme", patch.theme);
         } catch {}
       }
-      saveConfigToServer(next);
+      saveConfigToServer(next, patch);
     },
     [saveConfigToServer, applyThemeToDom],
   );
@@ -174,11 +185,13 @@ export function NavelixProvider({
         if (cats) setCategories(cats);
         if (lnks) setLinks(lnks);
         if (cfg) {
+          const safeConfig = configForBrowser(cfg);
+          localStorage.setItem("navelix.user.config", JSON.stringify(safeConfig));
           const activeTheme =
             localTheme === "light" || localTheme === "dark" || localTheme === "system"
               ? (localTheme as SystemConfig["theme"])
               : cfg.theme || "system";
-          setConfig({ ...defaultConfig, ...cfg, theme: activeTheme });
+          setConfig({ ...defaultConfig, ...safeConfig, theme: activeTheme });
           applyThemeToDom(activeTheme);
         } else if (localTheme) {
           setConfig((prev) => ({ ...prev, theme: localTheme as SystemConfig["theme"] }));
@@ -461,6 +474,8 @@ export function NavelixProvider({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ projects: nextProjects }),
+    }).then(response => {
+      if (!response.ok) throw new Error("保存配置失败");
     }).catch((e) => console.warn("[Navelix] 保存失败", e));
   }, []);
 

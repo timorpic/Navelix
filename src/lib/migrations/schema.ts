@@ -1,3 +1,4 @@
+import { USER_NOTIFICATION_SETTINGS_SQL, TELEGRAM_DELIVERIES_SQL } from "../notification-schema.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { dropColumn, ensureColumn } from "./shared.ts";
 import { ensureUserConfigColumns } from "../user-config-columns.ts";
@@ -35,6 +36,8 @@ export const CATEGORY_SUBSCRIPTIONS_TABLE_SQL = `CREATE TABLE IF NOT EXISTS user
     );`;
 
 export function ensureSchema(db: DatabaseSync): void {
+  db.exec(USER_NOTIFICATION_SETTINGS_SQL);
+  db.exec(TELEGRAM_DELIVERIES_SQL);
   // ── user_configs 列补齐（元数据驱动，见 ../user-config-columns.ts）──
   ensureUserConfigColumns(db);
   ensureColumn(db, "users", "avatar", "avatar TEXT NOT NULL DEFAULT ''");

@@ -11,8 +11,10 @@ import type { UseAdminTelegramSettingsResult } from "@/hooks/use-admin-telegram-
  */
 export default function AdminProfileTelegramCard({
   tg,
+  isAdmin = false,
 }: {
   tg: UseAdminTelegramSettingsResult;
+  isAdmin?: boolean;
 }) {
   return (
     <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
@@ -22,7 +24,7 @@ export default function AdminProfileTelegramCard({
           <span>Telegram Bot 通知</span>
         </h3>
         <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-          通过 Telegram Bot 推送备份结果、系统异常（服务重启 / 磁盘占用 / 登录异常）等安全通知
+          此通知渠道仅属于当前账号。个人通知和系统通知分别订阅。
         </p>
       </div>
 
@@ -54,6 +56,7 @@ export default function AdminProfileTelegramCard({
           />
         </div>
 
+        <button type="button" onClick={() => tg.tgSave({ clearBotToken: true })} className="text-xs text-rose-600">清除 Bot Token</button>
         {/* Chat ID */}
         <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
           <div className="flex items-center justify-between mb-1.5">
@@ -85,7 +88,7 @@ export default function AdminProfileTelegramCard({
               Telegram 通知总开关
             </p>
             <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
-              关闭后所有 Telegram 推送不再发送
+              关闭后当前账号的 Telegram 推送不再发送
             </p>
           </div>
           <button
@@ -101,10 +104,32 @@ export default function AdminProfileTelegramCard({
           </button>
         </div>
 
+        <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-3">
+          <p className="text-xs font-bold text-gray-800 dark:text-slate-200">个人通知</p>
+          {([
+            ["notifyTodo", "待办 / 日历到期", "按服务器时区，当天 9 点后提醒一次"],
+            ["notifyAssignment", "任务指派", "收到其他用户新建或转交的任务"],
+            ["notifyDataTransfer", "个人数据导入导出", "个人 JSON 导入成功或导出文件已生成"],
+          ] as const).map(([key, label, description]) => (
+            <div key={key} className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] text-gray-600 dark:text-slate-300">{label}</p>
+                <p className="text-[10px] text-gray-400 dark:text-slate-400">{description}</p>
+              </div>
+              <button type="button" aria-label={label} aria-pressed={tg.personalSubscriptions[key]}
+                onClick={() => tg.togglePersonalSubscription(key)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${tg.personalSubscriptions[key] ? "bg-[#00C776] text-white" : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"}`}>
+                {tg.personalSubscriptions[key] ? "已开启" : "已关闭"}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {isAdmin && <>
         {/* 场景开关 */}
         <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
           <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
-            通知场景
+            系统通知（仅管理员）
           </p>
           <div className="flex items-center justify-between">
             <div>
@@ -142,6 +167,7 @@ export default function AdminProfileTelegramCard({
           </div>
         </div>
 
+        </>}
         {/* 操作按钮 */}
         <div className="flex flex-wrap items-center gap-2.5 pt-1">
           <button

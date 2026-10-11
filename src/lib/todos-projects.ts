@@ -1,3 +1,4 @@
+import { captureTaskAssignments, enqueueChangedAssignments } from "./personal-telegram.ts";
 import { db } from "./db.ts";
 import { addDaysLocal } from "./date-utils.ts";
 
@@ -92,6 +93,7 @@ export function updateTodoFields(id: string, input: TodoPatchInput): string[] {
 
   db.exec("BEGIN IMMEDIATE;");
   try {
+    const assignmentsBefore = captureTaskAssignments({ todoId: id });
     // 必须在 UPDATE 之前读取：更新后这一列已是新值，就拿不到「源项目」了
     const before = db
       .prepare("SELECT project_id FROM user_todos WHERE id = ?")
@@ -111,6 +113,7 @@ export function updateTodoFields(id: string, input: TodoPatchInput): string[] {
       db.prepare("UPDATE projects SET updated_at = ? WHERE id = ?").run(now, pid);
     }
 
+    enqueueChangedAssignments(assignmentsBefore);
     db.exec("COMMIT;");
   } catch (e) {
     db.exec("ROLLBACK;");
@@ -166,7 +169,9 @@ export function syncProjectMilestones(
 ): void {
   db.exec("BEGIN IMMEDIATE;");
   try {
+    const assignmentsBefore = captureTaskAssignments({ ownerId: userId });
     syncProjectMilestonesInTransaction(projectId, userId, todos);
+    enqueueChangedAssignments(assignmentsBefore);
     db.exec("COMMIT;");
   } catch (e) {
     db.exec("ROLLBACK;");
@@ -193,7 +198,7 @@ function syncProjectMilestonesInTransaction(
 
   const updateStmt = db.prepare(
       `UPDATE user_todos
-       SET title = ?, priority = ?, due_date = ?, assignee_id = ?, assignee_name = ?, sort_order = ?
+       SET title = ?, priority = ?, due_date = ?, assignee_id = ?, assigned_to = ?, assignee_name = ?, sort_order = ?
        WHERE id = ? AND user_id = ?`,
     );
 
@@ -220,6 +225,7 @@ function syncProjectMilestonesInTransaction(
           tTitle,
           tPriority,
           tDueDate,
+          tAssigneeId,
           tAssigneeId,
           tAssigneeName,
           idx,
@@ -353,6 +359,7 @@ export function createTodo(userId: string, input: CreateTodoInput): string {
 
   db.exec("BEGIN IMMEDIATE;");
   try {
+    const assignmentsBefore = captureTaskAssignments({ ownerId: userId });
     const maxSort = db
       .prepare(
         "SELECT COALESCE(MAX(sort_order), -1) AS m FROM user_todos WHERE user_id = ? AND done = 0",
@@ -382,6 +389,7 @@ export function createTodo(userId: string, input: CreateTodoInput): string {
       db.prepare("UPDATE projects SET updated_at = ? WHERE id = ?").run(Date.now(), projectId);
     }
 
+    enqueueChangedAssignments(assignmentsBefore);
     db.exec("COMMIT;");
   } catch (e) {
     db.exec("ROLLBACK;");
@@ -432,6 +440,7 @@ export function createProject(userId: string, input: CreateProjectInput): Create
 
   db.exec("BEGIN IMMEDIATE;");
   try {
+    const assignmentsBefore = captureTaskAssignments({ ownerId: userId });
     const maxSort = db
       .prepare("SELECT COALESCE(MAX(sort_order), -1) AS m FROM projects WHERE user_id = ?")
       .get(userId) as { m: number };
@@ -467,6 +476,7 @@ export function createProject(userId: string, input: CreateProjectInput): Create
       });
     }
 
+    enqueueChangedAssignments(assignmentsBefore);
     db.exec("COMMIT;");
   } catch (e) {
     db.exec("ROLLBACK;");
@@ -541,12 +551,14 @@ export function updateProject(projectId: string, userId: string, input: ProjectP
 
   db.exec("BEGIN IMMEDIATE;");
   try {
+    const assignmentsBefore = captureTaskAssignments({ ownerId: userId });
     db.prepare(`UPDATE projects SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`).run(
       ...vals,
     );
     if (Array.isArray(input.todos)) {
       syncProjectMilestonesInTransaction(projectId, userId, input.todos);
     }
+    enqueueChangedAssignments(assignmentsBefore);
     db.exec("COMMIT;");
   } catch (e) {
     db.exec("ROLLBACK;");

@@ -66,7 +66,7 @@ graph TD
 
 1. **`users`**：系统用户表（ID、用户名、密码哈希、显示昵称、角色 `admin/user`、头像、个人简介）；
 2. **`sessions`**：用户会话表（Token 哈希、User ID、用户代理、IP 地址、过期时间）；
-3. **`user_configs`**：用户偏好与系统配置表（35+ 项偏好设置、AI 密钥、布局。字段由 `user-config-columns.ts` 的元数据驱动生成；旧版的「外部搜索引擎」相关列已在迁移 v10 中删除）；
+3. **`user_configs`**：用户偏好表（主题、布局、搜索栏、链接打开方式等；历史系统列暂留但停止业务读写。字段由 `user-config-columns.ts` 的元数据驱动生成；旧版的「外部搜索引擎」相关列已在迁移 v10 中删除）；
 4. **`user_categories`**：导航分类表（ID、User ID、名称、图标、色彩）；
 5. **`user_links`**：导航链接表（ID、User ID、标题、URL、描述、图标、分类、快捷访问标记）；
 6. **`projects`**：项目表（ID、User ID、名称、描述、状态、状态色彩、URL、排序权重、创建时间、更新时间）；
@@ -74,7 +74,7 @@ graph TD
 8. **`notifications`**：消息通知表（ID、User ID、标题、内容、来源声明、创建时间、已读标记）；
 9. **`api_tokens`**：个人 API Access Token 表（ID、User ID、名称、SHA-256 Token 哈希、前缀、创建时间、最后使用时间）；
 10. **`user_category_subscriptions`**：团队分类订阅关系表；
-11. **`system_settings`**：实例级系统设置（Telegram、许可证等）；
+11. **`system_settings`**：实例级系统设置（品牌、AI、天气、社交主页、访问策略、探针、统计、许可证等）；
 12. **`audit_logs`**：安全审计日志（备份 / 还原 / AI Key 变更等敏感操作）；
 13. **`analytics_events`**：本地使用统计事件表（仅写本机 SQLite，不上报明细）。
 
@@ -131,3 +131,5 @@ src/
 ---
 
 *下一步：请参阅 [[安全机制与运维规范|Security-安全机制与运维规范]] 了解系统的多层安全防护。*
+
+个人通知渠道保存在 `user_notification_settings`，按用户隔离，Token 加密保存。Schema v16 已移除系统配置对管理员账号锚点的依赖。

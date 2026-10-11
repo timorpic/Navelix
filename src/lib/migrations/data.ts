@@ -43,13 +43,17 @@ export function seedAdminIfEmpty(db: DatabaseSync): void {
  * - Lucide 风格分类图标 → emoji 约定迁移
  * - 通知数据自动清理：保留 30 天内记录，避免数据库无限制膨胀
  *
- * 注：user_configs 自 v14 起为「全站单例行」，品牌文案修复只作用于该行。
+ * v16 起系统品牌存于 system_settings；历史列只用于升级兼容。
  */
 export function applyAlwaysDataFixes(db: DatabaseSync): void {
   db.prepare("UPDATE user_configs SET logo_text = 'Navelix' WHERE logo_text = 'Nexus'").run();
   db.prepare(
     "UPDATE user_configs SET custom_footer = ? WHERE custom_footer = ?",
   ).run(DEFAULT_CUSTOM_FOOTER, "© 2026 Nexus. 保留所有权利。");
+
+  db.prepare("UPDATE system_settings SET value = 'Navelix' WHERE key = 'logo_text' AND value = 'Nexus'").run();
+  db.prepare("UPDATE system_settings SET value = ? WHERE key = 'custom_footer' AND value = ?")
+    .run(DEFAULT_CUSTOM_FOOTER, "© 2026 Nexus. 保留所有权利。");
 
   const ICON_MIGRATIONS: Record<string, string> = {
     Bot: "🤖",
@@ -77,7 +81,7 @@ export function applyAlwaysDataFixes(db: DatabaseSync): void {
  * 避免打扰已在运行的老用户；全新部署（user_version=0）保持 0，首次登录展示引导横幅。
  */
 export function backfillSecuritySetupDone(db: DatabaseSync, userVersion: number): void {
-  if (userVersion > 0) {
+  if (userVersion > 0 && userVersion < 16) {
     db.prepare("UPDATE user_configs SET security_setup_done = 1").run();
   }
 }

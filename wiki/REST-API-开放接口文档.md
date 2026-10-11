@@ -551,8 +551,21 @@ Content-Type: application/json
 | `POST` | `/api/auth/login` · `/api/auth/register` | 公开端点；登录带**防爆破限流** |
 
 ### 10.6 管理端
-- `POST`/`GET`/`PATCH` `/api/admin/*` —— 系统设置、用户管理、备份、存储、许可证、遥测配置等，全部要求 `role === "admin"`。
+- `POST`/`GET`/`PATCH` `/api/admin/*` —— 系统设置、用户管理、备份、存储、许可证、遥测配置等，要求 `role === "admin"`（旧 `/api/admin/telegram` 为个人通知接口的兼容别名，仅操作当前登录账号）。
 
 ---
 
 *文档版本: 2.0 · 对应 Navelix v2.9.5 | Navelix 遵循**自定义许可证**（详见 [LICENSE](https://github.com/timorpic/Navelix/blob/main/LICENSE)）*
+
+
+### 配置作用域与个人通知（Schema v16／v17）
+
+- `GET /api/admin/settings`：管理员读取系统配置，只返回密钥已配置标记。
+- `PATCH /api/admin/settings`：管理员提交 camelCase 字段的局部更新，例如 `{ "weatherEnabled": true }`；未知字段、错误类型、非系统字段及未授权 Pro 设置返回 400。`aiApiKey` / `weatherApiKey` 留空保持不变，传 `null` 明确清除。
+- `GET /api/user/telegram`：读取当前账号通知状态与 Chat ID，不返回 Bot Token。
+- `PUT /api/user/telegram`：局部更新 `botToken`、`chatId`、`enabled`、`notifyTodo`、`notifyAssignment`、`notifyDataTransfer`、`notifyBackup`、`notifySystem`；`clearBotToken: true` 清除密钥。普通用户不能开启全站备份／系统异常订阅。
+- `POST /api/user/telegram`：向当前账号保存的渠道发送测试消息。
+- `POST /api/user/telegram/data-transfer`：仅接受 `{ "action": "export" }`，通知当前账号个人 JSON 导出文件已生成；不接受收件人、消息正文或渠道参数，需登录与 CSRF 校验。
+- `POST /api/user/data` 可附带 `dataTransferAction: "import"`，只在数据事务成功提交后按当前用户的个人数据订阅推送；常规自动保存不附带此字段。个人任务提醒由服务端后台每分钟检查，待办／日历共用 `notifyTodo`，不提供任意消息广播接口。
+
+写请求保留 CSRF / Origin 校验；用户 ID 从登录会话取得，不接受指定其他账号。个人 JSON 格式为 `3.0-personal`，仅包含个人数据和偏好，旧 JSON 导入也不会修改系统设置。

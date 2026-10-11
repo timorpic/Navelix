@@ -1,3 +1,4 @@
+import { USER_CONFIG_MAPPED_COLUMNS, isGlobalScoped } from "./user-config-columns.ts";
 import type { Category, SiteLink, SystemConfig } from "@/types";
 
 /**
@@ -35,7 +36,7 @@ export interface UpdateCheckResult {
 }
 
 /** 服务端未回传版本号时展示的内置默认版本。由 scripts/sync-version.mjs 同步。 */
-export const FALLBACK_VERSION = "v2.10.3";
+export const FALLBACK_VERSION = "v2.10.4";
 
 /** 版本号展示：缺失时回退内置默认版本，缺少 `v` 前缀时补上。 */
 export function versionLabel(version?: string | null): string {
@@ -129,7 +130,25 @@ export function stripConfigSecrets<T>(config: T): T {
   const safe = { ...(config as Record<string, unknown>) };
   delete safe.aiApiKey;
   delete safe.weatherApiKey;
+  delete safe.ai_api_key;
+  delete safe.weather_api_key;
+  delete safe.botToken;
+  delete safe.telegram_bot_token;
   return safe as T;
+}
+
+/** Personal JSON backups never include site settings, derived secret flags or notification credentials. */
+export function personalBackupConfig(input: unknown): Partial<SystemConfig> {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return {};
+  const source = input as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+  for (const col of USER_CONFIG_MAPPED_COLUMNS) {
+    if (isGlobalScoped(col) || !col.configKey || col.kind === "secret") continue;
+    const value = source[col.configKey] ?? source[col.column];
+    if (value === undefined) continue;
+    result[col.configKey] = col.kind === "bool" ? value === true || value === 1 || value === "1" : value;
+  }
+  return result as Partial<SystemConfig>;
 }
 
 export interface FullExportInput {
@@ -148,33 +167,34 @@ export interface FullExportInput {
   localStorageData: LocalBackupState;
   /** 便于测试注入固定导出时间 */
   now?: Date;
+  scope?: "personal" | "full";
 }
 
 /** 组装全量导出载荷（字段取值顺序与重构前的内联实现一致）。 */
 export function buildFullExportPayload(input: FullExportInput): FullExportPayload {
   const { dbData, fallbackConfig, fallbackCategories, fallbackLinks, localStorageData } = input;
   return {
-    version: "2.0",
+    version: input.scope === "personal" ? "3.0-personal" : "2.0",
     exportTime: (input.now ?? new Date()).toISOString(),
     categories: dbData.categories || fallbackCategories,
     links: dbData.links || fallbackLinks,
     projects: dbData.projects || [],
     todos: dbData.todos || [],
-    config: stripConfigSecrets(dbData.config || fallbackConfig),
+    config: input.scope === "personal" ? personalBackupConfig(dbData.config || fallbackConfig) : stripConfigSecrets(dbData.config || fallbackConfig),
     localStorageData,
   };
 }
 
 /** 导出文件名（毫秒时间戳）。 */
-export function fullBackupFileName(now: Date = new Date()): string {
-  return `navelix-full-backup-${Math.floor(now.getTime())}.json`;
+export function fullBackupFileName(now: Date = new Date(), scope: "full" | "personal" = "full"): string {
+  return `navelix-${scope}-backup-${Math.floor(now.getTime())}.json`;
 }
 
 /** 导出成功后的通知中心文案。 */
 export function fullExportSummary(
   payload: Pick<FullExportPayload, "categories" | "links" | "projects" | "todos">,
 ): string {
-  return `全量数据导出成功：包含 ${payload.links.length} 链接、${payload.categories.length} 分组、${payload.projects.length} 项目、${payload.todos.length} 日程`;
+  return `个人数据导出成功：包含 ${payload.links.length} 链接、${payload.categories.length} 分组、${payload.projects.length} 项目、${payload.todos.length} 日程`;
 }
 
 export interface FullImportPayload {
@@ -234,7 +254,7 @@ export function parseFullImportPayload(parsed: unknown): FullImportPayload {
 export function fullImportSummary(
   payload: Pick<FullImportPayload, "categories" | "links" | "projects" | "todos">,
 ): string {
-  return `全网全量配置导入成功：恢复 ${payload.links.length} 链接、${payload.categories.length} 分组、${payload.projects.length} 项目、${payload.todos.length} 日程`;
+  return `个人数据导入成功：恢复 ${payload.links.length} 链接、${payload.categories.length} 分组、${payload.projects.length} 项目、${payload.todos.length} 日程`;
 }
 
 /** 读取浏览器本地数据段（解析失败按 null，与重构前逐项 try/catch 等价）。 */

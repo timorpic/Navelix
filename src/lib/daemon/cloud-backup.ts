@@ -1,5 +1,4 @@
 import { sendTelegramNotification } from "../telegram.ts";
-import { isTelegramNotifySystemEnabled } from "../system-settings.ts";
 
 /**
  * 自动异地云备份任务（每天定时触发）。
@@ -30,13 +29,13 @@ export async function runCloudBackupSchedule(): Promise<void> {
       console.log(`[Daemon] 成功完成每日自动异地云备份: ${fileName}`);
       sendTelegramNotification(
         `✅ Navelix 云备份成功\n\n文件：${fileName}\n位置：${cfg.type} 存储`,
-        isTelegramNotifySystemEnabled(),
+        "backup",
       ).catch(() => {});
     } else {
       console.warn(`[Daemon] 自动异地云备份上传失败:`, res.error);
       sendTelegramNotification(
         `❌ Navelix 云备份上传失败\n\n错误：${res.error || "未知错误"}`,
-        isTelegramNotifySystemEnabled(),
+        "backup",
       ).catch(() => {});
     }
   } catch (err) {

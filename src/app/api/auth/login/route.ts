@@ -15,7 +15,6 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { sendTelegramNotification } from "@/lib/telegram";
-import { isTelegramNotifySystemEnabled } from "@/lib/system-settings";
 import { track } from "@/lib/analytics";
 
 /** 登录失败达到该次数后向 Telegram 推送安全告警 */
@@ -64,7 +63,7 @@ export async function POST(req: Request) {
     if (status.remaining <= LOGIN_ALERT_THRESHOLD) {
       sendTelegramNotification(
         `🚨 Navelix 登录安全告警\n\n检测到对账号「${username}」的连续登录失败。\n${new Date().toLocaleString("zh-CN")}\n剩余允许尝试：${status.remaining} 次\n${status.lockRemainingMs > 0 ? `锁定中，剩余 ${Math.ceil(status.lockRemainingMs / 60000)} 分钟` : ""}`,
-        isTelegramNotifySystemEnabled(),
+        "system",
       ).catch(() => {});
     }
     // 统一中文错误信息：避免通过语言差异泄露"用户是否存在"，同时兼容客户端提示

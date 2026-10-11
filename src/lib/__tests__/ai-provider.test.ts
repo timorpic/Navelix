@@ -8,7 +8,7 @@ import {
   validateAIBaseUrl,
 } from "../ai-provider.ts";
 import { encryptSecret } from "../secret.ts";
-import { GLOBAL_CONFIG_OWNER_KEY } from "../global-config.ts";
+import { setSystemSetting } from "../system-settings.ts";
 
 /**
  * AI 配置解析测试。
@@ -23,7 +23,7 @@ const USER_ID = "ai-provider-test-user";
 function cleanup() {
   db.prepare("DELETE FROM user_configs WHERE user_id = ?").run(USER_ID);
   db.prepare("DELETE FROM users WHERE id = ?").run(USER_ID);
-  db.prepare("DELETE FROM system_settings WHERE key = ?").run(GLOBAL_CONFIG_OWNER_KEY);
+  db.prepare("DELETE FROM system_settings WHERE key IN ('ai_base_url', 'ai_model', 'ai_api_key')").run();
 }
 
 function seedUser() {
@@ -32,31 +32,13 @@ function seedUser() {
     "INSERT INTO users (id, username, password_hash, display_name, role, avatar, created_at) VALUES (?, ?, 'h', 'AI 测试', 'admin', '', ?)",
   ).run(USER_ID, USER_ID, Date.now());
   db.prepare("INSERT INTO user_configs (user_id) VALUES (?)").run(USER_ID);
-  // 将全站配置单例锚点钉到本测试用户，避免受 data 库中既有 admin 行干扰
-  db.prepare(
-    "INSERT INTO system_settings (key, value, updated_at) VALUES (?, ?, ?)",
-  ).run(GLOBAL_CONFIG_OWNER_KEY, USER_ID, Date.now());
+
 }
 
 function setAIConfig(baseUrl: string | null, model: string | null, key?: string) {
-  if (baseUrl !== null) {
-    db.prepare("UPDATE user_configs SET ai_base_url = ? WHERE user_id = ?").run(
-      baseUrl,
-      USER_ID,
-    );
-  }
-  if (model !== null) {
-    db.prepare("UPDATE user_configs SET ai_model = ? WHERE user_id = ?").run(
-      model,
-      USER_ID,
-    );
-  }
-  if (key !== undefined) {
-    db.prepare("UPDATE user_configs SET ai_api_key = ? WHERE user_id = ?").run(
-      key === "" ? "" : encryptSecret(key),
-      USER_ID,
-    );
-  }
+  if (baseUrl !== null) setSystemSetting("ai_base_url", baseUrl);
+  if (model !== null) setSystemSetting("ai_model", model);
+  if (key !== undefined) setSystemSetting("ai_api_key", encryptSecret(key));
 }
 
 describe("ai-provider: resolveAIConfig", () => {

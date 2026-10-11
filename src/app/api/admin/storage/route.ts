@@ -1,11 +1,10 @@
+import { restoreDatabaseSnapshot } from "@/lib/db-restore";
 import { NextRequest, NextResponse } from "next/server";
 import path from "node:path";
 import fs from "node:fs";
 import { requireAdmin } from "@/lib/auth";
 import { canAccessFeature } from "@/lib/license";
 import { isEEAvailable, CE_PRO_MESSAGE } from "@/lib/ee-bridge";
-import { getProFeatureFlags } from "@/lib/ee-gate";
-import { DEFAULT_SITE_TITLE } from "@/lib/constants";
 import { resolveDataDir } from "@/lib/data-dir";
 import {
   getCloudStorageConfig,
@@ -209,78 +208,10 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ error: "云端拉取的数据库文件损坏，已终止还原" }, { status: 400 });
       }
 
-      // 使用 SQLite ATTACH 在线原子事务还原，避免 db.close() 销毁全局连接句柄
       try {
-        db.exec("PRAGMA wal_checkpoint(TRUNCATE);");
-      } catch {}
-
-      const tables = [
-        "users",
-        "user_categories",
-        "user_links",
-        "quick_access_links",
-        "team_categories",
-        "team_category_subscriptions",
-        "projects",
-        "todos",
-        "system_settings",
-        "audit_logs",
-        "notifications",
-        "monitor_accounts",
-        "api_tokens",
-        "link_usage_stats",
-        "migrations_meta",
-      ];
-
-      db.exec(`ATTACH DATABASE '${tempFile.replace(/'/g, "''")}' AS cloud_snapshot;`);
-      try {
-        db.exec("BEGIN IMMEDIATE;");
-        for (const tbl of tables) {
-          try {
-            db.exec(`DELETE FROM main.${tbl};`);
-            db.exec(`INSERT OR REPLACE INTO main.${tbl} SELECT * FROM cloud_snapshot.${tbl};`);
-          } catch {
-            // 容错：个别非核心可选表不存在时跳过
-          }
-        }
-        // 还原后的 Pro 商业特权字段合规性清洗与原子置空（防止通过导入云端快照白嫖 Pro 特性）
-        // 注：这是**还原后清洗**，与读路径的降级目的不同，故保留 SQL 级实现；仅标志位取自共享门禁。
-        //
-        // 必须与上面的表拷贝同处一个事务：此前 COMMIT 在清洗之前，一旦清洗失败，
-        // 快照已经落库且未清洗，而 catch 里的 ROLLBACK 因无活动事务会再抛
-        // "cannot rollback - no transaction is active"，把真实错误盖掉。
-        const { hasCodeInject, hasBrandCustom, hasProbes } = getProFeatureFlags();
-
-        db.prepare(`
-          UPDATE user_configs SET
-            custom_head_scripts = CASE WHEN ? THEN custom_head_scripts ELSE '' END,
-            custom_css = CASE WHEN ? THEN custom_css ELSE '' END,
-            logo_image = CASE WHEN ? THEN logo_image ELSE '' END,
-            site_title = CASE WHEN ? THEN site_title ELSE '${DEFAULT_SITE_TITLE}' END,
-            logo_text = CASE WHEN ? THEN logo_text ELSE 'Navelix' END,
-            link_status_enabled = CASE WHEN ? THEN link_status_enabled ELSE 0 END,
-            link_status_interval = CASE WHEN ? THEN link_status_interval ELSE 60 END
-        `).run(
-          hasCodeInject ? 1 : 0,
-          hasCodeInject ? 1 : 0,
-          hasBrandCustom ? 1 : 0,
-          hasBrandCustom ? 1 : 0,
-          hasBrandCustom ? 1 : 0,
-          hasProbes ? 1 : 0,
-          hasProbes ? 1 : 0,
-        );
-
-        db.exec("COMMIT;");
-      } catch (txnErr) {
-        db.exec("ROLLBACK;");
-        throw txnErr;
+        restoreDatabaseSnapshot(db, tempFile);
       } finally {
-        try {
-          db.exec("DETACH DATABASE cloud_snapshot;");
-        } catch {}
-        try {
-          fs.unlinkSync(tempFile);
-        } catch {}
+        try { fs.unlinkSync(tempFile); } catch { /* best effort */ }
       }
 
       recordAuditLog({

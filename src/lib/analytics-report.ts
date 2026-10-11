@@ -205,11 +205,10 @@ export function buildWeeklyAggregate(): {
   const activeDays = new Set(activeRows.map((r) => r.day)).size;
 
   // ── 外观画像：枚举值（非敏感）──
-  const cfg = getGlobalConfigRow() as
-    | { theme: string; wallpaper_mode: string; link_open_target: string; max_width: string }
-    | undefined;
-
-  // ── AI 渗透率：是否配置 Key + 模型枚举 ──
+  const popularPreference = (column: "theme" | "wallpaper_mode" | "link_open_target" | "max_width", fallback: string) => {
+    const row = db.prepare(`SELECT ${column} AS value FROM user_configs GROUP BY ${column} ORDER BY COUNT(*) DESC, ${column} LIMIT 1`).get() as { value: string } | undefined;
+    return row?.value || fallback;
+  };
   const aiRow = getGlobalConfigRow() as { ai_model: string } | undefined;
   const aiKeyRow = getGlobalConfigRow() as { ai_api_key: string } | undefined;
 
@@ -241,10 +240,10 @@ export function buildWeeklyAggregate(): {
       activeDays,
     },
     profile: {
-      theme: cfg?.theme || "system",
-      wallpaperMode: cfg?.wallpaper_mode || "none",
-      linkOpenTarget: cfg?.link_open_target || "_blank",
-      maxWidth: cfg?.max_width || "1200px",
+      theme: popularPreference("theme", "system"),
+      wallpaperMode: popularPreference("wallpaper_mode", "none"),
+      linkOpenTarget: popularPreference("link_open_target", "_blank"),
+      maxWidth: popularPreference("max_width", "1200px"),
     },
     ai: {
       configured: Boolean(aiKeyRow?.ai_api_key),

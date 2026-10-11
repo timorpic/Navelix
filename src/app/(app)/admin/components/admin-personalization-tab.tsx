@@ -1,5 +1,6 @@
 "use client";
 
+import AdminProfileSearchBarCard from "./admin-profile-search-bar-card";
 import { useNavelixConfig } from "@/context/navelix-context";
 import {
   blurStatusText,
@@ -42,6 +43,8 @@ export default function AdminPersonalizationTab() {
           </div>
         </div>
       </div>
+
+      <AdminProfileSearchBarCard />
 
       {/* ═══════════════════════════════════════════════════════════════
           通栏卡片 1：链接跳转与打开偏好

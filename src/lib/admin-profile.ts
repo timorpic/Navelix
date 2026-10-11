@@ -111,6 +111,9 @@ export interface TelegramConfigState {
   enabled: boolean;
   notifyBackup: boolean;
   notifySystem: boolean;
+  notifyTodo: boolean;
+  notifyAssignment: boolean;
+  notifyDataTransfer: boolean;
   botTokenConfigured: boolean;
   chatId: string;
   chatIdConfigured: boolean;
@@ -124,6 +127,9 @@ export function parseTelegramConfig(data: unknown): TelegramConfigState | null {
       enabled?: unknown;
       notifyBackup?: unknown;
       notifySystem?: unknown;
+      notifyTodo?: unknown;
+      notifyAssignment?: unknown;
+      notifyDataTransfer?: unknown;
       configured?: unknown;
       chatIdConfigured?: unknown;
     };
@@ -134,6 +140,9 @@ export function parseTelegramConfig(data: unknown): TelegramConfigState | null {
     enabled: Boolean(d.status.enabled),
     notifyBackup: Boolean(d.status.notifyBackup),
     notifySystem: Boolean(d.status.notifySystem),
+    notifyTodo: Boolean(d.status.notifyTodo),
+    notifyAssignment: Boolean(d.status.notifyAssignment),
+    notifyDataTransfer: Boolean(d.status.notifyDataTransfer),
     botTokenConfigured: Boolean(d.status.configured),
     chatId: typeof d.chatId === "string" ? d.chatId : "",
     chatIdConfigured: Boolean(d.status.chatIdConfigured),
@@ -163,9 +172,12 @@ export interface TelegramDraft {
   enabled: boolean;
   notifyBackup: boolean;
   notifySystem: boolean;
+  notifyTodo?: boolean;
+  notifyAssignment?: boolean;
+  notifyDataTransfer?: boolean;
 }
 
-export type TelegramSavePatch = Partial<TelegramDraft>;
+export type TelegramSavePatch = Partial<TelegramDraft> & { clearBotToken?: boolean };
 
 /**
  * Telegram 保存载荷：显式传入 patch 时按 patch 提交（当前所有调用点均如此），
@@ -182,6 +194,9 @@ export function buildTelegramPayload(
     enabled: draft.enabled,
     notifyBackup: draft.notifyBackup,
     notifySystem: draft.notifySystem,
+    ...(draft.notifyTodo !== undefined ? { notifyTodo: draft.notifyTodo } : {}),
+    ...(draft.notifyAssignment !== undefined ? { notifyAssignment: draft.notifyAssignment } : {}),
+    ...(draft.notifyDataTransfer !== undefined ? { notifyDataTransfer: draft.notifyDataTransfer } : {}),
   };
 }
 

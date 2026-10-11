@@ -1,5 +1,5 @@
+import { runPersonalTelegramNotifications } from "./personal-telegram.ts";
 import { sendTelegramNotification } from "./telegram.ts";
-import { isTelegramNotifySystemEnabled } from "./system-settings.ts";
 import { maybeRunWeeklyReport } from "./analytics-report.ts";
 import { isAnalyticsReportEnabled } from "./analytics-report.ts";
 import { scheduleAutoBackup } from "./db-backup.ts";
@@ -62,15 +62,19 @@ export function startBackgroundDaemon(): void {
   // 防止「隐私优先」产品在用户无感知时默认开启上报，破坏信任。
   if (isAnalyticsReportEnabled()) {
     console.log(
-      "[Navelix] 匿名遥测默认开启（仅聚合计数，不含个人信息），关闭请设置环境变量 NAVELIX_ANALYTICS_REPORT=off 或在管理后台「个人账号与安全」中关闭",
+      "[Navelix] 匿名遥测默认开启（仅聚合计数，不含个人信息），关闭请设置环境变量 NAVELIX_ANALYTICS_REPORT=off 或在管理后台「系统设置 → 统计与遥测」中关闭",
     );
   }
 
   // 服务启动通知（系统异常场景：服务重启）
   sendTelegramNotification(
     `🟢 Navelix 服务已启动\n\n${new Date().toLocaleString("zh-CN")}`,
-    isTelegramNotifySystemEnabled(),
+    "system",
   ).catch(() => {});
+
+  globalThis.__navelix_daemon_timers__.push(
+    scheduleTask(() => runPersonalTelegramNotifications(), 60_000),
+  );
 
   // 1. 服务启动 10 秒后执行首次数据库维护
   const initTimer = setTimeout(() => {

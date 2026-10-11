@@ -1,22 +1,22 @@
 import { db, seedUserData, type PublicUser, type UserRow } from "./db.ts";
 import { toPublicUser } from "./auth/session.ts";
 import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
+import { validateConfigPatch } from "./config-validation.ts";
 import { encryptSecret } from "./secret.ts";
 import { applyEEGateToConfig } from "./ee-gate.ts";
 import {
-  buildUserConfigsUpsertSql,
+  USER_CONFIG_MAPPED_COLUMNS,
+  isGlobalScoped,
   coerceUserConfigValues,
   defaultUserConfig,
-  GLOBAL_SCOPE_CONFIG_KEYS,
   mapUserConfigRow,
 } from "./user-config-columns.ts";
 import {
   diffConfigChanges,
   getGlobalConfigRow,
   getUserConfigRow,
-  notifyAdminsConfigChanged,
   recordConfigAuditLog,
-  resolveGlobalConfigOwnerId,
+  saveGlobalConfig,
   splitConfigByScope,
 } from "./global-config.ts";
 
@@ -210,26 +210,10 @@ export function getUserData(userId: string): UserDataResult {
     sortOrder: t.sort_order,
   }));
 
-  // Fetch config —— 全站级字段（品牌/AI/天气/社交/安全/探针/页脚）读全局单例行，
-  // 个人偏好字段（theme/壁纸/侧边栏/小组件开关等）读当前用户自己的行，二者合并。
-  // 见 lib/global-config.ts：全站单例由 system_settings['global_config_user_id'] 锚定。
-  const globalRow = getGlobalConfigRow();
-  const personalConfigRow = getUserConfigRow(userId);
-
-  // 全局读只取全站级字段：单例行里还混有锚点 admin 的个人偏好，不得泄漏给其他用户。
-  const globalMapped = globalRow ? mapUserConfigRow(globalRow) : {};
-  for (const k of Object.keys(globalMapped)) {
-    if (!GLOBAL_SCOPE_CONFIG_KEYS.has(k) && k !== "aiKeyConfigured" && k !== "weatherKeyConfigured") {
-      delete (globalMapped as Record<string, unknown>)[k];
-    }
-  }
-
-  const config: SystemConfig = {
-    ...defaultUserConfig(),
-    ...globalMapped,
-    // 个人偏好覆盖在全站之上（同一字段不会同时属于两边，此处仅保证读取兜底）
-    ...(personalConfigRow ? mapUserConfigRow(personalConfigRow) : {}),
-  };
+  // 系统配置与当前用户偏好分别读取；历史个人行中的系统列不得覆盖系统设置。
+  const globalMapped = splitConfigByScope(mapUserConfigRow(getGlobalConfigRow())).global;
+  const personalMapped = splitConfigByScope(mapUserConfigRow(getUserConfigRow(userId))).personal;
+  const config = { ...defaultUserConfig(), ...personalMapped, ...globalMapped } as SystemConfig;
 
   // EE 门禁：无 Pro 授权时强制降级品牌定制 / 代码注入 / 探针开关。
   // 这是 SSR 与 API 两条读取路径的统一收口（见 ee-gate.ts）。
@@ -474,76 +458,64 @@ export type ConfigInput = Record<string, unknown>;
 
 /**
  * 保存配置：按 scope 拆分写入。
- * - 全站级字段（品牌/AI/天气/社交/安全/探针/页脚）→ 写全站单例行；
+ * - 全站级字段（品牌/AI/天气/社交/安全/探针/页脚）→ 写 system_settings；
  * - 个人偏好字段（theme/壁纸/侧边栏/小组件开关等）→ 写当前用户自己的行。
  * 仅更新传入字段，未传字段沿用当前库内值；密钥留空不覆盖。
  * 列定义 / 类型转换 / upsert SQL 全部由 user-config-columns.ts 元数据驱动。
- * 全站字段的真实变更会落审计日志并向所有 admin 广播通知（见 lib/global-config.ts）。
+ * 全站字段的真实变更会落审计日志（见 lib/global-config.ts；不再广播站内通知）。
  */
 export function saveUserConfigs(
   userId: string,
   cfg: ConfigInput,
 ): void {
+  validateConfigPatch(cfg);
   const { global: globalCfg, personal: personalCfg } = splitConfigByScope(cfg);
-
-  // 安全告警：自定义脚本/CSS 会绕过 CSP 直接注入到所有访客页面。
-  // 此处仅记录日志供运维审计；写入权限已由 POST /api/user/data 的 admin 角色门禁收口。
-  if (typeof globalCfg.customHeadScripts === "string" && globalCfg.customHeadScripts.trim() !== "") {
-    console.warn(
-      "[Security] user_configs.custom_head_scripts 已写入非空内容，将以 dangerouslySetInnerHTML 注入页面（绕过 CSP），请确保来源可信且仅管理员可配置。",
-    );
+  const globalFields = Object.keys(globalCfg).filter(key => key !== "aiKeyConfigured" && key !== "weatherKeyConfigured");
+  if (globalFields.length && !db.prepare("SELECT 1 FROM users WHERE id = ? AND role = 'admin'").get(userId)) {
+    throw new Error("仅管理员可修改系统配置");
   }
-  if (typeof globalCfg.customCss === "string" && globalCfg.customCss.trim() !== "") {
-    console.warn(
-      "[Security] user_configs.custom_css 已写入非空内容，将以 <style> 注入页面（绕过 CSP style-src），请确保来源可信且仅管理员可配置。",
-    );
-  }
-
-  // ── 个人偏好：写当前用户自己的行（upsert）──
-  if (Object.keys(personalCfg).length > 0) {
-    const userCurrentRow = getUserConfigRow(userId);
-    const personalValues = coerceUserConfigValues(
-      personalCfg,
-      userCurrentRow,
-      true,
-      encryptSecret,
-    );
-    db.prepare(buildUserConfigsUpsertSql()).run(userId, ...personalValues);
-  }
-
-  // ── 全站字段：写单例行（空库首启回退用调用者 id）──
-  if (Object.keys(globalCfg).length > 0) {
-    let ownerId = resolveGlobalConfigOwnerId();
-    if (!ownerId) ownerId = userId;
-
-    const globalCurrentRow = db
-      .prepare("SELECT * FROM user_configs WHERE user_id = ?")
-      .get(ownerId) as Record<string, unknown> | undefined;
-
-    const globalValues = coerceUserConfigValues(
-      globalCfg,
-      globalCurrentRow,
-      true,
-      encryptSecret,
-    );
-    db.prepare(buildUserConfigsUpsertSql()).run(ownerId, ...globalValues);
-
-    // ── 审计日志 + 通知广播（仅全站字段，个人偏好不通知他人）──
-    const changes = diffConfigChanges(globalCurrentRow, globalCfg);
-    if (changes.length > 0) {
-      const actorRow = db
-        .prepare("SELECT id, username, display_name FROM users WHERE id = ?")
-        .get(userId) as
-        | { id: string; username: string; display_name: string }
-        | undefined;
-
-      recordConfigAuditLog(userId, changes);
-      if (actorRow) {
-        notifyAdminsConfigChanged(
-          { id: actorRow.id, username: actorRow.username, displayName: actorRow.display_name },
-          changes,
-        );
-      }
+  db.exec("SAVEPOINT user_config_save");
+  try {
+    // 安全告警：自定义脚本/CSS 会绕过 CSP 直接注入到所有访客页面。
+    // 此处仅记录日志供运维审计；写入权限已由 POST /api/user/data 的 admin 角色门禁收口。
+    if (typeof globalCfg.customHeadScripts === "string" && globalCfg.customHeadScripts.trim() !== "") {
+      console.warn(
+        "[Security] system_settings.custom_head_scripts 已写入非空内容，将以 dangerouslySetInnerHTML 注入页面（绕过 CSP），请确保来源可信且仅管理员可配置。",
+      );
     }
+    if (typeof globalCfg.customCss === "string" && globalCfg.customCss.trim() !== "") {
+      console.warn(
+        "[Security] system_settings.custom_css 已写入非空内容，将以 <style> 注入页面（绕过 CSP style-src），请确保来源可信且仅管理员可配置。",
+      );
+    }
+
+    // ── 个人偏好：写当前用户自己的行（upsert）──
+    if (Object.keys(personalCfg).length > 0) {
+      const userCurrentRow = getUserConfigRow(userId);
+      const personalValues = coerceUserConfigValues(
+        personalCfg,
+        userCurrentRow,
+        true,
+        encryptSecret,
+      );
+      const columns = USER_CONFIG_MAPPED_COLUMNS.filter(col => !isGlobalScoped(col));
+      const names = columns.map(col => col.column);
+      const values = USER_CONFIG_MAPPED_COLUMNS.flatMap((col, index) => isGlobalScoped(col) ? [] : [personalValues[index]]);
+      const sql = `INSERT INTO user_configs (user_id, ${names.join(", ")}) VALUES (?, ${names.map(() => "?").join(", ")})
+        ON CONFLICT(user_id) DO UPDATE SET ${names.map(name => `${name} = excluded.${name}`).join(", ")}`;
+      db.prepare(sql).run(userId, ...values);
+      recordConfigAuditLog(userId, diffConfigChanges(userCurrentRow, personalCfg), "user_configs");
+    }
+
+    // 系统字段独立存储，审计日志不包含密钥明文。
+    if (Object.keys(globalCfg).length > 0) {
+      const current = getGlobalConfigRow();
+      saveGlobalConfig(globalCfg);
+      recordConfigAuditLog(userId, diffConfigChanges(current, globalCfg));
+    }
+    db.exec("RELEASE user_config_save");
+  } catch (error) {
+    db.exec("ROLLBACK TO user_config_save; RELEASE user_config_save");
+    throw error;
   }
 }

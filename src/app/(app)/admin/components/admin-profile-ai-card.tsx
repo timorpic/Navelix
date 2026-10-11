@@ -1,5 +1,6 @@
 "use client";
 
+import { useSystemSecretClear } from "@/hooks/use-system-secret-clear";
 import { useState } from "react";
 import { useNavelixConfig } from "@/context/navelix-context";
 
@@ -16,6 +17,7 @@ export default function AdminProfileAiCard({
   /** 展示提示并写入通知中心（来自 useToast） */
   notify: (title: string, msg: string) => void;
 }) {
+  const secret = useSystemSecretClear();
   const { config, updateConfig } = useNavelixConfig();
   // 密钥不会从服务端回传；输入框仅在本次填写时保存，提交后立即清空。
   const [aiApiKeyInput, setAiApiKeyInput] = useState("");
@@ -41,6 +43,8 @@ export default function AdminProfileAiCard({
         </span>
       </div>
 
+      <button type="button" onClick={() => secret.clear("aiApiKey")} className="text-xs text-rose-600">清除 AI 密钥</button>
+      {secret.error && <p role="alert">{secret.error}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="sm:col-span-2">
           <label htmlFor="admin-ai-base-url" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">

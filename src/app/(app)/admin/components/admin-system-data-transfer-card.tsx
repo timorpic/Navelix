@@ -4,9 +4,9 @@ import React, { useRef } from "react";
 import type { UseAdminDataTransferResult } from "@/hooks/use-admin-data-transfer";
 
 /**
- * 「系统运维与安全」Tab 的块 6：📦 配置与数据导入导出。
+ * 「系统运维与安全」Tab 的块 6：📦 个人数据导入导出。
  *
- * 从 `admin-system-tab.tsx`（原 928 行）抽出 —— 全量 JSON 导出/导入与
+ * 从 `admin-system-tab.tsx`（原 928 行）抽出 —— 个人 JSON 导出/导入与
  * Sun-Panel、HTML 书签两种兼容导入的接口调用与提示来自
  * `useAdminDataTransfer()`；本组件只保留四个入口与三个隐藏 input，
  * 导入结束后把 input 交给 `resetFileInput()` 清空。
@@ -25,10 +25,10 @@ export default function AdminSystemDataTransferCard({
       <div>
         <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
           <span>📦</span>
-          <span>配置与数据导入导出</span>
+          <span>个人数据导入导出</span>
         </h3>
         <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-          支持一键导出 Navelix 全量配置，或从 Sun-Panel / Chrome HTML 书签导入数据
+          支持一键导出 Navelix 个人配置，或从 Sun-Panel / Chrome HTML 书签导入数据
         </p>
       </div>
 
@@ -99,11 +99,11 @@ export default function AdminSystemDataTransferCard({
           </button>
         </div>
 
-        {/* Card 3: 导出全量 Navelix JSON */}
+        {/* Card 3: 导出个人 Navelix JSON */}
         <div className="bg-gray-50/50 dark:bg-slate-900/40 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 space-y-2.5">
-          <h4 className="text-xs font-bold text-gray-900 dark:text-white">导出全量配置 JSON</h4>
+          <h4 className="text-xs font-bold text-gray-900 dark:text-white">导出个人配置 JSON</h4>
           <p className="text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
-            导出包含全量书签、分组与个性化外观在内的 Navelix JSON 文件。
+            导出包含个人书签、分组与个性化外观在内的 Navelix JSON 文件。
           </p>
           <button
             onClick={transfer.exportAllData}
@@ -113,9 +113,9 @@ export default function AdminSystemDataTransferCard({
           </button>
         </div>
 
-        {/* Card 4: 导入全量 Navelix JSON */}
+        {/* Card 4: 导入个人 Navelix JSON */}
         <div className="bg-gray-50/50 dark:bg-slate-900/40 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 space-y-2.5">
-          <h4 className="text-xs font-bold text-gray-900 dark:text-white">导入全量 Navelix JSON</h4>
+          <h4 className="text-xs font-bold text-gray-900 dark:text-white">导入个人 Navelix JSON</h4>
           <p className="text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
             选择 Navelix 导出的 JSON 文件一键还原书签与外观配置。
           </p>

@@ -9,7 +9,7 @@ import {
   saveUserConfigs,
 } from "../user-data.ts";
 import { decryptSecret } from "../secret.ts";
-import { getGlobalConfigRow } from "../global-config.ts";
+import { getGlobalConfigRow, getUserConfigRow } from "../global-config.ts";
 import {
   checkLoginRateLimit,
   recordLoginFailure,
@@ -28,7 +28,7 @@ const TEST_USER_ID = `test-api-data-${Date.now()}`;
 function createTestUser() {
   db.prepare(`
     INSERT OR IGNORE INTO users (id, username, password_hash, display_name, role, created_at)
-    VALUES (?, ?, 'hash', 'API Test', 'user', ?)
+    VALUES (?, ?, 'hash', 'API Test', 'admin', ?)
   `).run(TEST_USER_ID, TEST_USER_ID, Date.now());
 }
 
@@ -158,7 +158,7 @@ describe("saveUserConfigs (字段合并 + 密钥留空语义)", () => {
     });
     let row = getGlobalConfigRow() as { logo_text: string; theme: string; site_title: string };
     assert.equal(row.logo_text, "测试品牌");
-    assert.equal(row.theme, "dark");
+    assert.equal(getUserConfigRow(TEST_USER_ID)?.theme, "dark");
     // 未传字段应保留此前库内值
     assert.equal(row.site_title, "基线站点");
 
@@ -166,7 +166,7 @@ describe("saveUserConfigs (字段合并 + 密钥留空语义)", () => {
     saveUserConfigs(TEST_USER_ID, { siteTitle: "测试站点" });
     row = getGlobalConfigRow() as { logo_text: string; theme: string; site_title: string };
     assert.equal(row.logo_text, "测试品牌");
-    assert.equal(row.theme, "dark");
+    assert.equal(getUserConfigRow(TEST_USER_ID)?.theme, "dark");
     assert.equal(row.site_title, "测试站点");
   });
 

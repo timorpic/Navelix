@@ -7,8 +7,7 @@ import {
 
 // Seed user starter categories and links ONLY ONCE on initial user creation
 export function seedUserData(userId: string) {
-  // 以「是否已有分类」作为 per-user 种子守卫（配置自 v14 起为全站单例，
-  // 不再按用户各建一行，因此不能再用 user_configs 行是否存在作为守卫）。
+  // 配置可独立于内容创建，因此用分类是否存在判断内容是否已播种。
   const seeded = db
     .prepare("SELECT 1 FROM user_categories WHERE user_id = ? LIMIT 1")
     .get(userId);

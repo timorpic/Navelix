@@ -1,9 +1,7 @@
 import { safeFetch } from "./ssrf.ts";
-import {
-  getTelegramBotToken,
-  getTelegramChatId,
-  isTelegramEnabled,
-} from "./system-settings.ts";
+import { db } from "./db.ts";
+import { decryptSecret } from "./secret.ts";
+import { getTelegramSettings, getSystemTelegramRecipients, isPersonalTelegramEnabled, type PersonalTelegramKind } from "./user-notifications.ts";
 
 /**
  * 向 Telegram Bot 发送一条文本消息。
@@ -12,11 +10,12 @@ import {
  * @param text 要发送的消息正文
  * @returns 是否真正发出（true=已发送成功；false=未配置或发送失败）
  */
-export async function sendTelegramMessage(text: string): Promise<boolean> {
+export async function sendTelegramMessage(userId: string, text: string): Promise<boolean> {
   try {
-    if (!isTelegramEnabled()) return false;
-    const token = getTelegramBotToken();
-    const chatId = getTelegramChatId();
+    const settings = getTelegramSettings(userId);
+    if (!settings.enabled) return false;
+    const token = decryptSecret(settings.bot_token);
+    const chatId = settings.chat_id;
     if (!token || !chatId) return false;
 
     const res = await safeFetch(
@@ -36,28 +35,34 @@ export async function sendTelegramMessage(text: string): Promise<boolean> {
 
     if (!res.ok) {
       // 静默记录，不影响业务
-      const bodyText = await res.text().catch(() => "");
       console.warn(
-        `[Telegram] 发送失败 (HTTP ${res.status}): ${bodyText.slice(0, 200)}`,
+        `[Telegram] 发送失败 (HTTP ${res.status})`,
       );
       return false;
     }
     return true;
-  } catch (err) {
-    console.warn("[Telegram] 发送异常:", err instanceof Error ? err.message : err);
+  } catch {
+    console.warn("[Telegram] 发送异常");
     return false;
   }
 }
 
-/**
- * 发送一条通知类消息，仅在对应场景开关开启时触发。
- * @param text 消息正文
- * @param notifyEnabled 该场景是否开启（由调用方传入对应开关）
- */
-export async function sendTelegramNotification(
-  text: string,
-  notifyEnabled: boolean,
-): Promise<boolean> {
-  if (!notifyEnabled) return false;
-  return sendTelegramMessage(text);
+/** Send system events only to explicitly subscribed, currently authorized administrators. */
+export async function sendTelegramNotification(text: string, kind: "backup" | "system"): Promise<boolean> {
+  let sent = false;
+  for (const userId of getSystemTelegramRecipients(kind)) {
+    if (!db.prepare("SELECT 1 FROM users WHERE id = ? AND role = 'admin'").get(userId)) continue;
+    sent = await sendTelegramMessage(userId, text) || sent;
+  }
+  return sent;
+}
+
+/** Personal events are always addressed to an explicit related user, never system recipients. */
+export async function sendUserTelegramNotification(userId: string, text: string, kind: PersonalTelegramKind): Promise<boolean> {
+  try {
+    if (!isPersonalTelegramEnabled(userId, kind)) return false;
+    return await sendTelegramMessage(userId, text);
+  } catch {
+    return false;
+  }
 }

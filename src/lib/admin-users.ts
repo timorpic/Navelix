@@ -1,5 +1,4 @@
 import { db } from "./db.ts";
-import { rehomeConfigBeforeUserDelete } from "./global-config.ts";
 
 /**
  * 管理员用户管理的领域逻辑（下沉自 src/app/api/admin/users/route.ts）。
@@ -28,6 +27,7 @@ const CASCADE_TABLES = [
   "user_categories",
   "user_links",
   "user_configs",
+  "user_notification_settings",
   "projects",
   "user_todos",
   "notifications",
@@ -46,10 +46,6 @@ const CASCADE_TABLES = [
 export function deleteUserCascade(userId: string): void {
   db.exec("BEGIN IMMEDIATE;");
   try {
-    // 若被删者恰为全站配置单例的锚点 admin，先把配置行迁到其他 admin，
-    // 避免 ON DELETE CASCADE 静默丢失全站配置（见 lib/global-config.ts）。
-    rehomeConfigBeforeUserDelete(userId);
-
     // users 行本身最后删：先清子表，避免外键约束在删除瞬间拒绝
     for (const table of CASCADE_TABLES) {
       db.prepare(`DELETE FROM ${table} WHERE user_id = ?`).run(userId);

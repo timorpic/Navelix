@@ -18,7 +18,7 @@ describe("Full JSON Export & Import Verification", () => {
       // 1. Create user
       db.prepare(`
         INSERT INTO users (id, username, password_hash, display_name, role, created_at)
-        VALUES (?, ?, 'hash', 'Roundtrip User', 'user', ?)
+        VALUES (?, ?, 'hash', 'Roundtrip User', 'admin', ?)
       `).run(testUserId, testUserId, Date.now());
 
       // 2. Populate complete dataset for this user
@@ -79,7 +79,7 @@ describe("Full JSON Export & Import Verification", () => {
       const projRows = db.prepare("SELECT id, name, status, status_color, url FROM projects WHERE user_id = ?").all(testUserId);
       const todoRows = db.prepare("SELECT id, title, priority, done, due_date, project_id, created_at, sort_order FROM user_todos WHERE user_id = ?").all(testUserId);
       // 全站配置为单例行（v14 起），导出/还原都读同一行
-      const configRow = getGlobalConfigRow();
+      const configRow = { ...getUserConfigRow(testUserId), ...getGlobalConfigRow() };
 
       const exportPayload = {
         version: "2.0",
@@ -99,7 +99,7 @@ describe("Full JSON Export & Import Verification", () => {
       const restoredUserId = "test-json-restored-" + Date.now();
       db.prepare(`
         INSERT INTO users (id, username, password_hash, display_name, role, created_at)
-        VALUES (?, ?, 'hash', 'Restored User', 'user', ?)
+        VALUES (?, ?, 'hash', 'Restored User', 'admin', ?)
       `).run(restoredUserId, restoredUserId, Date.now());
 
       saveUserCategories(restoredUserId, parsed.categories);

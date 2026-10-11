@@ -1,4 +1,6 @@
+import { sendUserTelegramNotification } from "@/lib/telegram";
 import { NextRequest, NextResponse } from "next/server";
+import { validateConfigPatch } from "@/lib/config-validation";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { checkCSRF } from "@/lib/csrf";
@@ -45,6 +47,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    if (body.config !== undefined) {
+      try { validateConfigPatch(body.config); }
+      catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "配置无效" }, { status: 400 }); }
+    }
+    if (body.dataTransferAction !== undefined && body.dataTransferAction !== "import") {
+      return NextResponse.json({ error: "无效数据传输操作" }, { status: 400 });
+    }
     db.exec("BEGIN IMMEDIATE");
 
     // 安全门禁与 Pro 商业权限管控：
@@ -101,6 +110,9 @@ export async function POST(req: NextRequest) {
     if (Array.isArray(body.projects)) emitUserEvent(userId, "projects:change");
     if (Array.isArray(body.todos)) emitUserEvent(userId, "todos:change");
 
+    if (body.dataTransferAction === "import") {
+      await sendUserTelegramNotification(userId, "📦 Navelix：个人 JSON 数据导入成功。", "dataTransfer");
+    }
     return NextResponse.json({ success: true });
   } catch (err) {
     try {

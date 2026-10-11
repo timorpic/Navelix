@@ -1,7 +1,6 @@
 import { db } from "./db.ts";
 import { recordAuditLog } from "./audit.ts";
 import { sendTelegramNotification } from "./telegram.ts";
-import { isTelegramNotifyBackupEnabled } from "./system-settings.ts";
 import {
   BACKUP_INTERVAL_MS,
   cleanOldBackups,
@@ -23,7 +22,7 @@ export function performDatabaseBackup(operatorUserId = "system"): string | null 
   if (!outcome.ok) {
     sendTelegramNotification(
       `❌ Navelix 数据库备份失败\n\n错误：${outcome.error}`,
-      isTelegramNotifyBackupEnabled(),
+      "backup",
     ).catch(() => {});
     return null;
   }
@@ -48,7 +47,7 @@ export function performDatabaseBackup(operatorUserId = "system"): string | null 
   // 备份完成 Telegram 通知
   sendTelegramNotification(
     `✅ Navelix 数据库备份成功\n\n文件：${outcome.fileName}\n大小：${formatFileSize(outcome.size)}`,
-    isTelegramNotifyBackupEnabled(),
+    "backup",
   ).catch(() => {});
 
   return outcome.path;

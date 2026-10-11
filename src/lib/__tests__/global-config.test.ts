@@ -2,11 +2,9 @@ import { describe, it, beforeEach, after } from "node:test";
 import assert from "node:assert/strict";
 import { db } from "../db.ts";
 import {
-  GLOBAL_CONFIG_OWNER_KEY,
   diffConfigChanges,
-  getAllAdminIds,
   getGlobalConfigRow,
-  resolveGlobalConfigOwnerId,
+  saveGlobalConfig,
   splitConfigByScope,
 } from "../global-config.ts";
 
@@ -22,7 +20,7 @@ function cleanup() {
     db.prepare("DELETE FROM user_configs WHERE user_id = ?").run(id);
     db.prepare("DELETE FROM users WHERE id = ?").run(id);
   }
-  db.prepare("DELETE FROM system_settings WHERE key = ?").run(GLOBAL_CONFIG_OWNER_KEY);
+  db.prepare("DELETE FROM system_settings WHERE key = 'logo_text'").run();
 }
 
 function seedAdmin(id: string, createdOffset: number) {
@@ -31,45 +29,21 @@ function seedAdmin(id: string, createdOffset: number) {
   ).run(id, id, `Admin ${id}`, Date.now() + createdOffset);
 }
 
-describe("global-config: 锚点解析与单例行", () => {
+describe("global-config: 独立系统设置", () => {
   beforeEach(cleanup);
   after(cleanup);
-
-  it("锚点显式钉到某 admin 时，解析返回该 admin 并读其行", () => {
+  it("系统配置不依赖用户行，删除管理员后保留", () => {
     seedAdmin(A, 0);
-    db.prepare("INSERT INTO user_configs (user_id, logo_text) VALUES (?, '品牌A')").run(A);
-    db.prepare(
-      "INSERT INTO system_settings (key, value, updated_at) VALUES (?, ?, ?)",
-    ).run(GLOBAL_CONFIG_OWNER_KEY, A, Date.now());
-
-    assert.equal(resolveGlobalConfigOwnerId(), A);
-    const row = getGlobalConfigRow() as { logo_text: string };
-    assert.equal(row.logo_text, "品牌A");
-  });
-
-  it("锚点 admin 被删后，解析自动迁到其他 admin，配置行可被重建", () => {
-    seedAdmin(A, 0);
-    db.prepare("INSERT INTO user_configs (user_id, logo_text) VALUES (?, '品牌A')").run(A);
-    db.prepare(
-      "INSERT INTO system_settings (key, value, updated_at) VALUES (?, ?, ?)",
-    ).run(GLOBAL_CONFIG_OWNER_KEY, A, Date.now());
-    assert.equal(resolveGlobalConfigOwnerId(), A);
-
-    // 直接删 A：user_configs 因 FK CASCADE 随 A 删除；重新解析应迁到其它 admin 并重建行
+    saveGlobalConfig({ logoText: "品牌A" });
     db.prepare("DELETE FROM users WHERE id = ?").run(A);
-    const newOwner = resolveGlobalConfigOwnerId();
-    assert.notEqual(newOwner, A);
-    assert.ok(newOwner, "应迁到某个仍存在的 admin");
-    const row = getGlobalConfigRow();
-    assert.ok(row, "配置行应被重建，全站配置不因 owner 删除而永久丢失");
+    assert.equal(getGlobalConfigRow().logo_text, "品牌A");
+    assert.equal(db.prepare("SELECT 1 FROM system_settings WHERE key = 'global_config_user_id'").get(), undefined);
   });
-
-  it("getAllAdminIds 返回全部 admin（含操作者）", () => {
+  it("用户行的旧全站列不能影响系统配置", () => {
     seedAdmin(A, 0);
-    seedAdmin(B, 1000);
-    const ids = getAllAdminIds();
-    assert.ok(ids.includes(A));
-    assert.ok(ids.includes(B));
+    db.prepare("INSERT INTO user_configs (user_id, logo_text) VALUES (?, '旧值')").run(A);
+    saveGlobalConfig({ logoText: "新值" });
+    assert.equal(getGlobalConfigRow().logo_text, "新值");
   });
 });
 

@@ -8,9 +8,6 @@ import { useAdminLicense } from "@/hooks/use-admin-license";
 import { useAdminCloudStorage } from "@/hooks/use-admin-cloud-storage";
 import AdminProLicenseCard from "./admin-pro-license-card";
 import AdminProStorageCard from "./admin-pro-storage-card";
-import AdminProLinkProbeCard from "./admin-pro-link-probe-card";
-import AdminProBrandCard from "./admin-pro-brand-card";
-import AdminProCodeInjectionCard from "./admin-pro-code-injection-card";
 import AdminProLicenseModal from "./admin-pro-license-modal";
 import AdminProBackupListModal from "./admin-pro-backup-list-modal";
 
@@ -54,20 +51,7 @@ export default function AdminProTab() {
           openLicenseModal={license.openLicenseModal}
         />
 
-        {/* 卡片 3：🌐 书签实时网络延迟与存活探针 (6 cols) */}
-        <AdminProLinkProbeCard
-          licenseStatus={license.licenseStatus}
-          onLockedClick={() => {
-            license.openLicenseModal();
-            flash("🔒 书签实时网络延迟与健康存活探针为 Pro 专享功能，请先激活 Pro 许可证");
-          }}
-        />
 
-        {/* 卡片 4：🏷️ 站点与品牌 LOGO (6 cols) */}
-        <AdminProBrandCard licenseStatus={license.licenseStatus} flash={flash} />
-
-        {/* 卡片 5：⚡ 全局代码与统计探针注入 (12 cols) */}
-        <AdminProCodeInjectionCard licenseStatus={license.licenseStatus} />
       </div>
 
       {/* 弹窗 1：💎 License 激活弹窗 */}

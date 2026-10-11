@@ -3,12 +3,13 @@
 import type { UseAdminReportSettingsResult } from "@/hooks/use-admin-report-settings";
 
 /**
- * 「个人账号与安全」Tab 的卡片 7：📡 匿名遥测（隐私透明开关，仅管理员可见）。
+ * 「系统与数据管理」Tab 的块：📡 匿名遥测（帮助改进 Navelix）。
  *
- * 从 `admin-profile-tab.tsx`（原 1219 行）抽出 —— 开关状态与保存逻辑来自
- * `useAdminReportSettings()`；管理员可见性判断仍由父组件在渲染处保留。
+ * 这是**系统全局**设置项（`system_settings` 存储、由 `requireAdmin` 门禁），
+ * 原误放在「个人账号与安全」Tab。现移回系统级配置区。
+ * 开关状态与保存逻辑来自 `useAdminReportSettings()`。
  */
-export default function AdminProfileReportCard({
+export default function AdminSystemTelemetryCard({
   report,
 }: {
   report: UseAdminReportSettingsResult;

@@ -1,3 +1,4 @@
+import { USER_NOTIFICATION_SETTINGS_SQL, TELEGRAM_DELIVERIES_SQL } from "../notification-schema.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { createUserConfigsTableSql } from "../user-config-columns.ts";
 import {
@@ -35,6 +36,9 @@ export function initSchema(db: DatabaseSync): void {
       expires_at INTEGER NOT NULL,
       created_at INTEGER NOT NULL
     );
+
+    ${USER_NOTIFICATION_SETTINGS_SQL}
+    ${TELEGRAM_DELIVERIES_SQL}
 
     ${API_TOKENS_TABLE_SQL}
 

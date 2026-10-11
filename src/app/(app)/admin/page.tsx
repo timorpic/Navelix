@@ -14,14 +14,12 @@ import ProjectAdminPanel from "@/components/project-admin-panel";
 import AdminSidebar from "./components/admin-sidebar";
 import AdminLinksTab from "./components/admin-links-tab";
 import AdminAnalyticsTab from "./components/admin-analytics-tab";
-import AdminSystemTab from "./components/admin-system-tab";
+import AdminSettingsTab from "./components/admin-settings-tab";
+import { SYSTEM_SETTINGS_NAV, USER_SETTINGS_NAV, isSystemSettingsTab } from "@/lib/admin-settings-nav";
 import AdminProTab from "./components/admin-pro-tab";
-import AdminPersonalizationTab from "./components/admin-personalization-tab";
-import AdminProfileTab from "./components/admin-profile-tab";
+import AdminAuditLogsPanel from "./components/admin-audit-logs-panel";
 
-type AdminTab =
-  | "links" | "categories" | "quickAccess" | "projects" | "schedules"
-  | "users" | "analytics" | "system" | "pro" | "personalization" | "profile";
+type AdminTab = import("./components/admin-sidebar").AdminTab;
 
 interface AdminNavItem {
   id: AdminTab;
@@ -38,15 +36,23 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>("links");
   const [users, setUsers] = useState<Array<{ id: string; username: string; displayName: string; role: "admin" | "user"; avatar: string; createdAt: number }>>([]);
 
-  // 支持 URL 深链：/admin?tab=system 等（如首次登录安全设置引导）
+  // URL selection, reload and browser history use the same tab identifiers.
   useEffect(() => {
-    try {
+    const readTab = () => {
       const param = new URL(window.location.href).searchParams.get("tab");
-      if (param && (["links", "categories", "quickAccess", "projects", "schedules", "users", "analytics", "system", "pro", "personalization", "profile"] as AdminTab[]).includes(param as AdminTab)) {
-        queueMicrotask(() => setActiveTab(param as AdminTab));
-      }
-    } catch { /* ignore */ }
+      const valid: string[] = ["links", "categories", "quickAccess", "projects", "schedules", "users", "analytics", "auditLogs", "pro", ...SYSTEM_SETTINGS_NAV.map(item => item.id), ...USER_SETTINGS_NAV.map(item => item.id)];
+      setActiveTab(param && valid.includes(param) ? param as AdminTab : "links");
+    };
+    queueMicrotask(readTab);
+    window.addEventListener("popstate", readTab);
+    return () => window.removeEventListener("popstate", readTab);
   }, []);
+  const selectTab = (tab: AdminTab) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    window.history.pushState(null, "", url);
+    setActiveTab(tab);
+  };
   const [currentUser, setCurrentUser] = useState<{
     username: string; displayName: string; role: "admin" | "user";
     avatar?: string; email?: string; bio?: string;
@@ -138,15 +144,17 @@ export default function AdminPage() {
       ? [{ id: "users" as AdminTab, icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>, label: "账号管理", badge: users.length || 1 }]
       : []),
     { id: "analytics", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="M18 9l-5 5l-2-2l-4 4" /></svg>, label: "访问统计" },
-    { id: "system", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" /></svg>, label: "系统与数据管理" },
-    { id: "pro", icon: <span className="text-sm">💎</span>, label: "Pro 高级功能", badge: "PRO" },
-    { id: "personalization", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor" /><circle cx="17.5" cy="10.5" r=".5" fill="currentColor" /><circle cx="8.5" cy="7.5" r=".5" fill="currentColor" /><circle cx="6.5" cy="12.5" r=".5" fill="currentColor" /><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.92 0 1.7-.75 1.7-1.67 0-.42-.16-.81-.43-1.11-.27-.3-.43-.69-.43-1.11 0-.92.75-1.67 1.67-1.67H17c2.76 0 5-2.24 5-5 0-5.52-4.48-9.5-10-9.5z" /></svg>, label: "界面与功能偏好" },
-    { id: "profile", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="m9 12 2 2 4-4" /></svg>, label: "个人账号与安全" },
+    ...(currentUser?.role === "admin"
+      ? [{ id: "auditLogs" as AdminTab, icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /><path d="M9 14l2 2 4-4" /></svg>, label: "审计日志" }]
+      : []),
+    ...(currentUser?.role === "admin" ? [{ id: "pro" as AdminTab, icon: <span>💎</span>, label: "Pro 高级功能", badge: "PRO" }] : []),
+    ...(currentUser?.role === "admin" ? SYSTEM_SETTINGS_NAV.map(item => ({ ...item, icon: <span>⚙</span> })) : []),
+    ...USER_SETTINGS_NAV.map(item => ({ ...item, icon: <span>·</span> })),
   ];
 
   return (
     <div className="flex min-h-screen flex-col bg-[#F6F8FA] dark:bg-[#151218] text-gray-900 dark:text-slate-100 font-sans antialiased transition-colors duration-200 lg:flex-row">
-      <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} adminNavItems={adminNavItems} currentUser={currentUser} />
+      <AdminSidebar activeTab={activeTab} setActiveTab={selectTab} adminNavItems={adminNavItems} currentUser={currentUser} />
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-20 backdrop-blur-md transition-colors">
@@ -237,7 +245,7 @@ export default function AdminPage() {
 
             {showAdminUserMenu && (
               <div className="absolute top-12 right-0 w-44 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 z-50 animate-fadeIn flex flex-col gap-1 text-xs font-semibold text-gray-700 dark:text-slate-200">
-                <button onClick={() => { setShowAdminUserMenu(false); setActiveTab("profile"); }} className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 text-left transition-colors cursor-pointer"><span>👤</span><span>个人中心</span></button>
+                <button onClick={() => { setShowAdminUserMenu(false); selectTab("profile"); }} className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 text-left transition-colors cursor-pointer"><span>👤</span><span>个人中心</span></button>
                 <div className="my-1 border-t border-gray-100 dark:border-slate-700" />
                 <button onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); router.push("/login"); router.refresh(); }} className="flex items-center gap-2 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-left transition-colors cursor-pointer"><span>🚪</span><span>退出当前登录</span></button>
               </div>
@@ -247,7 +255,7 @@ export default function AdminPage() {
 
         <div className="lg:hidden sticky top-16 z-10 flex gap-1.5 overflow-x-auto border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2">
           {adminNavItems.map((item) => (
-            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${activeTab === item.id ? "bg-[#00C776] text-white" : "bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-300"}`}>
+            <button key={item.id} onClick={() => selectTab(item.id)} className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${activeTab === item.id ? "bg-[#00C776] text-white" : "bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-300"}`}>
               <span>{item.icon}</span><span>{item.label}</span>
               {typeof item.badge !== "undefined" && <span className="text-[10px] opacity-70">{item.badge}</span>}
             </button>
@@ -304,14 +312,16 @@ export default function AdminPage() {
           {activeTab === "users" && currentUser?.role === "admin" && <AdminUsersPanel />}
           {/* TAB 6: 📊 访问统计 → 使用统计 */}
           {activeTab === "analytics" && <AdminAnalyticsTab />}
+          {/* TAB 6.5: 🧾 审计日志（仅管理员） */}
+          {activeTab === "auditLogs" && currentUser?.role === "admin" && <AdminAuditLogsPanel />}
           {/* TAB 7: ⚙️ 系统与数据管理 */}
-          {activeTab === "system" && <AdminSystemTab currentUser={currentUser} />}
+          {(SYSTEM_SETTINGS_NAV.some(item => item.id === activeTab) || USER_SETTINGS_NAV.some(item => item.id === activeTab)) &&
+            (!isSystemSettingsTab(activeTab) || currentUser?.role === "admin") &&
+            <AdminSettingsTab key={activeTab} tab={activeTab} isAdmin={currentUser?.role === "admin"} />}
           {/* TAB 7.5: 💎 Pro 商业特权 */}
-          {activeTab === "pro" && <AdminProTab />}
+          {activeTab === "pro" && currentUser?.role === "admin" && <AdminProTab />}
           {/* TAB 8: 🎨 界面与功能偏好 */}
-          {activeTab === "personalization" && <AdminPersonalizationTab />}
           {/* TAB 9: 👤 个人账号与安全 */}
-          {activeTab === "profile" && <AdminProfileTab />}
         </main>
       </div>
 

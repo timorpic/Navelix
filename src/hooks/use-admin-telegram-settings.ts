@@ -23,6 +23,8 @@ interface UseAdminTelegramSettingsOptions {
 }
 
 export interface UseAdminTelegramSettingsResult {
+  personalSubscriptions: Record<"notifyTodo" | "notifyAssignment" | "notifyDataTransfer", boolean>;
+  togglePersonalSubscription: (key: "notifyTodo" | "notifyAssignment" | "notifyDataTransfer") => void;
   tgEnabled: boolean;
   tgNotifyBackup: boolean;
   tgNotifySystem: boolean;
@@ -47,6 +49,7 @@ export function useAdminTelegramSettings({
   flash,
 }: UseAdminTelegramSettingsOptions): UseAdminTelegramSettingsResult {
   // ── Telegram 通知配置 ──
+  const [personalSubscriptions, setPersonalSubscriptions] = useState({ notifyTodo: false, notifyAssignment: false, notifyDataTransfer: false });
   const [tgEnabled, setTgEnabled] = useState(false);
   const [tgNotifyBackup, setTgNotifyBackup] = useState(true);
   const [tgNotifySystem, setTgNotifySystem] = useState(true);
@@ -58,10 +61,11 @@ export function useAdminTelegramSettings({
 
   const fetchTelegramConfig = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/telegram");
+      const res = await fetch("/api/user/telegram");
       const data = await res.json();
       const state = parseTelegramConfig(data);
       if (state) {
+        setPersonalSubscriptions({ notifyTodo: state.notifyTodo, notifyAssignment: state.notifyAssignment, notifyDataTransfer: state.notifyDataTransfer });
         setTgEnabled(state.enabled);
         setTgNotifyBackup(state.notifyBackup);
         setTgNotifySystem(state.notifySystem);
@@ -83,6 +87,7 @@ export function useAdminTelegramSettings({
   const tgSave = useCallback(
     async (patch?: TelegramSavePatch) => {
       const draft: TelegramDraft = {
+        ...personalSubscriptions,
         botToken: tgBotTokenInput,
         chatId: tgChatId,
         enabled: tgEnabled,
@@ -90,7 +95,7 @@ export function useAdminTelegramSettings({
         notifySystem: tgNotifySystem,
       };
       try {
-        const res = await fetch("/api/admin/telegram", {
+        const res = await fetch("/api/user/telegram", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(buildTelegramPayload(draft, patch)),
@@ -101,30 +106,36 @@ export function useAdminTelegramSettings({
           if (saved) {
             setTgBotTokenConfigured(saved.botTokenConfigured);
             setTgChatIdConfigured(saved.chatIdConfigured);
+            const state = parseTelegramConfig(data);
+            if (state) { setPersonalSubscriptions({ notifyTodo: state.notifyTodo, notifyAssignment: state.notifyAssignment, notifyDataTransfer: state.notifyDataTransfer }); setTgEnabled(state.enabled); setTgNotifyBackup(state.notifyBackup); setTgNotifySystem(state.notifySystem); }
           }
           setTgBotTokenInput("");
           flash("✅ Telegram 配置已保存");
         } else {
+          await fetchTelegramConfig();
           flash(`❌ ${data.error || "保存失败"}`);
         }
       } catch {
+        await fetchTelegramConfig();
         flash("❌ 网络请求失败");
       }
     },
     [
+      personalSubscriptions,
       tgBotTokenInput,
       tgChatId,
       tgEnabled,
       tgNotifyBackup,
       tgNotifySystem,
       flash,
+      fetchTelegramConfig,
     ],
   );
 
   const tgTest = useCallback(async () => {
     setTgTesting(true);
     try {
-      const res = await fetch("/api/admin/telegram", {
+      const res = await fetch("/api/user/telegram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -160,6 +171,8 @@ export function useAdminTelegramSettings({
   }, [tgNotifySystem, tgSave]);
 
   return {
+    personalSubscriptions,
+    togglePersonalSubscription: (key) => { void tgSave({ [key]: !personalSubscriptions[key] }); },
     tgEnabled,
     tgNotifyBackup,
     tgNotifySystem,

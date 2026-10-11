@@ -1,0 +1,57 @@
+import { test, expect, type Page } from "@playwright/test";
+async function login(page: Page, username = "admin", password = "e2e-test-password") {
+  await page.goto("/login");
+  await page.fill("#login-username", username); await page.fill("#login-password", password);
+  await page.getByRole("button", { name: "立即登录" }).click(); await page.waitForURL("/");
+}
+async function write(page: Page, path: string, method: string, body: unknown) {
+  return page.evaluate(async ({ path, method, body }) => {
+    const response = await fetch(path, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    return { status: response.status, data: await response.json() };
+  }, { path, method, body });
+}
+test("设置作用域：管理员系统菜单、个人偏好、Telegram 用户隔离", async ({ page, browser }) => {
+  await login(page);
+  await page.goto("/admin?tab=weather");
+  await expect(page.getByRole("heading", { name: "天气服务" })).toBeVisible();
+  expect((await write(page, "/api/admin/settings", "PATCH", { weatherLocation: "scope-city" })).status).toBe(200);
+  expect((await write(page, "/api/user/telegram", "PUT", { botToken: "admin-fixture-token", chatId: "123" })).status).toBe(200);
+  const username = `scope_${Date.now().toString().slice(-9)}`;
+  expect((await write(page, "/api/admin/users", "POST", { username, password: "scope-test-password", role: "user" })).status).toBe(201);
+  const memberContext = await browser.newContext();
+  const member = await memberContext.newPage();
+  try {
+    await login(member, username, "scope-test-password");
+    await member.goto("/admin?tab=notifications");
+    await expect(member.getByText("Telegram Bot 通知", { exact: true })).toBeVisible();
+    await expect(member.getByRole("button", { name: "系统设置", exact: true })).toHaveCount(0);
+    await expect(member.getByText("系统通知（仅管理员）", { exact: true })).toHaveCount(0);
+    await expect(member.getByText("个人通知", { exact: true })).toBeVisible();
+    await expect(member.getByRole("button", { name: "待办 / 日历到期", exact: true })).toHaveAttribute("aria-pressed", "false");
+    await member.getByRole("button", { name: "待办 / 日历到期", exact: true }).click();
+    await expect(member.getByRole("button", { name: "待办 / 日历到期", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await member.reload();
+    await expect(member.getByRole("button", { name: "待办 / 日历到期", exact: true })).toHaveAttribute("aria-pressed", "true");
+    expect((await write(member, "/api/user/telegram/data-transfer", "POST", { action: "export", userId: "admin" })).status).toBe(400);
+    expect((await write(member, "/api/user/telegram/data-transfer", "POST", { action: "import" })).status).toBe(400);
+    expect((await write(member, "/api/user/telegram/data-transfer", "POST", { action: "export" })).status).toBe(200);
+    const initial = await member.evaluate(async () => (await fetch("/api/user/telegram")).json());
+    expect(initial.status.configured).toBe(false); expect(initial.chatId).toBe("");
+    expect((await write(member, "/api/admin/settings", "PATCH", { weatherLocation: "attack" })).status).toBe(403);
+    expect((await write(member, "/api/user/telegram", "PUT", { notifySystem: true })).status).toBe(400);
+    expect((await write(member, "/api/user/telegram", "PUT", { botToken: "member-fixture-token", chatId: "456" })).status).toBe(200);
+    expect((await write(member, "/api/user/data", "POST", { config: { linkOpenTarget: "_self" } })).status).toBe(200);
+    await member.goto("/admin?tab=personalization");
+    await expect(member.getByRole("button", { name: "在当前页打开" })).toHaveClass(/bg-\[#00C776\]/);
+    await expect(member.getByText("首页搜索栏", { exact: true }).first()).toBeVisible();
+    const stored = await member.evaluate(async () => (await fetch("/api/user/data")).json());
+    expect(stored.config.weatherLocation).toBe("scope-city");
+    expect(stored.config.linkOpenTarget).toBe("_self");
+    const adminTelegram = await page.evaluate(async () => (await fetch("/api/user/telegram")).json());
+    expect(adminTelegram.chatId).toBe("123");
+    await member.setViewportSize({ width: 390, height: 844 });
+    await member.goto("/admin?tab=notifications");
+    await expect(member.getByText("Telegram Bot 通知", { exact: true })).toBeVisible();
+    expect(await member.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  } finally { await memberContext.close(); }
+});

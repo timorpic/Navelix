@@ -3,12 +3,13 @@
 import { useNavelixConfig } from "@/context/navelix-context";
 
 /**
- * 「系统运维与安全」Tab 的块 2：🔍 首页搜索栏。
+ * 「个人账号与安全」Tab 的卡片：🔍 首页搜索栏。
  *
- * 从 `admin-system-tab.tsx`（原 928 行）抽出 —— 单个开关直接读写
- * `useNavelixConfig()`，本身不持有 state，是文件里耦合最少的一块。
+ * 这是**用户级**设置项（`showSearchBar` 属个人偏好、按 user_id 各存各的），
+ * 原误放在「系统与数据管理」Tab。现移回个人设置区。
+ * 单个开关直接读写 `useNavelixConfig()`，本身不持有 state。
  */
-export default function AdminSystemSearchBarCard() {
+export default function AdminProfileSearchBarCard() {
   const { config, updateConfig } = useNavelixConfig();
 
   return (

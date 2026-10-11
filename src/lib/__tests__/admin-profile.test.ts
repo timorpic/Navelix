@@ -202,6 +202,7 @@ describe("admin-profile: parseTelegramConfig", () => {
       enabled: true,
       notifyBackup: false,
       notifySystem: true,
+      notifyTodo: false, notifyAssignment: false, notifyDataTransfer: false,
       botTokenConfigured: true,
       chatId: "123456789",
       chatIdConfigured: false,

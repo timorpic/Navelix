@@ -6,6 +6,7 @@ import { trackClientEvent } from "@/lib/client/analytics";
 import { parseBookmarksHTML } from "@/lib/bookmarks";
 import { parseSunPanelJSON } from "@/lib/sun-panel";
 import {
+  personalBackupConfig,
   bookmarkImportSummary,
   buildFullExportPayload,
   fullBackupFileName,
@@ -33,10 +34,10 @@ export interface UseAdminDataTransferOptions {
 }
 
 export interface UseAdminDataTransferResult {
-  /** 导出全量 Navelix JSON（成功后写入通知中心） */
+  /** 导出个人 Navelix JSON（成功后写入通知中心） */
   exportAllData: () => Promise<void>;
-  /** 导入全量 Navelix JSON；成功后 1.2s 自动刷新页面 */
-  /** 从全量 Navelix JSON 导入；导入结束清空传入的 input */
+  /** 导入个人 Navelix JSON；成功后 1.2s 自动刷新页面 */
+  /** 从个人 Navelix JSON 导入；导入结束清空传入的 input */
   importAllData: (file: File, input: HTMLInputElement | null) => void;
   /** 从 HTML 书签文件合并导入；导入结束清空传入的 input */
   importBookmarks: (file: File, input: HTMLInputElement | null) => void;
@@ -55,7 +56,7 @@ export function useAdminDataTransfer({
     if (input) input.value = "";
   }, []);
 
-  // ── 导出全量 Navelix JSON ──
+  // ── 导出个人 Navelix JSON ──
   const exportAllData = useCallback(async () => {
     try {
       // 1. 先取服务端最新数据
@@ -63,6 +64,7 @@ export function useAdminDataTransfer({
       const dbData = res.ok ? await res.json() : {};
 
       const payload = buildFullExportPayload({
+        scope: "personal",
         dbData,
         fallbackConfig: config,
         fallbackCategories: categories,
@@ -75,17 +77,21 @@ export function useAdminDataTransfer({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = fullBackupFileName();
+      a.download = fullBackupFileName(new Date(), "personal");
       a.click();
       URL.revokeObjectURL(url);
 
       notify("数据管理", fullExportSummary(payload));
+      void fetch("/api/user/telegram/data-transfer", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "export" }),
+      }).catch(() => {});
     } catch {
-      flash("导出全量配置失败");
+      flash("导出个人数据失败");
     }
   }, [config, categories, links, notify, flash]);
 
-  // ── 导入全量 Navelix JSON ──
+  // ── 导入个人 Navelix JSON ──
   // 原文件里该 input 未挂 ref，收尾的 value 清空不可达，故此处不做清空。
   const importAllData = useCallback(
     (file: File, input: HTMLInputElement | null) => {
@@ -94,11 +100,13 @@ export function useAdminDataTransfer({
         try {
           const parsed = JSON.parse(String(reader.result));
           const payload = parseFullImportPayload(parsed);
+          payload.config = personalBackupConfig(payload.config);
 
           const saveRes = await fetch("/api/user/data", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+              dataTransferAction: "import",
               categories: payload.categories,
               links: payload.links,
               projects: payload.projects,

@@ -1,18 +1,9 @@
 import { db } from "./db.ts";
-import { decryptSecret, encryptSecret } from "./secret.ts";
 
 /**
  * 全局系统设置（key-value，存数据库）。
- * 仅服务端使用：Telegram Bot 通知等需要持久化且不宜放 .env 的配置。
+ * 仅服务端使用：系统配置等需要持久化且不宜放 .env 的配置。
  */
-
-export const SYSTEM_SETTING_KEYS = {
-  telegramBotToken: "telegram_bot_token",
-  telegramChatId: "telegram_chat_id",
-  telegramEnabled: "telegram_enabled",
-  telegramNotifyBackup: "telegram_notify_backup",
-  telegramNotifySystem: "telegram_notify_system",
-} as const;
 
 export function getSystemSetting(key: string): string {
   const row = db
@@ -28,84 +19,3 @@ export function setSystemSetting(key: string, value: string): void {
     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
   `).run(key, String(value), Date.now());
 }
-
-// ── Telegram Bot 通知配置 ─────────────────────────────
-// 存储于 system_settings（全站级），Bot Token 加密落盘，支持环境变量兜底。
-
-export function getTelegramBotToken(): string {
-  if (process.env.TELEGRAM_BOT_TOKEN?.trim()) {
-    return process.env.TELEGRAM_BOT_TOKEN.trim();
-  }
-  const raw = getSystemSetting(SYSTEM_SETTING_KEYS.telegramBotToken);
-  if (raw) {
-    const decrypted = decryptSecret(raw);
-    if (decrypted) return decrypted;
-  }
-  return "";
-}
-
-export function setTelegramBotToken(token: string): void {
-  const enc = encryptSecret(token.trim());
-  setSystemSetting(SYSTEM_SETTING_KEYS.telegramBotToken, enc);
-}
-
-export function isTelegramBotTokenConfigured(): boolean {
-  if (process.env.TELEGRAM_BOT_TOKEN?.trim()) return true;
-  const raw = getSystemSetting(SYSTEM_SETTING_KEYS.telegramBotToken);
-  return Boolean(raw && decryptSecret(raw));
-}
-
-export function getTelegramChatId(): string {
-  const env = process.env.TELEGRAM_CHAT_ID?.trim();
-  if (env) return env;
-  return getSystemSetting(SYSTEM_SETTING_KEYS.telegramChatId).trim();
-}
-
-export function setTelegramChatId(chatId: string): void {
-  setSystemSetting(SYSTEM_SETTING_KEYS.telegramChatId, chatId.trim());
-}
-
-function telegramFlag(key: string, envName: string, fallback: boolean): boolean {
-  const env = process.env[envName];
-  if (env === "1" || env === "true") return true;
-  if (env === "0" || env === "false") return false;
-  const raw = getSystemSetting(key);
-  if (raw === "1" || raw === "true") return true;
-  if (raw === "0" || raw === "false") return false;
-  return fallback;
-}
-
-export function isTelegramEnabled(): boolean {
-  return telegramFlag(SYSTEM_SETTING_KEYS.telegramEnabled, "TELEGRAM_ENABLED", false);
-}
-
-export function setTelegramEnabled(enabled: boolean): void {
-  setSystemSetting(SYSTEM_SETTING_KEYS.telegramEnabled, enabled ? "1" : "0");
-}
-
-export function isTelegramNotifyBackupEnabled(): boolean {
-  return telegramFlag(SYSTEM_SETTING_KEYS.telegramNotifyBackup, "TELEGRAM_NOTIFY_BACKUP", true);
-}
-
-export function setTelegramNotifyBackupEnabled(enabled: boolean): void {
-  setSystemSetting(SYSTEM_SETTING_KEYS.telegramNotifyBackup, enabled ? "1" : "0");
-}
-
-export function isTelegramNotifySystemEnabled(): boolean {
-  return telegramFlag(SYSTEM_SETTING_KEYS.telegramNotifySystem, "TELEGRAM_NOTIFY_SYSTEM", true);
-}
-
-export function setTelegramNotifySystemEnabled(enabled: boolean): void {
-  setSystemSetting(SYSTEM_SETTING_KEYS.telegramNotifySystem, enabled ? "1" : "0");
-}
-
-/** 后台读取当前 Telegram 配置状态（不返回 token 明文） */
-export function getTelegramConfigStatus() {
-  return {
-    configured: isTelegramBotTokenConfigured(),
-    chatIdConfigured: getTelegramChatId().length > 0,
-    enabled: isTelegramEnabled(),
-    notifyBackup: isTelegramNotifyBackupEnabled(),
-    notifySystem: isTelegramNotifySystemEnabled(),
-  };
-}

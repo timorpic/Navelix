@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { sendTelegramNotification } from "../telegram.ts";
-import { isTelegramNotifySystemEnabled } from "../system-settings.ts";
 import { resolveDataDir } from "../data-dir.ts";
 
 /**
@@ -33,12 +32,12 @@ export function checkWalSize(): void {
     if (size > 1024 * 1024 * 1024) {
       sendTelegramNotification(
         `🚨 Navelix WAL 文件异常膨胀\n\nnavelix.db-wal：${mb(size)}\n已超过 1GB，请立即检查写入异常或执行 VACUUM / checkpoint。`,
-        isTelegramNotifySystemEnabled(),
+        "system",
       ).catch(() => {});
     } else if (size > 256 * 1024 * 1024) {
       sendTelegramNotification(
         `⚠️ Navelix WAL 文件偏大\n\nnavelix.db-wal：${mb(size)}\n已超过 256MB，若持续增长建议检查高写入任务。`,
-        isTelegramNotifySystemEnabled(),
+        "system",
       ).catch(() => {});
     }
   } catch {
@@ -75,13 +74,13 @@ export function checkDiskUsage(): void {
     if (dataSize > 2 * 1024 * 1024 * 1024) {
       sendTelegramNotification(
         `⚠️ Navelix 数据目录占用过高\n\ndata/ 目录：${mb(dataSize)}\n请及时清理无用数据。`,
-        isTelegramNotifySystemEnabled(),
+        "system",
       ).catch(() => {});
     }
     if (backupSize > 1024 * 1024 * 1024) {
       sendTelegramNotification(
         `⚠️ Navelix 备份目录占用过高\n\nbackups/ 目录：${mb(backupSize)}\n请及时清理旧备份。`,
-        isTelegramNotifySystemEnabled(),
+        "system",
       ).catch(() => {});
     }
   } catch {

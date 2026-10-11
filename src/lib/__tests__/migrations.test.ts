@@ -32,7 +32,7 @@ describe("Schema integrity after migrations", () => {
   });
 
   it("should keep ON DELETE CASCADE foreign keys to users on core tables", () => {
-    for (const t of ["sessions", "user_categories", "user_links", "user_configs", "user_todos", "projects", "notifications"]) {
+    for (const t of ["sessions", "user_categories", "user_links", "user_configs", "user_notification_settings", "user_todos", "projects", "notifications"]) {
       const fks = db.prepare(`PRAGMA foreign_key_list(${t})`).all() as Array<{
         table: string;
         on_delete: string;
@@ -53,6 +53,6 @@ describe("Schema integrity after migrations", () => {
 
   it("should be at the latest schema version", () => {
     const ver = (db.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
-    assert.equal(ver, 15);
+    assert.equal(ver, 17);
   });
 });

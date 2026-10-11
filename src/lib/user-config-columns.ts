@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { SystemConfig } from "@/types";
-import { ensureColumn } from "./migrations/shared.ts";
+import { ensureColumn } from "./db/columns.ts";
 import {
   DEFAULT_CUSTOM_FOOTER,
   DEFAULT_SITE_TITLE,
@@ -342,7 +342,7 @@ export const USER_CONFIG_MAPPED_COLUMNS: UserConfigColumnDef[] =
  * 全站级（全局共享）配置的 configKey 集合。
  *
  * 语义：这些字段是「站点级」——品牌、AI、天气、社交、安全策略、代码注入、探针、
- * 页脚——由任意 admin 修改后全员（含成员与访客）看到一致值，存储于全站单例行。
+ * 页脚——由任意 admin 修改后全员（含成员与访客）看到一致值，存储于 system_settings，与用户生命周期无关。
  * 其余字段（theme/壁纸/侧边栏/右侧小组件开关/内容宽度/搜索栏等）为**个人偏好**，
  * 仍按 user_id 各存各的（见 lib/global-config.ts 的读写拆分）。
  */
@@ -428,14 +428,14 @@ export function mapUserConfigRow(
         if (col.configuredFlag) cfg[col.configuredFlag] = Boolean(v);
         break;
       case "bool":
-        cfg[col.configKey!] = toBool(v);
+        cfg[col.configKey!] = v === undefined || v === null ? Boolean(col.configDefault) : toBool(v);
         break;
       case "num":
         cfg[col.configKey!] = Number(v) || Number(col.configDefault);
         break;
       case "str":
       default:
-        cfg[col.configKey!] = String(v || col.configDefault);
+        cfg[col.configKey!] = String(v ?? col.configDefault);
         break;
     }
   }
@@ -512,7 +512,7 @@ export function coerceUserConfigValues(
             : Number(current ?? col.configDefault);
         break;
       case "secret":
-        v =
+        v = input === null ? "" :
           typeof input === "string" && input.trim() !== ""
             ? input.trim()
             : String(current || "");

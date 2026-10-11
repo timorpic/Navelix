@@ -1,3 +1,4 @@
+import { restoreDatabaseSnapshot } from "@/lib/db-restore";
 import fs from "node:fs";
 import path from "node:path";
 import { NextRequest, NextResponse } from "next/server";
@@ -7,7 +8,6 @@ import { performDatabaseBackup } from "@/lib/db-backup";
 import { runMigrations } from "@/lib/migrations";
 import { recordAuditLog } from "@/lib/audit";
 import { track } from "@/lib/analytics";
-import { DEFAULT_SITE_TITLE } from "@/lib/constants";
 import { resolveDataDir } from "@/lib/data-dir";
 
 // GET: 下载当前 SQLite 数据库的物理快照备份文件 (.db)
@@ -97,94 +97,14 @@ export async function POST(req: NextRequest) {
     const tempRestorePath = path.join(resolveDataDir(), `restore-temp-${Date.now()}.db`);
     fs.writeFileSync(tempRestorePath, buffer);
 
-    // 3. 将上传的数据库中的数据无缝同步还原至当前库
-    const attachDbName = `restore_${Date.now()}`;
-    const sanitizedPath = tempRestorePath.replace(/'/g, "''");
-    db.exec(`ATTACH DATABASE '${sanitizedPath}' AS ${attachDbName};`);
-
     try {
-      db.exec("BEGIN TRANSACTION;");
-      // 还原全量业务与设置数据表
-      const tables = [
-        "users",
-        "user_categories",
-        "user_links",
-        "user_configs",
-        "projects",
-        "user_todos",
-        "api_tokens",
-        "notifications",
-      ];
-      for (const t of tables) {
-        try {
-          db.exec(`DELETE FROM ${t};`);
-          db.exec(`INSERT OR REPLACE INTO ${t} SELECT * FROM ${attachDbName}.${t};`);
-        } catch {
-          // 如果旧版本库中不存在某些表，安全跳过
-        }
-      }
-      db.exec("COMMIT;");
-    } catch (txErr) {
-      db.exec("ROLLBACK;");
-      throw txErr;
+      restoreDatabaseSnapshot(db, tempRestorePath);
     } finally {
-      try {
-        db.exec(`DETACH DATABASE ${attachDbName};`);
-      } catch {}
-      try {
-        fs.unlinkSync(tempRestorePath);
-      } catch {}
+      try { fs.unlinkSync(tempRestorePath); } catch { /* best effort */ }
     }
 
     // 4. 再次执行自动迁移确保结构最新
     runMigrations(db);
-
-    // 5. 数据还原后的 Pro 商业字段合规性清洗与防护（防止在 CE/未授权环境下通过导入 .db 白嫖 Pro 特性）
-    // 注：这是**还原后清洗**，与读路径的降级目的不同，故保留 SQL 级实现；仅标志位取自共享门禁。
-    //
-    // 清洗刻意放在上面的 COMMIT 与 runMigrations 之后：迁移可能重建 user_configs 表，
-    // 清洗必须先于迁移会失效。代价是此步失败时数据已落库 —— 因此单独捕获，
-    // 明确告知「已还原但未完成门禁清洗」，而不是让用户以为还原没生效（那会误导他重试）。
-    try {
-      const { getProFeatureFlags } = await import("@/lib/ee-gate");
-      const { hasCodeInject, hasBrandCustom, hasProbes } = getProFeatureFlags();
-
-      db.prepare(`
-        UPDATE user_configs SET
-          custom_head_scripts = CASE WHEN ? THEN custom_head_scripts ELSE '' END,
-          custom_css = CASE WHEN ? THEN custom_css ELSE '' END,
-          logo_image = CASE WHEN ? THEN logo_image ELSE '' END,
-          site_title = CASE WHEN ? THEN site_title ELSE '${DEFAULT_SITE_TITLE}' END,
-          logo_text = CASE WHEN ? THEN logo_text ELSE 'Navelix' END,
-          link_status_enabled = CASE WHEN ? THEN link_status_enabled ELSE 0 END,
-          link_status_interval = CASE WHEN ? THEN link_status_interval ELSE 60 END
-      `).run(
-        hasCodeInject ? 1 : 0,
-        hasCodeInject ? 1 : 0,
-        hasBrandCustom ? 1 : 0,
-        hasBrandCustom ? 1 : 0,
-        hasBrandCustom ? 1 : 0,
-        hasProbes ? 1 : 0,
-        hasProbes ? 1 : 0,
-      );
-    } catch (gateErr) {
-      console.error("[Database Restore] Pro 门禁清洗失败（数据已还原）:", gateErr);
-      recordAuditLog({
-        userId: adminUser.id,
-        action: "database.restore.gate_failed",
-        target: "navelix.db",
-        details: `还原成功但 Pro 字段清洗失败：${
-          gateErr instanceof Error ? gateErr.message : String(gateErr)
-        }`,
-      });
-      return NextResponse.json(
-        {
-          error:
-            "数据库已还原，但 Pro 门禁字段清洗失败，未授权环境下的商业特性可能仍然生效，请检查服务端日志后重试或手工清理。",
-        },
-        { status: 500 },
-      );
-    }
 
     recordAuditLog({
       userId: adminUser.id,

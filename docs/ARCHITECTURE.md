@@ -58,6 +58,10 @@ API 处理器保持 HTTP 职责，复杂行为使用 `admin-*`、`todos-projects
 
 主要实体包括用户、会话、API Token、用户分类、链接、用户配置、项目、待办、通知、统计与审计记录；具体字段、外键与索引查阅 Schema。分类和链接等使用用户维度的复合标识，不能凭单独对象 ID 跨用户操作。
 
+配置自 Schema v16 起按作用域分离：`system_settings` 保存站点品牌、AI、天气、社交主页、访问策略、代码注入、探针及统计设置；`user_configs` 保存各账号的界面和功能偏好；`user_notification_settings` 按 `(user_id, channel)` 保存个人通知渠道。历史 `user_configs` 系统列暂留但停止业务读写，`global_config_user_id` 已移除。`getUserData()` 只合并系统字段与当前用户的个人字段，避免旧个人行覆盖全站值。系统写入要求管理员，通知渠道仅允许当前账号读写；系统事件发送时再次检查接收人的管理员身份。
+
+个人 JSON 备份不包含系统配置与通知凭据；全站物理备份包含三个作用域。恢复先升级临时快照，再在事务内恢复业务与配置，执行 Pro 字段清洗；不恢复登录会话。密钥跨实例恢复仍需原加密主密钥。
+
 升级由 `migrations/versions/` 的有序迁移和 `PRAGMA user_version` 跟踪。新增字段同时考虑新建库与历史库，多步写入使用事务。迁移需要备份时优先使用显式传入数据库连接的 `db-backup-core.ts`，避免初始化导入环。
 
 ## 后台任务与商业扩展
@@ -67,3 +71,9 @@ API 处理器保持 HTTP 职责，复杂行为使用 `admin-*`、`todos-projects
 后台任务涵盖维护、备份、磁盘检查与模型刷新等。当前结构适合单服务配本地持久卷，不能直接假设多副本共享 SQLite 与定时任务具有分布式协调能力。
 
 部署约束和备份说明见 [DEPLOYMENT](DEPLOYMENT.md)；更详细背景见 [Wiki 架构](../wiki/Architecture-系统架构与技术选型.md)。
+
+### Telegram 事件作用域
+
+`user_notification_settings` 按账号保存加密渠道和显式订阅。`telegram.ts` 的 `sendUserTelegramNotification` 用于个人事件；`sendTelegramNotification` 用于系统事件，并在发送时复核管理员身份。本地与云端备份统一使用 `backup`，服务启动、磁盘／WAL、登录异常使用 `system`。
+
+个人任务事件由 `personal-telegram.ts` 调度：任务指派随待办／项目事务写入 `telegram_deliveries`；到期提醒复用日历与待办的日期，在服务器本地时区当天 09:00 后入队。守护任务每分钟处理，使用持久化去重键、原子租约和最多三次重试，投递前重新读取任务与订阅。记录保存 30 天，随账号级联删除并包含于数据库快照还原。个人 JSON 导入在服务端提交后推送，浏览器导出完成通过仅允许固定操作的当前用户接口通知；正常自动保存不触发数据导入消息。
