@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     }
 
     // 2. 读取 AI 配置（统一解析见 lib/ai-provider.ts）
-    const { apiKey, modelName, targetUrl } = resolveAIConfig(user.id);
+    const { apiKey, modelName, targetUrl } = resolveAIConfig();
 
     // 3. AI 生成 Markdown 摘要（无 Key 或抓取失败时回退为纯文本摘要）
     const makeFallbackNotes = (): string => {

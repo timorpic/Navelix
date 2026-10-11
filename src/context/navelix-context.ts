@@ -38,7 +38,6 @@ export const defaultConfig: SystemConfig = {
   glassmorphism: false,
   sidebarDefaultState: "expanded",
   clockWidgetMode: "time",
-  modelMonitorEnabled: true,
   aiCopilotEnabled: true,
   todayActivityEnabled: true,
   recentVisitsEnabled: true,

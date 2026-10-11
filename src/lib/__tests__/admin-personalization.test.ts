@@ -66,14 +66,13 @@ describe("状态文案", () => {
 });
 
 describe("buildWidgetToggles", () => {
-  it("固定 6 项，顺序与 id 稳定", () => {
+  it("固定 5 项，顺序与 id 稳定", () => {
     const toggles = buildWidgetToggles({});
     assert.deepEqual(
       toggles.map((t) => t.id),
       [
         "aiCopilot",
         "todayActivity",
-        "modelMonitor",
         "linkStatus",
         "quickAccess",
         "pendingReminders",
@@ -84,7 +83,6 @@ describe("buildWidgetToggles", () => {
       [
         "aiCopilotEnabled",
         "todayActivityEnabled",
-        "modelMonitorEnabled",
         "linkStatusEnabled",
         "recentVisitsEnabled",
         "pendingRemindersEnabled",
@@ -92,7 +90,7 @@ describe("buildWidgetToggles", () => {
     );
   });
 
-  it("空配置下 6 项全部为显示（缺省即开启）", () => {
+  it("空配置下 5 项全部为显示（缺省即开启）", () => {
     for (const t of buildWidgetToggles({})) {
       assert.equal(t.enabled, true, `${t.id} 缺省应为显示`);
       assert.equal(t.toggleValue, false, `${t.id} 点击后应切到隐藏`);
@@ -100,11 +98,10 @@ describe("buildWidgetToggles", () => {
   });
 
   it("显式 false 的项为隐藏，点击后切到显示", () => {
-    const toggles = buildWidgetToggles({ modelMonitorEnabled: false, linkStatusEnabled: false });
+    const toggles = buildWidgetToggles({ linkStatusEnabled: false });
     const byId = Object.fromEntries(toggles.map((t) => [t.id, t]));
-    assert.equal(byId.modelMonitor.enabled, false);
-    assert.equal(byId.modelMonitor.toggleValue, true);
     assert.equal(byId.linkStatus.enabled, false);
+    assert.equal(byId.linkStatus.toggleValue, true);
     assert.equal(byId.aiCopilot.enabled, true, "未设置的项不受影响");
   });
 

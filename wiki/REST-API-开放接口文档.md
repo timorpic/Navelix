@@ -550,9 +550,8 @@ Content-Type: application/json
 | `POST` | `/api/auth/logout` | 登出 |
 | `POST` | `/api/auth/login` · `/api/auth/register` | 公开端点；登录带**防爆破限流** |
 
-### 10.6 管理端与账号监控
+### 10.6 管理端
 - `POST`/`GET`/`PATCH` `/api/admin/*` —— 系统设置、用户管理、备份、存储、许可证、遥测配置等，全部要求 `role === "admin"`。
-- `/api/monitor/*` —— 反重力 / Codex 等模型账号的额度监控与 OAuth 授权流程（`oauth/start`、`oauth/callback`、`oauth/status`、`disconnect`、`refresh`、`accounts`）。
 
 ---
 

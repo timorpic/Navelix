@@ -4,7 +4,6 @@ export type RealtimeEventType =
   | "links:change"
   | "projects:change"
   | "todos:change"
-  | "monitor:update"
   | "notifications:new"
   | "categories:change";
 

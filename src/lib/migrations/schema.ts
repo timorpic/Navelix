@@ -60,14 +60,11 @@ export function ensureSchema(db: DatabaseSync): void {
 
 /**
  * 后置 Schema 补齐（在版本迁移之后执行）：
- * 补齐 model_accounts 列 + user_links.notes。
- * 需在 v12 创建 model_accounts 表之后才能安全执行。
+ * 补齐 user_links.notes。
  * user_configs 列在此重复补齐一次：v5 重建表会丢失其中的小组件开关等
  * 后置列，ensureUserConfigColumns 幂等，已存在列安全跳过。
  */
 export function ensureSchemaPostMigrations(db: DatabaseSync): void {
-  ensureColumn(db, "model_accounts", "project_id", "project_id TEXT NOT NULL DEFAULT ''");
-  ensureColumn(db, "model_accounts", "quota_summary", "quota_summary TEXT NOT NULL DEFAULT ''");
   ensureUserConfigColumns(db);
   ensureColumn(db, "user_links", "notes", "notes TEXT NOT NULL DEFAULT ''");
 

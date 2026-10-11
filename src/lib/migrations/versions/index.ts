@@ -9,8 +9,9 @@ import { migrateV8 } from "./v8.ts";
 import { migrateV9 } from "./v9.ts";
 import { migrateV10 } from "./v10.ts";
 import { migrateV11 } from "./v11.ts";
-import { migrateV12 } from "./v12.ts";
 import { migrateV13 } from "./v13.ts";
+import { migrateV14 } from "./v14.ts";
+import { migrateV15 } from "./v15.ts";
 
 /**
  * 版本化迁移注册表（按 user_version 顺序执行）。
@@ -31,6 +32,7 @@ export const VERSIONED_MIGRATIONS: Array<{
   { version: 9, name: "v9: clean up leftover test accounts", migrate: migrateV9 },
   { version: 10, name: "v10: drop legacy search engine columns", migrate: migrateV10 },
   { version: 11, name: "v11: drop legacy SenseNova columns", migrate: migrateV11 },
-  { version: 12, name: "v12: create model_accounts table", migrate: migrateV12 },
   { version: 13, name: "v13: create analytics_events table", migrate: migrateV13 },
+  { version: 14, name: "v14: collapse user_configs to global singleton", migrate: migrateV14 },
+  { version: 15, name: "v15: drop model_accounts table and monitor column", migrate: migrateV15 },
 ];

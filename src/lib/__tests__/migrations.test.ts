@@ -23,11 +23,6 @@ describe("Schema integrity after migrations", () => {
       assert.ok(userCfg.includes(col), `user_configs.${col} should exist`);
     }
 
-    const ma = tableColumns("model_accounts");
-    for (const col of ["project_id", "quota_summary", "refresh_token_enc", "id_token_enc", "last_error"]) {
-      assert.ok(ma.includes(col), `model_accounts.${col} should exist`);
-    }
-
     assert.ok(tableColumns("sessions").includes("last_active_at"), "sessions.last_active_at");
     assert.ok(tableColumns("sessions").includes("ip_address"), "sessions.ip_address");
     assert.ok(tableColumns("user_todos").includes("assignee_id"), "user_todos.assignee_id");
@@ -37,7 +32,7 @@ describe("Schema integrity after migrations", () => {
   });
 
   it("should keep ON DELETE CASCADE foreign keys to users on core tables", () => {
-    for (const t of ["sessions", "user_categories", "user_links", "user_configs", "user_todos", "projects", "notifications", "model_accounts"]) {
+    for (const t of ["sessions", "user_categories", "user_links", "user_configs", "user_todos", "projects", "notifications"]) {
       const fks = db.prepare(`PRAGMA foreign_key_list(${t})`).all() as Array<{
         table: string;
         on_delete: string;
@@ -58,6 +53,6 @@ describe("Schema integrity after migrations", () => {
 
   it("should be at the latest schema version", () => {
     const ver = (db.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
-    assert.equal(ver, 13);
+    assert.equal(ver, 15);
   });
 });

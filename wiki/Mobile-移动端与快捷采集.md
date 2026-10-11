@@ -63,39 +63,6 @@
 
 > 仅接受 `http` / `https` 链接。旧写法（GET `/api/user/data` 取全量快照 → 追加 → POST 写回）已无必要。
 
-### 3.3 查看模型额度
-
-「获取 URL 内容」`<BASE>/api/monitor/accounts`（GET，Bearer）→「显示结果」。响应为 JSON，包含反重力 / Codex 各账号的额度窗口与订阅状态。
-
-## 4. 🔲 iOS 小组件（Scriptable 模板）
-
-不支持快捷指令的小组件场景，可用免费国产 [Scriptable](https://scriptable.app) 渲染：
-
-```javascript
-// 复制为 Scriptable 脚本 → 添加"scriptable"小组件，每 15 分钟刷新
-const BASE = "https://你的实例";   // ← 改为你的地址
-const TOKEN = "nvx_live_xxx";      // ← 你的 API 令牌
-const req = new Request(BASE + "/api/monitor/accounts");
-req.headers = { Authorization: "Bearer " + TOKEN };
-const data = await req.loadJSON();
-
-let body = "";
-(data.accounts || []).forEach((a) => {
-  const per = a.quotaSummary?.groups
-    ?.map((g) => g.windows.map((w) => `${g.shortName} ${w.label} ${Math.round((w.remainingFraction || 0) * 100)}%`).join("  "))
-    .join("\n");
-  body += `${a.provider === "antigravity" ? "🌀" : "🧠"} ${a.label}\n${per || a.codexUsage ? "额度见 App" : "未查询"}\n`;
-});
-
-const w = new ListWidget();
-w.backgroundColor = new Color("#151218");
-const t = w.addText("🧠 Navelix 额度");
-t.font = Font.boldSystemFont(16); t.textColor = Color.white();
-const b = w.addText(body || "暂无账号");
-b.font = Font.systemFont(12); b.textColor = new Color("#9ca3af");
-Script.setWidget(w);
-```
-
 ---
 
 *相关：[[REST API 开放接口文档|REST-API-开放接口文档]] · [[安全机制与运维规范|Security-安全机制与运维规范]]*

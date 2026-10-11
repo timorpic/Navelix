@@ -4,7 +4,6 @@ import { maybeRunWeeklyReport } from "./analytics-report.ts";
 import { isAnalyticsReportEnabled } from "./analytics-report.ts";
 import { scheduleAutoBackup } from "./db-backup.ts";
 import { runDatabaseMaintenance } from "./daemon/maintenance.ts";
-import { refreshAllModelAccounts } from "./daemon/model-refresh.ts";
 import { checkDiskUsage, checkWalSize } from "./daemon/disk.ts";
 import { runCloudBackupSchedule } from "./daemon/cloud-backup.ts";
 
@@ -13,7 +12,6 @@ import { runCloudBackupSchedule } from "./daemon/cloud-backup.ts";
  *
  * 各任务实现已按类型拆分至 `./daemon/` 子目录：
  * - maintenance.ts   数据库自维护（清理过期会话）
- * - model-refresh.ts 模型配额预拉取 + 书签健康巡检
  * - cloud-backup.ts  Pro 授权下的每日异地云备份
  * - disk.ts          磁盘占用与 WAL 膨胀阈值告警
  *
@@ -74,29 +72,23 @@ export function startBackgroundDaemon(): void {
     isTelegramNotifySystemEnabled(),
   ).catch(() => {});
 
-  // 1. 服务启动 10 秒后执行首次模型配额预拉取
+  // 1. 服务启动 10 秒后执行首次数据库维护
   const initTimer = setTimeout(() => {
-    refreshAllModelAccounts().catch(() => {});
     runDatabaseMaintenance();
   }, 10_000);
   globalThis.__navelix_daemon_timers__.push(initTimer);
 
-  // 2. 模型配额定时巡检（每 30 分钟，完成后调度下一轮）
-  globalThis.__navelix_daemon_timers__.push(
-    scheduleTask(() => refreshAllModelAccounts(), 30 * 60 * 1000),
-  );
-
-  // 3. 数据库维护任务（每 12 小时）
+  // 2. 数据库维护任务（每 12 小时）
   globalThis.__navelix_daemon_timers__.push(
     scheduleTask(() => runDatabaseMaintenance(), 12 * 60 * 60 * 1000),
   );
 
-  // 4. 每日自动异地云备份检查（每 24 小时；上传可能因网络超时，完成后才调度下一轮）
+  // 3. 每日自动异地云备份检查（每 24 小时；上传可能因网络超时，完成后才调度下一轮）
   globalThis.__navelix_daemon_timers__.push(
     scheduleTask(() => runCloudBackupSchedule(), 24 * 60 * 60 * 1000),
   );
 
-  // 5. 本地自动备份（每 24 小时检查一次；目录内已有 24 小时内的快照则跳过，
+  // 4. 本地自动备份（每 24 小时检查一次；目录内已有 24 小时内的快照则跳过，
   //    因此与上面的云备份共享同一份快照，不会在同一天重复 VACUUM INTO）
   //
   //    启动后 90 秒补检查一次：scheduleTask 的首次执行也在 delayMs 之后，
@@ -155,6 +147,5 @@ export function stopBackgroundDaemon(): void {
 
 // 保持既有公开 API：外部（含测试）仍可从 @/lib/daemon 取到各任务函数
 export { runDatabaseMaintenance } from "./daemon/maintenance.ts";
-export { checkBookmarksHealth, refreshAllModelAccounts } from "./daemon/model-refresh.ts";
 export { checkDiskUsage, checkWalSize } from "./daemon/disk.ts";
 export { runCloudBackupSchedule } from "./daemon/cloud-backup.ts";

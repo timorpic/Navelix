@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import BrandLogo from "@/components/brand-logo";
 import BrandLogoText from "@/components/brand-logo-text";
 
@@ -15,6 +15,19 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [allowRegistration, setAllowRegistration] = useState<boolean | null>(null);
+
+  // 读取公开注册开关：关闭时隐藏「立即注册」入口，避免入口与后端门禁不一致
+  useEffect(() => {
+    fetch("/api/auth/register")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && typeof d.allowRegistration === "boolean") {
+          setAllowRegistration(d.allowRegistration);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -331,13 +344,19 @@ function LoginForm() {
             </div>
 
             <p className="text-center text-sm text-gray-500">
-              还没有账号？{" "}
-              <Link
-                href="/register"
-                className="font-semibold text-[#009a5a] transition-colors hover:text-[#00C776]"
-              >
-                立即注册
-              </Link>
+              {allowRegistration ? (
+                <>
+                  还没有账号？{" "}
+                  <Link
+                    href="/register"
+                    className="font-semibold text-[#009a5a] transition-colors hover:text-[#00C776]"
+                  >
+                    立即注册
+                  </Link>
+                </>
+              ) : (
+                "新用户注册已关闭，请联系管理员开通账号"
+              )}
             </p>
           </div>
 

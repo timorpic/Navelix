@@ -286,13 +286,6 @@ export const USER_CONFIG_COLUMNS: UserConfigColumnDef[] = [
 
   // ── 右侧边栏小组件开关 ──
   {
-    column: "model_monitor_enabled",
-    def: "model_monitor_enabled INTEGER NOT NULL DEFAULT 1",
-    configKey: "modelMonitorEnabled",
-    kind: "bool",
-    configDefault: true,
-  },
-  {
     column: "ai_copilot_enabled",
     def: "ai_copilot_enabled INTEGER NOT NULL DEFAULT 1",
     configKey: "aiCopilotEnabled",
@@ -344,6 +337,56 @@ export const USER_CONFIG_COLUMN_NAMES: string[] = USER_CONFIG_COLUMNS.map(
 /** 可读写映射到 SystemConfig 的列（排除仅存储列） */
 export const USER_CONFIG_MAPPED_COLUMNS: UserConfigColumnDef[] =
   USER_CONFIG_COLUMNS.filter((c) => c.configKey);
+
+/**
+ * 全站级（全局共享）配置的 configKey 集合。
+ *
+ * 语义：这些字段是「站点级」——品牌、AI、天气、社交、安全策略、代码注入、探针、
+ * 页脚——由任意 admin 修改后全员（含成员与访客）看到一致值，存储于全站单例行。
+ * 其余字段（theme/壁纸/侧边栏/右侧小组件开关/内容宽度/搜索栏等）为**个人偏好**，
+ * 仍按 user_id 各存各的（见 lib/global-config.ts 的读写拆分）。
+ */
+export const GLOBAL_SCOPE_CONFIG_KEYS: ReadonlySet<string> = new Set([
+  // 品牌与页脚
+  "logoText",
+  "logoImage",
+  "siteTitle",
+  "customFooter",
+  // AI
+  "aiBaseUrl",
+  "aiApiKey",
+  "aiModel",
+  // 天气
+  "weatherEnabled",
+  "weatherApiKey",
+  "weatherLocation",
+  "weatherApiBaseUrl",
+  // 社交
+  "socialGithub",
+  "socialX",
+  "socialLinkedin",
+  "socialEmail",
+  // 访问与安全策略
+  "allowPublicAccess",
+  "allowRegistration",
+  "securitySetupDone",
+  // 代码注入（绕过 CSP）
+  "customHeadScripts",
+  "customCss",
+  // 链接探针
+  "linkStatusEnabled",
+  "linkStatusInterval",
+]);
+
+/** 某列是否属于全站级（全局共享）范围。 */
+export function isGlobalScoped(col: UserConfigColumnDef): boolean {
+  return col.configKey != null && GLOBAL_SCOPE_CONFIG_KEYS.has(col.configKey);
+}
+
+/** 全站级列的 snake_case 名（用于迁移/重归属时的列级拷贝）。 */
+export const GLOBAL_SCOPE_COLUMN_NAMES: string[] = USER_CONFIG_MAPPED_COLUMNS.filter(
+  isGlobalScoped,
+).map((c) => c.column);
 
 /** 生成初次建表的 CREATE TABLE 语句（db/schema.ts 使用） */
 export function createUserConfigsTableSql(): string {

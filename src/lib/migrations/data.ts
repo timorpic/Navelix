@@ -42,6 +42,8 @@ export function seedAdminIfEmpty(db: DatabaseSync): void {
  * - 品牌文案 Nexus → Navelix 迁移（用户自定义过的值不受影响）
  * - Lucide 风格分类图标 → emoji 约定迁移
  * - 通知数据自动清理：保留 30 天内记录，避免数据库无限制膨胀
+ *
+ * 注：user_configs 自 v14 起为「全站单例行」，品牌文案修复只作用于该行。
  */
 export function applyAlwaysDataFixes(db: DatabaseSync): void {
   db.prepare("UPDATE user_configs SET logo_text = 'Navelix' WHERE logo_text = 'Nexus'").run();

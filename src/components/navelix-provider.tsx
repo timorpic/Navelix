@@ -32,8 +32,6 @@ export function clearCachedUserData(): void {
     localStorage.removeItem("navelix.user.links");
     localStorage.removeItem("navelix.user.config");
     localStorage.removeItem("navelix_theme");
-    localStorage.removeItem("navelix.antigravity.auth.accounts");
-    localStorage.removeItem("navelix.antigravity.auth.info");
   } catch {
     // localStorage 不可用时静默忽略
   }
@@ -195,10 +193,6 @@ export function NavelixProvider({
       if (typeof window !== "undefined") {
         const media = window.matchMedia("(prefers-color-scheme: dark)");
         queueMicrotask(() => setResolvedDark(media.matches));
-        try {
-          localStorage.removeItem("navelix.antigravity.auth.accounts");
-          localStorage.removeItem("navelix.antigravity.auth.info");
-        } catch {}
       }
 
     if (!initialData) {

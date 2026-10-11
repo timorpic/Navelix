@@ -2,7 +2,14 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { db, SESSION_COOKIE } from "@/lib/db";
 import { createSession, hashPassword, sessionCookieOptions, toPublicUser } from "@/lib/auth";
+import { canRegister } from "@/lib/registration";
 import { track } from "@/lib/analytics";
+
+// GET /api/auth/register - 公开读取注册开关（登录页/注册页为未登录页面，无法走需 session 的 /api/user/data）。
+// allowRegistration 是纯布尔策略，不含用户列表/用户名等敏感信息，且该状态本可经 POST 试探得出，故无需鉴权。
+export async function GET() {
+  return NextResponse.json({ allowRegistration: canRegister() });
+}
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -43,17 +50,9 @@ export async function POST(req: Request) {
         db.prepare("SELECT COUNT(*) AS c FROM users").get() as { c: number }
       ).c;
 
-      if (count > 0) {
-        // 检查系统全局配置是否允许新用户注册（以管理员账号的配置为准，默认严格关闭）
-        const adminConfig = db
-          .prepare(
-            "SELECT allow_registration FROM user_configs WHERE user_id = (SELECT id FROM users WHERE role = 'admin' ORDER BY created_at ASC LIMIT 1)",
-          )
-          .get() as { allow_registration?: number } | undefined;
-        if (!adminConfig || adminConfig.allow_registration !== 1) {
-          db.exec("ROLLBACK");
-          throw Object.assign(new Error("系统当前已关闭新用户注册，请联系管理员"), { status: 403 });
-        }
+      if (count > 0 && !canRegister()) {
+        db.exec("ROLLBACK");
+        throw Object.assign(new Error("系统当前已关闭新用户注册，请联系管理员"), { status: 403 });
       }
 
       const role = count === 0 ? "admin" : "user";

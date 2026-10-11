@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
 import { decryptSecret } from "@/lib/secret";
+import { getGlobalConfigRow } from "@/lib/global-config";
 
 // GET /api/weather - 后端代理心知天气，隐藏 API Key 与位置
 export async function GET() {
@@ -11,11 +11,7 @@ export async function GET() {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
-  const row = db
-    .prepare(
-      "SELECT weather_enabled, weather_api_key, weather_location, weather_api_base_url FROM user_configs WHERE user_id = ?",
-    )
-    .get(user.id) as
+  const row = getGlobalConfigRow() as
     | { weather_enabled: number; weather_api_key: string; weather_location: string; weather_api_base_url: string }
     | undefined;
 

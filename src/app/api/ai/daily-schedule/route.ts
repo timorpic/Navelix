@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       .all(user.id) as Array<{ name: string; status: string }>;
 
     // 2. 读取当前用户的 AI 配置（统一解析见 lib/ai-provider.ts）
-    const { apiKey, modelName, targetUrl } = resolveAIConfig(user.id);
+    const { apiKey, modelName, targetUrl } = resolveAIConfig();
 
     // 规则智能生成器 (保障无 Key 或网络故障时 100% 顺畅工作)
     const generateFallback = () => {

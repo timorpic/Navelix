@@ -8,6 +8,7 @@ import {
   saveUserTodos,
   saveUserConfigs,
 } from "../user-data.ts";
+import { getGlobalConfigRow, getUserConfigRow } from "../global-config.ts";
 
 describe("Full JSON Export & Import Verification", () => {
   it("should faithfully roundtrip all system configs, categories, links, projects, and todos via JSON data structure", () => {
@@ -77,7 +78,8 @@ describe("Full JSON Export & Import Verification", () => {
       const linkRows = db.prepare("SELECT id, title, url, description, icon, category, notes, is_quick_access FROM user_links WHERE user_id = ?").all(testUserId);
       const projRows = db.prepare("SELECT id, name, status, status_color, url FROM projects WHERE user_id = ?").all(testUserId);
       const todoRows = db.prepare("SELECT id, title, priority, done, due_date, project_id, created_at, sort_order FROM user_todos WHERE user_id = ?").all(testUserId);
-      const configRow = db.prepare("SELECT * FROM user_configs WHERE user_id = ?").get(testUserId) as Record<string, unknown>;
+      // 全站配置为单例行（v14 起），导出/还原都读同一行
+      const configRow = getGlobalConfigRow();
 
       const exportPayload = {
         version: "2.0",
@@ -135,19 +137,22 @@ describe("Full JSON Export & Import Verification", () => {
         clockWidgetMode: parsed.config.clock_widget_mode,
       });
 
-      // 6. Verify restored data matches 100% of the original settings
-      const restoredConfig = db.prepare("SELECT * FROM user_configs WHERE user_id = ?").get(restoredUserId) as Record<string, unknown>;
-      assert.equal(restoredConfig.site_title, "我的专属数字工作台");
-      assert.equal(restoredConfig.logo_text, "MyHub");
-      assert.equal(restoredConfig.allow_public_access, 0);
-      assert.equal(restoredConfig.allow_registration, 0);
-      assert.equal(restoredConfig.custom_head_scripts, "<script src='https://analytics.example.com/tracker.js'></script>");
-      assert.equal(restoredConfig.custom_css, "body { --brand: #00c776; }");
-      assert.equal(restoredConfig.wallpaper_mode, "custom");
-      assert.equal(restoredConfig.custom_wallpaper_url, "https://images.unsplash.com/photo-12345");
-      assert.equal(restoredConfig.glassmorphism, 1);
-      assert.equal(restoredConfig.clock_widget_mode, "analog");
-      assert.equal(restoredConfig.sidebar_default_state, "collapsed");
+      // 6. Verify restored data matches 100% of the original settings.
+      // 全站级字段走单例行、个人偏好走 restore 用户自己的行（scope 分离，见 global-config.ts）。
+      const restoredGlobal = getGlobalConfigRow() as Record<string, unknown>;
+      assert.equal(restoredGlobal.site_title, "我的专属数字工作台");
+      assert.equal(restoredGlobal.logo_text, "MyHub");
+      assert.equal(restoredGlobal.allow_public_access, 0);
+      assert.equal(restoredGlobal.allow_registration, 0);
+      assert.equal(restoredGlobal.custom_head_scripts, "<script src='https://analytics.example.com/tracker.js'></script>");
+      assert.equal(restoredGlobal.custom_css, "body { --brand: #00c776; }");
+
+      const restoredPersonal = getUserConfigRow(restoredUserId) as Record<string, unknown>;
+      assert.equal(restoredPersonal.wallpaper_mode, "custom");
+      assert.equal(restoredPersonal.custom_wallpaper_url, "https://images.unsplash.com/photo-12345");
+      assert.equal(restoredPersonal.glassmorphism, 1);
+      assert.equal(restoredPersonal.clock_widget_mode, "analog");
+      assert.equal(restoredPersonal.sidebar_default_state, "collapsed");
 
       const restoredCats = db.prepare("SELECT * FROM user_categories WHERE user_id = ?").all(restoredUserId);
       assert.equal(restoredCats.length, 2);

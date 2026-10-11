@@ -9,6 +9,7 @@ import {
   saveUserConfigs,
 } from "../user-data.ts";
 import { decryptSecret } from "../secret.ts";
+import { getGlobalConfigRow } from "../global-config.ts";
 import {
   checkLoginRateLimit,
   recordLoginFailure,
@@ -144,23 +145,26 @@ describe("saveUserTodos (upsert + 删除语义)", () => {
 
 describe("saveUserConfigs (字段合并 + 密钥留空语义)", () => {
   it("更新部分字段时应保留库内其他字段", () => {
+    // 全站配置为单例，先固化一个已知基线，再验证「只改部分字段、其余保留」
+    saveUserConfigs(TEST_USER_ID, {
+      logoText: "基线品牌",
+      theme: "light",
+      siteTitle: "基线站点",
+    });
+
     saveUserConfigs(TEST_USER_ID, {
       logoText: "测试品牌",
       theme: "dark",
     });
-    let row = db
-      .prepare("SELECT logo_text, theme, site_title FROM user_configs WHERE user_id = ?")
-      .get(TEST_USER_ID) as { logo_text: string; theme: string; site_title: string };
+    let row = getGlobalConfigRow() as { logo_text: string; theme: string; site_title: string };
     assert.equal(row.logo_text, "测试品牌");
     assert.equal(row.theme, "dark");
-    // 未传字段应保留默认值
-    assert.equal(row.site_title, "Navelix · Personal Digital Hub");
+    // 未传字段应保留此前库内值
+    assert.equal(row.site_title, "基线站点");
 
     // 第二次只改 site_title → 品牌与主题保留
     saveUserConfigs(TEST_USER_ID, { siteTitle: "测试站点" });
-    row = db
-      .prepare("SELECT logo_text, theme, site_title FROM user_configs WHERE user_id = ?")
-      .get(TEST_USER_ID) as { logo_text: string; theme: string; site_title: string };
+    row = getGlobalConfigRow() as { logo_text: string; theme: string; site_title: string };
     assert.equal(row.logo_text, "测试品牌");
     assert.equal(row.theme, "dark");
     assert.equal(row.site_title, "测试站点");
@@ -169,9 +173,7 @@ describe("saveUserConfigs (字段合并 + 密钥留空语义)", () => {
   it("密钥字段传入空字符串时不清空已有密钥（留空=保持不变且落盘加密）", () => {
     saveUserConfigs(TEST_USER_ID, { aiApiKey: "sk-test-123" });
     saveUserConfigs(TEST_USER_ID, { aiApiKey: "" });
-    const row = db
-      .prepare("SELECT ai_api_key FROM user_configs WHERE user_id = ?")
-      .get(TEST_USER_ID) as { ai_api_key: string };
+    const row = getGlobalConfigRow() as { ai_api_key: string };
     assert.ok(row.ai_api_key.startsWith("enc:v1:"), "数据库落盘必须为 AES-256 加密密文");
     assert.equal(decryptSecret(row.ai_api_key), "sk-test-123");
   });

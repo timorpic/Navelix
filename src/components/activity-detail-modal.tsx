@@ -56,7 +56,7 @@ export default function ActivityDetailModal({
               <span className="font-bold text-gray-700 dark:text-slate-300">
                 详细描述与执行日志：
               </span>
-              <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900/80 border border-gray-100 dark:border-slate-800 text-gray-700 dark:text-slate-200 leading-relaxed break-words font-mono text-[11px] max-h-60 overflow-y-auto">
+              <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900/80 border border-gray-100 dark:border-slate-800 text-gray-700 dark:text-slate-200 leading-relaxed break-words font-mono text-[11px] max-h-60 overflow-y-auto whitespace-pre-line">
                 {item.detail}
               </div>
             </div>

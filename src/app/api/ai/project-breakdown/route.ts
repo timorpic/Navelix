@@ -99,7 +99,7 @@ export async function POST(req: Request) {
 
     // 1. 读取当前用户的 AI 配置
     // AI 配置统一解析（见 lib/ai-provider.ts）
-    const { apiKey, modelName, targetUrl } = resolveAIConfig(user.id);
+    const { apiKey, modelName, targetUrl } = resolveAIConfig();
 
     // 若未配置 API Key，直接使用智能工程规则拆解
     if (!apiKey) {

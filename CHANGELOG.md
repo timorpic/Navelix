@@ -10,7 +10,15 @@
 
 ---
 
-## [2.10.2] - 2026-10-10
+## [2.10.3] - 2026-10-12
+
+### 变更
+- **配置架构重构：全站配置与个人偏好分离**：此前系统级配置（品牌、AI、天气、社交、安全策略、探针、代码注入、页脚）与个人偏好（主题、壁纸、侧边栏、右侧小组件开关等）混存于 `user_configs` 的「每用户一行」中，多 admin 场景下「写自己、读最早 admin」导致改完不生效、各 admin 看到不一致；最早 admin 被删还会因级联删除静默丢失全站开关。现全站级字段统一收敛到 `system_settings['global_config_user_id']` 锚定的单例行（v14 迁移建立锚点，不删任何数据），个人偏好仍按账号各存各的；任意 admin 修改全站配置后全员与访客看到一致值，删除锚点 admin 时配置行自动迁移不丢失。
+- **配置变更审计与通知**：每次全站配置变更都会落 `audit_logs`（`action=config.updated`，记录字段级 `from → to` 明细，密钥字段脱敏），并同时向所有 admin 广播「系统配置已更新」站内通知——通知内嵌完整变更明细，可在「消息通知」页直接查看。
+- **开放注册开关前端同步**：此前关闭「开放新用户注册」后，登录页仍显示「立即注册」链接、注册页仍渲染表单，直到提交才被后端拒绝。现新增公开 `GET /api/auth/register` 状态端点，登录页与注册页按开关同步隐藏入口 / 显示「注册已关闭」提示，与后端门禁一致。
+- **移除模型账号监控功能**：模型监控（反重力 / Codex 账号额度大盘、OAuth 授权、`model_accounts` 表、后台「模型监控」页与右侧栏卡片）整体下线；新增 v15 迁移在启动时删除 `model_accounts` 表与 `user_configs.model_monitor_enabled` 列（删表前自动生成物理热备份）。链接存活/延迟探针（Pro）为独立功能，不受影响。
+
+
 
 ### 变更
 - **应用构建、测试与运行环境统一升级至 Node.js 24**：CI 单元测试/E2E、Docker 各阶段、提交检查容器及 EE 编译目标统一为 Node.js 24，最低版本调整为 `24.0.0`，同步源码部署与开发文档；已有 EE 字节码需使用目标 Node/V8 版本重新编译。
@@ -220,7 +228,9 @@
 
 ---
 
-[未发布]: https://github.com/timorpic/Navelix/compare/v2.9.5...HEAD
+[未发布]: https://github.com/timorpic/Navelix/compare/v2.10.3...HEAD
+[2.10.3]: https://github.com/timorpic/Navelix/compare/v2.10.2...v2.10.3
+[2.10.2]: https://github.com/timorpic/Navelix/compare/v2.10.1...v2.10.2
 [2.9.5]: https://github.com/timorpic/Navelix/compare/v2.9.4...v2.9.5
 [2.9.4]: https://github.com/timorpic/Navelix/compare/v2.9.3...v2.9.4
 [2.9.3]: https://github.com/timorpic/Navelix/compare/v2.9.2...v2.9.3

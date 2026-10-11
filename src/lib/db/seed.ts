@@ -4,16 +4,17 @@ import {
   seedQuickAccess,
   siteLinks as seedLinks,
 } from "../../data/links.ts";
-import { DEFAULT_SITE_TITLE } from "../constants.ts";
 
 // Seed user starter categories and links ONLY ONCE on initial user creation
 export function seedUserData(userId: string) {
-  const configExists = db
-    .prepare("SELECT 1 FROM user_configs WHERE user_id = ?")
+  // 以「是否已有分类」作为 per-user 种子守卫（配置自 v14 起为全站单例，
+  // 不再按用户各建一行，因此不能再用 user_configs 行是否存在作为守卫）。
+  const seeded = db
+    .prepare("SELECT 1 FROM user_categories WHERE user_id = ? LIMIT 1")
     .get(userId);
 
-  // 如果用户已经进行过初始化（已存在配置记录），绝对不要重复 re-seed 覆盖用户数据
-  if (configExists) {
+  // 如果用户已经进行过初始化（已存在分类记录），绝对不要重复 re-seed 覆盖用户数据
+  if (seeded) {
     return;
   }
 
@@ -102,8 +103,6 @@ export function seedUserData(userId: string) {
     );
   });
 
-  db.prepare(`
-    INSERT OR REPLACE INTO user_configs (user_id, logo_text, site_title)
-    VALUES (?, 'Navelix', '${DEFAULT_SITE_TITLE}')
-  `).run(userId);
+  // 全站配置为单例行（见 lib/global-config.ts）：不再按用户各建一行，
+  // 单例行由 resolveGlobalConfigOwnerId → ensureConfigRowAt 惰性创建（含列默认值）。
 }

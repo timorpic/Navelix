@@ -27,7 +27,6 @@ const TABLES_WITH_USER_ID = [
   "user_todos",
   "notifications",
   "api_tokens",
-  "model_accounts",
   "analytics_events",
 ] as const;
 
@@ -65,9 +64,6 @@ function seedUser(userId: string, role = "user") {
     Date.now() + 86400000,
     Date.now(),
   );
-  db.prepare(
-    "INSERT INTO model_accounts (id, user_id, provider, created_at, updated_at) VALUES (?, ?, 'codex', ?, ?)",
-  ).run(`acct-${userId}`, userId, Date.now(), Date.now());
   db.prepare(
     "INSERT INTO analytics_events (event, user_id, instance_id, meta, ts) VALUES ('test.event', ?, 'inst', '{}', ?)",
   ).run(userId, Date.now());
@@ -135,14 +131,14 @@ describe("admin-users: deleteUserCascade", () => {
     seedUser(userId);
 
     // 制造失败：临时把一张关联表改名，使循环中的 DELETE 抛错
-    db.exec("ALTER TABLE model_accounts RENAME TO model_accounts_tmp");
+    db.exec("ALTER TABLE notifications RENAME TO notifications_tmp");
     let threw = false;
     try {
       deleteUserCascade(userId);
     } catch {
       threw = true;
     } finally {
-      db.exec("ALTER TABLE model_accounts_tmp RENAME TO model_accounts");
+      db.exec("ALTER TABLE notifications_tmp RENAME TO notifications");
     }
 
     assert.equal(threw, true, "应向上抛出错误");

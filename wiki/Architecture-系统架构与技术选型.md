@@ -14,7 +14,7 @@
 | **持久化存储** | **SQLite3 (Node.js 原生 DatabaseSync / WAL 模式)** | 单文件中心化嵌入式数据库，极简部署无外部依赖，WAL 并发读写性能极高 |
 | **运行时** | **Node.js ≥ 24.0**（镜像为 `node:24-alpine`） | 依赖内置 `node:sqlite`（`DatabaseSync`），**Node 20 无法运行**；包管理器锁定 `pnpm@11.16.0` |
 | **安全体系** | **`node:crypto`** | 密码哈希使用 **scrypt**（配定时安全比较）；SHA-256 用于会话 / API Token 摘要；**AES-256-GCM** 加密敏感字段 |
-| **标准协议** | **RFC 5545 iCalendar / OAuth2** | 标准日历导出（`text/calendar`）与 OAuth2 授权流程。**PKCE（S256）目前仅 Codex 使用**，反重力走传统 `client_secret` 授权码流程 |
+| **标准协议** | **RFC 5545 iCalendar** | 标准日历导出（`text/calendar`） |
 
 ---
 
@@ -74,17 +74,16 @@ graph TD
 8. **`notifications`**：消息通知表（ID、User ID、标题、内容、来源声明、创建时间、已读标记）；
 9. **`api_tokens`**：个人 API Access Token 表（ID、User ID、名称、SHA-256 Token 哈希、前缀、创建时间、最后使用时间）；
 10. **`user_category_subscriptions`**：团队分类订阅关系表；
-11. **`model_accounts`**：模型账号表（反重力 / Codex 的 OAuth 账号，含 AES 加密的 access / refresh / id token 与额度缓存）——即上文「大模型接入 & OAuth 账号监控引擎」的载体；
-12. **`system_settings`**：实例级系统设置（Telegram、OAuth Secret、许可证等）；
-13. **`audit_logs`**：安全审计日志（备份 / 还原 / AI Key 变更等敏感操作）；
-14. **`analytics_events`**：本地使用统计事件表（仅写本机 SQLite，不上报明细）。
+11. **`system_settings`**：实例级系统设置（Telegram、许可证等）；
+12. **`audit_logs`**：安全审计日志（备份 / 还原 / AI Key 变更等敏感操作）；
+13. **`analytics_events`**：本地使用统计事件表（仅写本机 SQLite，不上报明细）。
 
 ---
 
 ## 🔄 幂等数据库迁移体系 (Migrations Engine)
 
 Navelix 内置了基于 `PRAGMA user_version` 的**自动数据库迁移引擎**：
-- 每次服务启动时，系统自动检查数据库结构并按版本顺序执行迁移（当前注册至 **v13**）；
+- 每次服务启动时，系统自动检查数据库结构并按版本顺序执行迁移（当前注册至 **v15**）；
 - 其中多数迁移是**幂等**的字段补齐（`ensureColumn`）与新建表，可安全重复执行；
 - ⚠️ **但并非全部「无损」**：部分历史迁移会重建表（`DROP TABLE` + `RENAME`，在事务内拷贝数据），也有迁移**直接删除列**（如 v10 删除搜索引擎配置）。且只有部分破坏性迁移在操作前调用了自动备份（如 v11），**不是每次都有兜底**；
 - 因此升级前仍建议**自行做整卷快照**（见 [[安全机制与运维规范|Security-安全机制与运维规范]] 的备份章节），不要完全依赖迁移自身的回滚能力。

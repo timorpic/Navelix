@@ -6,8 +6,8 @@ import type { Category, SiteLink, SystemConfig } from "@/types";
  * 从该文件下沉 —— 版本自检结果与各接口响应的解析、全量 JSON 备份的载荷组装
  * 与导入归一化、浏览器本地数据段的读写，原先都内联在组件的 handler 里，
  * 无法被单测覆盖。本模块不含任何 React 依赖，React 状态与副作用见
- * `@/hooks/use-admin-update-check` / `use-admin-antigravity-secret` /
- * `use-admin-db-backup` / `use-admin-data-transfer` / `use-admin-cache-purge`。
+ * `@/hooks/use-admin-update-check` / `use-admin-db-backup` /
+ * `use-admin-data-transfer` / `use-admin-cache-purge`。
  */
 
 // ── 版本自检（块 4：🔄 版本与更新）──
@@ -35,7 +35,7 @@ export interface UpdateCheckResult {
 }
 
 /** 服务端未回传版本号时展示的内置默认版本。由 scripts/sync-version.mjs 同步。 */
-export const FALLBACK_VERSION = "v2.10.2";
+export const FALLBACK_VERSION = "v2.10.3";
 
 /** 版本号展示：缺失时回退内置默认版本，缺少 `v` 前缀时补上。 */
 export function versionLabel(version?: string | null): string {
@@ -56,41 +56,6 @@ export function updateCheckFailureResult(): UpdateCheckResult {
     updateAvailable: null,
     error: "检查失败，请稍后重试",
   };
-}
-
-// ── 反重力 OAuth 客户端密钥（块 3：🔐 反重力 OAuth 配置）──
-
-export interface AntigravitySecretState {
-  isCustomSecret: boolean;
-}
-
-/** 解析 GET /api/admin/system-settings 的响应；缺少配置标记时视为无效响应。 */
-export function parseAntigravitySettings(data: unknown): AntigravitySecretState | null {
-  if (!data || typeof data !== "object") return null;
-  const d = data as {
-    antigravityClientSecretConfigured?: unknown;
-    isCustomSecret?: unknown;
-  };
-  if (typeof d.antigravityClientSecretConfigured !== "boolean") return null;
-  return { isCustomSecret: Boolean(d.isCustomSecret) };
-}
-
-/** 解析 PUT /api/admin/system-settings 成功响应里的 isCustomSecret 标记。 */
-export function parseAntigravitySaveResult(data: unknown): AntigravitySecretState {
-  const d = (data ?? {}) as { isCustomSecret?: unknown };
-  return { isCustomSecret: Boolean(d.isCustomSecret) };
-}
-
-/** 密钥输入归一化：去除首尾空白（空值由调用方判定为「不保存」）。 */
-export function normalizeAntigravitySecret(raw: string): string {
-  return raw.trim();
-}
-
-/** 保存密钥的提示文案：成功为固定文案，失败取服务端 error。 */
-export function antigravitySaveNotice(resOk: boolean, data: unknown): string {
-  if (resOk) return "✅ 反重力 OAuth 客户端密钥已保存";
-  const d = (data ?? {}) as { error?: unknown };
-  return `❌ ${d.error ? String(d.error) : "保存失败"}`;
 }
 
 // ── 数据库物理还原（块 5：💾 数据库物理快照与备份还原）──

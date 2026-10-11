@@ -2,14 +2,23 @@ import { db, seedUserData, type PublicUser, type UserRow } from "./db.ts";
 import { toPublicUser } from "./auth/session.ts";
 import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
 import { encryptSecret } from "./secret.ts";
-import { recordAuditLog } from "./audit.ts";
 import { applyEEGateToConfig } from "./ee-gate.ts";
 import {
   buildUserConfigsUpsertSql,
   coerceUserConfigValues,
   defaultUserConfig,
+  GLOBAL_SCOPE_CONFIG_KEYS,
   mapUserConfigRow,
 } from "./user-config-columns.ts";
+import {
+  diffConfigChanges,
+  getGlobalConfigRow,
+  getUserConfigRow,
+  notifyAdminsConfigChanged,
+  recordConfigAuditLog,
+  resolveGlobalConfigOwnerId,
+  splitConfigByScope,
+} from "./global-config.ts";
 
 export interface UserDataResult {
   user?: PublicUser | null;
@@ -201,42 +210,25 @@ export function getUserData(userId: string): UserDataResult {
     sortOrder: t.sort_order,
   }));
 
-  // Fetch config
-  const isAdmin = user?.role === "admin";
+  // Fetch config —— 全站级字段（品牌/AI/天气/社交/安全/探针/页脚）读全局单例行，
+  // 个人偏好字段（theme/壁纸/侧边栏/小组件开关等）读当前用户自己的行，二者合并。
+  // 见 lib/global-config.ts：全站单例由 system_settings['global_config_user_id'] 锚定。
+  const globalRow = getGlobalConfigRow();
+  const personalConfigRow = getUserConfigRow(userId);
 
-  const configRow = db
-    .prepare("SELECT * FROM user_configs WHERE user_id = ?")
-    .get(userId) as Record<string, unknown> | undefined;
-
-  let effectiveAllowPublicAccess = configRow
-    ? (configRow.allow_public_access === 1 || configRow.allow_public_access === true || configRow.allow_public_access === "1")
-    : false;
-  let effectiveAllowRegistration = configRow
-    ? (configRow.allow_registration === 1 || configRow.allow_registration === true || configRow.allow_registration === "1")
-    : false;
-
-  if (!isAdmin) {
-    const adminConfigRow = db
-      .prepare(
-        `SELECT allow_public_access, allow_registration 
-         FROM user_configs 
-         JOIN users ON users.id = user_configs.user_id 
-         WHERE users.role = 'admin' 
-         ORDER BY users.created_at ASC LIMIT 1`
-      )
-      .get() as { allow_public_access?: number; allow_registration?: number } | undefined;
-
-    if (adminConfigRow) {
-      effectiveAllowPublicAccess = adminConfigRow.allow_public_access === 1;
-      effectiveAllowRegistration = adminConfigRow.allow_registration === 1;
+  // 全局读只取全站级字段：单例行里还混有锚点 admin 的个人偏好，不得泄漏给其他用户。
+  const globalMapped = globalRow ? mapUserConfigRow(globalRow) : {};
+  for (const k of Object.keys(globalMapped)) {
+    if (!GLOBAL_SCOPE_CONFIG_KEYS.has(k) && k !== "aiKeyConfigured" && k !== "weatherKeyConfigured") {
+      delete (globalMapped as Record<string, unknown>)[k];
     }
   }
 
   const config: SystemConfig = {
     ...defaultUserConfig(),
-    ...(configRow ? mapUserConfigRow(configRow) : {}),
-    allowPublicAccess: effectiveAllowPublicAccess,
-    allowRegistration: effectiveAllowRegistration,
+    ...globalMapped,
+    // 个人偏好覆盖在全站之上（同一字段不会同时属于两边，此处仅保证读取兜底）
+    ...(personalConfigRow ? mapUserConfigRow(personalConfigRow) : {}),
   };
 
   // EE 门禁：无 Pro 授权时强制降级品牌定制 / 代码注入 / 探针开关。
@@ -481,46 +473,77 @@ export function saveUserTodos(userId: string, items: TodoInput[]): void {
 export type ConfigInput = Record<string, unknown>;
 
 /**
- * 保存用户配置：仅更新传入字段，未传字段沿用当前库内值；密钥留空不覆盖。
- * 列定义 / 类型转换 / upsert SQL 全部由 user-config-columns.ts 元数据驱动，
- * 新增配置项只需在元数据文件中追加一行。
+ * 保存配置：按 scope 拆分写入。
+ * - 全站级字段（品牌/AI/天气/社交/安全/探针/页脚）→ 写全站单例行；
+ * - 个人偏好字段（theme/壁纸/侧边栏/小组件开关等）→ 写当前用户自己的行。
+ * 仅更新传入字段，未传字段沿用当前库内值；密钥留空不覆盖。
+ * 列定义 / 类型转换 / upsert SQL 全部由 user-config-columns.ts 元数据驱动。
+ * 全站字段的真实变更会落审计日志并向所有 admin 广播通知（见 lib/global-config.ts）。
  */
 export function saveUserConfigs(
   userId: string,
   cfg: ConfigInput,
 ): void {
-  const currentRow = db
-    .prepare("SELECT * FROM user_configs WHERE user_id = ?")
-    .get(userId) as Record<string, unknown> | undefined;
-
-  const userRow = db.prepare("SELECT role FROM users WHERE id = ?").get(userId) as { role?: string } | undefined;
-  const isAdmin = userRow?.role === "admin";
+  const { global: globalCfg, personal: personalCfg } = splitConfigByScope(cfg);
 
   // 安全告警：自定义脚本/CSS 会绕过 CSP 直接注入到所有访客页面。
   // 此处仅记录日志供运维审计；写入权限已由 POST /api/user/data 的 admin 角色门禁收口。
-  if (typeof cfg.customHeadScripts === "string" && cfg.customHeadScripts.trim() !== "") {
+  if (typeof globalCfg.customHeadScripts === "string" && globalCfg.customHeadScripts.trim() !== "") {
     console.warn(
       "[Security] user_configs.custom_head_scripts 已写入非空内容，将以 dangerouslySetInnerHTML 注入页面（绕过 CSP），请确保来源可信且仅管理员可配置。",
     );
   }
-  if (typeof cfg.customCss === "string" && cfg.customCss.trim() !== "") {
+  if (typeof globalCfg.customCss === "string" && globalCfg.customCss.trim() !== "") {
     console.warn(
       "[Security] user_configs.custom_css 已写入非空内容，将以 <style> 注入页面（绕过 CSP style-src），请确保来源可信且仅管理员可配置。",
     );
   }
 
-  const values = coerceUserConfigValues(cfg, currentRow, isAdmin, encryptSecret);
+  // ── 个人偏好：写当前用户自己的行（upsert）──
+  if (Object.keys(personalCfg).length > 0) {
+    const userCurrentRow = getUserConfigRow(userId);
+    const personalValues = coerceUserConfigValues(
+      personalCfg,
+      userCurrentRow,
+      true,
+      encryptSecret,
+    );
+    db.prepare(buildUserConfigsUpsertSql()).run(userId, ...personalValues);
+  }
 
-  db.prepare(buildUserConfigsUpsertSql()).run(userId, ...values);
+  // ── 全站字段：写单例行（空库首启回退用调用者 id）──
+  if (Object.keys(globalCfg).length > 0) {
+    let ownerId = resolveGlobalConfigOwnerId();
+    if (!ownerId) ownerId = userId;
 
-  // 记录关键配置变更安全审计日志
-  const incomingAiKey = typeof cfg.aiApiKey === "string" ? cfg.aiApiKey.trim() : "";
-  if (incomingAiKey !== "" && incomingAiKey !== String(currentRow?.ai_api_key || "")) {
-    recordAuditLog({
-      userId,
-      action: "config.ai_key.update",
-      target: "user_configs",
-      details: "更新了 AI API Key",
-    });
+    const globalCurrentRow = db
+      .prepare("SELECT * FROM user_configs WHERE user_id = ?")
+      .get(ownerId) as Record<string, unknown> | undefined;
+
+    const globalValues = coerceUserConfigValues(
+      globalCfg,
+      globalCurrentRow,
+      true,
+      encryptSecret,
+    );
+    db.prepare(buildUserConfigsUpsertSql()).run(ownerId, ...globalValues);
+
+    // ── 审计日志 + 通知广播（仅全站字段，个人偏好不通知他人）──
+    const changes = diffConfigChanges(globalCurrentRow, globalCfg);
+    if (changes.length > 0) {
+      const actorRow = db
+        .prepare("SELECT id, username, display_name FROM users WHERE id = ?")
+        .get(userId) as
+        | { id: string; username: string; display_name: string }
+        | undefined;
+
+      recordConfigAuditLog(userId, changes);
+      if (actorRow) {
+        notifyAdminsConfigChanged(
+          { id: actorRow.id, username: actorRow.username, displayName: actorRow.display_name },
+          changes,
+        );
+      }
+    }
   }
 }

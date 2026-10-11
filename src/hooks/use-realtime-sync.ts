@@ -7,7 +7,6 @@ interface RealtimeSyncOptions {
   onLinksChange?: () => void;
   onProjectsChange?: () => void;
   onTodosChange?: () => void;
-  onMonitorUpdate?: () => void;
   onNotificationsNew?: () => void;
   onEvent?: (event: RealtimeEvent) => void;
   enabled?: boolean;
@@ -54,9 +53,6 @@ export function useRealtimeSync(options: RealtimeSyncOptions = {}) {
                 break;
               case "todos:change":
                 callbacksRef.current.onTodosChange?.();
-                break;
-              case "monitor:update":
-                callbacksRef.current.onMonitorUpdate?.();
                 break;
               case "notifications:new":
                 callbacksRef.current.onNotificationsNew?.();

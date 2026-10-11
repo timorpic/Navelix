@@ -12,6 +12,7 @@ import {
 } from "@/lib/user-data";
 import { emitUserEvent } from "@/lib/events";
 import { getProFeatureFlags } from "@/lib/ee-gate";
+import { GLOBAL_SCOPE_CONFIG_KEYS } from "@/lib/user-config-columns";
 
 // GET /api/user/data - Fetch categories, links, and config for current logged-in user
 export async function GET() {
@@ -52,15 +53,12 @@ export async function POST(req: NextRequest) {
     const cfg = body.config;
     if (cfg) {
       if (user.role !== "admin") {
-        delete cfg.allowPublicAccess;
-        delete cfg.allowRegistration;
-        delete cfg.customHeadScripts;
-        delete cfg.customCss;
-        delete cfg.logoImage;
-        delete cfg.siteTitle;
-        delete cfg.logoText;
-        delete cfg.linkStatusEnabled;
-        delete cfg.linkStatusInterval;
+        // 普通用户只能改个人偏好；全部全站级字段（品牌/AI/天气/社交/安全/探针/页脚/代码注入）一律剥离。
+        for (const key of GLOBAL_SCOPE_CONFIG_KEYS) {
+          delete cfg[key];
+        }
+        delete cfg.aiKeyConfigured;
+        delete cfg.weatherKeyConfigured;
       } else {
         const { hasCodeInject, hasBrandCustom, hasProbes } = getProFeatureFlags();
         if (!hasCodeInject) {

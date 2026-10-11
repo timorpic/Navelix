@@ -11,7 +11,6 @@ import { resolveAvatar } from "@/lib/avatars";
 import AdminUsersPanel from "./admin-users";
 import ScheduleAdminPanel from "@/components/schedule-admin-panel";
 import ProjectAdminPanel from "@/components/project-admin-panel";
-import ModelMonitorPanel from "@/components/model-monitor-panel";
 import AdminSidebar from "./components/admin-sidebar";
 import AdminLinksTab from "./components/admin-links-tab";
 import AdminAnalyticsTab from "./components/admin-analytics-tab";
@@ -22,7 +21,7 @@ import AdminProfileTab from "./components/admin-profile-tab";
 
 type AdminTab =
   | "links" | "categories" | "quickAccess" | "projects" | "schedules"
-  | "users" | "analytics" | "models" | "system" | "pro" | "personalization" | "profile";
+  | "users" | "analytics" | "system" | "pro" | "personalization" | "profile";
 
 interface AdminNavItem {
   id: AdminTab;
@@ -43,7 +42,7 @@ export default function AdminPage() {
   useEffect(() => {
     try {
       const param = new URL(window.location.href).searchParams.get("tab");
-      if (param && (["links", "categories", "quickAccess", "projects", "schedules", "users", "analytics", "models", "system", "pro", "personalization", "profile"] as AdminTab[]).includes(param as AdminTab)) {
+      if (param && (["links", "categories", "quickAccess", "projects", "schedules", "users", "analytics", "system", "pro", "personalization", "profile"] as AdminTab[]).includes(param as AdminTab)) {
         queueMicrotask(() => setActiveTab(param as AdminTab));
       }
     } catch { /* ignore */ }
@@ -139,7 +138,6 @@ export default function AdminPage() {
       ? [{ id: "users" as AdminTab, icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>, label: "账号管理", badge: users.length || 1 }]
       : []),
     { id: "analytics", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="M18 9l-5 5l-2-2l-4 4" /></svg>, label: "访问统计" },
-    { id: "models", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="12" cy="5" r="2" /><path d="M12 7v4" /><line x1="8" y1="16" x2="8" y2="16" /><line x1="16" y1="16" x2="16" y2="16" /></svg>, label: "模型监控" },
     { id: "system", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" /></svg>, label: "系统与数据管理" },
     { id: "pro", icon: <span className="text-sm">💎</span>, label: "Pro 高级功能", badge: "PRO" },
     { id: "personalization", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor" /><circle cx="17.5" cy="10.5" r=".5" fill="currentColor" /><circle cx="8.5" cy="7.5" r=".5" fill="currentColor" /><circle cx="6.5" cy="12.5" r=".5" fill="currentColor" /><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.92 0 1.7-.75 1.7-1.67 0-.42-.16-.81-.43-1.11-.27-.3-.43-.69-.43-1.11 0-.92.75-1.67 1.67-1.67H17c2.76 0 5-2.24 5-5 0-5.52-4.48-9.5-10-9.5z" /></svg>, label: "界面与功能偏好" },
@@ -306,8 +304,6 @@ export default function AdminPage() {
           {activeTab === "users" && currentUser?.role === "admin" && <AdminUsersPanel />}
           {/* TAB 6: 📊 访问统计 → 使用统计 */}
           {activeTab === "analytics" && <AdminAnalyticsTab />}
-          {/* TAB 6.5: 🤖 模型监控 */}
-          {activeTab === "models" && <ModelMonitorPanel />}
           {/* TAB 7: ⚙️ 系统与数据管理 */}
           {activeTab === "system" && <AdminSystemTab currentUser={currentUser} />}
           {/* TAB 7.5: 💎 Pro 商业特权 */}

@@ -17,7 +17,9 @@ describe("Database Foreign Keys & CASCADE", () => {
 
     seedUserData(testUserId);
 
-    // Verify records exist for this user
+    // 全站配置自 v14 起为单例行，seedUserData 不再按用户建 config 行；
+    // 这里手工建一行，专门验证 user_configs 对 users 的 ON DELETE CASCADE 仍生效。
+    db.prepare("INSERT INTO user_configs (user_id) VALUES (?)").run(testUserId);
     const configBefore = db.prepare("SELECT user_id FROM user_configs WHERE user_id = ?").get(testUserId);
     assert.ok(configBefore);
 

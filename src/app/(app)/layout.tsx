@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getSessionUser } from "@/lib/auth";
 import { getUserData } from "@/lib/user-data";
 import { db } from "@/lib/db";
+import { getGlobalConfigRow } from "@/lib/global-config";
 import { NavelixProvider } from "@/components/navelix-provider";
 import ErrorBoundary from "@/components/error-boundary";
 
@@ -31,11 +32,8 @@ export default async function AppLayout({
       redirect("/register");
     }
 
-    const configRow = db
-      .prepare("SELECT allow_public_access FROM user_configs WHERE user_id = ?")
-      .get(primaryUser.id) as { allow_public_access?: number } | undefined;
-
     // 系统默认不开放访客公开访问（私有模式）：只有管理员显式设置为 1 时才允许访客公开浏览，否则强制跳转登录页
+    const configRow = getGlobalConfigRow();
     if (!configRow || configRow.allow_public_access !== 1) {
       redirect("/login");
     }

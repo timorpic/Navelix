@@ -10,6 +10,7 @@ Navelix 是可自托管的个人数字工作空间，包含网址导航、项目
 - 视觉规范：[DESIGN](DESIGN.md)；组件规范：[COMPONENT-GUIDELINES](docs/COMPONENT-GUIDELINES.md)。
 - 开发与发布：[DEVELOPMENT](docs/DEVELOPMENT.md)；构建分发：[REGISTRY](docs/REGISTRY.md)；部署：[DEPLOYMENT](docs/DEPLOYMENT.md)。
 - 版本号以 `package.json` 为准；命令以其 `scripts` 为准；样式实现以 `src/app/globals.css` 为准；Schema 和迁移以 `src/lib/db/`、`src/lib/migrations/` 为准。
+- **版本号规则**（`X.Y.Z`）：第一位 `X` 初始为 `1`、每过一个自然年 `+1`（2026 年为 `2`）；第二位 `Y` 为**月份**（`1`–`12`）；第三位 `Z` 为该月内的**发布序号**（当月第 1 次发版为 `0`，之后每次 `+1`）。发版前先核对当月已有 tag/CHANGELOG 确定 `Z`，不臆造主次版本号。
 - README 是项目入口，`docs/` 面向开发与维护，`wiki/` 面向使用与运维。发现冲突时核实实现并同步相关说明，不把规划写成已实现功能。
 
 ## 工作方式

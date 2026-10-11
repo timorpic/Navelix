@@ -1,16 +1,12 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import {
-  antigravitySaveNotice,
   bookmarkImportSummary,
   buildFullExportPayload,
   fullBackupFileName,
   fullExportSummary,
   fullImportSummary,
   formatUpdateTime,
-  normalizeAntigravitySecret,
-  parseAntigravitySaveResult,
-  parseAntigravitySettings,
   parseCachePurgeResult,
   parseDbRestoreResult,
   parseFullImportPayload,
@@ -77,49 +73,6 @@ describe("updateCheckFailureResult", () => {
       updateAvailable: null,
       error: "检查失败，请稍后重试",
     });
-  });
-});
-
-describe("parseAntigravitySettings", () => {
-  test("缺少 antigravityClientSecretConfigured 布尔标记时视为无效响应", () => {
-    assert.equal(parseAntigravitySettings(null), null);
-    assert.equal(parseAntigravitySettings({}), null);
-    assert.equal(parseAntigravitySettings({ antigravityClientSecretConfigured: "yes" }), null);
-  });
-
-  test("取 isCustomSecret（非布尔时按 false）", () => {
-    assert.deepEqual(
-      parseAntigravitySettings({ antigravityClientSecretConfigured: true, isCustomSecret: true }),
-      { isCustomSecret: true },
-    );
-    assert.deepEqual(
-      parseAntigravitySettings({ antigravityClientSecretConfigured: false }),
-      { isCustomSecret: false },
-    );
-  });
-});
-
-describe("parseAntigravitySaveResult", () => {
-  test("取保存响应里的 isCustomSecret 标记", () => {
-    assert.deepEqual(parseAntigravitySaveResult({ success: true, isCustomSecret: true }), {
-      isCustomSecret: true,
-    });
-    assert.deepEqual(parseAntigravitySaveResult(undefined), { isCustomSecret: false });
-  });
-});
-
-describe("normalizeAntigravitySecret", () => {
-  test("去除首尾空白，纯空白归一为空串（由调用方判定不保存）", () => {
-    assert.equal(normalizeAntigravitySecret("  GOCSPX-abc  "), "GOCSPX-abc");
-    assert.equal(normalizeAntigravitySecret("   "), "");
-  });
-});
-
-describe("antigravitySaveNotice", () => {
-  test("成功为固定文案，失败取服务端 error 并回退默认", () => {
-    assert.equal(antigravitySaveNotice(true, {}), "✅ 反重力 OAuth 客户端密钥已保存");
-    assert.equal(antigravitySaveNotice(false, { error: "CSRF 验证失败" }), "❌ CSRF 验证失败");
-    assert.equal(antigravitySaveNotice(false, {}), "❌ 保存失败");
   });
 });
 

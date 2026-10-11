@@ -186,7 +186,7 @@ export async function POST(req: Request) {
 
     // Read AI config from the current user's server-side settings
     // （统一解析见 lib/ai-provider.ts）
-    const { apiKey, baseUrl, modelName, targetUrl } = resolveAIConfig(user.id);
+    const { apiKey, baseUrl, modelName, targetUrl } = resolveAIConfig();
     if (!apiKey) {
       return NextResponse.json({
         text: "💡 提示：您尚未在后台配置 AI API Key。\n请前往「后台管理控制台 -> 👤 个人账号与安全 -> AI Copilot 配置」填入您的 BaseURL、API Key 与模型名称，即可开启真实大语言模型对话功能！",

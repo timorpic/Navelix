@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
 import type { AIChatMessage } from "@/types";
-import ModelMonitorWidget from "./model-monitor-widget";
 import TodayActivityWidget from "./today-activity-widget";
 import PendingRemindersWidget from "./pending-reminders-widget";
 import TodaySummaryWidget from "./today-summary-widget";
@@ -385,9 +384,6 @@ export default function RightSidebar({
 
         </div>
         )}
-
-        {/* ── Widget 1.5: 模型监控 ── */}
-        {config.modelMonitorEnabled && <ModelMonitorWidget />}
 
         {/* ── Widget 1.6: 今日动态 ── */}
         {config.todayActivityEnabled !== false && <TodayActivityWidget />}

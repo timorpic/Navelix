@@ -1,5 +1,6 @@
 import { db } from "./db.ts";
 import { getSystemSetting, setSystemSetting } from "./system-settings.ts";
+import { getGlobalConfigRow } from "./global-config.ts";
 import {
   EVENT_MODULES,
   VALUE_MOMENT_EVENTS,
@@ -204,25 +205,13 @@ export function buildWeeklyAggregate(): {
   const activeDays = new Set(activeRows.map((r) => r.day)).size;
 
   // ── 外观画像：枚举值（非敏感）──
-  const cfg = db
-    .prepare(
-      "SELECT theme, wallpaper_mode, link_open_target, max_width FROM user_configs WHERE user_id = (SELECT id FROM users WHERE role = 'admin' ORDER BY created_at ASC LIMIT 1)",
-    )
-    .get() as
+  const cfg = getGlobalConfigRow() as
     | { theme: string; wallpaper_mode: string; link_open_target: string; max_width: string }
     | undefined;
 
   // ── AI 渗透率：是否配置 Key + 模型枚举 ──
-  const aiRow = db
-    .prepare(
-      "SELECT ai_model FROM user_configs WHERE user_id = (SELECT id FROM users WHERE role = 'admin' ORDER BY created_at ASC LIMIT 1)",
-    )
-    .get() as { ai_model: string } | undefined;
-  const aiKeyRow = db
-    .prepare(
-      "SELECT ai_api_key FROM user_configs WHERE user_id = (SELECT id FROM users WHERE role = 'admin' ORDER BY created_at ASC LIMIT 1)",
-    )
-    .get() as { ai_api_key: string } | undefined;
+  const aiRow = getGlobalConfigRow() as { ai_model: string } | undefined;
+  const aiKeyRow = getGlobalConfigRow() as { ai_api_key: string } | undefined;
 
   const userCount = (
     db.prepare("SELECT COUNT(*) AS c FROM users").get() as { c: number }

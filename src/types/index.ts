@@ -122,8 +122,6 @@ export interface SystemConfig {
   sidebarDefaultState?: "expanded" | "collapsed";
   sidebarRightDefaultState?: "expanded" | "collapsed";
   clockWidgetMode?: "time" | "weather" | "analog";
-  // 前台右侧侧边栏是否显示模型监控块（后台模型监控面板可切换）
-  modelMonitorEnabled?: boolean;
   // 前台右侧侧边栏各小组件显示开关（管理后台「界面与功能偏好」可切换）
   aiCopilotEnabled?: boolean;
   todayActivityEnabled?: boolean;

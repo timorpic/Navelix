@@ -303,9 +303,12 @@ export function rolloverOverdueTodos(
         updateStmt.run(todayStr, t.id, userId);
       }
     } else {
-      // 均匀平摊到本周剩余天数（从今天到周日）
-      const today = new Date();
-      const currentDay = today.getDay() === 0 ? 7 : today.getDay(); // 1=Mon, 7=Sun
+      // 均匀平摊到本周剩余天数（从 todayStr 到周日）。
+      // 注意：星期几必须由传入的 todayStr 解析，而非真实系统日期 new Date()——
+      // 否则 today/week 两种模式对「今天」的定义不一致，且测试无法注入固定日期
+      // （week 分支会随真实日期漂移，越过周日边界即失败）。
+      const base = new Date(todayStr.replace(/-/g, "/"));
+      const currentDay = base.getDay() === 0 ? 7 : base.getDay(); // 1=Mon, 7=Sun
       const remainingDays = Math.max(1, 7 - currentDay + 1);
 
       overdueTodos.forEach((t, index) => {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -12,6 +12,20 @@ export default function RegisterPage() {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // null = 状态加载中；false = 已关闭；true = 已开放
+  const [allowRegistration, setAllowRegistration] = useState<boolean | null>(null);
+
+  // 读取公开注册开关：关闭时展示提示而非表单，避免等提交才被后端拒绝
+  useEffect(() => {
+    fetch("/api/auth/register")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && typeof d.allowRegistration === "boolean") {
+          setAllowRegistration(d.allowRegistration);
+        }
+      })
+      .catch(() => setAllowRegistration(true));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +67,16 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          {allowRegistration === false ? (
+            <div className="rounded-lg border border-amber-100 bg-amber-50 p-4 text-center">
+              <p className="text-sm font-semibold text-amber-800">新用户注册已关闭</p>
+              <p className="mt-1 text-xs text-amber-600">
+                当前系统禁止自主注册，请联系管理员在后台为你开通账号。
+              </p>
+            </div>
+          ) : (
+            <>
+              <div>
             <label
               htmlFor="register-username"
               className="mb-1.5 block text-xs font-medium text-gray-500"
@@ -128,6 +151,8 @@ export default function RegisterPage() {
           >
             {loading ? "正在创建..." : "立即注册"}
           </button>
+            </>
+          )}
         </form>
 
         <p className="mt-5 text-center text-xs text-gray-400">
