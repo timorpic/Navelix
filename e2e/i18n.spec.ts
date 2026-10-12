@@ -45,7 +45,7 @@ test("账号语言：跨设备、用户隔离、英文新增任务和移动端�
   try {
     await login(member, username);
     await member.goto("/admin?tab=personalization");
-    await member.getByLabel("Language / 界面语言").last().selectOption("en");
+    await member.getByLabel("Language / 界面语言").selectOption("en");
     await expect(member.locator("html")).toHaveAttribute("lang", "en");
     await expect(member.getByRole("heading", { name: "Appearance & preferences", exact: true })).toBeVisible();
     const stored = await (await member.request.get("/api/user/data")).json();
@@ -77,7 +77,7 @@ test("账号语言：跨设备、用户隔离、英文新增任务和移动端�
       await second.goto("/admin?tab=personalization");
       await expect(second.getByRole("heading", { name: "Appearance & preferences" })).toBeVisible();
       expect(await second.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      await second.getByLabel("Language / 界面语言").last().selectOption("zh-CN");
+      await second.getByLabel("Language / 界面语言").selectOption("zh-CN");
       await expect(second.locator("html")).toHaveAttribute("lang", "zh-CN");
     } finally { await secondContext.close(); }
     expect((await (await page.request.get("/api/user/data")).json()).config.language).toBe("zh-CN");

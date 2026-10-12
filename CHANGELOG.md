@@ -10,6 +10,16 @@
 
 ---
 
+## [未发布]
+
+### 变更
+- **界面语言入口调整**：语言切换从主侧边栏与后台侧边栏移除，改到「用户设置 → 界面与功能」的独立卡片（与页面其他设置卡片一致）；登录、注册与分享页保留切换入口。个人配置读写、跨设备生效与访客 Cookie 行为不变。
+
+### 文档
+- 修正已下线功能的过期说明：移除「模型账号 OAuth 监控」「每周匿名上报」等描述，更新 AI 能力范围、加密字段清单与 `GET /api/user/data` 的偏好字段说明。
+
+---
+
 ## [2.10.6] - 2026-10-12
 
 ### 新增
@@ -20,10 +30,6 @@
 
 ### 文档
 - 中英文 README 增加 Telegram 交流群组文字入口。
-
----
-
-## [未发布]
 
 ---
 
@@ -278,7 +284,7 @@
 
 ---
 
-[未发布]: https://github.com/timorpic/Navelix/compare/v2.10.3...HEAD
+[未发布]: https://github.com/timorpic/Navelix/compare/v2.10.6...HEAD
 [2.10.3]: https://github.com/timorpic/Navelix/compare/v2.10.2...v2.10.3
 [2.10.2]: https://github.com/timorpic/Navelix/compare/v2.10.1...v2.10.2
 [2.9.5]: https://github.com/timorpic/Navelix/compare/v2.9.4...v2.9.5

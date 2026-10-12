@@ -427,7 +427,7 @@ Content-Type: application/json
 
 ### 8.1 获取全量工作台数据与偏好配置
 - **请求方式**: `GET /api/user/data`
-- **响应内容**: 顶层包含 **5 个键** —— `categories`、`links`、`projects`、**`todos`** 以及全量 `config`（主题、壁纸、搜索引擎、模型账号等跨端偏好）。
+- **响应内容**: 顶层包含 **5 个键** —— `categories`、`links`、`projects`、**`todos`** 以及全量 `config`（主题、壁纸、界面语言等跨端偏好）。
 
 > 注意包含 `todos`：按早期版本文档实现的脚本会漏掉待办数据。
 

@@ -47,8 +47,31 @@ export default function AdminPersonalizationTab() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"><LanguageSwitcher /></div>
       <AdminProfileSearchBarCard />
+
+      {/* ── 通栏卡片：界面语言（个人偏好，跨设备生效） ── */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-gray-100/90 dark:border-slate-800 shadow-2xs transition-colors space-y-4">
+        <div className="flex items-start gap-3">
+          <span className="text-base shrink-0">🌐</span>
+          <div>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
+              {tx("interface_language_3d138685")}</h3>
+            <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
+              {tx("choose_the_interface_language_signed_in_preference_347798d3")}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+          <div className="flex items-start gap-2.5">
+            <span className="text-gray-400 dark:text-slate-500 text-sm mt-0.5">↳</span>
+            <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-0.5">
+              简体中文 / English</p>
+          </div>
+          <div className="shrink-0">
+            <LanguageSwitcher showLabel={false} />
+          </div>
+        </div>
+      </div>
 
       {/* ═══════════════════════════════════════════════════════════════
           通栏卡片 1：链接跳转与打开偏好

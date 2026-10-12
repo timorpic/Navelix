@@ -26,7 +26,6 @@ src/
 │   ├── migrations/      # 历史版本升级与数据修复
 │   ├── daemon/          # 定时维护任务模块
 │   ├── ee-bridge/       # 商业驱动契约与 CE 降级
-│   ├── monitor/         # 模型账号 OAuth 与提供方适配
 │   └── __tests__/       # Node 测试；另有就近放置的测试
 ├── data/                # 随源码提供的种子链接
 └── types/               # 共享业务类型

@@ -1,13 +1,21 @@
 "use client";
 
 import { useContext, useState, useTransition } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { NavelixConfigContext, NavelixDataContext } from "@/context/navelix-context";
 import { isLocale } from "@/lib/i18n";
 
-export default function LanguageSwitcher() {
+/**
+ * 界面语言切换控件。
+ *
+ * 登录、注册与分享页使用默认的内联样式（自带「🌐 界面语言」可见标签）；
+ * 后台「界面与功能」页传入 `showLabel={false}`，由所在卡片提供标题与说明，
+ * 避免与卡片标题重复。登录后写入个人配置，访客仅写语言 Cookie。
+ */
+export default function LanguageSwitcher({ showLabel = true }: { showLabel?: boolean }) {
   const locale = useLocale();
+  const tx = useTranslations();
   const router = useRouter();
   const config = useContext(NavelixConfigContext);
   const data = useContext(NavelixDataContext);
@@ -29,12 +37,12 @@ export default function LanguageSwitcher() {
   };
   return (
     <label className="max-w-full inline-flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-slate-300">
-      <span>🌐 {locale === "en" ? "Language" : "界面语言"}</span>
-      <select aria-label="Language / 界面语言" value={locale} disabled={saving || pending} onChange={event => void change(event.target.value)} className="max-w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-gray-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+      {showLabel && <span>🌐 {tx("interface_language_3d138685")}</span>}
+      <select aria-label="Language / 界面语言" value={locale} disabled={saving || pending} onChange={event => void change(event.target.value)} className="max-w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-gray-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white cursor-pointer">
         <option value="zh-CN">简体中文</option>
         <option value="en">English</option>
       </select>
-      {error && <span role="alert">{locale === "en" ? "Failed to save language. Try again." : "保存语言失败，请重试。"}</span>}
+      {error && <span role="alert">{tx("failed_to_save_language_please_try_again__d424186b")}</span>}
     </label>
   );
 }

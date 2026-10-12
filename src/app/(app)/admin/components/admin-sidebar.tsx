@@ -1,7 +1,6 @@
 "use client";
 
 import { useText } from "@/hooks/use-text";
-import LanguageSwitcher from "@/components/language-switcher";
 import { useTranslations } from "next-intl";
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
@@ -133,7 +132,6 @@ export default function AdminSidebar({
             </div>
           ))}
         </nav>
-        <LanguageSwitcher />
       </div>
 
       {/* Bottom Profile Card */}

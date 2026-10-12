@@ -121,7 +121,7 @@ docker run --rm -v /volume1/docker/navelix:/src:ro -v "$(pwd)":/dst alpine \
 
 ### 🔑 主加密密钥（APP_SECRET / .app_secret）说明
 
-所有敏感凭据（模型账号令牌、AI Key、天气 Key）由主密钥以 **AES-256-GCM** 加密后落库。主密钥来源优先级：
+所有敏感凭据（AI Key、天气 Key、云存储密钥、Telegram Bot Token）由主密钥以 **AES-256-GCM** 加密后落库。主密钥来源优先级：
 
 1. 环境变量 `APP_SECRET` —— **长度需 ≥ 16 字符**，实际密钥由它的 SHA-256 摘要派生（并非直接使用该值）；
 2. 否则使用 `data/.app_secret` —— 32 字节随机数的 64 位 hex。该文件在**首次需要加密时按需生成**（权限 `0600`），不是安装/迁移时预置的。
@@ -132,7 +132,7 @@ docker run --rm -v /volume1/docker/navelix:/src:ro -v "$(pwd)":/dst alpine \
 > **静默返回空字符串**（仅打印一行服务端日志，界面无任何报错）。
 >
 > 因此：**改动 `APP_SECRET` 或替换 `.app_secret` 后，此前加密的所有凭据会全部无法解密**，
-> 表现为后台里的模型账号令牌 / AI Key / 天气 Key「突然空白」。
+> 表现为后台里的 AI Key / 天气 Key / 云存储密钥 / Telegram Bot Token「突然空白」。
 >
 > 若确需轮换主密钥，正确顺序是：
 >

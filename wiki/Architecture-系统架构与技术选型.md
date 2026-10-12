@@ -35,7 +35,7 @@ graph TD
         UserDataModule["全量用户数据与偏好漫游"]
         ProjectModule["项目四维看板与甘特图计算"]
         TodoModule["日历日程与 Rollover 顺延"]
-        AIModule["大模型接入 & OAuth 账号监控引擎"]
+        AIModule["大模型接入与项目拆解引擎"]
         BackupModule["SQLite VACUUM INTO 备份引擎"]
     end
 

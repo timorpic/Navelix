@@ -1,7 +1,6 @@
 "use client";
 
 import { useText } from "@/hooks/use-text";
-import LanguageSwitcher from "@/components/language-switcher";
 import { useTranslations } from "next-intl";
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
@@ -340,7 +339,6 @@ export default function Sidebar({
               );
             })}
           </nav>
-        <LanguageSwitcher />
         </div>
 
         {/* Bottom Section 抽屉 */}
