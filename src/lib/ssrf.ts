@@ -1,5 +1,8 @@
 import dns from "node:dns/promises";
 import net from "node:net";
+import http from "node:http";
+import https from "node:https";
+import { createBrotliDecompress, createGunzip, createInflate } from "node:zlib";
 
 /**
  * 判断 IPv4 地址是否在私有或保留地址段中
@@ -32,6 +35,7 @@ export function isPrivateIPv4(ip: string): boolean {
   if (p0 === 192 && p1 === 0 && parts[2] === 2) return true;
   // 192.168.0.0/16 (Private IP)
   if (p0 === 192 && p1 === 168) return true;
+  if (p0 === 198 && (p1 === 18 || p1 === 19)) return true;
   // 198.51.100.0/24 (TEST-NET-2)
   if (p0 === 198 && p1 === 51 && parts[2] === 100) return true;
   // 203.0.113.0/24 (TEST-NET-3)
@@ -50,7 +54,7 @@ export function isPrivateIPv4(ip: string): boolean {
 export function isPrivateIPv6(ip: string): boolean {
   if (!net.isIPv6(ip)) return false;
 
-  const normalized = ip.toLowerCase().trim();
+  const normalized = new URL(`http://[${ip}]/`).hostname.slice(1, -1);
 
   // 回环与未指定地址 ::1 / ::
   if (normalized === "::1" || normalized === "::" || normalized === "0:0:0:0:0:0:0:1" || normalized === "0:0:0:0:0:0:0:0") {
@@ -118,11 +122,11 @@ export function isLoopbackOrLinkLocalIP(ip: string): boolean {
     return p0 === 127 || p0 === 169;
   }
   if (net.isIPv6(ip)) {
-    const lower = ip.toLowerCase();
+    const lower = new URL(`http://[${ip}]/`).hostname.slice(1, -1);
     if (
       lower === "::1" ||
       lower === "0:0:0:0:0:0:0:1" ||
-      lower.startsWith("fe80") ||
+      lower.startsWith("fe8") ||
       lower.startsWith("fe9") ||
       lower.startsWith("fea") ||
       lower.startsWith("feb")
@@ -162,7 +166,7 @@ export interface ValidateHostOptions {
  */
 export async function validateHostIPs(hostname: string, options: ValidateHostOptions = {}): Promise<string[]> {
   const { allowPrivateIPs = false } = options;
-  const cleanHost = hostname.trim().toLowerCase();
+  const cleanHost = hostname.trim().toLowerCase().replace(/^\[|\]$/g, "");
 
   // 1. 如果配置了允许内网 IP（导航站抓取内网 NAS/路由器/开发服务）
 if (allowPrivateIPs) {
@@ -255,6 +259,7 @@ if (allowPrivateIPs) {
 export interface SafeFetchOptions extends RequestInit {
   maxRedirects?: number;
   timeoutMs?: number;
+  maxResponseBytes?: number;
   allowPrivateIPs?: boolean;
 }
 
@@ -290,65 +295,118 @@ export function resolveRedirect(
   return new URL(location, baseUrl).toString();
 }
 
-/**
- * 执行单次 fetch（redirect: 'manual'，带超时中止）。
- * 超时通过 AbortController 实现，返回前确保计时器清理。
- */
+/** Abort an outstanding DNS lookup without keeping a request waiting for it. */
+async function abortable<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+  signal.throwIfAborted();
+  let onAbort: () => void = () => {};
+  const interrupted = new Promise<never>((_, reject) => {
+    onAbort = () => reject(signal.reason);
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+  try { return await Promise.race([work, interrupted]); }
+  finally { signal.removeEventListener("abort", onAbort); }
+}
+
+/** A bounded buffered response: deadline covers DNS, headers AND decoded body. */
 export async function performFetch(
   currentUrl: string,
   fetchInit: RequestInit,
   timeoutMs: number,
+  validatedIPs?: string[],
+  maxResponseBytes = 2 * 1024 * 1024,
 ): Promise<Response> {
   const controller = new AbortController();
-  const timeoutTimer = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = setTimeout(() => controller.abort(new DOMException("Request timed out", "TimeoutError")), timeoutMs);
+  const signal = fetchInit.signal ? AbortSignal.any([controller.signal, fetchInit.signal]) : controller.signal;
   try {
-    return await fetch(currentUrl, {
-      ...fetchInit,
-      redirect: "manual",
-      signal: controller.signal,
+    const url = validateUrl(currentUrl);
+    const hostname = url.hostname.replace(/^\[|\]$/g, "");
+    const addresses = validatedIPs ?? (await abortable(dns.lookup(hostname, { all: true }), signal)).map(row => row.address);
+    if (!addresses.length) throw new Error("DNS_LOOKUP_FAILED");
+    const request = new Request(url, { ...fetchInit, signal });
+    const headers = Object.fromEntries(request.headers);
+    // Host and TLS SNI come from the original URL; only the socket address is pinned.
+    delete headers.host;
+    delete headers["content-length"];
+    headers["accept-encoding"] = "identity";
+    const body = request.body ? Buffer.from(await abortable(request.arrayBuffer(), signal)) : undefined;
+    signal.throwIfAborted();
+    return await new Promise<Response>((resolve, reject) => {
+      const transport = url.protocol === "https:" ? https : http;
+      const req = transport.request(url, {
+        method: request.method, headers, signal,
+        lookup: (_hostname, options, callback) => {
+          const candidates = addresses.filter(ip => !options.family || net.isIP(ip) === options.family);
+          if (!candidates.length) { callback(new Error("DNS_LOOKUP_FAILED: no validated address"), "", 0); return; }
+          if (options.all) callback(null, candidates.map(address => ({ address, family: net.isIP(address) })));
+          else callback(null, candidates[0], net.isIP(candidates[0]));
+        },
+      }, res => {
+        const encoding = res.headers["content-encoding"];
+        const decoder = encoding === "gzip" ? createGunzip() : encoding === "deflate" ? createInflate() : encoding === "br" ? createBrotliDecompress() : null;
+        const stream = decoder ? res.pipe(decoder) : res;
+        const chunks: Buffer[] = [];
+        let size = 0;
+        const fail = (error: Error) => { res.destroy(); stream.destroy(); req.destroy(); reject(signal.aborted ? signal.reason : error); };
+        res.on("aborted", () => fail(new Error("Response body interrupted")));
+        res.on("error", fail);
+        if (decoder) decoder.on("error", fail);
+        stream.on("data", (chunk: Buffer) => {
+          size += chunk.length;
+          if (size > maxResponseBytes) { fail(new Error("RESPONSE_TOO_LARGE")); return; }
+          chunks.push(chunk);
+        });
+        stream.on("end", () => {
+          const responseHeaders = new Headers();
+          for (const [key, value] of Object.entries(res.headers)) {
+            if (value !== undefined) for (const entry of Array.isArray(value) ? value : [value]) responseHeaders.append(key, entry);
+          }
+          if (decoder) { responseHeaders.delete("content-encoding"); responseHeaders.delete("content-length"); }
+          try {
+            const status = res.statusCode ?? 502;
+            const response = new Response(request.method === "HEAD" || [204, 205, 304].includes(status) ? null : Buffer.concat(chunks), {
+              status, statusText: res.statusMessage, headers: responseHeaders,
+            });
+            Object.defineProperty(response, "url", { value: url.href });
+            resolve(response);
+          } catch (error) { reject(error); }
+        });
+      });
+      req.on("error", reject);
+      req.end(body);
     });
-  } finally {
-    clearTimeout(timeoutTimer);
-  }
+  } finally { clearTimeout(timer); }
 }
 
-/**
- * SSRF 安全的 fetch 客户端：
- * 1. 验证目标 URL 协议（仅限 http: 和 https:）
- * 2. 解析 Host 并验证所有 A/AAAA IP 记录
- * 3. 逐级追踪重定向（redirect: 'manual'），每次重定向均对目标 URL 及 DNS 解析进行 SSRF 校验，防止重定向绕过
- * 4. 防御 DNS Rebinding
- */
+/** Every redirect uses the validated socket addresses and the same total deadline. */
 export async function safeFetch(urlInput: string, options: SafeFetchOptions = {}): Promise<Response> {
-  const { maxRedirects = 5, timeoutMs = 10_000, allowPrivateIPs = false, ...fetchInit } = options;
-
+  const { maxRedirects = 5, timeoutMs = 10_000, maxResponseBytes = 2 * 1024 * 1024, allowPrivateIPs = false, ...initial } = options;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new DOMException("Request timed out", "TimeoutError")), timeoutMs);
+  const signal = initial.signal ? AbortSignal.any([controller.signal, initial.signal]) : controller.signal;
   let currentUrl = urlInput;
-  let redirectCount = 0;
-
-  while (redirectCount <= maxRedirects) {
-    const parsedUrl = validateUrl(currentUrl);
-
-    // SSRF & DNS 校验：解析 Host 名下所有 IP 并检查私有地址
-    await validateHostIPs(parsedUrl.hostname, { allowPrivateIPs });
-
-    const response = await performFetch(currentUrl, fetchInit, timeoutMs);
-
-    // 判断是否需要处理重定向
-    if (REDIRECT_STATUS_CODES.has(response.status)) {
-      const nextUrl = resolveRedirect(response, parsedUrl);
-      if (nextUrl === null) {
-        return response;
+  let fetchInit = { ...initial, signal };
+  try {
+    for (let count = 0; count <= maxRedirects; count++) {
+      const parsed = validateUrl(currentUrl);
+      const addresses = await abortable(validateHostIPs(parsed.hostname, { allowPrivateIPs }), signal);
+      const response = await performFetch(currentUrl, fetchInit, timeoutMs, addresses, maxResponseBytes);
+      if (!REDIRECT_STATUS_CODES.has(response.status)) return response;
+      const nextUrl = resolveRedirect(response, parsed);
+      if (!nextUrl) return response;
+      if (count === maxRedirects) throw new Error("MAX_REDIRECTS_EXCEEDED");
+      const headers = new Headers(fetchInit.headers);
+      if (new URL(nextUrl).origin !== parsed.origin) {
+        headers.delete("authorization"); headers.delete("cookie"); headers.delete("proxy-authorization");
       }
-      redirectCount++;
-      if (redirectCount > maxRedirects) {
-        throw new Error(`MAX_REDIRECTS_EXCEEDED: Exceeded max redirects limit of ${maxRedirects}`);
+      const method = (fetchInit.method || "GET").toUpperCase();
+      if ((response.status === 303 && method !== "HEAD") || ([301, 302].includes(response.status) && method === "POST")) {
+        fetchInit = { ...fetchInit, method: "GET", body: undefined };
+        headers.delete("content-type"); headers.delete("content-length");
       }
+      fetchInit = { ...fetchInit, headers };
       currentUrl = nextUrl;
-      continue;
     }
-
-    return response;
-  }
-
-  throw new Error(`MAX_REDIRECTS_EXCEEDED: Exceeded max redirects limit`);
+    throw new Error("MAX_REDIRECTS_EXCEEDED");
+  } finally { clearTimeout(timer); }
 }

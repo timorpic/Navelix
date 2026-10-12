@@ -1,3 +1,4 @@
+import { seedInitialUserData } from "./seed.ts";
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
@@ -50,4 +51,6 @@ try {
 initSchema(db);
 
 // 迁移逻辑已抽离至 src/lib/migrations/index.ts（Schema 版本 v1~v13 + 数据修复）
+const needsInitialAdmin = !db.prepare("SELECT 1 FROM users LIMIT 1").get();
 runMigrations(db);
+if (needsInitialAdmin) seedInitialUserData(db, "admin-001");

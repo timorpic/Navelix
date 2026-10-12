@@ -1,6 +1,6 @@
 import { localizedJson } from "@/lib/localized-json";
 import { randomBytes } from "node:crypto";
-import { db } from "@/lib/db";
+import { db, seedUserData } from "@/lib/db";
 import { checkCSRF, hashPassword, requireAdmin } from "@/lib/auth";
 import { adminCount, deleteUserCascade, updateUser, UserUpdateError } from "@/lib/admin-users";
 
@@ -69,6 +69,8 @@ export async function POST(req: Request) {
   }
 
   const id = randomBytes(16).toString("hex");
+  db.exec("BEGIN IMMEDIATE");
+  try {
   db.prepare(
     "INSERT INTO users (id, username, password_hash, display_name, role, avatar, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
   ).run(
@@ -80,6 +82,10 @@ export async function POST(req: Request) {
     avatar,
     Date.now()
   );
+
+  seedUserData(id);
+  db.exec("COMMIT");
+  } catch (error) { db.exec("ROLLBACK"); throw error; }
 
   return localizedJson({ message: "User created successfully", userId: id }, { status: 201 });
 }

@@ -4,7 +4,7 @@ import { saveUserConfigs } from "@/lib/user-data";
 import { localizedJson } from "@/lib/localized-json";
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
-import { db, SESSION_COOKIE } from "@/lib/db";
+import { db, seedUserData, SESSION_COOKIE } from "@/lib/db";
 import { createSession, hashPassword, sessionCookieOptions, toPublicUser } from "@/lib/auth";
 import { canRegister } from "@/lib/registration";
 
@@ -72,6 +72,7 @@ export async function POST(req: Request) {
         Date.now(),
       );
 
+      seedUserData(id);
       saveUserConfigs(id, { language });
       db.exec("COMMIT");
       return role;

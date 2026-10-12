@@ -1,4 +1,4 @@
-import { db } from "./connection.ts";
+import type { DatabaseSync } from "node:sqlite";
 import {
   categories as seedCategories,
   seedQuickAccess,
@@ -6,7 +6,7 @@ import {
 } from "../../data/links.ts";
 
 // Seed user starter categories and links ONLY ONCE on initial user creation
-export function seedUserData(userId: string) {
+export function seedInitialUserData(db: DatabaseSync, userId: string) {
   // 配置可独立于内容创建，因此用分类是否存在判断内容是否已播种。
   const seeded = db
     .prepare("SELECT 1 FROM user_categories WHERE user_id = ? LIMIT 1")
@@ -18,7 +18,7 @@ export function seedUserData(userId: string) {
   }
 
   const insertCat = db.prepare(`
-    INSERT OR REPLACE INTO user_categories (id, user_id, name, label, icon, color)
+    INSERT OR IGNORE INTO user_categories (id, user_id, name, label, icon, color)
     VALUES (?, ?, ?, ?, ?, ?)
   `);
   for (const c of seedCategories) {
@@ -26,7 +26,7 @@ export function seedUserData(userId: string) {
   }
 
   const insertLink = db.prepare(`
-    INSERT OR REPLACE INTO user_links (id, user_id, title, url, description, icon, category, is_quick_access)
+    INSERT OR IGNORE INTO user_links (id, user_id, title, url, description, icon, category, is_quick_access)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
@@ -61,7 +61,7 @@ export function seedUserData(userId: string) {
   }
 
   const insertProject = db.prepare(`
-    INSERT OR REPLACE INTO projects (id, user_id, name, status, status_color, url, sort_order)
+    INSERT OR IGNORE INTO projects (id, user_id, name, status, status_color, url, sort_order)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
   const defaults = [

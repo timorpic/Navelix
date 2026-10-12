@@ -23,7 +23,7 @@ export default function ProjectGanttView({
   projects: Project[];
   getProjectTodos: (projectId: string) => TodoItem[];
   doneCount: (projectId: string) => number;
-  onToggleTodo: (id: string, done: boolean) => void;
+  onToggleTodo: (id: string, done: boolean, ownerId?: string) => void;
   /** 点击项目上的 ✨ 呼出 AI 拆解 */
   onEditProject: (project: Project, triggerAi?: boolean) => void;
 }) {
@@ -259,7 +259,7 @@ export default function ProjectGanttView({
 
                       return (
                         <div
-                          key={t.id}
+                          key={`${t.ownerId ?? ""}:${t.id}`}
                           className="flex items-center hover:bg-gray-50/40 dark:hover:bg-slate-800/30 transition-colors bg-gray-50/20 dark:bg-slate-900/40"
                         >
                           {/* 左侧子任务标题与勾选 */}
@@ -268,7 +268,7 @@ export default function ProjectGanttView({
                               <input
                                 type="checkbox"
                                 checked={isDone}
-                                onChange={() => onToggleTodo(t.id, t.done)}
+                                onChange={() => onToggleTodo(t.id, t.done, t.ownerId)}
                                 className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
                               />
                               <span
@@ -329,7 +329,7 @@ export default function ProjectGanttView({
                                 color: "#FFFFFF",
                                 opacity: isDone ? 0.6 : 0.95,
                               }}
-                              onClick={() => onToggleTodo(t.id, t.done)}
+                              onClick={() => onToggleTodo(t.id, t.done, t.ownerId)}
                               title={tx("message_2d777619d691", {v0: t.title, v1: t.dueDate || tx("not_set_181f81e0"), v2: t.assigneeName || tx("unassigned_350c6830")})}
                             >
                               <span className="truncate flex items-center gap-1">

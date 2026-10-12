@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -48,6 +48,7 @@ export function NavelixProvider({
   initialData?: UserDataResult;
 }) {
   const locale = useLocale();
+  const tx = useTranslations();
   const router = useRouter();
   const [user, setUser] = useState(initialData?.user ?? null);
   const [categories, setCategories] = useState<Category[]>(
@@ -64,6 +65,17 @@ export function NavelixProvider({
     initialData?.config ?? defaultConfig,
   );
   const [hydrated, setHydrated] = useState(!!initialData);
+
+  const revisionRef = useRef(initialData?.revision);
+  const pendingSaves = useRef(0);
+  const saveQueue = useRef(Promise.resolve());
+  const saveEpoch = useRef(0);
+  const generation = useRef(0);
+  const loadInFlight = useRef(false);
+  const loadQueued = useRef(false);
+  const loadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mounted = useRef(true);
+  const [saveError, setSaveError] = useState("");
 
   const [resolvedDark, setResolvedDark] = useState<boolean>(false);
 
@@ -165,13 +177,22 @@ export function NavelixProvider({
   }, [updateConfig]);
 
   // 4. 数据加载 fallback
-  const loadData = useCallback(() => {
+  const performLoad = useCallback(() => {
+    if (!mounted.current) return;
+    if (pendingSaves.current || loadInFlight.current) { loadQueued.current = true; return; }
+    loadInFlight.current = true;
+    loadQueued.current = false;
+    const currentGeneration = generation.current;
     fetch("/api/user/data")
       .then((res) => {
         if (res.ok) return res.json();
         throw new Error("Not logged in");
       })
       .then((data) => {
+        if (!mounted.current || pendingSaves.current || currentGeneration !== generation.current) return;
+        revisionRef.current = data.revision;
+        if (Array.isArray(data.categories)) categoriesRef.current = data.categories;
+        if (Array.isArray(data.links)) linksRef.current = data.links;
         if (data.user) setUser(data.user);
         if (Array.isArray(data.categories)) setCategories(data.categories);
         if (Array.isArray(data.links)) setLinks(data.links);
@@ -192,6 +213,7 @@ export function NavelixProvider({
         setHydrated(true);
       })
       .catch(() => {
+        if (!mounted.current || initialData) return;
         const cats = readJson<Category[]>("navelix.user.categories");
         const lnks = readJson<SiteLink[]>("navelix.user.links");
         const cfg = readJson<Partial<SystemConfig>>("navelix.user.config");
@@ -213,8 +235,24 @@ export function NavelixProvider({
           applyThemeToDom(localTheme);
         }
         setHydrated(true);
+      }).finally(() => {
+        loadInFlight.current = false;
+        if (loadQueued.current && mounted.current && !pendingSaves.current) {
+          window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
+        }
       });
-  }, [applyThemeToDom, locale, router]);
+  }, [applyThemeToDom, initialData, locale, router]);
+
+  const loadData = useCallback(() => {
+    if (!mounted.current) return;
+    if (loadTimer.current) clearTimeout(loadTimer.current);
+    loadTimer.current = setTimeout(() => { loadTimer.current = null; performLoad(); }, 80);
+  }, [performLoad]);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; if (loadTimer.current) clearTimeout(loadTimer.current); };
+  }, []);
 
   // 5. 挂载加载与跨标签页 Storage 同步
   useEffect(() => {
@@ -269,7 +307,7 @@ export function NavelixProvider({
     onLinksChange: loadData,
     onProjectsChange: loadData,
     onTodosChange: loadData,
-    enabled: hydrated,
+    enabled: hydrated && Boolean(user),
   });
 
   // 6.1 统一数据刷新：监听工作台数据变更事件（各组件改完后广播），
@@ -305,32 +343,38 @@ export function NavelixProvider({
     }
   }, [config.siteTitle, hydrated]);
 
-  const saveToServer = useCallback(
-    (nextCats: Category[], nextLinks: SiteLink[]) => {
-      fetch("/api/user/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ categories: nextCats, links: nextLinks }),
-      })
-        .then((res) => {
-          if (!res.ok) {
-            console.error("[Navelix] 保存配置至服务器失败 HTTP Status:", res.status);
-          }
-        })
-        .catch((e) => console.warn("[Navelix] 保存失败", e));
-
+  // Serialize local snapshots; stale cross-tab snapshots are rejected atomically by the server.
+  const saveSnapshot = useCallback((snapshot: { categories?: Category[]; links?: SiteLink[]; projects?: Project[] }) => {
+    const epoch = saveEpoch.current;
+    pendingSaves.current++;
+    generation.current++;
+    saveQueue.current = saveQueue.current.then(async () => {
+      if (!mounted.current || epoch !== saveEpoch.current) return;
+      const response = await fetch("/api/user/data", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...snapshot, expectedRevision: revisionRef.current }),
+      });
+      if (!response.ok) throw new Error(response.status === 409 ? "conflict" : "failed");
+      const data = await response.json();
+      revisionRef.current = data.revision;
+      if (!mounted.current) return;
+      setSaveError("");
       try {
-        localStorage.setItem(
-          "navelix.user.categories",
-          JSON.stringify(nextCats),
-        );
-        localStorage.setItem("navelix.user.links", JSON.stringify(nextLinks));
-      } catch (e) {
-        console.warn("[Navelix] localStorage 操作失败", e);
-      }
-    },
-    [],
-  );
+        if (snapshot.categories) localStorage.setItem("navelix.user.categories", JSON.stringify(snapshot.categories));
+        if (snapshot.links) localStorage.setItem("navelix.user.links", JSON.stringify(snapshot.links));
+      } catch { /* cache is optional */ }
+    }).catch((error: unknown) => {
+      saveEpoch.current++;
+      if (mounted.current) setSaveError(error instanceof Error && error.message === "conflict" ? tx("workspace_save_conflict") : tx("workspace_save_failed"));
+    }).finally(() => {
+      pendingSaves.current--;
+      if (!pendingSaves.current) loadData();
+    });
+  }, [loadData, tx]);
+
+  const saveToServer = useCallback((nextCats: Category[], nextLinks: SiteLink[]) => {
+    saveSnapshot({ categories: nextCats, links: nextLinks });
+  }, [saveSnapshot]);
 
   const commitData = useCallback(
     (nextCats: Category[], nextLinks: SiteLink[]) => {
@@ -368,6 +412,7 @@ export function NavelixProvider({
 
   const deleteCategory = useCallback(
     (id: string) => {
+      if (categoriesRef.current.some(c => c.id === id && c.isSubscribed)) return;
       const nextCats = categoriesRef.current.filter((c) => c.id !== id);
       const nextLinks = linksRef.current.filter((l) => l.category !== id);
       commitData(nextCats, nextLinks);
@@ -377,6 +422,7 @@ export function NavelixProvider({
 
   const addLink = useCallback(
     (link: Omit<SiteLink, "id">) => {
+      if (categoriesRef.current.some(c => c.id === link.category && c.isSubscribed)) return;
       const nextLinks = [
         ...linksRef.current,
         { ...link, id: crypto.randomUUID() },
@@ -396,6 +442,7 @@ export function NavelixProvider({
 
   const updateLink = useCallback(
     (id: string, patch: Omit<SiteLink, "id">) => {
+      if (linksRef.current.some(l => l.id === id && l.isSubscribed)) return;
       const nextLinks = linksRef.current.map((l) =>
         l.id === id ? { ...patch, id } : l,
       );
@@ -406,6 +453,7 @@ export function NavelixProvider({
 
   const updateCategory = useCallback(
     (id: string, patch: { name: string; icon: string; isTeamShared?: boolean }) => {
+      if (categoriesRef.current.some(c => c.id === id && c.isSubscribed)) return;
       const nextCats = categoriesRef.current.map((c) =>
         c.id === id
           ? {
@@ -485,14 +533,8 @@ export function NavelixProvider({
 
   const saveProjects = useCallback((nextProjects: Project[]) => {
     setProjects(nextProjects);
-    fetch("/api/user/data", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projects: nextProjects }),
-    }).then(response => {
-      if (!response.ok) throw new Error("保存配置失败");
-    }).catch((e) => console.warn("[Navelix] 保存失败", e));
-  }, []);
+    saveSnapshot({ projects: nextProjects });
+  }, [saveSnapshot]);
 
   const dataApi: NavelixDataApi = {
     user,
@@ -531,6 +573,9 @@ export function NavelixProvider({
   return (
     <NavelixDataContext.Provider value={dataApi}>
       <NavelixConfigContext.Provider value={configApi}>
+        {saveError && <div role="alert" className="fixed top-4 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-red-700 p-3 text-sm text-white">
+          {saveError}<button type="button" className="ml-3 underline" onClick={() => setSaveError("")}>{tx("workspace_notice_dismiss")}</button>
+        </div>}
         {children}
       </NavelixConfigContext.Provider>
     </NavelixDataContext.Provider>

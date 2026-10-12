@@ -58,7 +58,7 @@ describe("updateTodoFields", () => {
   it("无字段时返回空数组且不写库", () => {
     const uid = seedUser();
     const tid = seedTodo(uid);
-    assert.deepEqual(updateTodoFields(tid, {}), []);
+    assert.deepEqual(updateTodoFields(tid, uid, {}), []);
     const row = db.prepare("SELECT title FROM user_todos WHERE id = ?").get(tid) as {
       title: string;
     };
@@ -69,7 +69,7 @@ describe("updateTodoFields", () => {
     const uid = seedUser();
     const tid = seedTodo(uid);
     assert.deepEqual(
-      updateTodoFields(tid, { done: true, title: "  新标题  ", dueDate: "2026-10-12T09:00:00Z" }),
+      updateTodoFields(tid, uid, { done: true, title: "  新标题  ", dueDate: "2026-10-12T09:00:00Z" }),
       ["done", "title", "dueDate"],
     );
     const row = db
@@ -83,7 +83,7 @@ describe("updateTodoFields", () => {
   it("assigneeId 同时写入 assignee_id 与历史列 assigned_to", () => {
     const uid = seedUser();
     const tid = seedTodo(uid);
-    updateTodoFields(tid, { assigneeId: "u-9" });
+    updateTodoFields(tid, uid, { assigneeId: "u-9" });
     const row = db
       .prepare("SELECT assignee_id, assigned_to FROM user_todos WHERE id = ?")
       .get(tid) as { assignee_id: string; assigned_to: string };
@@ -94,8 +94,8 @@ describe("updateTodoFields", () => {
   it("清空 assigneeId 时两列一起清空", () => {
     const uid = seedUser();
     const tid = seedTodo(uid);
-    updateTodoFields(tid, { assigneeId: "u-9" });
-    updateTodoFields(tid, { assigneeId: "" });
+    updateTodoFields(tid, uid, { assigneeId: "u-9" });
+    updateTodoFields(tid, uid, { assigneeId: "" });
     const row = db
       .prepare("SELECT assignee_id, assigned_to FROM user_todos WHERE id = ?")
       .get(tid) as { assignee_id: string; assigned_to: string };
@@ -107,7 +107,7 @@ describe("updateTodoFields", () => {
     const uid = seedUser();
     const pid = seedProject(uid);
     const tid = seedTodo(uid, pid);
-    updateTodoFields(tid, { title: "x" });
+    updateTodoFields(tid, uid, { title: "x" });
     assert.ok(projectUpdatedAt(pid) > 0, "同项目内的编辑也应刷新项目时间戳");
   });
 
@@ -117,7 +117,7 @@ describe("updateTodoFields", () => {
     const to = seedProject(uid, "目标");
     const tid = seedTodo(uid, from);
 
-    updateTodoFields(tid, { projectId: to });
+    updateTodoFields(tid, uid, { projectId: to });
 
     assert.ok(projectUpdatedAt(from) > 0, "源项目应感知到待办被移走");
     assert.ok(projectUpdatedAt(to) > 0, "目标项目应感知到待办被移入");
@@ -132,7 +132,7 @@ describe("updateTodoFields", () => {
     const uid = seedUser();
     const from = seedProject(uid, "源");
     const tid = seedTodo(uid, from);
-    updateTodoFields(tid, { projectId: "" });
+    updateTodoFields(tid, uid, { projectId: "" });
     assert.ok(projectUpdatedAt(from) > 0);
     const row = db.prepare("SELECT project_id FROM user_todos WHERE id = ?").get(tid) as {
       project_id: string;
@@ -144,7 +144,7 @@ describe("updateTodoFields", () => {
     const uid = seedUser();
     const other = seedProject(uid, "无关项目");
     const tid = seedTodo(uid);
-    updateTodoFields(tid, { title: "y" });
+    updateTodoFields(tid, uid, { title: "y" });
     assert.equal(projectUpdatedAt(other), 0, "无关项目不应被刷新");
   });
 });

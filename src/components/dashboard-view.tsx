@@ -1,5 +1,7 @@
 "use client";
 
+import { todoUrl } from "@/lib/todo-url";
+
 import { useTranslations } from "next-intl";
 import { useState, useEffect, useMemo } from "react";
 import type { Category, SiteLink, SystemConfig } from "@/types";
@@ -76,14 +78,14 @@ export default function DashboardView({
   const projectMetrics = useMemo(() => computeProjectMetrics(projects), [projects]);
 
   // 切换待办完成状态
-  const handleToggleTodo = async (id: string, done: boolean) => {
+  const handleToggleTodo = async (id: string, done: boolean, ownerId?: string) => {
     try {
-      await fetch(`/api/todos/${id}`, {
+      const response = await fetch(todoUrl(id, ownerId), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ done: !done }),
       });
-      window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
+        if (!response.ok) return;
       refreshData();
     } catch {
       // ignore
@@ -373,14 +375,14 @@ export default function DashboardView({
             ) : (
               todoMetrics.urgentOrUpcoming.map((item) => (
                 <div
-                  key={item.id}
+                  key={`${item.ownerId ?? ""}:${item.id}`}
                   className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50/80 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-800 transition-all"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <input
                       type="checkbox"
                       checked={item.done}
-                      onChange={() => handleToggleTodo(item.id, item.done)}
+                      onChange={() => handleToggleTodo(item.id, item.done, item.ownerId)}
                       className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776] border-gray-300 dark:border-slate-600 cursor-pointer"
                     />
                     <div className="min-w-0">

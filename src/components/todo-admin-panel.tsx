@@ -1,5 +1,7 @@
 "use client";
 
+import { todoUrl } from "@/lib/todo-url";
+
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { TodoItem } from "@/types";
@@ -36,17 +38,19 @@ export default function TodoAdminPanel() {
     }
     try {
       if (editing) {
-        await fetch(`/api/todos/${editing.id}`, {
+        const response = await fetch(todoUrl(editing.id, editing.ownerId), {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: t, priority, dueDate: dueDate || undefined }),
         });
+        if (!response.ok) throw new Error("Save failed");
       } else {
-        await fetch("/api/todos", {
+        const response = await fetch("/api/todos", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: t, priority, dueDate: dueDate || undefined }),
         });
+        if (!response.ok) throw new Error("Save failed");
       }
       resetForm();
       refreshData();
@@ -56,16 +60,18 @@ export default function TodoAdminPanel() {
   };
 
   const toggle = async (todo: TodoItem) => {
-    await fetch(`/api/todos/${todo.id}`, {
+    const response = await fetch(todoUrl(todo.id, todo.ownerId), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ done: !todo.done }),
     });
+    if (!response.ok) { setError(tx("failed_to_save_try_again_f42a1238")); return; }
     refreshData();
   };
 
-  const remove = async (id: string) => {
-    await fetch(`/api/todos/${id}`, { method: "DELETE" });
+  const remove = async (id: string, ownerId?: string) => {
+    const response = await fetch(todoUrl(id, ownerId), { method: "DELETE" });
+    if (!response.ok) { setError(tx("failed_to_save_try_again_f42a1238")); return; }
     refreshData();
   };
 
@@ -182,7 +188,7 @@ export default function TodoAdminPanel() {
               <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
                 {todos.map((todo) => (
                   <tr
-                    key={todo.id}
+                    key={`${todo.ownerId ?? ""}:${todo.id}`}
                     className="hover:bg-gray-50/60 dark:hover:bg-slate-700/50 transition-colors"
                   >
                     <td className="py-3 pr-4">
@@ -224,7 +230,7 @@ export default function TodoAdminPanel() {
                         >
                           {tx("edit_a2e86c4b")}</button>
                         <button
-                          onClick={() => remove(todo.id)}
+                          onClick={() => remove(todo.id, todo.ownerId)}
                           className="text-gray-400 dark:text-slate-400 hover:text-rose-500 font-medium transition-colors cursor-pointer"
                         >
                           {tx("delete_a6c5bde8")}</button>

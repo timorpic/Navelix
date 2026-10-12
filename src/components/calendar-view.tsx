@@ -1,5 +1,7 @@
 "use client";
 
+import { todoUrl } from "@/lib/todo-url";
+
 import { useTranslations } from "next-intl";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { TodoItem, WorkspaceMember } from "@/types";
@@ -186,7 +188,6 @@ export default function CalendarView() {
       if (res.ok) {
         setNewTitle("");
         setNewProjectId("");
-        window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
         refreshData();
         pushNotification(tx("schedule_created_278d4cc2"), newTitle.trim(), "calendar");
       }
@@ -195,14 +196,14 @@ export default function CalendarView() {
     }
   };
 
-  const handleToggleTodo = async (id: string, done: boolean) => {
+  const handleToggleTodo = async (id: string, done: boolean, ownerId?: string) => {
     try {
-      await fetch(`/api/todos/${id}`, {
+      const response = await fetch(todoUrl(id, ownerId), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ done: !done }),
       });
-      window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
+        if (!response.ok) return;
       refreshData();
     } catch {
       // ignore
@@ -215,7 +216,6 @@ export default function CalendarView() {
 
   /** 弹窗内保存/删除成功后统一收口：刷新数据并广播工作区更新 */
   const handleScheduleModalSaved = () => {
-    window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
     refreshData();
   };
 
@@ -519,14 +519,14 @@ export default function CalendarView() {
                   ) : (
                     energyBuckets.morning.map((t) => (
                       <div
-                        key={t.id}
+                        key={`${t.ownerId ?? ""}:${t.id}`}
                         className="flex items-center justify-between p-2 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-800 text-xs"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <input
                             type="checkbox"
                             checked={t.done}
-                            onChange={() => handleToggleTodo(t.id, t.done)}
+                            onChange={() => handleToggleTodo(t.id, t.done, t.ownerId)}
                             className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
                           />
                           <span
@@ -561,14 +561,14 @@ export default function CalendarView() {
                   ) : (
                     energyBuckets.afternoon.map((t) => (
                       <div
-                        key={t.id}
+                        key={`${t.ownerId ?? ""}:${t.id}`}
                         className="flex items-center justify-between p-2 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-800 text-xs"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <input
                             type="checkbox"
                             checked={t.done}
-                            onChange={() => handleToggleTodo(t.id, t.done)}
+                            onChange={() => handleToggleTodo(t.id, t.done, t.ownerId)}
                             className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
                           />
                           <span
@@ -603,14 +603,14 @@ export default function CalendarView() {
                   ) : (
                     energyBuckets.evening.map((t) => (
                       <div
-                        key={t.id}
+                        key={`${t.ownerId ?? ""}:${t.id}`}
                         className="flex items-center justify-between p-2 rounded-xl bg-gray-50 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-800 text-xs"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <input
                             type="checkbox"
                             checked={t.done}
-                            onChange={() => handleToggleTodo(t.id, t.done)}
+                            onChange={() => handleToggleTodo(t.id, t.done, t.ownerId)}
                             className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
                           />
                           <span
@@ -745,14 +745,14 @@ export default function CalendarView() {
                       ) : (
                         dayTodos.map((t) => (
                           <div
-                            key={t.id}
+                            key={`${t.ownerId ?? ""}:${t.id}`}
                             className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-gray-200/60 dark:border-slate-700 shadow-2xs space-y-1"
                           >
                             <div className="flex items-start gap-1.5">
                               <input
                                 type="checkbox"
                                 checked={t.done}
-                                onChange={() => handleToggleTodo(t.id, t.done)}
+                                onChange={() => handleToggleTodo(t.id, t.done, t.ownerId)}
                                 className="mt-0.5 w-3 h-3 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
                               />
                               <span
@@ -854,7 +854,7 @@ export default function CalendarView() {
                 .filter((t) => t.dueDate === todayStr)
                 .map((item, idx) => (
                   <div
-                    key={item.id}
+                    key={`${item.ownerId ?? ""}:${item.id}`}
                     className="flex items-start gap-4 p-3.5 rounded-xl bg-gray-50/80 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-800"
                   >
                     <span className="w-6 h-6 rounded-full bg-[#00C776]/15 text-[#00C776] font-black text-xs flex items-center justify-center shrink-0">
@@ -899,7 +899,7 @@ export default function CalendarView() {
                     <input
                       type="checkbox"
                       checked={item.done}
-                      onChange={() => handleToggleTodo(item.id, item.done)}
+                      onChange={() => handleToggleTodo(item.id, item.done, item.ownerId)}
                       className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
                     />
                   </div>

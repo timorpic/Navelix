@@ -52,8 +52,8 @@ export function useAdminDataTransfer({
 }: UseAdminDataTransferOptions): UseAdminDataTransferResult {
   const tx = useTranslations();
   const text = useText();
-  const { config, updateConfig } = useNavelixConfig();
-  const { categories, links, importData, mergeBookmarks } = useNavelixData();
+  const { config } = useNavelixConfig();
+  const { categories, links, refreshData, mergeBookmarks } = useNavelixData();
 
   const resetFileInput = useCallback((input: HTMLInputElement | null) => {
     if (input) input.value = "";
@@ -105,11 +105,15 @@ export function useAdminDataTransfer({
           const payload = parseFullImportPayload(parsed);
           payload.config = personalBackupConfig(payload.config);
 
+          const latest = await fetch("/api/user/data", { cache: "no-store" });
+          if (!latest.ok) throw new Error("Unable to read workspace");
+          const { revision } = await latest.json();
           const saveRes = await fetch("/api/user/data", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               dataTransferAction: "import",
+              expectedRevision: revision,
               categories: payload.categories,
               links: payload.links,
               projects: payload.projects,
@@ -124,10 +128,7 @@ export function useAdminDataTransfer({
 
           writeLocalExportState(localStorage, payload.localStorageData);
 
-          if (payload.config) {
-            updateConfig(payload.config);
-          }
-          importData(payload.categories, payload.links);
+          refreshData();
 
           notify(tx("data_management_9bb882c6"), text(fullImportSummary(payload)));
 
@@ -141,7 +142,7 @@ export function useAdminDataTransfer({
       };
       reader.readAsText(file);
     },
-    [updateConfig, importData, notify, flash, resetFileInput, tx, text],
+    [refreshData, notify, flash, resetFileInput, tx, text],
   );
 
   // ── 导入 Chrome / HTML 书签 ──

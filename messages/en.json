@@ -1543,7 +1543,7 @@
   "message_25a0a3234588": "Project “{v0}” not found or not authorized",
   "message_383c8b96b5e9": "Deleted project “{v0}” and its related todos.",
   "message_02aa2b7ea9f4": "Unknown tool: {v0}",
-  "message_3cd4525e93e7": "⚠️ Please confirm deletion of “{v0}”.\nReply “confirm delete” to proceed. If you did not request this, ignore this message.",
+  "message_3cd4525e93e7": "⚠️ Confirm deletion of “{v0}”.\nReply with “{v1}” to proceed; otherwise ignore this message.",
   "message_8a5383c45c73": "Locked for {v0} more minutes",
   "message_e5de10170369": "🚨 Navelix sign-in security alert\n\nRepeated sign-in failures for “{v0}”.\n{v1}\nAttempts remaining: {v2}\n{v3}",
   "message_a89afa99f7d5": "© 2026 Navelix. All rights reserved.",
@@ -1551,5 +1551,12 @@
   "message_15a3d3ef703a": "Missing todo ID",
   "message_2de97656984d": "Missing project ID",
   "message_6596555475ed": "Todo updated.",
-  "message_47b2e662f634": "Project updated."
+  "message_47b2e662f634": "Project updated.",
+  "workspace_save_conflict": "Another page updated this workspace. Your change was not saved. Latest data has been reloaded; please retry.",
+  "workspace_save_failed": "Save failed. Your change was not saved; please retry.",
+  "workspace_notice_dismiss": "Dismiss",
+  "workspace_conflict_error": "This workspace was updated elsewhere. Refresh and try again.",
+  "todo_identity_error": "The task is unavailable, ambiguous, or you do not have permission.",
+  "ai_delete_cancelled": "Deletion cancelled.",
+  "ai_conversation_required": "Conversation ID is missing. Refresh the page and try again."
 }

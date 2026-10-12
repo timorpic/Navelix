@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { emitUserEvent } from "@/lib/events";
+import { resolveTodoOwner } from "@/lib/todo-store";
 import { updateTodoFields } from "@/lib/todos-projects";
 
 // PATCH /api/todos/[id] - toggle done / update fields
@@ -15,10 +16,13 @@ export async function PATCH(
   const userId = user.id;
 
   const { id } = await params;
+  const body = await req.json();
 
+  const ownerId = resolveTodoOwner(id, userId, req.nextUrl.searchParams.get("ownerId") || undefined);
+  if (!ownerId) return localizedJson({ error: "待办不存在、身份不明确或无权操作" }, { status: 404 });
   const todoRow = db
-    .prepare("SELECT user_id, assigned_to, project_id, due_date FROM user_todos WHERE id = ?")
-    .get(id) as { user_id: string; assigned_to?: string; project_id?: string; due_date?: string } | undefined;
+    .prepare("SELECT user_id, COALESCE(NULLIF(assignee_id, ''), assigned_to) AS assigned_to, project_id, due_date FROM user_todos WHERE id = ? AND user_id = ?")
+    .get(id, ownerId) as { user_id: string; assigned_to?: string; project_id?: string; due_date?: string } | undefined;
 
   if (!todoRow) {
     return localizedJson({ error: "待办不存在" }, { status: 404 });
@@ -29,9 +33,7 @@ export async function PATCH(
     return localizedJson({ error: "无权修改该待办" }, { status: 403 });
   }
 
-  const body = await req.json();
-
-  const changed = updateTodoFields(id, body);
+  const changed = updateTodoFields(id, ownerId, body);
   if (changed.length === 0) {
     return localizedJson({ error: "无更新字段" }, { status: 400 });
   }
@@ -42,12 +44,15 @@ export async function PATCH(
     emitUserEvent(todoRow.assigned_to, "todos:change");
   }
 
+  if (typeof body.assigneeId === "string" && body.assigneeId && body.assigneeId !== todoRow.assigned_to && body.assigneeId !== todoRow.user_id) {
+    emitUserEvent(body.assigneeId, "todos:change");
+  }
   return localizedJson({ success: true });
 }
 
 // DELETE /api/todos/[id] - delete a todo
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getSessionUser();
@@ -56,9 +61,11 @@ export async function DELETE(
 
   const { id } = await params;
 
+  const ownerId = resolveTodoOwner(id, userId, req.nextUrl.searchParams.get("ownerId") || undefined);
+  if (!ownerId) return localizedJson({ error: "待办不存在、身份不明确或无权操作" }, { status: 404 });
   const todoRow = db
-    .prepare("SELECT user_id, assigned_to FROM user_todos WHERE id = ?")
-    .get(id) as { user_id: string; assigned_to?: string } | undefined;
+    .prepare("SELECT user_id, COALESCE(NULLIF(assignee_id, ''), assigned_to) AS assigned_to FROM user_todos WHERE id = ? AND user_id = ?")
+    .get(id, ownerId) as { user_id: string; assigned_to?: string } | undefined;
 
   if (!todoRow) {
     return localizedJson({ success: true });
@@ -68,7 +75,7 @@ export async function DELETE(
     return localizedJson({ error: "仅任务创建者可删除该待办" }, { status: 403 });
   }
 
-  db.prepare("DELETE FROM user_todos WHERE id = ?").run(id);
+  db.prepare("DELETE FROM user_todos WHERE id = ? AND user_id = ?").run(id, ownerId);
 
   emitUserEvent(todoRow.user_id, "todos:change");
   if (todoRow.assigned_to && todoRow.assigned_to !== todoRow.user_id) {

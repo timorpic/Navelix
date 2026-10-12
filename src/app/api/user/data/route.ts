@@ -15,6 +15,7 @@ import {
 } from "@/lib/user-data";
 import { emitUserEvent } from "@/lib/events";
 import { getProFeatureFlags } from "@/lib/ee-gate";
+import { getWorkspaceRevision, requireWorkspaceRevision, WorkspaceConflictError } from "@/lib/workspace-revision";
 import { GLOBAL_SCOPE_CONFIG_KEYS } from "@/lib/user-config-columns";
 
 // GET /api/user/data - Fetch categories, links, and config for current logged-in user
@@ -56,6 +57,11 @@ export async function POST(req: NextRequest) {
       return localizedJson({ error: "无效数据传输操作" }, { status: 400 });
     }
     db.exec("BEGIN IMMEDIATE");
+    if ([body.categories, body.links, body.projects, body.todos].some(Array.isArray)) {
+      requireWorkspaceRevision(userId, body.expectedRevision);
+    }
+    const subscribers = db.prepare("SELECT DISTINCT user_id FROM user_category_subscriptions WHERE owner_id = ?").all(userId);
+    const assignees = db.prepare("SELECT DISTINCT COALESCE(NULLIF(assignee_id, ''), assigned_to) AS id FROM user_todos WHERE user_id = ?").all(userId);
 
     // 安全门禁与 Pro 商业权限管控：
     // 1. 普通用户禁止修改全局安全策略与 Pro 特权字段
@@ -103,6 +109,7 @@ export async function POST(req: NextRequest) {
       saveUserConfigs(userId, body.config);
     }
 
+    const revision = getWorkspaceRevision(userId);
     db.exec("COMMIT");
 
     // 广播实时变更通知
@@ -111,16 +118,24 @@ export async function POST(req: NextRequest) {
     if (Array.isArray(body.projects)) emitUserEvent(userId, "projects:change");
     if (Array.isArray(body.todos)) emitUserEvent(userId, "todos:change");
 
+    if (Array.isArray(body.links) || Array.isArray(body.categories)) {
+      for (const subscriber of subscribers) emitUserEvent(String(subscriber.user_id), "categories:change");
+    }
+    if (Array.isArray(body.todos)) {
+      const recipients = new Set([...assignees, ...db.prepare("SELECT DISTINCT COALESCE(NULLIF(assignee_id, ''), assigned_to) AS id FROM user_todos WHERE user_id = ?").all(userId)].map(row => String(row.id || "")));
+      for (const id of recipients) if (id && id !== userId) emitUserEvent(id, "todos:change");
+    }
     if (body.dataTransferAction === "import") {
       await sendUserTelegramNotification(userId, "📦 Navelix：个人 JSON 数据导入成功。", "dataTransfer");
     }
-    return localizedJson({ success: true });
+    return localizedJson({ success: true, revision });
   } catch (err) {
     try {
       db.exec("ROLLBACK");
     } catch {
       // rollback error ignore
     }
+    if (err instanceof WorkspaceConflictError) return localizedJson({ error: err.message, code: "WORKSPACE_CONFLICT" }, { status: 409 });
     const message = err instanceof Error ? err.message : "保存配置失败";
     return localizedJson({ error: message }, { status: 500 });
   }

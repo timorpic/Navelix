@@ -38,7 +38,7 @@ export interface TodoRowForPatch {
  *
  * 返回实际写入的字段名列表（空表示无需更新）。
  */
-export function updateTodoFields(id: string, input: TodoPatchInput): string[] {
+export function updateTodoFields(id: string, userId: string, input: TodoPatchInput): string[] {
   const fields: string[] = [];
   const vals: (string | number)[] = [];
   const changed: string[] = [];
@@ -89,28 +89,28 @@ export function updateTodoFields(id: string, input: TodoPatchInput): string[] {
 
   if (fields.length === 0) return [];
 
-  vals.push(id);
+  vals.push(id, userId);
 
   db.exec("BEGIN IMMEDIATE;");
   try {
-    const assignmentsBefore = captureTaskAssignments({ todoId: id });
+    const assignmentsBefore = captureTaskAssignments({ ownerId: userId, todoId: id });
     // 必须在 UPDATE 之前读取：更新后这一列已是新值，就拿不到「源项目」了
     const before = db
-      .prepare("SELECT project_id FROM user_todos WHERE id = ?")
-      .get(id) as { project_id?: string } | undefined;
+      .prepare("SELECT project_id FROM user_todos WHERE id = ? AND user_id = ?")
+      .get(id, userId) as { project_id?: string } | undefined;
 
-    db.prepare(`UPDATE user_todos SET ${fields.join(", ")} WHERE id = ?`).run(...vals);
+    db.prepare(`UPDATE user_todos SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`).run(...vals);
 
     // 同步刷新关联项目的 updated_at：待办换项目时，源与目标项目都应感知到变更
     const now = Date.now();
     const touched = new Set<string>();
     if (before?.project_id) touched.add(before.project_id);
     const after = db
-      .prepare("SELECT project_id FROM user_todos WHERE id = ?")
-      .get(id) as { project_id?: string } | undefined;
+      .prepare("SELECT project_id FROM user_todos WHERE id = ? AND user_id = ?")
+      .get(id, userId) as { project_id?: string } | undefined;
     if (after?.project_id) touched.add(after.project_id);
     for (const pid of touched) {
-      db.prepare("UPDATE projects SET updated_at = ? WHERE id = ?").run(now, pid);
+      db.prepare("UPDATE projects SET updated_at = ? WHERE id = ? AND user_id = ?").run(now, pid, userId);
     }
 
     enqueueChangedAssignments(assignmentsBefore);
@@ -204,8 +204,8 @@ function syncProjectMilestonesInTransaction(
 
     const insertStmt = db.prepare(
       `INSERT INTO user_todos (
-        id, user_id, title, priority, done, due_date, project_id, assignee_id, assignee_name, created_at, sort_order
-      ) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)`,
+        id, user_id, title, priority, done, due_date, project_id, assignee_id, assigned_to, assignee_name, created_at, sort_order
+      ) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)`,
     );
 
     todos.forEach((t, idx) => {
@@ -245,6 +245,7 @@ function syncProjectMilestonesInTransaction(
           tPriority,
           tDueDate,
           projectId,
+          tAssigneeId,
           tAssigneeId,
           tAssigneeName,
           Date.now() + idx,
@@ -386,7 +387,7 @@ export function createTodo(userId: string, input: CreateTodoInput): string {
     );
 
     if (projectId) {
-      db.prepare("UPDATE projects SET updated_at = ? WHERE id = ?").run(Date.now(), projectId);
+      db.prepare("UPDATE projects SET updated_at = ? WHERE id = ? AND user_id = ?").run(Date.now(), projectId, userId);
     }
 
     enqueueChangedAssignments(assignmentsBefore);
@@ -453,7 +454,7 @@ export function createProject(userId: string, input: CreateProjectInput): Create
 
     if (Array.isArray(input.todos) && input.todos.length > 0) {
       const insertTodo = db.prepare(
-        "INSERT INTO user_todos (id, user_id, title, priority, done, due_date, project_id, assignee_id, assignee_name, created_at, sort_order) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO user_todos (id, user_id, title, priority, done, due_date, project_id, assignee_id, assigned_to, assignee_name, created_at, sort_order) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)",
       );
       input.todos.forEach((t, idx) => {
         const tTitle = String(t.title || "").trim();
@@ -468,6 +469,7 @@ export function createProject(userId: string, input: CreateProjectInput): Create
           tPriority,
           t.dueDate ? String(t.dueDate).slice(0, 10) : "",
           id,
+          t.assigneeId ? String(t.assigneeId).trim() : "",
           t.assigneeId ? String(t.assigneeId).trim() : "",
           t.assigneeName ? String(t.assigneeName).trim() : "",
           Date.now() + idx,

@@ -3,21 +3,27 @@ import { logger } from "../../logger.ts";
 
 /**
  * v5：一次性迁移 —— 重建所有数据表，补齐外键约束与级联删除。
- * 仅对 user_version < 5 的旧库执行一次。失败时回滚但保留版本推进（与旧实现一致）。
+ * 取得写锁后重新检查版本；失败回滚并阻止版本推进。
  */
 export function migrateV5(db: DatabaseSync): void {
   try {
     db.exec("PRAGMA foreign_keys = OFF;");
-    db.exec("BEGIN TRANSACTION;");
+    db.exec("BEGIN IMMEDIATE;");
+    const version = db.prepare("PRAGMA user_version").get()?.user_version;
+    if (Number(version) >= 5) {
+      db.exec("COMMIT;");
+      return;
+    }
 
     db.exec(REBUILD_SQL);
-
+    db.exec("PRAGMA user_version = 5;");
     db.exec("COMMIT;");
   } catch (err) {
     logger.error("v5 migration failed", {
       error: err instanceof Error ? err.message : err,
     });
     try { db.exec("ROLLBACK;"); } catch {}
+    throw err;
   } finally {
     db.exec("PRAGMA foreign_keys = ON;");
   }

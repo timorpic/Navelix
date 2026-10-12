@@ -1,5 +1,7 @@
 "use client";
 
+import { todoUrl } from "@/lib/todo-url";
+
 import { useTranslations } from "next-intl";
 import React, { useState, useMemo } from "react";
 import type { TodoItem } from "@/types";
@@ -56,7 +58,7 @@ export default function ScheduleAdminPanel() {
     try {
       if (editingSchedule) {
         // Edit Schedule
-        const res = await fetch(`/api/todos/${editingSchedule.id}`, {
+        const res = await fetch(todoUrl(editingSchedule.id, editingSchedule.ownerId), {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -99,11 +101,12 @@ export default function ScheduleAdminPanel() {
   // Toggle Schedule Done Status
   const handleToggleDone = async (item: TodoItem) => {
     try {
-      await fetch(`/api/todos/${item.id}`, {
+      const response = await fetch(todoUrl(item.id, item.ownerId), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ done: !item.done }),
       });
+      if (!response.ok) return;
       refreshData();
     } catch {
       // ignore
@@ -114,7 +117,7 @@ export default function ScheduleAdminPanel() {
   const handleDeleteConfirm = async () => {
     if (!scheduleToDelete) return;
     try {
-      const res = await fetch(`/api/todos/${scheduleToDelete.id}`, {
+      const res = await fetch(todoUrl(scheduleToDelete.id, scheduleToDelete.ownerId), {
         method: "DELETE",
       });
       if (res.ok) {
@@ -244,7 +247,7 @@ export default function ScheduleAdminPanel() {
 
                 return (
                   <tr
-                    key={item.id}
+                    key={`${item.ownerId ?? ""}:${item.id}`}
                     className="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors"
                   >
                     {/* Status Checkbox */}

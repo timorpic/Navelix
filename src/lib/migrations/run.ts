@@ -30,9 +30,19 @@ export function runMigrations(db: DatabaseSync): void {
 
   // ── 2. 版本迁移（结构与业务数据分离，仅当 user_version 落后时执行）──
   for (const migration of VERSIONED_MIGRATIONS) {
-    if (user_version < migration.version) {
+    if (Number(db.prepare("PRAGMA user_version").get()?.user_version) < migration.version) {
       migration.migrate(db);
-      db.exec(`PRAGMA user_version = ${migration.version}`);
+      // Another worker may have advanced further while this migration ran.
+      db.exec("BEGIN IMMEDIATE");
+      try {
+        if (Number(db.prepare("PRAGMA user_version").get()?.user_version) < migration.version) {
+          db.exec(`PRAGMA user_version = ${migration.version}`);
+        }
+        db.exec("COMMIT");
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
     }
   }
 

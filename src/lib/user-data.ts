@@ -1,4 +1,6 @@
-import { db, seedUserData, type PublicUser, type UserRow } from "./db.ts";
+import { db, type PublicUser, type UserRow } from "./db.ts";
+import { getWorkspaceRevision } from "./workspace-revision.ts";
+import { getUserTodos } from "./todo-store.ts";
 import { toPublicUser } from "./auth/session.ts";
 import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
 import { validateConfigPatch } from "./config-validation.ts";
@@ -21,6 +23,7 @@ import {
 } from "./global-config.ts";
 
 export interface UserDataResult {
+  revision?: string;
   user?: PublicUser | null;
   categories: Category[];
   links: SiteLink[];
@@ -36,9 +39,6 @@ export interface UserDataResult {
  * 注：SQLite WAL 模式实时读写，commit 后即可读到，无需主动缓存失效。
  */
 export function getUserData(userId: string): UserDataResult {
-  // Ensure user has starter seeded data
-  seedUserData(userId);
-
   // Fetch current user details
   const userRow = db
     .prepare("SELECT id, username, display_name, email, bio, role, avatar FROM users WHERE id = ?")
@@ -75,7 +75,7 @@ export function getUserData(userId: string): UserDataResult {
       FROM user_category_subscriptions s
       JOIN user_categories c ON c.id = s.category_id AND c.user_id = s.owner_id
       JOIN users u ON u.id = s.owner_id
-      WHERE s.user_id = ?
+      WHERE s.user_id = ? AND c.is_team_shared = 1
     `)
     .all(userId) as Array<{
     id: string;
@@ -88,8 +88,10 @@ export function getUserData(userId: string): UserDataResult {
     owner_username: string;
   }>;
 
+  const sharedId = (owner: string, id: string) => `shared:${encodeURIComponent(owner)}:${encodeURIComponent(id)}`;
   const subCategories: Category[] = subCategoryRows.map((c) => ({
-    id: c.id,
+    id: sharedId(c.owner_id, c.id),
+    sourceId: c.id,
     name: c.name,
     label: c.label,
     icon: c.icon,
@@ -118,7 +120,7 @@ export function getUserData(userId: string): UserDataResult {
     is_quick_access: number;
   }>;
 
-  const subLinkRows: typeof ownLinkRows = [];
+  const subLinkRows: Array<(typeof ownLinkRows)[number] & { ownerId: string; sourceId: string; isSubscribed: true }> = [];
   if (subCategoryRows.length > 0) {
     for (const sub of subCategoryRows) {
       const linksInSub = db
@@ -126,13 +128,15 @@ export function getUserData(userId: string): UserDataResult {
           "SELECT id, title, url, description, icon, category, notes, is_quick_access FROM user_links WHERE user_id = ? AND category = ?",
         )
         .all(sub.owner_id, sub.id) as typeof ownLinkRows;
-      subLinkRows.push(...linksInSub);
+      subLinkRows.push(...linksInSub.map(link => ({ ...link, id: sharedId(sub.owner_id, link.id),
+        category: sharedId(sub.owner_id, sub.id), ownerId: sub.owner_id, sourceId: link.id, isSubscribed: true as const })));
     }
   }
 
   const linkRows = [...ownLinkRows, ...subLinkRows];
 
   const links: SiteLink[] = linkRows.map((l) => ({
+    ...("ownerId" in l ? { ownerId: String(l.ownerId), isSubscribed: true, sourceId: String("sourceId" in l ? l.sourceId : l.id) } : {}),
     id: l.id,
     title: l.title,
     url: l.url,
@@ -176,39 +180,7 @@ export function getUserData(userId: string): UserDataResult {
     updatedAt: p.updated_at ?? undefined,
   }));
 
-  // Fetch todos/schedules
-  const todoRows = db
-    .prepare(
-      `SELECT id, title, priority, done, due_date, project_id, assignee_id, assignee_name, created_at, sort_order
-       FROM user_todos
-       WHERE user_id = ?
-       ORDER BY done ASC, sort_order ASC, created_at ASC`,
-    )
-    .all(userId) as Array<{
-    id: string;
-    title: string;
-    priority: string;
-    done: number;
-    due_date: string;
-    project_id: string;
-    assignee_id: string;
-    assignee_name: string;
-    created_at: number;
-    sort_order: number;
-  }>;
-
-  const todos: TodoItem[] = todoRows.map((t) => ({
-    id: t.id,
-    title: t.title,
-    priority: (t.priority as TodoItem["priority"]) || "medium",
-    done: t.done === 1,
-    dueDate: t.due_date || undefined,
-    projectId: t.project_id || undefined,
-    assigneeId: t.assignee_id || undefined,
-    assigneeName: t.assignee_name || undefined,
-    createdAt: t.created_at,
-    sortOrder: t.sort_order,
-  }));
+  const todos = getUserTodos(userId);
 
   // 系统配置与当前用户偏好分别读取；历史个人行中的系统列不得覆盖系统设置。
   const globalMapped = splitConfigByScope(mapUserConfigRow(getGlobalConfigRow())).global;
@@ -219,7 +191,7 @@ export function getUserData(userId: string): UserDataResult {
   // 这是 SSR 与 API 两条读取路径的统一收口（见 ee-gate.ts）。
   applyEEGateToConfig(config);
 
-  const result: UserDataResult = { user, categories: categoryRows as Category[], links, projects, todos, config };
+  const result: UserDataResult = { revision: getWorkspaceRevision(userId), user, categories: categoryRows as Category[], links, projects, todos, config };
   // SQLite 返回的行对象原型非标准（null 原型），
   // Next.js 要求传给客户端组件的数据必须是纯对象，深拷贝处理。
   return JSON.parse(JSON.stringify(result)) as UserDataResult;
@@ -240,6 +212,8 @@ interface CategoryInput {
 
 /** 链接输入 */
 interface LinkInput {
+  ownerId?: unknown;
+  isSubscribed?: unknown;
   id?: unknown;
   title?: unknown;
   url?: unknown;
@@ -281,7 +255,7 @@ interface TodoInput {
 
 /** 保存分类：upsert 传入项，删除不在列表中的旧分类 */
 export function saveUserCategories(userId: string, items: CategoryInput[]): void {
-  const ownItems = items.filter((c) => !c.isSubscribed);
+  const ownItems = items.filter((c) => c && typeof c === "object" && !c.isSubscribed);
   const incomingIds: string[] = [];
   const upsert = db.prepare(`
     INSERT INTO user_categories (id, user_id, name, label, icon, color, is_team_shared)
@@ -335,7 +309,7 @@ export function saveUserLinks(userId: string, items: LinkInput[]): void {
       is_quick_access = excluded.is_quick_access
   `);
   for (const l of items) {
-    if (!l || typeof l !== "object") continue;
+    if (!l || typeof l !== "object" || l.isSubscribed || (l.ownerId && l.ownerId !== userId)) continue;
     const linkId = String(l.id || crypto.randomUUID());
     incomingIds.push(linkId);
     upsert.run(
@@ -405,7 +379,7 @@ export function saveUserProjects(userId: string, items: ProjectInput[]): void {
 
 /** 保存待办：upsert 传入项，删除不在列表中的旧待办 */
 export function saveUserTodos(userId: string, items: TodoInput[]): void {
-  const ownItems = items.filter((t) => !(t as { isDelegated?: boolean }).isDelegated);
+  const ownItems = items.filter((t) => t && typeof t === "object" && !(t as { isDelegated?: boolean }).isDelegated);
   const incomingIds: string[] = [];
   const now = Date.now();
   const upsert = db.prepare(`

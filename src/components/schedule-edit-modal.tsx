@@ -1,5 +1,7 @@
 "use client";
 
+import { todoUrl } from "@/lib/todo-url";
+
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { TodoItem, WorkspaceMember } from "@/types";
@@ -42,7 +44,7 @@ export default function ScheduleEditModal({
     if (!title.trim()) return;
     try {
       const matchedMember = members.find((m) => m.id === assigneeId);
-      const res = await fetch(`/api/todos/${item.id}`, {
+      const res = await fetch(todoUrl(item.id, item.ownerId), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -67,7 +69,8 @@ export default function ScheduleEditModal({
 
   const handleDelete = async () => {
     try {
-      await fetch(`/api/todos/${item.id}`, { method: "DELETE" });
+      const response = await fetch(todoUrl(item.id, item.ownerId), { method: "DELETE" });
+      if (!response.ok) return;
       onClose();
       onSaved();
     } catch {

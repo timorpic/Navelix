@@ -95,6 +95,7 @@ export default function RightSidebar({
   }, [projects, todos, tx]);
 
   // 4. 对话状态
+  const [conversationId] = useState(() => crypto.randomUUID());
   const [chatMessages, setChatMessages] = useState<AIChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -120,6 +121,7 @@ export default function RightSidebar({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: text,
+          conversationId,
           history: chatMessages.slice(-4),
         }),
       });

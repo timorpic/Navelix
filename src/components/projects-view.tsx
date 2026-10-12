@@ -1,5 +1,7 @@
 "use client";
 
+import { todoUrl } from "@/lib/todo-url";
+
 import { useText } from "@/hooks/use-text";
 import { useTranslations } from "next-intl";
 import React, { useState, useEffect, useCallback } from "react";
@@ -216,7 +218,7 @@ export default function ProjectsView() {
     setUrl(p.url || "");
 
     // 关键：读取该项目当前已有拆解的所有阶段里程碑任务，允许编辑、增删与指派！
-    const currentProjectTodos = todos.filter((t) => t.projectId === p.id);
+    const currentProjectTodos = todos.filter((t) => !t.isDelegated && t.projectId === p.id);
     if (currentProjectTodos.length > 0) {
       ai.loadDraft(
         currentProjectTodos.map((t) => ({
@@ -257,7 +259,6 @@ export default function ProjectsView() {
         pushNotification(tx("delete_failed_8a7bf43e"), tx("the_server_could_not_delete_this_project_try_aga_befb1e22"), "project");
         return;
       }
-      window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
       refreshData();
     } catch {
       pushNotification(tx("delete_failed_8a7bf43e"), tx("network_error_try_again_later_c59e54b9"), "project");
@@ -265,14 +266,14 @@ export default function ProjectsView() {
   };
 
   // Toggle todo done right inside project view
-  const handleToggleTodo = async (id: string, done: boolean) => {
+  const handleToggleTodo = async (id: string, done: boolean, ownerId?: string) => {
     try {
-      await fetch(`/api/todos/${id}`, {
+      const response = await fetch(todoUrl(id, ownerId), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ done: !done }),
       });
-      window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
+        if (!response.ok) return;
       refreshData();
     } catch {
       // ignore
@@ -280,7 +281,7 @@ export default function ProjectsView() {
   };
 
   const getProjectTodos = useCallback(
-    (pid: string) => todos.filter((t) => t.projectId === pid),
+    (pid: string) => todos.filter((t) => !t.isDelegated && t.projectId === pid),
     [todos],
   );
 
@@ -629,14 +630,14 @@ export default function ProjectsView() {
                       ) : (
                         projectTodos.map((t) => (
                           <div
-                            key={t.id}
+                            key={`${t.ownerId ?? ""}:${t.id}`}
                             className="flex items-center justify-between p-2 rounded-xl bg-gray-50/80 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-800 text-xs"
                           >
                             <div className="flex items-center gap-2 min-w-0">
                               <input
                                 type="checkbox"
                                 checked={t.done}
-                                onChange={() => handleToggleTodo(t.id, t.done)}
+                                onChange={() => handleToggleTodo(t.id, t.done, t.ownerId)}
                                 className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] border-gray-300 cursor-pointer"
                               />
                               <span

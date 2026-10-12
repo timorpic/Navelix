@@ -88,8 +88,8 @@ export interface UseAdminLinksResult {
 export function useAdminLinks(): UseAdminLinksResult {
   const tx = useTranslations();
   const {
-    categories,
-    links,
+    categories: allCategories,
+    links: allLinks,
     addCategory,
     updateCategory,
     deleteCategory,
@@ -99,6 +99,9 @@ export function useAdminLinks(): UseAdminLinksResult {
     deleteAllLinks,
     toggleQuickAccess,
   } = useNavelixData();
+
+  const categories = useMemo(() => allCategories.filter(category => !category.isSubscribed), [allCategories]);
+  const links = useMemo(() => allLinks.filter(link => !link.isSubscribed), [allLinks]);
 
   const { config } = useNavelixConfig();
 

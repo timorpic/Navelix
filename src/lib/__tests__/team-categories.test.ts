@@ -51,12 +51,12 @@ describe("Team Shared Categories & Subscriptions", () => {
 
     // 4. 用户 B 获取数据，应自动并入该分类及分类下的链接
     const bData = getUserData(userB);
-    const subCat = bData.categories.find((c) => c.id === "cat-shared-fe");
+    const subCat = bData.categories.find((c) => c.sourceId === "cat-shared-fe");
     assert.ok(subCat, "用户 B 应能在分类列表中看到已订阅的团队分类");
     assert.equal(subCat?.isSubscribed, true);
     assert.equal(subCat?.name, "前端规范");
 
-    const subLink = bData.links.find((l) => l.id === "link-fe-doc");
+    const subLink = bData.links.find((l) => l.sourceId === "link-fe-doc");
     assert.ok(subLink, "用户 B 应能在书签列表中看到订阅分类下的链接");
     assert.equal(subLink?.title, "React 19 规范指南");
 
@@ -67,7 +67,7 @@ describe("Team Shared Categories & Subscriptions", () => {
     `).run(userB, "cat-shared-fe", userA);
 
     const bDataAfter = getUserData(userB);
-    const subCatAfter = bDataAfter.categories.find((c) => c.id === "cat-shared-fe");
+    const subCatAfter = bDataAfter.categories.find((c) => c.sourceId === "cat-shared-fe");
     assert.equal(subCatAfter, undefined, "取消订阅后分类应从用户 B 视图中移除");
   });
 });

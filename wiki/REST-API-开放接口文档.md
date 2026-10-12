@@ -170,12 +170,14 @@ Content-Type: application/json
 ```
 
 ### 3.3 更新待办状态与信息
-- **请求方式**: `PATCH /api/todos/{id}`
+- **请求方式**: `PATCH /api/todos/{id}?ownerId={任务创建者ID}`
+- `ownerId` 用于区分跨账号同 ID 待办；未指定时必须只有一个可访问目标。所有者和当前责任人可修改。
 - **请求头**: `Authorization: Bearer nvx_live_YOUR_TOKEN`
 - **请求体**: 支持更新任意字段（`done: true/false`, `title`, `priority`, `dueDate`, `assigneeId`, `assigneeName` 等）。
 
 ### 3.4 删除待办事项
-- **请求方式**: `DELETE /api/todos/{id}`
+- **请求方式**: `DELETE /api/todos/{id}?ownerId={任务创建者ID}`
+- 仅创建者可删除，不能通过相同 ID 删除其他用户的待办。
 
 ### 3.5 逾期待办一键/定时顺延 (Rollover API)
 将当前所有已逾期未完成的待办事项自动延期。
@@ -427,12 +429,25 @@ Content-Type: application/json
 
 ### 8.1 获取全量工作台数据与偏好配置
 - **请求方式**: `GET /api/user/data`
-- **响应内容**: 顶层包含 **5 个键** —— `categories`、`links`、`projects`、**`todos`** 以及全量 `config`（主题、壁纸、界面语言等跨端偏好）。
+- **响应内容**: 顶层包含 `user`、`revision`、`categories`、`links`、`projects`、`todos` 和 `config`。`todos` 包含本人及被指派任务，并附 `ownerId` / `isDelegated`。共享分类、链接附 `sourceId` / `ownerId` / `isSubscribed`，展示 ID 与个人数据隔离。
 
 > 注意包含 `todos`：按早期版本文档实现的脚本会漏掉待办数据。
 
 ### 8.2 批量保存或更新工作台数据
 - **请求方式**: `POST /api/user/data`
+- 请求包含 `categories`、`links`、`projects` 或 `todos` 数组时，必须附带最近一次 GET 返回的 `expectedRevision`。这些数组按完整快照替换，不能用过期数据覆盖其他页面的新内容。
+- 缺失或过期版本返回 `409` / `WORKSPACE_CONFLICT`，整个数据事务不写入；成功返回 `{ success: true, revision }`，下次保存使用新的版本。纯 `{ config: {...} }` 补丁无需版本。
+- 发生冲突应重新读取并让用户重试，不能把旧快照自动配上新版本重发。外部采集新增链接优先用 `POST /api/links`。
+- 个人 JSON 导入同样需要 `expectedRevision`，可附 `dataTransferAction: "import"`；共享条目不写入个人表，委托待办不作为本人任务导入。
+
+```json
+{
+  "expectedRevision": "GET 返回的 revision",
+  "links": []
+}
+```
+
+此请求仅清空个人链接，不会触发示例内容重建。
 
 ### 8.3 书签与分类接口
 `/api/links` 与 `/api/categories/team` 才是书签与分类的**真实读写端点**（详见 [§10.1](#101-书签与分类)）：

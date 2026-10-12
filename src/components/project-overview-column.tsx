@@ -42,7 +42,7 @@ const currentActiveProject = useMemo(() => {
 const activeProjectAnalysis = useMemo(() => {
   if (!currentActiveProject) return null;
   const p = currentActiveProject;
-  const pTodos = todos.filter((t) => t.projectId === p.id);
+  const pTodos = todos.filter((t) => !t.isDelegated && t.projectId === p.id);
   const done = pTodos.filter((t) => t.done).length;
   const total = pTodos.length;
   const progress = total > 0 ? Math.round((done / total) * 100) : p.status === "已完成" ? 100 : 0;
@@ -267,14 +267,14 @@ const activeProjectAnalysis = useMemo(() => {
             <div className="space-y-1.5 max-h-28 overflow-y-auto pr-0.5">
               {activeProjectAnalysis.activeTasks.map((task) => (
                 <div
-                  key={task.id}
+                  key={`${task.ownerId ?? ""}:${task.id}`}
                   className="flex items-center justify-between p-2 rounded-xl bg-gray-50/70 dark:bg-slate-900/50 border border-gray-100/80 dark:border-slate-800 text-xs"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <input
                       type="checkbox"
                       checked={task.done}
-                      onChange={() => handleToggleTodo(task.id, task.done)}
+                      onChange={() => handleToggleTodo(task.id, task.done, task.ownerId)}
                       className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
                     />
                     <span

@@ -8,9 +8,13 @@ export interface Category {
   isSubscribed?: boolean;
   ownerId?: string;
   ownerName?: string;
+  sourceId?: string;
 }
 
 export interface SiteLink {
+  ownerId?: string;
+  isSubscribed?: boolean;
+  sourceId?: string;
   id: string;
   title: string;
   url: string;

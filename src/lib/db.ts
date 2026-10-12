@@ -6,7 +6,9 @@
 // - legacy-migration.ts 旧库 nexus.db → navelix.db 自动迁移
 // - types.ts            常量与类型（SESSION_COOKIE / SESSION_IDLE_TTL_MS / SESSION_MAX_TTL_MS / UserRow / PublicUser）
 export { db } from "./db/connection.ts";
-export { seedUserData } from "./db/seed.ts";
+import { db } from "./db/connection.ts";
+import { seedInitialUserData } from "./db/seed.ts";
+export function seedUserData(userId: string): void { seedInitialUserData(db, userId); }
 export {
   SESSION_COOKIE,
   SESSION_IDLE_TTL_MS,

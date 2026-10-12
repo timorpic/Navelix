@@ -1438,5 +1438,9 @@
   "缺少待办 ID": "message_15a3d3ef703a",
   "缺少项目 ID": "message_2de97656984d",
   "已更新待办。": "message_6596555475ed",
-  "已更新项目。": "message_47b2e662f634"
+  "已更新项目。": "message_47b2e662f634",
+  "工作区已在其他页面更新，请刷新后重试": "workspace_conflict_error",
+  "待办不存在、身份不明确或无权操作": "todo_identity_error",
+  "已取消删除操作。": "ai_delete_cancelled",
+  "缺少对话标识，请刷新页面后重试": "ai_conversation_required"
 }

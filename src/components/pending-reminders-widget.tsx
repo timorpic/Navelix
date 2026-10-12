@@ -5,6 +5,7 @@ import { useNavelixData } from "@/context/navelix-context";
 
 interface PendingTodo {
   id: string;
+  ownerId?: string;
   title: string;
   priority: string;
   dueDate: string;
@@ -20,6 +21,7 @@ export default function PendingRemindersWidget() {
     .slice(0, 6)
     .map((t) => ({
       id: t.id,
+      ownerId: t.ownerId,
       title: t.title,
       priority: t.priority || "medium",
       dueDate: t.dueDate || "",
@@ -48,7 +50,7 @@ export default function PendingRemindersWidget() {
       ) : (
         <div className="space-y-2">
           {pending.map((todo) => (
-            <div key={todo.id} className="flex items-center gap-2 min-w-0">
+            <div key={`${todo.ownerId ?? ""}:${todo.id}`} className="flex items-center gap-2 min-w-0">
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priorityColor(todo.priority)}`} />
               <span className="flex-1 text-[11px] text-gray-700 dark:text-slate-200 truncate">
                 {todo.title}

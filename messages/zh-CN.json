@@ -1543,7 +1543,7 @@
   "message_25a0a3234588": "未找到项目「{v0}」，或无权删除",
   "message_383c8b96b5e9": "已删除项目「{v0}」及其关联待办。",
   "message_02aa2b7ea9f4": "未知工具：{v0}",
-  "message_3cd4525e93e7": "⚠️ 删除操作需要您的确认：将删除「{v0}」。\n请回复「确认删除」继续执行；若非本人操作，忽略此消息即可。",
+  "message_3cd4525e93e7": "⚠️ 删除操作需要您的确认：将删除「{v0}」。\n请回复「{v1}」继续执行；若非本人操作，忽略此消息即可。",
   "message_8a5383c45c73": "锁定中，剩余 {v0} 分钟",
   "message_e5de10170369": "🚨 Navelix 登录安全告警\n\n检测到对账号「{v0}」的连续登录失败。\n{v1}\n剩余允许尝试：{v2} 次\n{v3}",
   "message_a89afa99f7d5": "© 2026 Navelix. 保留所有权利。",
@@ -1551,5 +1551,12 @@
   "message_15a3d3ef703a": "缺少待办 ID",
   "message_2de97656984d": "缺少项目 ID",
   "message_6596555475ed": "已更新待办。",
-  "message_47b2e662f634": "已更新项目。"
+  "message_47b2e662f634": "已更新项目。",
+  "workspace_save_conflict": "其他页面已更新工作区，本次修改未保存。已重新加载最新数据，请重试。",
+  "workspace_save_failed": "保存失败，本次修改未保存，请重试。",
+  "workspace_notice_dismiss": "关闭",
+  "workspace_conflict_error": "工作区已在其他页面更新，请刷新后重试",
+  "todo_identity_error": "待办不存在、身份不明确或无权操作",
+  "ai_delete_cancelled": "已取消删除操作。",
+  "ai_conversation_required": "缺少对话标识，请刷新页面后重试"
 }

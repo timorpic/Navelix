@@ -234,7 +234,7 @@ const getProjectName = (pid?: string) => {
 
         return (
           <div
-            key={item.id}
+            key={`${item.ownerId ?? ""}:${item.id}`}
             className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50/80 dark:bg-slate-900/60 border border-gray-100/80 dark:border-slate-800 hover:border-gray-200 transition-all group text-xs"
           >
             <div className="flex items-center gap-2 min-w-0">
@@ -243,7 +243,7 @@ const getProjectName = (pid?: string) => {
                 name={`todo-done-${item.id}`}
                 type="checkbox"
                 checked={item.done}
-                onChange={() => handleToggleTodo(item.id, item.done)}
+                onChange={() => handleToggleTodo(item.id, item.done, item.ownerId)}
                 aria-label={tx("message_ac34883a8f3d", {v0: item.title})}
                 className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] border-gray-300 dark:border-slate-600 cursor-pointer shrink-0"
               />

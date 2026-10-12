@@ -51,22 +51,22 @@ describe("personal Telegram delivery", () => {
     await runPersonalTelegramNotifications(now, sender);
     await runPersonalTelegramNotifications(now, sender);
     assert.deepEqual(sent.sort(), [users[0], users[1]].sort());
-    updateTodoFields(id, { dueDate: toLocalDateStr(new Date(now.getTime() + 86400_000)) });
+    updateTodoFields(id, users[0], { dueDate: toLocalDateStr(new Date(now.getTime() + 86400_000)) });
     await runPersonalTelegramNotifications(new Date(now.getTime() + 86400_000), sender);
     assert.equal(sent.length, 4);
   });
   it("queues new assignments and reassignments, skips unchanged/self assignments, and rechecks ownership", async () => {
     const now = morning();
     const id = createTodo(users[0], { title: "private", assigneeId: users[1] });
-    updateTodoFields(id, { title: "renamed" });
-    updateTodoFields(id, { assigneeId: users[1] });
-    updateTodoFields(id, { assigneeId: users[2] });
-    updateTodoFields(id, { assigneeId: users[1] });
-    updateTodoFields(id, { assigneeId: users[2] });
+    updateTodoFields(id, users[0], { title: "renamed" });
+    updateTodoFields(id, users[0], { assigneeId: users[1] });
+    updateTodoFields(id, users[0], { assigneeId: users[2] });
+    updateTodoFields(id, users[0], { assigneeId: users[1] });
+    updateTodoFields(id, users[0], { assigneeId: users[2] });
     const sent: string[] = [];
     await runPersonalTelegramNotifications(now, async (userId, text) => { sent.push(userId); assert.ok(text.includes("renamed")); return true; });
     assert.deepEqual(sent, [users[2]]);
-    updateTodoFields(id, { assigneeId: users[0] });
+    updateTodoFields(id, users[0], { assigneeId: users[0] });
     await runPersonalTelegramNotifications(now, async userId => { sent.push(userId); return true; });
     assert.equal(sent.length, 1);
   });
@@ -90,7 +90,7 @@ describe("personal Telegram delivery", () => {
     const id = createTodo(users[0], { title: "disabled", assigneeId: users[1] });
     saveTelegramSettings(users[1], { notifyAssignment: false });
     const done = createTodo(users[0], { title: "done", assigneeId: users[2] });
-    updateTodoFields(done, { done: true });
+    updateTodoFields(done, users[0], { done: true });
     db.prepare("DELETE FROM user_todos WHERE id = ? AND user_id = ?").run(id, users[0]);
     let count = 0;
     await runPersonalTelegramNotifications(now, async () => { count++; return true; });

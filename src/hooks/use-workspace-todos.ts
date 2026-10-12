@@ -1,5 +1,7 @@
 "use client";
 
+import { todoUrl } from "@/lib/todo-url";
+
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 import type { TodoItem } from "@/types";
@@ -19,7 +21,7 @@ import { addDaysLocal, toLocalDateStr } from "@/lib/date-utils";
 export interface UseWorkspaceTodosResult {
   todayStr: string;
   /** 勾选/取消勾选待办 */
-  toggleTodo: (id: string, done: boolean) => Promise<void>;
+  toggleTodo: (id: string, done: boolean, ownerId?: string) => Promise<void>;
   /** 待办顺延一天 */
   postponeOneDay: (item: TodoItem) => Promise<void>;
   /** 从首页快速新增待办 */
@@ -36,32 +38,32 @@ export function useWorkspaceTodos(): UseWorkspaceTodosResult {
   const todayStr = toLocalDateStr();
 
   const toggleTodo = useCallback(
-    async (id: string, done: boolean) => {
+    async (id: string, done: boolean, ownerId?: string) => {
       try {
-        await fetch(`/api/todos/${id}`, {
+        const response = await fetch(todoUrl(id, ownerId), {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ done: !done }),
         });
-        window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
+        if (!response.ok) throw new Error("Save failed");
         refreshData();
       } catch {
-        // ignore
+        pushNotification(tx("failed_to_save_try_again_f42a1238"), tx("network_error_try_again_later_c59e54b9"), "calendar");
       }
     },
-    [refreshData],
+    [refreshData, tx],
   );
 
   const postponeOneDay = useCallback(
     async (item: TodoItem) => {
       const newDueDate = addDaysLocal(item.dueDate || todayStr, 1);
       try {
-        await fetch(`/api/todos/${item.id}`, {
+        const response = await fetch(todoUrl(item.id, item.ownerId), {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ dueDate: newDueDate }),
         });
-        window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
+        if (!response.ok) throw new Error("Save failed");
         refreshData();
         pushNotification(
           tx("schedule_moved_forward_one_day_f019321c"),
@@ -69,7 +71,7 @@ export function useWorkspaceTodos(): UseWorkspaceTodosResult {
           "calendar",
         );
       } catch {
-        // ignore
+        pushNotification(tx("failed_to_save_try_again_f42a1238"), tx("network_error_try_again_later_c59e54b9"), "calendar");
       }
     },
     [refreshData, todayStr, tx],
@@ -94,7 +96,6 @@ export function useWorkspaceTodos(): UseWorkspaceTodosResult {
           }),
         });
         if (res.ok) {
-          window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
           refreshData();
           pushNotification(tx("schedule_added_5c1114a4"), title, "calendar");
           return true;

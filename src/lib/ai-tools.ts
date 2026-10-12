@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+import { deleteProjectCascade } from "./todos-projects.ts";
 import { db } from "./db.ts";
 import { emitUserEvent } from "./events.ts";
 
@@ -212,8 +214,7 @@ function runDeleteProject(userId: string, args: Record<string, unknown>): AiTool
   if (!row) return { ok: false, error: `未找到项目「${id}」，或无权删除` };
 
   // 清理项目及其子待办
-  db.prepare("DELETE FROM user_todos WHERE project_id = ? AND user_id = ?").run(id, userId);
-  db.prepare("DELETE FROM projects WHERE id = ? AND user_id = ?").run(id, userId);
+  deleteProjectCascade(id, userId);
   emitUserEvent(userId, "projects:change");
   emitUserEvent(userId, "todos:change");
   return { ok: true, message: `已删除项目「${row.name}」及其关联待办。` };
@@ -248,6 +249,7 @@ interface PendingDelete {
   args: Record<string, unknown>;
   targetName: string;
   expiresAt: number;
+  confirmation: string;
 }
 
 const pendingDeletes = new Map<string, PendingDelete>();
@@ -286,21 +288,24 @@ function runPendingDelete(pending: PendingDelete): AiToolExecResult {
  * 暂存删除请求并提示用户确认（不立即执行）。
  * 返回 needsConfirmation 结果，由前端展示提示，等待用户回复确认。
  */
-export function stageDelete(userId: string, call: AiToolCall): AiToolResult {
+export function stageDelete(userId: string, call: AiToolCall, conversationId: string): AiToolResult {
   const targetName = resolveDeleteTargetName(userId, call);
   if (targetName === null) {
     return { ok: false, error: `未找到要删除的目标，或无权删除` };
   }
-  pendingDeletes.set(userId, {
+  for (const [key, pending] of pendingDeletes) if (pending.expiresAt <= Date.now()) pendingDeletes.delete(key);
+  const confirmation = `确认删除 ${randomBytes(4).toString("hex")}`;
+  pendingDeletes.set(JSON.stringify([userId, conversationId]), {
     userId,
     tool: call.tool as "delete_todo" | "delete_project",
     args: call.args,
     targetName,
     expiresAt: Date.now() + PENDING_TTL_MS,
+    confirmation,
   });
   return {
     needsConfirmation: true,
-    message: `⚠️ 删除操作需要您的确认：将删除「${targetName}」。\n请回复「确认删除」继续执行；若非本人操作，忽略此消息即可。`,
+    message: `⚠️ 删除操作需要您的确认：将删除「${targetName}」。\n请回复「${confirmation}」继续执行；若非本人操作，忽略此消息即可。`,
   };
 }
 
@@ -311,22 +316,23 @@ export function stageDelete(userId: string, call: AiToolCall): AiToolResult {
 export function consumePendingDelete(
   userId: string,
   userPrompt: string,
+  conversationId: string,
 ): AiToolExecResult | null {
-  const pending = pendingDeletes.get(userId);
+  const key = JSON.stringify([userId, conversationId]);
+  const pending = pendingDeletes.get(key);
   if (!pending) return null;
   if (Date.now() > pending.expiresAt) {
-    pendingDeletes.delete(userId);
+    pendingDeletes.delete(key);
     return null;
   }
 
-  const affirmative =
-    /确认|确定|是的|同意|执行|删除|好的|yes|confirm|delete/i.test(userPrompt);
-  const negative =
-    /取消|不了|不要|别|撤销|cancel/i.test(userPrompt) ||
-    /\bno\b/i.test(userPrompt);
-  if (!affirmative || negative) return null;
-
-  pendingDeletes.delete(userId);
+  const prompt = userPrompt.trim();
+  if (/取消|不了|不要|别|撤销|cancel|\bno\b/i.test(prompt)) {
+    pendingDeletes.delete(key);
+    return { ok: true, message: "已取消删除操作。" };
+  }
+  if (prompt !== pending.confirmation) return null;
+  pendingDeletes.delete(key);
   return runPendingDelete(pending);
 }
 

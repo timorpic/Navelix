@@ -171,6 +171,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => null);
     const prompt = typeof body?.prompt === "string" ? body.prompt.trim() : "";
+    const conversationId = typeof body?.conversationId === "string" && /^[a-zA-Z0-9-]{1,80}$/.test(body.conversationId) ? body.conversationId : "";
     const history = Array.isArray(body?.history) ? body.history : [];
 
     if (!prompt) {
@@ -178,7 +179,7 @@ export async function POST(req: Request) {
     }
 
     // 若用户回复是对上一条删除请求的二次确认，直接执行暂存的删除，不再调用模型
-    const confirmedDelete = consumePendingDelete(user.id, prompt);
+    const confirmedDelete = consumePendingDelete(user.id, prompt, conversationId);
     if (confirmedDelete) {
       return localizedJson({
         text: confirmedDelete.ok
@@ -235,7 +236,7 @@ export async function POST(req: Request) {
       });
     } catch (err) {
       const isSsrf = err instanceof Error && err.message.includes("SSRF_BLOCKED");
-      const timedOut = err instanceof Error && (err.name === "AbortError" || err.message.includes("TIMEOUT"));
+      const timedOut = err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError" || err.message.includes("TIMEOUT"));
       return localizedJson({
         text: isSsrf
           ? "⚠️ 安全拦截：配置的 BaseURL 为内部/私有 IP 地址，禁止访问。"
@@ -272,7 +273,7 @@ export async function POST(req: Request) {
       const lines: string[] = [];
       for (const call of toolCalls) {
         if (isDestructiveTool(call.tool)) {
-          const result = stageDelete(user.id, call);
+          const result = conversationId ? stageDelete(user.id, call, conversationId) : { ok: false as const, error: "缺少对话标识，请刷新页面后重试" };
           if ("needsConfirmation" in result) {
             lines.push(`⚠️ ${text(result.message)}`);
           } else if (result.ok) {

@@ -2,6 +2,8 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { db } from "../db.ts";
 import { USER_CONFIG_COLUMN_NAMES } from "../user-config-columns.ts";
+import { DatabaseSync } from "node:sqlite";
+import { migrateV5 } from "../migrations/versions/v5.ts";
 
 /**
  * Schema 完整性自测：防止未来迁移把 db.ts 期望的列/外键悄悄改掉
@@ -17,6 +19,25 @@ function tableColumns(table: string): string[] {
 }
 
 describe("Schema integrity after migrations", () => {
+  it("does not rebuild tables when another worker already advanced the version", () => {
+    const isolated = new DatabaseSync(":memory:");
+    try {
+      isolated.exec("PRAGMA user_version = 19; CREATE TABLE sessions (marker TEXT); INSERT INTO sessions VALUES ('preserved');");
+      migrateV5(isolated);
+      assert.equal(isolated.prepare("PRAGMA user_version").get()?.user_version, 19);
+      assert.equal(isolated.prepare("SELECT marker FROM sessions").get()?.marker, "preserved");
+    } finally { isolated.close(); }
+  });
+
+  it("propagates a failed table rebuild without advancing the version", () => {
+    const isolated = new DatabaseSync(":memory:");
+    try {
+      assert.throws(() => migrateV5(isolated));
+      assert.equal(isolated.prepare("PRAGMA user_version").get()?.user_version, 0);
+      assert.equal(isolated.prepare("PRAGMA foreign_keys").get()?.foreign_keys, 1);
+      assert.equal(isolated.prepare("SELECT 1 FROM sqlite_master WHERE name = 'sessions_new'").get(), undefined);
+    } finally { isolated.close(); }
+  });
   it("should keep all expected columns across core tables", () => {
     const userCfg = tableColumns("user_configs");
     for (const col of USER_CONFIG_COLUMN_NAMES) {
