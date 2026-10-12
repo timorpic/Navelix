@@ -2,13 +2,13 @@
 export const SYSTEM_SETTINGS_NAV = [
   { id: "site", label: "站点与服务", pro: false },
   { id: "access", label: "访问与安全", pro: false },
-  { id: "proSystem", label: "Pro 系统功能", pro: true },
+  { id: "proSystem", label: "系统功能", pro: true },
   { id: "system", label: "数据与维护", pro: false },
 ] as const;
 export const USER_SETTINGS_NAV = [
   { id: "profile", label: "个人与偏好" },
   { id: "account", label: "账号与数据" },
-  { id: "proUser", label: "Pro 用户功能", pro: true },
+  { id: "proUser", label: "用户功能", pro: true },
 ] as const;
 export type SettingsTab = typeof SYSTEM_SETTINGS_NAV[number]["id"] | typeof USER_SETTINGS_NAV[number]["id"];
 export function isSystemSettingsTab(tab: string): boolean {

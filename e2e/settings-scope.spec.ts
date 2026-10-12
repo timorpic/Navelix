@@ -40,7 +40,7 @@ test("设置作用域：管理员系统菜单、个人偏好、Telegram 用户�
     await expect(member.getByRole("heading", { name: "个人与偏好", exact: true })).toBeVisible();
     await expect(member.getByRole("heading", { name: "个人资料", exact: true })).toBeVisible();
     await expect(member.getByLabel("Language / 界面语言")).toBeVisible();
-    await expect(member.getByRole("button", { name: /Pro 用户功能 PRO$/ }).first()).toBeVisible();
+    await expect(member.getByRole("button", { name: /用户功能 PRO$/ }).first()).toBeVisible();
     await expect(member.getByText("Telegram Bot 通知", { exact: true })).toBeVisible();
     await expect(member.getByRole("button", { name: "系统设置", exact: true })).toHaveCount(0);
     await expect(member.getByText("系统通知（仅管理员）", { exact: true })).toHaveCount(0);
