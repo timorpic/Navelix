@@ -33,6 +33,8 @@ bookmark navigation, AI assistant, project kanban, interactive Gantt charts, cal
 
 Zero external database dependencies, single lightweight container, and 100% of your data stays on your own machine.
 
+💬 Join the [Telegram community group](https://t.me/+c6qtFiK5Lk9hZDZl) to discuss deployment and share tips.
+
 ### Why Navelix?
 
 - 🧭 **One-stop workspace**: bookmarks, AI assistant, project board, Gantt, calendar & productivity tools in a single home page

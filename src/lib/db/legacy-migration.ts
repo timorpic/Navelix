@@ -38,7 +38,8 @@ export function migrateLegacyDatabase(
     fs.renameSync(legacyFile, dbFile);
     for (const ext of ["-wal", "-shm"]) {
       const src = legacyFile + ext;
-      if (fs.existsSync(src)) {
+      // 旧库的 WAL/SHM 来自运行期挂载卷，不应追踪进 standalone 产物。
+      if (fs.existsSync(/*turbopackIgnore: true*/ src)) {
         try {
           fs.renameSync(src, dbFile + ext);
         } catch {

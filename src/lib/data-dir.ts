@@ -12,5 +12,6 @@ export function resolveDataDir(): string {
   if (override && override.trim() !== "") {
     return path.resolve(override.trim());
   }
-  return path.join(process.cwd(), DATA_DIR_NAME);
+  // 数据目录由部署时创建或挂载，不属于构建产物，禁止打包器追踪运行期文件。
+  return path.join(/*turbopackIgnore: true*/ process.cwd(), DATA_DIR_NAME);
 }
