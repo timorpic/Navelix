@@ -10,10 +10,14 @@
 
 ---
 
-## [未发布]
+## [2.10.8] - 2026-10-12
 
 ### 修复
 - **登录与注册页语言下拉框在深色系统偏好下变黑**：两个页面为固定浅色设计，根布局仍会按系统主题给根节点加 `.dark`，导致下拉框跟随 `dark:` 样式渲染成近黑背景。现为组件增加固定浅色选项并在两页启用；分享页与后台继续跟随主题。
+
+---
+
+## [未发布]
 
 ---
 
@@ -291,7 +295,7 @@
 
 ---
 
-[未发布]: https://github.com/timorpic/Navelix/compare/v2.10.7...HEAD
+[未发布]: https://github.com/timorpic/Navelix/compare/v2.10.8...HEAD
 [2.10.3]: https://github.com/timorpic/Navelix/compare/v2.10.2...v2.10.3
 [2.10.2]: https://github.com/timorpic/Navelix/compare/v2.10.1...v2.10.2
 [2.9.5]: https://github.com/timorpic/Navelix/compare/v2.9.4...v2.9.5
