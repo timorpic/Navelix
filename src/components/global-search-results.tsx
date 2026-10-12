@@ -1,5 +1,7 @@
 "use client";
+import { useLocale } from "next-intl";
 
+import { useTranslations } from "next-intl";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TodoItem } from "@/types";
 import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
@@ -92,6 +94,8 @@ export default function GlobalSearchResults({
   onNavigate,
   onClear,
 }: GlobalSearchResultsProps) {
+  const locale = useLocale();
+  const tx = useTranslations();
   const { categories, links, projects, todos } = useNavelixData();
   const { config } = useNavelixConfig();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -257,9 +261,9 @@ export default function GlobalSearchResults({
       low: "bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200/60 dark:border-sky-800",
     };
     const label: Record<TodoItem["priority"], string> = {
-      high: "高",
-      medium: "中",
-      low: "低",
+      high: tx("high_b1c27820"),
+      medium: tx("medium_a567bdaa"),
+      low: tx("low_aa9e366f"),
     };
     return (
       <span
@@ -273,11 +277,11 @@ export default function GlobalSearchResults({
   const sourceBadge = (source: string) => {
     const s = (source || "").toLowerCase();
     const labelMap: Record<string, string> = {
-      api: "API推送",
-      calendar: "日历日程",
-      project: "项目管理",
-      dashboard: "数据看板",
-      system: "系统",
+      api: tx("api_8ba15a13"),
+      calendar: tx("calendar_72e10d04"),
+      project: tx("projects_a049dca9"),
+      dashboard: tx("dashboard_d8b1aeba"),
+      system: tx("system_5b50d7c4"),
     };
     const clsMap: Record<string, string> = {
       api: "bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200/60 dark:border-purple-800",
@@ -294,7 +298,7 @@ export default function GlobalSearchResults({
       <span
         className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold border ${clsMap[s] || clsMap.system}`}
       >
-        {labelMap[s] || source || "系统"}
+        {labelMap[s] || source || tx("system_5b50d7c4")}
       </span>
     );
   };
@@ -318,39 +322,33 @@ export default function GlobalSearchResults({
     <div className="flex flex-col gap-4 mt-2 animate-fadeIn">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-gray-900 dark:text-white">
-          搜索结果（「{query}」）
+          {tx("search_results_e04df8b1")}{query}」）
           {loaded && (
             <span className="ml-2 text-xs font-medium text-gray-400 dark:text-slate-500">
-              共 {totalCount} 条
-            </span>
+              {tx("total_76e547a8")}{totalCount} {tx("results_f004f1d8")}</span>
           )}
         </h2>
         <button
           onClick={onClear}
           className="text-xs text-[#00C776] hover:underline cursor-pointer"
         >
-          清除搜索
-        </button>
+          {tx("clear_search_ee32f25f")}</button>
       </div>
 
       {!loaded ? (
         <div className="py-10 text-center text-sm text-gray-400 dark:text-slate-500">
-          搜索中…
-        </div>
+          {tx("searching_cc50237e")}</div>
       ) : totalCount === 0 ? (
         <div className="py-14 text-center flex flex-col items-center gap-3 rounded-2xl bg-white/90 dark:bg-slate-900/80 border border-gray-200/80 dark:border-slate-800 shadow-2xs">
           <span className="text-4xl">🔍</span>
           <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">
-            未找到与「{query}」相关的内容
-          </p>
+            {tx("no_results_for_f27b102c")}{query}{tx("text_6a3db3a4")}</p>
           <p className="text-xs text-gray-400 dark:text-slate-500">
-            试试更短的关键词，或用空格拆分多个关键词
-          </p>
+            {tx("try_a_shorter_keyword_or_separate_multiple_keywo_312b39bd")}</p>
           {suggestedLinks.length > 0 && (
             <div className="w-full max-w-md mt-2">
               <p className="text-xs font-bold text-gray-400 dark:text-slate-500 mb-2">
-                你可能想找
-              </p>
+                {tx("you_may_be_looking_for_762f5bcc")}</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {suggestedLinks.map((l) => (
                   <button
@@ -370,7 +368,7 @@ export default function GlobalSearchResults({
           {/* 书签 */}
           {matchedLinks.length > 0 && (
             <section className="flex flex-col gap-2">
-              <SectionHeader icon="🔖" title="书签" count={matchedLinks.length} />
+              <SectionHeader icon="🔖" title={tx("bookmarks_94b8975c")} count={matchedLinks.length} />
               <div className="grid gap-2">
                 {matchedLinks.map((l) => {
                   const index = actions.findIndex((a) => a.id === `link-${l.id}`);
@@ -401,7 +399,7 @@ export default function GlobalSearchResults({
                         </span>
                       </span>
                       <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400">
-                        {categoryNameMap.get(l.category) || "未分类"}
+                        {categoryNameMap.get(l.category) || tx("uncategorized_54b89f90")}
                       </span>
                     </button>
                   );
@@ -413,7 +411,7 @@ export default function GlobalSearchResults({
           {/* 日程 / 待办 */}
           {matchedTodos.length > 0 && (
             <section className="flex flex-col gap-2">
-              <SectionHeader icon="📅" title="日程 / 待办" count={matchedTodos.length} />
+              <SectionHeader icon="📅" title={tx("schedules_todos_f3299b39")} count={matchedTodos.length} />
               <div className="grid gap-2">
                 {matchedTodos.map((t) => {
                   const index = actions.findIndex((a) => a.id === `todo-${t.id}`);
@@ -437,9 +435,9 @@ export default function GlobalSearchResults({
                         </span>
                         <span className="block truncate text-xs text-gray-400 dark:text-slate-500">
                           {t.dueDate
-                            ? `截止 ${toLocalDateStr(new Date(t.dueDate.replace(/-/g, "/")))}`
-                            : "未设置日期"}
-                          {t.assigneeName ? ` · 负责人 ${t.assigneeName}` : ""}
+                            ? tx("message_e3a3f48dc772", {v0: toLocalDateStr(new Date(t.dueDate.replace(/-/g, "/")))})
+                            : tx("no_date_set_5b624cae")}
+                          {t.assigneeName ? tx("message_0b4c8bf2c128", {v0: t.assigneeName}) : ""}
                         </span>
                       </span>
                       <span className="shrink-0">{priorityBadge(t.priority)}</span>
@@ -453,7 +451,7 @@ export default function GlobalSearchResults({
           {/* 项目 */}
           {matchedProjects.length > 0 && (
             <section className="flex flex-col gap-2">
-              <SectionHeader icon="🗂️" title="项目" count={matchedProjects.length} />
+              <SectionHeader icon="🗂️" title={tx("projects_79f326be")} count={matchedProjects.length} />
               <div className="grid gap-2">
                 {matchedProjects.map((p) => {
                   const index = actions.findIndex((a) => a.id === `proj-${p.id}`);
@@ -477,7 +475,7 @@ export default function GlobalSearchResults({
                           {highlight(p.name, keywords)}
                         </span>
                         <span className="block truncate text-xs text-gray-400 dark:text-slate-500">
-                          {p.description || p.status || "暂无描述"}
+                          {p.description || p.status || tx("no_description_4172af0c")}
                         </span>
                       </span>
                       {p.status && (
@@ -495,7 +493,7 @@ export default function GlobalSearchResults({
           {/* 消息 */}
           {matchedNotifications.length > 0 && (
             <section className="flex flex-col gap-2">
-              <SectionHeader icon="🔔" title="消息" count={matchedNotifications.length} />
+              <SectionHeader icon="🔔" title={tx("messages_4da199fa")} count={matchedNotifications.length} />
               <div className="grid gap-2">
                 {matchedNotifications.map((n) => {
                   const index = actions.findIndex(
@@ -520,13 +518,13 @@ export default function GlobalSearchResults({
                           {highlight(n.title, keywords)}
                         </span>
                         <span className="block truncate text-xs text-gray-400 dark:text-slate-500">
-                          {n.content || formatRelativeTime(n.createdAt)}
+                          {n.content || formatRelativeTime(n.createdAt, { locale })}
                         </span>
                       </span>
                       <span className="shrink-0 flex flex-col items-end gap-1">
                         {sourceBadge(n.source || "system")}
                         <span className="text-[10px] text-gray-400 dark:text-slate-500">
-                          {formatRelativeTime(n.createdAt)}
+                          {formatRelativeTime(n.createdAt, { locale })}
                         </span>
                       </span>
                     </button>

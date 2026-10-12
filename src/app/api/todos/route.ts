@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { emitUserEvent } from "@/lib/events";
@@ -43,7 +44,7 @@ function rowToTodo(
 
 export async function GET() {
   const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const userId = user.id;
 
   const rows = db
@@ -73,18 +74,18 @@ export async function GET() {
     sort_order: number;
   }>;
 
-  return NextResponse.json({ todos: rows.map((r) => rowToTodo(r, userId)) });
+  return localizedJson({ todos: rows.map((r) => rowToTodo(r, userId)) });
 }
 
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const userId = user.id;
   try {
     const body = await req.json();
     const title = String(body.title || "").trim();
     if (!title) {
-      return NextResponse.json({ error: "待办内容不能为空" }, { status: 400 });
+      return localizedJson({ error: "待办内容不能为空" }, { status: 400 });
     }
 
     const id = createTodo(userId, {
@@ -103,9 +104,9 @@ export async function POST(req: NextRequest) {
       emitUserEvent(assigneeId, "todos:change");
     }
 
-    return NextResponse.json({ success: true, todo: { id } });
+    return localizedJson({ success: true, todo: { id } });
   } catch (err) {
-    return NextResponse.json(
+    return localizedJson(
       { error: err instanceof Error ? err.message : "创建失败" },
       { status: 500 },
     );

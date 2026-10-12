@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useNavelixConfig } from "@/context/navelix-context";
 
 /**
@@ -10,6 +11,7 @@ import { useNavelixConfig } from "@/context/navelix-context";
  * （提示与禁用样式均保持原样）。
  */
 export default function AdminSystemAccessCard({ isAdmin }: { isAdmin: boolean }) {
+  const tx = useTranslations();
   const { config, updateConfig } = useNavelixConfig();
 
   return (
@@ -18,34 +20,31 @@ export default function AdminSystemAccessCard({ isAdmin }: { isAdmin: boolean })
         <div>
           <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
             <span>🔒</span>
-            <span>访问与安全策略控制</span>
+            <span>{tx("access_security_policies_5fb634b7")}</span>
           </h3>
           <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-            管理未登录访客公开访问权限与新用户开放注册策略
-          </p>
+            {tx("manage_public_access_and_registration_policies_5cfd9363")}</p>
         </div>
         {!isAdmin && (
           <span className="shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900/60 text-amber-600 dark:text-amber-400">
-            🔒 仅管理员可修改
-          </span>
+            {tx("administrators_only_21a9d9f1")}</span>
         )}
       </div>
       <div className="space-y-3">
         <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
           <div>
             <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
-              未登录访客公开访问主页
-            </p>
+              {tx("allow_public_access_to_home_page_af0181e6")}</p>
             <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
               {config.allowPublicAccess
-                ? "开启：访客无需登录即可浏览导航主页（适合个人公开主页）"
-                : "关闭（私有模式）：未登录者访问首页将直接强制跳转登录页（系统默认）"}
+                ? tx("on_visitors_can_browse_your_home_page_without_si_3b2ea5c7")
+                : tx("off_private_mode_visitors_are_redirected_to_sign_ae2ef3f8")}
             </p>
           </div>
           <button
             type="button"
             disabled={!isAdmin}
-            title={isAdmin ? "" : "仅管理员有权修改全站安全与访问策略（当前显示已同步的全局状态）"}
+            title={isAdmin ? "" : tx("only_administrators_can_change_site_wide_access__1278d2d2")}
             onClick={() => {
               if (!isAdmin) return;
               updateConfig({
@@ -61,25 +60,24 @@ export default function AdminSystemAccessCard({ isAdmin }: { isAdmin: boolean })
                 : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
             }`}
           >
-            {config.allowPublicAccess ? "已开启" : "私有模式"}
+            {config.allowPublicAccess ? tx("on_8a4ef3e4") : tx("private_mode_316f03ca")}
           </button>
         </div>
 
         <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
           <div>
             <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
-              开放新用户注册
-            </p>
+              {tx("allow_registration_daff6c83")}</p>
             <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
               {config.allowRegistration
-                ? "开启：任何人均可通过 /register 页面注册新账号"
-                : "关闭：禁止公网用户自主注册，仅管理员可在后台手动添加用户（系统默认）"}
+                ? tx("on_anyone_can_create_an_account_at_register_16d34111")
+                : tx("off_only_administrators_can_add_users_manually_d_ef8de1f4")}
             </p>
           </div>
           <button
             type="button"
             disabled={!isAdmin}
-            title={isAdmin ? "" : "仅管理员有权修改全站安全与访问策略（当前显示已同步的全局状态）"}
+            title={isAdmin ? "" : tx("only_administrators_can_change_site_wide_access__1278d2d2")}
             onClick={() => {
               if (!isAdmin) return;
               updateConfig({
@@ -95,7 +93,7 @@ export default function AdminSystemAccessCard({ isAdmin }: { isAdmin: boolean })
                 : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
             }`}
           >
-            {config.allowRegistration ? "已开放" : "已关闭"}
+            {config.allowRegistration ? tx("open_e2eceeca") : tx("off_6744b4c6")}
           </button>
         </div>
       </div>

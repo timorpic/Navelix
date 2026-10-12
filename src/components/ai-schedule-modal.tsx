@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Overlay from "./overlay";
 import type { AiScheduledTask } from "@/hooks/use-ai-schedule";
 
@@ -43,6 +44,7 @@ export default function AiScheduleModal({
   onAddCustomTask: () => void;
   onApply: () => void;
 }) {
+  const tx = useTranslations();
   if (!open) return null;
 
   return (
@@ -53,11 +55,9 @@ export default function AiScheduleModal({
             <span className="text-base">✨</span>
             <div>
               <h3 className="text-sm font-black text-gray-900 dark:text-white">
-                AI Copilot 智能排程建议
-              </h3>
+                {tx("ai_copilot_scheduling_suggestions_59d4f89d")}</h3>
               <p className="text-[11px] text-gray-400">
-                针对 {dateLabel} 智能规划精力时段与执行里程碑
-              </p>
+                {tx("for_72dcac11")}{dateLabel} {tx("plan_focus_blocks_and_milestones_531c7f93")}</p>
             </div>
           </div>
           <button
@@ -72,8 +72,7 @@ export default function AiScheduleModal({
           <div className="py-12 flex flex-col items-center justify-center gap-3 text-gray-400">
             <span className="animate-spin text-2xl">⏳</span>
             <span className="text-xs font-bold">
-              AI Copilot 正在深度分析您的工作区与项目状态，规划排期中...
-            </span>
+              {tx("ai_copilot_is_analyzing_your_workspace_and_proje_a4e126f6")}</span>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto space-y-3.5 pr-1">
@@ -94,15 +93,14 @@ export default function AiScheduleModal({
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-slate-300">
                 <span>
-                  规划任务列表 (已选 {selectedIndices.size}/{tasks.length})
+                  {tx("planned_tasks_selected_08f3eaaa")}{selectedIndices.size}/{tasks.length})
                 </span>
                 <button
                   type="button"
                   onClick={onAddCustomTask}
                   className="text-xs text-[#00C776] hover:underline font-bold cursor-pointer"
                 >
-                  + 补充任务
-                </button>
+                  {tx("add_task_1132dccd")}</button>
               </div>
 
               {tasks.map((task, idx) => {
@@ -146,9 +144,9 @@ export default function AiScheduleModal({
                       }
                       className="px-2 py-1 text-xs font-bold bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg cursor-pointer"
                     >
-                      <option value="high">🌅 高优</option>
-                      <option value="medium">☀️ 中优</option>
-                      <option value="low">🌙 普通</option>
+                      <option value="high">{tx("high_ea9f78eb")}</option>
+                      <option value="medium">{tx("medium_a9441c12")}</option>
+                      <option value="low">{tx("normal_d02e0577")}</option>
                     </select>
 
                     {/* 删除 */}
@@ -156,7 +154,7 @@ export default function AiScheduleModal({
                       type="button"
                       onClick={() => onDeleteTask(idx)}
                       className="p-1 text-gray-400 hover:text-rose-500 text-xs"
-                      title="移除此项"
+                      title={tx("remove_item_982e1131")}
                     >
                       ✕
                     </button>
@@ -169,23 +167,21 @@ export default function AiScheduleModal({
 
         <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-slate-800">
           <span className="text-[11px] text-gray-400">
-            采纳后将自动同步写入系统待办并投射至日历
-          </span>
+            {tx("accepted_tasks_are_saved_to_your_todos_and_displ_c680741d")}</span>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => onClose()}
               className="px-3.5 py-1.5 text-xs text-gray-500 hover:text-gray-700 font-bold"
             >
-              取消
-            </button>
+              {tx("cancel_2cd0f3be")}</button>
             <button
               type="button"
               disabled={planning || applying || selectedIndices.size === 0}
               onClick={onApply}
               className="px-4 py-1.5 bg-[#00C776] hover:bg-[#00B068] text-white text-xs font-black rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
-              <span>{applying ? "写入中..." : "一键采纳并写入日历 🗓️"}</span>
+              <span>{applying ? tx("saving_22a6a532") : tx("accept_add_to_calendar_b14ea5df")}</span>
             </button>
           </div>
         </div>

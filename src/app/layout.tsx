@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 import { Geist } from "next/font/google";
 import { cookies } from "next/headers";
 import Script from "next/script";
@@ -43,13 +45,14 @@ export const metadata: Metadata = {
 const themeInitScript = `(function(){try{var d=document.documentElement;var t=localStorage.getItem("navelix_theme");if(!t){var m=document.cookie.match(/(?:^|; )navelix_theme=([^;]*)/);if(m)t=decodeURIComponent(m[1]);}if(!t){var e=localStorage.getItem("navelix.user.config");if(e){try{var n=JSON.parse(e);if(n&&n.theme)t=n.theme;}catch(err){}}}if(!t)t="system";var isDark=t==="dark"||((!t||t==="system")&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(isDark){d.classList.add("dark");}else{d.classList.remove("dark");}}catch(err){}})();`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
   const cookieStore = await cookies();
   const themeCookie = cookieStore.get("navelix_theme_dark")?.value;
   const isDarkInitial = themeCookie === "1";
 
   return (
     <html
-      lang="zh-CN"
+      lang={locale}
       className={`${geistSans.variable} h-full antialiased ${isDarkInitial ? "dark" : ""}`}
       suppressHydrationWarning
     >
@@ -61,9 +64,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body className="min-h-full flex flex-col">
-        {children}
-        <SessionKeepalive />
-        <PWARegister />
+        <NextIntlClientProvider>
+          {children}
+          <SessionKeepalive />
+          <PWARegister />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

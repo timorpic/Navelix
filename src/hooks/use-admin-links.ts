@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
 import { useLinkStatus } from "@/hooks/use-link-status";
@@ -85,6 +86,7 @@ export interface UseAdminLinksResult {
 }
 
 export function useAdminLinks(): UseAdminLinksResult {
+  const tx = useTranslations();
   const {
     categories,
     links,
@@ -143,50 +145,50 @@ export function useAdminLinks(): UseAdminLinksResult {
     (data: LinkSaveData) => {
       if (editingLink) {
         updateLink(editingLink.id, data);
-        notify("链接管理", "链接修改成功");
+        notify(tx("link_management_09f9a1cb"), tx("link_updated_5272bcd3"));
       } else {
         addLink(data);
-        notify("链接管理", "链接添加成功");
+        notify(tx("link_management_09f9a1cb"), tx("link_added_6df3b0a6"));
       }
       setEditingLink(null);
     },
-    [editingLink, updateLink, addLink, notify],
+    [editingLink, updateLink, addLink, notify, tx],
   );
 
   const handleCategorySave = useCallback(
     (name: string, icon: string, isTeamShared?: boolean) => {
       if (editingCategory) {
         updateCategory(editingCategory.id, { name, icon, isTeamShared });
-        notify("分组管理", "分组修改成功");
+        notify(tx("category_management_49243080"), tx("category_updated_0ee5f4b9"));
       } else {
         addCategory(name, icon, isTeamShared);
-        notify("分组管理", "分组添加成功");
+        notify(tx("category_management_49243080"), tx("category_added_59f32839"));
       }
       setEditingCategory(null);
     },
-    [editingCategory, updateCategory, addCategory, notify],
+    [editingCategory, updateCategory, addCategory, notify, tx],
   );
 
   const handleDeleteLink = useCallback(() => {
     if (linkToDelete) {
       deleteLink(linkToDelete.id);
-      notify("链接管理", "链接已删除");
+      notify(tx("link_management_09f9a1cb"), tx("link_deleted_798c8170"));
     }
-  }, [linkToDelete, deleteLink, notify]);
+  }, [linkToDelete, deleteLink, notify, tx]);
 
   const handleDeleteCategory = useCallback(() => {
     if (categoryToDelete) {
       deleteCategory(categoryToDelete.id);
-      notify("分组管理", "分组已删除");
+      notify(tx("category_management_49243080"), tx("category_deleted_23dd1ebf"));
     }
-  }, [categoryToDelete, deleteCategory, notify]);
+  }, [categoryToDelete, deleteCategory, notify, tx]);
 
   const handleClearAllLinks = useCallback(() => {
     const count = links.length;
     deleteAllLinks();
     setShowClearAllConfirm(false);
-    notify("链接管理", buildClearLinksMessage(count));
-  }, [links.length, deleteAllLinks, notify]);
+    notify(tx("link_management_09f9a1cb"), buildClearLinksMessage(count));
+  }, [links.length, deleteAllLinks, notify, tx]);
 
   const openAddLink = useCallback(() => {
     setEditingLink(null);

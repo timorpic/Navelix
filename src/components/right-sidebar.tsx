@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useEffect, useMemo } from "react";
 import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
 import type { AIChatMessage } from "@/types";
@@ -14,11 +15,12 @@ export default function RightSidebar({
   collapsed?: boolean;
   onToggle?: () => void;
 }) {
+  const tx = useTranslations();
   const { config } = useNavelixConfig();
   const { user, projects, todos } = useNavelixData();
 
   // 1. 用户与工作区实时数据
-  const userName = user?.displayName || user?.username || config.logoText || "朋友";
+  const userName = user?.displayName || user?.username || config.logoText || tx("friend_677aad1a");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -29,11 +31,11 @@ export default function RightSidebar({
   const copilotInsight = useMemo(() => {
     const now = new Date();
     const hour = now.getHours();
-    let greet = "你好";
-    if (hour >= 5 && hour < 12) greet = "早上好";
-    else if (hour >= 12 && hour < 14) greet = "中午好";
-    else if (hour >= 14 && hour < 19) greet = "下午好";
-    else greet = "晚上好";
+    let greet = tx("hello_670d9743");
+    if (hour >= 5 && hour < 12) greet = tx("good_morning_3cc2e31e");
+    else if (hour >= 12 && hour < 14) greet = tx("good_afternoon_fceb1962");
+    else if (hour >= 14 && hour < 19) greet = tx("good_afternoon_552594ef");
+    else greet = tx("good_evening_d8e9a7fa");
 
     const inProgressProjects = projects.filter(
       (p) =>
@@ -49,21 +51,21 @@ export default function RightSidebar({
     // 发现列表
     const observations: string[] = [];
     if (inProgressProjects.length > 0) {
-      observations.push(`• ${inProgressProjects[0].name} 正在推进中`);
+      observations.push(tx("message_b33d973d7a46", {v0: inProgressProjects[0].name}));
     } else if (projects.length > 0) {
-      observations.push(`• 已记录 ${projects.length} 个重点项目`);
+      observations.push(tx("message_277bd0cc5aa8", {v0: projects.length}));
     } else {
-      observations.push("• 暂无进行中的项目，适合开启新规划");
+      observations.push(tx("no_active_projects_time_to_start_planning_7eeeba0c"));
     }
 
     if (pendingTodos.length > 0) {
-      observations.push(`• 今天还有 ${pendingTodos.length} 项待处理待办`);
+      observations.push(tx("message_07a3e6a37326", {v0: pendingTodos.length}));
     } else {
-      observations.push("• 今日待办已全部完成，状态极佳");
+      observations.push(tx("all_of_today_s_todos_are_done_great_work_be68e842"));
     }
 
     if (highPrioTodos.length > 0) {
-      observations.push(`• 其中 ${highPrioTodos.length} 项为高优先级任务`);
+      observations.push(tx("message_dc2822a82122", {v0: highPrioTodos.length}));
     }
 
     // 建议列表
@@ -81,8 +83,8 @@ export default function RightSidebar({
       }
     }
     if (suggestions.length === 0) {
-      suggestions.push("① 规划本周核心里程碑");
-      suggestions.push("② 整理数字工作区与书签");
+      suggestions.push(tx("plan_this_week_s_key_milestones_017618d2"));
+      suggestions.push(tx("organize_your_workspace_and_bookmarks_62c5fae7"));
     }
 
     return {
@@ -90,7 +92,7 @@ export default function RightSidebar({
       observations,
       suggestions,
     };
-  }, [projects, todos]);
+  }, [projects, todos, tx]);
 
   // 4. 对话状态
   const [chatMessages, setChatMessages] = useState<AIChatMessage[]>([]);
@@ -123,7 +125,7 @@ export default function RightSidebar({
       });
 
       const data = await res.json();
-      const aiResponse = data.text || "无法获取 AI 响应。";
+      const aiResponse = data.text || tx("unable_to_get_an_ai_response_f9b508f8");
 
       setChatMessages((prev) => [
         ...prev,
@@ -135,7 +137,7 @@ export default function RightSidebar({
         {
           id: (Date.now() + 1).toString(),
           sender: "ai",
-          text: "⚠️ 网络请求失败，请稍后再试。",
+          text: tx("network_request_failed_try_again_later_5570b3c9"),
         },
       ]);
     } finally {
@@ -210,7 +212,7 @@ export default function RightSidebar({
           <button
             onClick={onToggle}
             className="p-2 rounded-xl transition-colors cursor-pointer hover:bg-gray-100 text-gray-400 hover:text-gray-600 dark:hover:bg-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-            title="展开侧边栏"
+            title={tx("expand_sidebar_eea954b9")}
           >
             <svg
               className="w-4 h-4"
@@ -220,8 +222,7 @@ export default function RightSidebar({
             </svg>
           </button>
           <span className="text-xs text-gray-300 dark:text-slate-600 font-medium" style={{ writingMode: "vertical-rl" }}>
-            AI 助手
-          </span>
+            {tx("ai_assistant_1b0049fc")}</span>
         </div>
       ) : (
         <>
@@ -236,7 +237,7 @@ export default function RightSidebar({
             <button
               onClick={onToggle}
               className="p-1.5 rounded-xl transition-colors cursor-pointer hover:bg-gray-100 text-gray-400 hover:text-gray-600 dark:hover:bg-slate-800 dark:text-slate-400 dark:hover:text-slate-200 shrink-0"
-              title="收起侧边栏"
+              title={tx("collapse_sidebar_ce1d67c2")}
             >
               <svg
                 className="w-4 h-4"
@@ -259,16 +260,14 @@ export default function RightSidebar({
                 <h3 className="text-xs font-black text-gray-900 dark:text-white tracking-wide flex items-center gap-1.5">
                   <span>AI Copilot</span>
                   <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#00C776]/15 text-[#00C776] border border-[#00C776]/30">
-                    数字副驾驶
-                  </span>
+                    {tx("copilot_75efcbe2")}</span>
                 </h3>
               </div>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-[#00C776] animate-pulse" />
               <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400">
-                协同在线
-              </span>
+                {tx("online_6fcf7d38")}</span>
             </div>
           </div>
 
@@ -280,13 +279,12 @@ export default function RightSidebar({
                   {copilotInsight.greet}，{userName}。
                 </p>
                 <span className="text-[11px] text-gray-500 dark:text-slate-400">
-                  我已实时同步您的工作区全景状态：
-                </span>
+                  {tx("your_workspace_is_up_to_date_6cd350b8")}</span>
               </div>
 
               {/* 发现列表 */}
               <div className="space-y-1 bg-gray-50/70 dark:bg-slate-800/50 p-2 rounded-lg text-[11px] text-gray-700 dark:text-slate-300">
-                <span className="font-bold text-[#00C776]">我发现：</span>
+                <span className="font-bold text-[#00C776]">{tx("i_noticed_45306ac8")}</span>
                 {copilotInsight.observations.map((obs, idx) => (
                   <p key={idx} className="leading-relaxed truncate">
                     {obs}
@@ -297,8 +295,7 @@ export default function RightSidebar({
               {/* 建议列表 */}
               <div className="space-y-1 text-[11px] text-gray-700 dark:text-slate-300">
                 <span className="font-bold text-gray-800 dark:text-slate-200">
-                  我建议今天先处理：
-                </span>
+                  {tx("suggested_priorities_for_today_76099211")}</span>
                 {copilotInsight.suggestions.map((sug, idx) => (
                   <p key={idx} className="leading-relaxed truncate text-gray-600 dark:text-slate-300">
                     {sug}
@@ -310,11 +307,11 @@ export default function RightSidebar({
               <button
                 type="button"
                 onClick={() =>
-                  handleSendChat("请结合我当前的所有项目、进行中的任务和未完成待办，帮我制定一份今天最高效的行动安排与时间拆解计划。")
+                  handleSendChat(tx("using_my_current_projects_active_tasks_and_unfin_6e6f7c93"))
                 }
                 className="w-full py-1.5 px-3 bg-[#00C776] hover:bg-[#00B068] text-white rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <span>🎯 帮我安排今天</span>
+                <span>{tx("plan_my_day_cc492c96")}</span>
                 <span>→</span>
               </button>
             </div>
@@ -345,7 +342,7 @@ export default function RightSidebar({
                 <div className="flex justify-start">
                   <div className="bg-white/90 dark:bg-slate-800 text-gray-400 dark:text-slate-400 text-xs px-3 py-2 rounded-xl rounded-bl-none shadow-2xs flex items-center gap-1.5">
                     <span className="animate-ping text-xs">•</span>
-                    <span>Copilot 正在为您梳理与规划...</span>
+                    <span>{tx("copilot_is_planning_for_you_1fca6a7b")}</span>
                   </div>
                 </div>
               )}
@@ -365,15 +362,15 @@ export default function RightSidebar({
                   handleSendChat();
                 }
               }}
-              aria-label="向 AI Copilot 提问或指示"
-              placeholder="指示 Copilot 安排任务、拆解或检索..."
+              aria-label={tx("ask_ai_copilot_a_question_or_give_an_instruction_37a91290")}
+              placeholder={tx("ask_copilot_to_plan_break_down_or_search_28015430")}
               className="w-full pl-3 pr-9 py-2 bg-white/90 dark:bg-slate-900 rounded-xl border border-gray-200/80 dark:border-slate-700 text-xs text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 focus:border-[#00C776]"
             />
             <button
               onClick={() => handleSendChat()}
               disabled={isTyping}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#00C776] hover:text-[#009a5a] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              title="发送指令"
+              title={tx("send_0e2ebb3f")}
             >
               <svg className="w-4 h-4 transform rotate-90" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
@@ -398,8 +395,7 @@ export default function RightSidebar({
         {config.socialLinksEnabled !== false && socialLinks.length > 0 && (
           <div className="flex flex-col gap-2 pt-2 border-t border-gray-100 dark:border-slate-800">
             <span className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
-              社交与联系
-            </span>
+              {tx("social_contact_258de35f")}</span>
             <div className="flex items-center gap-2">
               {socialLinks.map((s) => {
                 const targetHref = normalizeSocialHref(s.key, s.href);

@@ -8,6 +8,10 @@
  * `IS_REACT_ACT_ENVIRONMENT`），不依赖 @testing-library。
  */
 
+import { NextIntlClientProvider } from "next-intl";
+import zh from "../../../../messages/zh-CN.json" with { type: "json" };
+import en from "../../../../messages/en.json" with { type: "json" };
+import type { Locale } from "../../i18n.ts";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -27,6 +31,7 @@ export interface RenderResult {
 export function render(
   Component: AnyComponent,
   props: Record<string, unknown> = {},
+  options: { locale?: Locale } = {},
 ): RenderResult {
   const { createRoot } = require("react-dom/client") as typeof import("react-dom/client");
   const React = require("react") as typeof import("react");
@@ -38,7 +43,8 @@ export function render(
 
   const paint = (p: Record<string, unknown>) => {
     act(() => {
-      root.render(React.createElement(Component, p));
+      const providerProps = { timeZone: "UTC", locale: options.locale || "zh-CN", messages: options.locale === "en" ? en : zh, children: React.createElement(Component, p) };
+      root.render(React.createElement(NextIntlClientProvider, providerProps));
     });
   };
   paint(props);

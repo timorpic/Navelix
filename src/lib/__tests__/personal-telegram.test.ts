@@ -2,6 +2,7 @@ import { beforeEach, after, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { db } from "../db.ts";
+import { saveUserConfigs } from "../user-data.ts";
 import { saveTelegramSettings, isPersonalTelegramEnabled } from "../user-notifications.ts";
 import { createTodo, updateTodoFields, createProject, syncProjectMilestones } from "../todos-projects.ts";
 import { enqueueDueReminders, runPersonalTelegramNotifications } from "../personal-telegram.ts";
@@ -26,6 +27,18 @@ beforeEach(() => {
 after(cleanup);
 
 describe("personal Telegram delivery", () => {
+  it("uses each recipient's language while preserving the original task title", async () => {
+    saveUserConfigs(users[1], { language: "en" });
+    const now = morning();
+    createTodo(users[0], { title: "中文任务 English", dueDate: toLocalDateStr(now), assigneeId: users[1] });
+    db.prepare("DELETE FROM telegram_deliveries").run();
+    const messages = new Map<string, string>();
+    await runPersonalTelegramNotifications(now, async (userId, message) => { messages.set(userId, message); return true; });
+    assert.match(messages.get(users[0]) ?? "", /今日到期/);
+    assert.match(messages.get(users[1]) ?? "", /due today/i);
+    for (const message of messages.values()) assert.ok(message.includes("中文任务 English"));
+    assert.equal(messages.size, 2);
+  });
   it("reminds only owners and assignees, after 09:00, once per task/date even across scheduler runs", async () => {
     const now = morning();
     const id = createTodo(users[0], { title: "due", dueDate: toLocalDateStr(now), assigneeId: users[1] });

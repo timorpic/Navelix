@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { parseCachePurgeResult, type CachePurgeTarget } from "@/lib/admin-system";
 
@@ -26,13 +28,15 @@ export interface UseAdminCachePurgeResult {
 export function useAdminCachePurge({
   notify,
 }: UseAdminCachePurgeOptions): UseAdminCachePurgeResult {
+  const tx = useTranslations();
+  const text = useText();
   const [isPurgingCache, setIsPurgingCache] = useState(false);
   const [purgeNotice, setPurgeNotice] = useState("");
 
   const purgeCache = useCallback(
     async (target: CachePurgeTarget = "all") => {
       setIsPurgingCache(true);
-      setPurgeNotice("正在执行系统与存储清理...");
+      setPurgeNotice(tx("cleaning_up_system_and_storage_441b966e"));
       try {
         const res = await fetch("/api/admin/cache-purge", {
           method: "POST",
@@ -41,18 +45,18 @@ export function useAdminCachePurge({
         });
         const data = await res.json();
         const outcome = parseCachePurgeResult(res.ok, data);
-        setPurgeNotice(outcome.notice);
+        setPurgeNotice(text(outcome.notice));
         if (outcome.ok) {
-          notify("系统运维", outcome.message);
+          notify(tx("system_maintenance_e1ac05d8"), text(outcome.message));
         }
       } catch {
-        setPurgeNotice("❌ 清理失败");
+        setPurgeNotice(tx("cleanup_failed_23a5489a"));
       } finally {
         setIsPurgingCache(false);
         setTimeout(() => setPurgeNotice(""), 4000);
       }
     },
-    [notify],
+    [notify, tx, text],
   );
 
   return { isPurgingCache, purgeNotice, purgeCache };

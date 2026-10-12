@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useNavelixConfig } from "@/context/navelix-context";
 
 /**
@@ -10,6 +11,7 @@ import { useNavelixConfig } from "@/context/navelix-context";
  * 单个开关直接读写 `useNavelixConfig()`，本身不持有 state。
  */
 export default function AdminProfileSearchBarCard() {
+  const tx = useTranslations();
   const { config, updateConfig } = useNavelixConfig();
 
   return (
@@ -17,20 +19,18 @@ export default function AdminProfileSearchBarCard() {
       <div>
         <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
           <span>🔍</span>
-          <span>首页搜索栏</span>
+          <span>{tx("home_search_bar_4d897e72")}</span>
         </h3>
         <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-          首页搜索仅限系统内（书签、日程、项目、消息），无需配置外部搜索引擎
-        </p>
+          {tx("search_only_within_your_workspace_bookmarks_sche_29c522e3")}</p>
       </div>
       <div className="space-y-3.5">
         <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
           <div>
             <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
-              搜索栏组件显示状态
-            </p>
+              {tx("search_bar_visibility_e03847e4")}</p>
             <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
-              {config.showSearchBar ? "当前状态：已显示搜索栏" : "当前状态：已隐藏搜索栏"}
+              {config.showSearchBar ? tx("current_status_search_bar_visible_686e6481") : tx("current_status_search_bar_hidden_79c2fbb6")}
             </p>
           </div>
           <button
@@ -41,7 +41,7 @@ export default function AdminProfileSearchBarCard() {
               config.showSearchBar ? "bg-[#00C776] text-white" : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
             }`}
           >
-            {config.showSearchBar ? "隐藏" : "显示"}
+            {config.showSearchBar ? tx("hide_145219e7") : tx("show_4e1449e7")}
           </button>
         </div>
       </div>

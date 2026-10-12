@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
 import { getSessionUser } from "@/lib/auth";
 import {
   currentSessionHash,
@@ -14,24 +14,24 @@ export type { SessionItem } from "@/lib/auth/sessions";
 export async function GET() {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   const currentHash = await currentSessionHash();
-  return NextResponse.json({ sessions: listSessions(user.id, currentHash) });
+  return localizedJson({ sessions: listSessions(user.id, currentHash) });
 }
 
 // DELETE /api/auth/sessions - 踢出特定会话或注销其他所有设备
 export async function DELETE(req: Request) {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   // 速率限制：防止会话 ID 暴力枚举或大规模注销（按用户维度 30 次/分钟）
   const rl = simpleRateLimit(`session-revoke:${user.id}`, 30, 60_000);
   if (!rl.allowed) {
-    return NextResponse.json(
+    return localizedJson(
       { error: "操作过于频繁，请稍后再试", retryAfterMs: rl.retryAfterMs },
       { status: 429, headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) } },
     );
@@ -44,7 +44,7 @@ export async function DELETE(req: Request) {
 
   if (action === "revoke_others") {
     revokeOtherSessions(user.id, currentHash);
-    return NextResponse.json({
+    return localizedJson({
       success: true,
       message: "已注销其他所有设备的登录会话",
     });
@@ -52,11 +52,11 @@ export async function DELETE(req: Request) {
 
   if (targetTokenHash) {
     revokeSession(user.id, String(targetTokenHash));
-    return NextResponse.json({
+    return localizedJson({
       success: true,
       message: "已安全强退选定的会话设备",
     });
   }
 
-  return NextResponse.json({ error: "缺少操作参数" }, { status: 400 });
+  return localizedJson({ error: "缺少操作参数" }, { status: 400 });
 }

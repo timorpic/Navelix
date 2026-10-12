@@ -53,22 +53,30 @@ export function addDaysLocal(d: Date | string, days: number): string {
  */
 export function formatRelativeTime(
   timestamp: number,
-  options: { style?: "words" | "compact"; fallbackAfterDays?: number } = {},
+  options: { style?: "words" | "compact"; fallbackAfterDays?: number; locale?: string } = {},
 ): string {
-  const { style = "words", fallbackAfterDays = 30 } = options;
+  const { style = "words", fallbackAfterDays = 30, locale = "zh-CN" } = options;
 
   const diff = Date.now() - timestamp;
   const minute = 60_000;
   const hour = 60 * minute;
   const day = 24 * hour;
 
+  if (locale === "en" && style === "words") {
+    const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+    if (diff < minute) return "Just now";
+    if (diff < hour) return formatter.format(-Math.floor(diff / minute), "minute");
+    if (diff < day) return formatter.format(-Math.floor(diff / hour), "hour");
+    if (diff < fallbackAfterDays * day) return formatter.format(-Math.floor(diff / day), "day");
+    return new Date(timestamp).toLocaleDateString(locale);
+  }
   const suffix = style === "compact"
     ? { m: "m", h: "h", d: "d" }
     : { m: " 分钟前", h: " 小时前", d: " 天前" };
 
-  if (diff < minute) return "刚刚";
+  if (diff < minute) return locale === "en" ? "Just now" : "刚刚";
   if (diff < hour) return `${Math.floor(diff / minute)}${suffix.m}`;
   if (diff < day) return `${Math.floor(diff / hour)}${suffix.h}`;
   if (diff < fallbackAfterDays * day) return `${Math.floor(diff / day)}${suffix.d}`;
-  return new Date(timestamp).toLocaleDateString("zh-CN");
+  return new Date(timestamp).toLocaleDateString(locale);
 }

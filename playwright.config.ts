@@ -21,6 +21,7 @@ export default defineConfig({
   timeout: 90_000,
 
   use: {
+    locale: "zh-CN",
     baseURL: `http://localhost:${PORT}`,
     trace: process.env.CI ? "on-first-retry" : "off",
     screenshot: "only-on-failure",

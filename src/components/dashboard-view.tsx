@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useEffect, useMemo } from "react";
 import type { Category, SiteLink, SystemConfig } from "@/types";
 import { useFocusTracker } from "@/hooks/use-focus-tracker";
@@ -27,12 +28,13 @@ export default function DashboardView({
   config,
   statuses,
 }: DashboardViewProps) {
+  const tx = useTranslations();
   // 1. 专注追踪数据 (Focus Tracker)
   const { totalHours, weeklyChange, dailyAverage, isPositive, weeklyData, todayMinutes } =
     useFocusTracker();
 
   const currentDayIdx = (new Date().getDay() + 6) % 7;
-  const weekdaysLabels = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+  const weekdaysLabels = [tx("mon_c430f4c1"), tx("tue_d1378a68"), tx("wed_29611689"), tx("thu_e9d3b01a"), tx("fri_572388f3"), tx("sat_f9aa11db"), tx("sun_ee239f39")];
   const maxWeeklyHours = Math.max(...weeklyData, 4);
 
   // 2. 项目与待办数据 (Projects & Todos) — 从 NavelixProvider 统一读取
@@ -95,14 +97,12 @@ export default function DashboardView({
         <div>
           <h2 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
             <span>📈</span>
-            <span>全景数字化工作空间看板</span>
+            <span>{tx("your_workspace_dashboard_3f5e2093")}</span>
             <span className="px-2 py-0.5 rounded-full bg-[#00C776]/10 text-[#00C776] text-[10px] font-bold border border-[#00C776]/20">
-              实时驾驶舱
-            </span>
+              {tx("live_overview_dc554371")}</span>
           </h2>
           <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-            全景监控个人效能投入、项目健康度、自建服务可用性、待办预警与数字资产分布
-          </p>
+            {tx("track_focus_time_project_health_service_availabi_f8da2340")}</p>
         </div>
 
         <button
@@ -111,7 +111,7 @@ export default function DashboardView({
           className="px-3.5 py-1.5 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs font-bold border border-gray-200/80 dark:border-slate-700 transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
         >
           <span>🔄</span>
-          <span>同步刷新</span>
+          <span>{tx("refresh_24af1e94")}</span>
         </button>
       </div>
 
@@ -124,8 +124,7 @@ export default function DashboardView({
         <div className="bg-white dark:bg-slate-900/90 p-4.5 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-500 dark:text-slate-400 flex items-center gap-1">
-              <span>⏱️</span> 本周专注投入
-            </span>
+              <span>⏱️</span> {tx("focus_this_week_473a9279")}</span>
             <span
               className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                 isPositive
@@ -141,11 +140,10 @@ export default function DashboardView({
               {totalHours}
             </span>
             <span className="text-xs font-bold text-gray-400 dark:text-slate-500">
-              小时
-            </span>
+              {tx("hours_3b6fefc5")}</span>
           </div>
           <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-1">
-            今日投入 {todayMinutes} 分钟 · 日均 {dailyAverage}h
+            {tx("today_5a645296")}{todayMinutes} {tx("min_daily_average_89e2aa5d")}{dailyAverage}h
           </p>
         </div>
 
@@ -153,54 +151,45 @@ export default function DashboardView({
         <div className="bg-white dark:bg-slate-900/90 p-4.5 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-500 dark:text-slate-400 flex items-center gap-1">
-              <span>📋</span> 待办闭环率
-            </span>
+              <span>📋</span> {tx("task_completion_rate_54729bb5")}</span>
             <span className="px-2 py-0.5 rounded-md bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 text-[10px] font-bold">
-              {todoMetrics.rate}% 达成
-            </span>
+              {todoMetrics.rate}{tx("achieved_e9a45d1e")}</span>
           </div>
           <div className="mt-2.5 flex items-baseline gap-1.5">
             <span className="text-2xl font-black text-sky-600 dark:text-sky-400">
               {todoMetrics.completed}
             </span>
             <span className="text-xs font-bold text-gray-400 dark:text-slate-500">
-              / {todos.length} 项
-            </span>
+              / {todos.length} {tx("items_49ccde43")}</span>
           </div>
           <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-1">
-            当前仍有 {todoMetrics.pending} 项待处理行动
-          </p>
+            {tx("still_41d048b9")}{todoMetrics.pending} {tx("pending_actions_ad497ca9")}</p>
         </div>
 
         {/* KPI 3: 🗂️ 项目健康度 */}
         <div className="bg-white dark:bg-slate-900/90 p-4.5 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-500 dark:text-slate-400 flex items-center gap-1">
-              <span>🗂️</span> 项目健康度
-            </span>
+              <span>🗂️</span> {tx("project_health_2d6cb08f")}</span>
             <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400 text-[10px] font-bold">
-              {projectMetrics.inProgress} 个进行中
-            </span>
+              {projectMetrics.inProgress} {tx("in_progress_139b261e")}</span>
           </div>
           <div className="mt-2.5 flex items-baseline gap-1.5">
             <span className="text-2xl font-black text-purple-600 dark:text-purple-400">
               {projectMetrics.deliveryRate}%
             </span>
             <span className="text-xs font-bold text-gray-400 dark:text-slate-500">
-              交付率
-            </span>
+              {tx("delivery_rate_281ad0c3")}</span>
           </div>
           <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-1">
-            已闭环 {projectMetrics.completed} 项 · 总项目 {projects.length} 个
-          </p>
+            {tx("completed_58de3aa7")}{projectMetrics.completed} {tx("items_total_projects_67b5d7da")}{projects.length} {tx("items_3a116815")}</p>
         </div>
 
         {/* KPI 4: 🛡️ 服务可用性 */}
         <div className="bg-white dark:bg-slate-900/90 p-4.5 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-500 dark:text-slate-400 flex items-center gap-1">
-              <span>🛡️</span> 服务可用性
-            </span>
+              <span>🛡️</span> {tx("service_availability_a1b431ee")}</span>
             <span
               className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                 serviceHealth.offline > 0
@@ -209,8 +198,8 @@ export default function DashboardView({
               }`}
             >
               {serviceHealth.offline > 0
-                ? `${serviceHealth.offline} 项异常`
-                : "全部正常"}
+                ? tx("message_70e9c4be7a80", {v0: serviceHealth.offline})
+                : tx("all_healthy_659cffc7")}
             </span>
           </div>
           <div className="mt-2.5 flex items-baseline gap-1.5">
@@ -218,12 +207,10 @@ export default function DashboardView({
               {serviceHealth.uptimeRate}%
             </span>
             <span className="text-xs font-bold text-gray-400 dark:text-slate-500">
-              存活率
-            </span>
+              {tx("availability_62907046")}</span>
           </div>
           <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-1">
-            已探活 {serviceHealth.totalProbed} 处网络服务
-          </p>
+            {tx("checked_0f766cf9")}{serviceHealth.totalProbed} {tx("network_services_e06747fe")}</p>
         </div>
       </div>
 
@@ -234,11 +221,10 @@ export default function DashboardView({
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
               <span>📊</span>
-              <span>周专注时长与精力投入趋势</span>
+              <span>{tx("weekly_focus_time_investment_67c62a88")}</span>
             </h3>
             <span className="text-[11px] font-bold text-gray-400 dark:text-slate-400">
-              近 7 日分布 (h)
-            </span>
+              {tx("last_7_days_h_832b78bd")}</span>
           </div>
 
           {/* Bar Chart */}
@@ -278,8 +264,8 @@ export default function DashboardView({
           </div>
 
           <div className="flex items-center justify-between pt-3 text-[11px] text-gray-500 dark:text-slate-400">
-            <span>🟢 高亮柱代表今天投入</span>
-            <span>日均建议目标：4.0 小时</span>
+            <span>{tx("highlighted_bar_shows_today_s_focus_time_aa9c4efa")}</span>
+            <span>{tx("suggested_daily_target_4_0_hours_348156d0")}</span>
           </div>
         </div>
 
@@ -288,18 +274,17 @@ export default function DashboardView({
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
               <span>🛡️</span>
-              <span>基础设施与服务可用性</span>
+              <span>{tx("infrastructure_service_availability_1e031c11")}</span>
             </h3>
             <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
-              {config.linkStatusEnabled ? "探针运行中" : "探针已暂停"}
+              {config.linkStatusEnabled ? tx("probes_running_10514361") : tx("probes_paused_e2cfeaa6")}
             </span>
           </div>
 
           <div className="flex flex-col gap-2 flex-1 max-h-52 overflow-y-auto pr-1">
             {serviceHealth.probedList.length === 0 ? (
               <div className="py-8 flex items-center justify-center text-xs text-gray-400">
-                暂无配置探针服务
-              </div>
+                {tx("no_probe_services_configured_aeb910f9")}</div>
             ) : (
               serviceHealth.probedList.map((l) => {
                 const s = getStatusType(statuses[l.id]);
@@ -344,7 +329,7 @@ export default function DashboardView({
                             : "bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-300"
                         }`}
                       >
-                        {s === "online" ? "在线" : s === "slow" ? "缓慢" : s === "offline" ? "离线" : "探测中"}
+                        {s === "online" ? tx("online_b9086662") : s === "slow" ? tx("slow_002b4b0b") : s === "offline" ? tx("offline_be1b4f3c") : tx("probing_0c92f0e5")}
                       </span>
                       <a
                         href={l.url}
@@ -362,8 +347,7 @@ export default function DashboardView({
           </div>
 
           <p className="text-[10px] text-gray-400 dark:text-slate-500 pt-2 border-t border-gray-100 dark:border-slate-800">
-            自动检测间隔：{config.linkStatusInterval || 60}s · 智能异常标记
-          </p>
+            {tx("automatic_check_interval_437e831f")}{config.linkStatusInterval || 60}{tx("s_automatic_alert_indicators_5f4a1f1a")}</p>
         </div>
       </div>
 
@@ -374,18 +358,17 @@ export default function DashboardView({
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
               <span>⚠️</span>
-              <span>临近截止与高优先待办预警</span>
+              <span>{tx("upcoming_high_priority_tasks_a6eb3ba2")}</span>
             </h3>
             <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
-              {todoMetrics.urgentOrUpcoming.length} 项关键事项
-            </span>
+              {todoMetrics.urgentOrUpcoming.length} {tx("key_items_1f8a4caa")}</span>
           </div>
 
           <div className="flex flex-col gap-2 flex-1 max-h-56 overflow-y-auto pr-1">
             {todoMetrics.urgentOrUpcoming.length === 0 ? (
               <div className="py-8 flex flex-col items-center justify-center text-xs text-gray-400 gap-1">
                 <span>✨</span>
-                <span>当前无紧急或临近截止待办，状态极佳</span>
+                <span>{tx("no_urgent_or_upcoming_tasks_all_clear_8e8bd4ca")}</span>
               </div>
             ) : (
               todoMetrics.urgentOrUpcoming.map((item) => (
@@ -410,13 +393,12 @@ export default function DashboardView({
                   <div className="flex items-center gap-1.5 shrink-0">
                     {item.priority === "high" && (
                       <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200/50">
-                        高优
-                      </span>
+                        {tx("high_323a1d5c")}</span>
                     )}
                     {item.dueDate && (
                       <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
                         {item.dueDate === todoMetrics.todayStr
-                          ? "今日截止"
+                          ? tx("due_today_87b9b659")
                           : item.dueDate.slice(5)}
                       </span>
                     )}
@@ -427,8 +409,7 @@ export default function DashboardView({
           </div>
 
           <p className="text-[10px] text-gray-400 dark:text-slate-500 pt-2 border-t border-gray-100 dark:border-slate-800">
-            勾选即可在看板中即时闭环任务
-          </p>
+            {tx("check_a_task_to_mark_it_complete_immediately_1fb031f8")}</p>
         </div>
 
         {/* 2.2 🗂️ 项目全景交付比率与阶段分布 (6 cols) */}
@@ -436,18 +417,16 @@ export default function DashboardView({
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
               <span>🗂️</span>
-              <span>项目全生命周期阶段分布</span>
+              <span>{tx("project_lifecycle_distribution_da4eedb3")}</span>
             </h3>
             <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400">
-              共 {projectMetrics.total} 个项目
-            </span>
+              {tx("total_76e547a8")}{projectMetrics.total} {tx("projects_5e7e8850")}</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-2">
             <div className="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 text-center">
               <span className="block text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
-                进行中
-              </span>
+                {tx("in_progress_dc9591e5")}</span>
               <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">
                 {projectMetrics.inProgress}
               </span>
@@ -455,8 +434,7 @@ export default function DashboardView({
 
             <div className="p-3 rounded-xl bg-purple-50/60 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900/40 text-center">
               <span className="block text-[11px] font-bold text-purple-700 dark:text-purple-300">
-                已交付
-              </span>
+                {tx("delivered_624ecd84")}</span>
               <span className="text-xl font-black text-purple-600 dark:text-purple-400">
                 {projectMetrics.completed}
               </span>
@@ -464,8 +442,7 @@ export default function DashboardView({
 
             <div className="p-3 rounded-xl bg-sky-50/60 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-900/40 text-center">
               <span className="block text-[11px] font-bold text-sky-700 dark:text-sky-300">
-                研究中
-              </span>
+                {tx("research_69f307d7")}</span>
               <span className="text-xl font-black text-sky-600 dark:text-sky-400">
                 {projectMetrics.research}
               </span>
@@ -473,8 +450,7 @@ export default function DashboardView({
 
             <div className="p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/40 text-center">
               <span className="block text-[11px] font-bold text-amber-700 dark:text-amber-300">
-                维护中
-              </span>
+                {tx("maintenance_d7021d9f")}</span>
               <span className="text-xl font-black text-amber-600 dark:text-amber-400">
                 {projectMetrics.maintenance}
               </span>
@@ -483,7 +459,7 @@ export default function DashboardView({
 
           <div className="space-y-1 pt-1">
             <div className="flex justify-between text-[11px] font-bold text-gray-500 dark:text-slate-400">
-              <span>项目整体完工比率</span>
+              <span>{tx("overall_project_completion_c7932462")}</span>
               <span className="text-purple-600 dark:text-purple-400">
                 {projectMetrics.deliveryRate}%
               </span>
@@ -504,7 +480,7 @@ export default function DashboardView({
         <div className="lg:col-span-6 bg-white dark:bg-slate-900/90 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-2xs">
           <h3 className="text-sm font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <span>📂</span>
-            <span>数字资产分类分布</span>
+            <span>{tx("digital_assets_by_category_32e1c11b")}</span>
           </h3>
 
           <div className="flex flex-col gap-3">
@@ -522,7 +498,7 @@ export default function DashboardView({
                       <span>{cat.name}</span>
                     </span>
                     <span className="text-gray-400 font-medium">
-                      {catLinks.length} 项 ({percentage}%)
+                      {catLinks.length} {tx("items_c3c813b8")}{percentage}%)
                     </span>
                   </div>
                   <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-slate-800 overflow-hidden">
@@ -544,7 +520,7 @@ export default function DashboardView({
         <div className="lg:col-span-6 bg-white dark:bg-slate-900/90 p-5 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-2xs">
           <h3 className="text-sm font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <span>🔥</span>
-            <span>最常访问书签排行</span>
+            <span>{tx("most_visited_bookmarks_c3238529")}</span>
           </h3>
 
           <div className="flex flex-col gap-2">
@@ -573,8 +549,7 @@ export default function DashboardView({
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-[#00C776]">
-                    {item.clicks} 次点击
-                  </span>
+                    {item.clicks} {tx("clicks_de6122e0")}</span>
                 </div>
               </div>
             ))}

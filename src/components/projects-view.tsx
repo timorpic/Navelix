@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import React, { useState, useEffect, useCallback } from "react";
 import type { Project, WorkspaceMember } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
@@ -40,6 +42,8 @@ const STATUS_PRESETS = [
 type ProjectViewTab = "cards" | "gantt";
 
 export default function ProjectsView() {
+  const text = useText();
+  const tx = useTranslations();
   const confirmDialog = useConfirm();
   const [viewTab, setViewTab] = useState<ProjectViewTab>("cards");
   const { projects, todos, refreshData, hydrated } = useNavelixData();
@@ -149,13 +153,13 @@ export default function ProjectsView() {
         });
 
         if (!res.ok) {
-          pushNotification("❌ 项目更新失败", "服务器未能保存本次修改，请稍后重试。", "project");
+          pushNotification(tx("project_update_failed_1ae41d93"), tx("the_server_could_not_save_your_changes_try_again_654bf0e1"), "project");
           return;
         }
 
         pushNotification(
-          "🗂️ 项目与阶段任务已更新",
-          `项目「${n}」已更新，关联的 ${ai.tasks.length} 项阶段里程碑已同步保存！`,
+          tx("project_stage_tasks_updated_4d5cf2e7"),
+          tx("message_a3457651b260", {v0: n, v1: ai.tasks.length}),
           "project",
         );
       } else {
@@ -184,14 +188,14 @@ export default function ProjectsView() {
         });
 
         if (!res.ok) {
-          pushNotification("❌ 项目创建失败", "服务器未能保存该项目，请稍后重试。", "project");
+          pushNotification(tx("project_creation_failed_69e6fd96"), tx("the_server_could_not_save_the_project_try_again__f0dc2104"), "project");
           return;
         }
 
         if (ai.syncToCalendar && ai.tasks.length > 0) {
           pushNotification(
-            "🗂️ 项目与日程创建成功",
-            `项目「${n}」已建立，并自动规划了 ${ai.tasks.length} 项日程待办投射至日历！`,
+            tx("project_schedules_created_2a04b788"),
+            tx("message_109f02097e71", {v0: n, v1: ai.tasks.length}),
             "project",
           );
         }
@@ -200,7 +204,7 @@ export default function ProjectsView() {
       resetForm();
       refreshData();
     } catch {
-      pushNotification("❌ 保存失败", "网络异常，项目未能保存，请稍后重试。", "project");
+      pushNotification(tx("save_failed_cc35f455"), tx("network_error_your_project_was_not_saved_try_aga_06c3af76"), "project");
     }
   };
 
@@ -223,7 +227,7 @@ export default function ProjectsView() {
           assigneeId: t.assigneeId || "",
           assigneeName: t.assigneeName || "",
         })),
-        `📋 已载入该项目当前 ${currentProjectTodos.length} 项阶段里程碑，您可在此修改任务内容、排期与责任人，或使用 AI 重新规划。`,
+        tx("message_11ae20b617ff", {v0: currentProjectTodos.length}),
       );
     } else {
       ai.reset();
@@ -242,21 +246,21 @@ export default function ProjectsView() {
 
   const handleDelete = async (id: string) => {
     const okToDelete = await confirmDialog.confirm({
-      title: "删除项目",
-      message: "确认删除该项目？关联待办也将一并清理。",
-      confirmLabel: "删除",
+      title: tx("delete_project_f6dc6a11"),
+      message: tx("delete_this_project_related_todos_will_also_be_r_25a6d2f2"),
+      confirmLabel: tx("delete_2f9daa82"),
     });
     if (!okToDelete) return;
     try {
       const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
       if (!res.ok) {
-        pushNotification("❌ 删除失败", "服务器未能删除该项目，请稍后重试。", "project");
+        pushNotification(tx("delete_failed_8a7bf43e"), tx("the_server_could_not_delete_this_project_try_aga_befb1e22"), "project");
         return;
       }
       window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
       refreshData();
     } catch {
-      pushNotification("❌ 删除失败", "网络异常，请稍后重试。", "project");
+      pushNotification(tx("delete_failed_8a7bf43e"), tx("network_error_try_again_later_c59e54b9"), "project");
     }
   };
 
@@ -294,14 +298,13 @@ export default function ProjectsView() {
         <div>
           <h2 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
             <span>🗂️</span>
-            <span>项目管理与团队里程碑中心</span>
+            <span>{tx("projects_team_milestones_f4a026d0")}</span>
             <span className="px-2 py-0.5 rounded-full bg-[#00C776]/10 text-[#00C776] text-[10px] font-bold border border-[#00C776]/20">
-              {viewTab === "gantt" ? "甘特图视界" : "卡片看板"}
+              {viewTab === "gantt" ? tx("gantt_view_9d71057a") : tx("cards_a7b7324c")}
             </span>
           </h2>
           <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-            统筹数字化项目生命周期、AI 智能拆解、多用户责任人指派与甘特排期
-          </p>
+            {tx("manage_project_lifecycles_ai_breakdowns_team_ass_84dd7991")}</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -316,8 +319,7 @@ export default function ProjectsView() {
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
-              🗂️ 项目卡片
-            </button>
+              {tx("project_cards_d82d1c09")}</button>
             <button
               type="button"
               onClick={() => handleViewTabChange("gantt")}
@@ -327,8 +329,7 @@ export default function ProjectsView() {
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
-              📊 甘特图视界
-            </button>
+              {tx("gantt_view_79de07a8")}</button>
           </div>
 
           <button
@@ -339,7 +340,7 @@ export default function ProjectsView() {
             className="px-4 py-2 bg-[#00C776] hover:bg-[#00B068] text-white text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
           >
             <span>{showAdd ? "✕" : "+"}</span>
-            <span>{showAdd ? "收起面板" : "新建项目"}</span>
+            <span>{showAdd ? tx("collapse_panel_90bb34c2") : tx("new_project_0e1a7040")}</span>
           </button>
         </div>
       </div>
@@ -353,7 +354,7 @@ export default function ProjectsView() {
           <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-800">
             <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
               <span>{editingId ? "✏️" : "✨"}</span>
-              <span>{editingId ? "编辑项目" : "新建项目与里程碑规划"}</span>
+              <span>{editingId ? tx("edit_project_577feeef") : tx("new_project_milestones_8b01b94e")}</span>
             </h3>
             <button
               type="button"
@@ -370,8 +371,7 @@ export default function ProjectsView() {
                 htmlFor="projects-view-name"
                 className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
               >
-                项目名称 *
-              </label>
+                {tx("project_name_bdeb781f")}</label>
               <div className="flex gap-2">
                 <input
                   id="projects-view-name"
@@ -380,7 +380,7 @@ export default function ProjectsView() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="例如：Navelix 2.0 升级 / 私有云 NAS 搭建"
+                  placeholder={tx("e_g_navelix_2_0_upgrade_private_nas_setup_5a2358c5")}
                   className="flex-1 px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
                 />
                 <button
@@ -388,10 +388,10 @@ export default function ProjectsView() {
                   onClick={() => ai.generate(name, description)}
                   disabled={ai.loading}
                   className="px-3 py-2 bg-gradient-to-r from-[#00C776] to-teal-500 hover:from-[#00B068] hover:to-teal-600 text-white text-xs font-black rounded-xl transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                  title="让 AI 自动拆分阶段任务、责任人与截止日期"
+                  title={tx("let_ai_plan_stages_owners_and_deadlines_12e10c9d")}
                 >
                   <span>{ai.loading ? "⏳" : "✨"}</span>
-                  <span>{ai.loading ? "拆解中..." : editingId ? "AI 智能拆解" : "AI 拆解"}</span>
+                  <span>{ai.loading ? tx("breaking_down_b18b2441") : editingId ? tx("ai_breakdown_0b83f8cd") : tx("ai_breakdown_c3a0c242")}</span>
                 </button>
               </div>
             </div>
@@ -401,8 +401,7 @@ export default function ProjectsView() {
                 htmlFor="projects-view-url"
                 className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
               >
-                关联入口链接
-              </label>
+                {tx("related_url_89bc331e")}</label>
               <input
                 id="projects-view-url"
                 name="projectUrl"
@@ -419,8 +418,7 @@ export default function ProjectsView() {
                 htmlFor="projects-view-status"
                 className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
               >
-                状态阶段
-              </label>
+                {tx("stage_99736957")}</label>
               <select
                 id="projects-view-status"
                 name="projectStatus"
@@ -435,8 +433,8 @@ export default function ProjectsView() {
                 className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer font-bold"
               >
                 {STATUS_PRESETS.map((p) => (
-                  <option key={p.label} value={p.label}>
-                    {p.label}
+                  <option key={text(p.label)} value={text(p.label)}>
+                    {text(p.label)}
                   </option>
                 ))}
               </select>
@@ -448,15 +446,14 @@ export default function ProjectsView() {
               htmlFor="projects-view-desc"
               className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
             >
-              项目目标与背景（可选，供 AI 拆解参考）
-            </label>
+              {tx("goals_background_optional_used_by_ai_31297d45")}</label>
             <textarea
               id="projects-view-desc"
               name="projectDescription"
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="例如：重构前端架构，优化响应式排版，两周内交付上线..."
+              placeholder={tx("e_g_refactor_the_frontend_improve_responsive_lay_ec1be730")}
               className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
             />
           </div>
@@ -465,7 +462,7 @@ export default function ProjectsView() {
 
           <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-gray-500">主题标识:</span>
+              <span className="text-xs font-bold text-gray-500">{tx("color_c65fdbe1")}</span>
               <div className="flex gap-1.5">
                 {["#00C776", "#0284C7", "#D97706", "#9333EA", "#EF4444"].map(
                   (c) => (
@@ -489,17 +486,16 @@ export default function ProjectsView() {
                 onClick={resetForm}
                 className="px-3.5 py-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-slate-400 cursor-pointer"
               >
-                取消
-              </button>
+                {tx("cancel_2cd0f3be")}</button>
               <button
                 type="submit"
                 className="px-4 py-2 bg-[#00C776] hover:bg-[#00B068] text-white text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer"
               >
                 {ai.tasks.length > 0 && ai.syncToCalendar
                   ? editingId
-                    ? "一键保存并追加日程至日历 🗓️"
-                    : "一键创建项目并同步日历 🗓️"
-                  : "保存项目"}
+                    ? tx("save_add_schedules_to_calendar_97a35eef")
+                    : tx("create_project_sync_calendar_cd22aa04")
+                  : tx("save_project_a637cf46")}
               </button>
             </div>
           </div>
@@ -509,12 +505,10 @@ export default function ProjectsView() {
       {/* ── 视图模式渲染：卡片看板 vs 甘特图视界 ── */}
       {!hydrated ? (
         <div className="py-16 text-center text-xs text-gray-400">
-          加载项目与排期数据中...
-        </div>
+          {tx("loading_projects_and_schedules_d21d33a0")}</div>
       ) : projects.length === 0 ? (
         <div className="py-16 text-center text-xs text-gray-400 bg-white dark:bg-slate-900/90 rounded-2xl border border-gray-100 dark:border-slate-800">
-          暂无项目，点击右上角新建项目或让 AI 智能拆解
-        </div>
+          {tx("no_projects_yet_create_one_above_or_use_ai_break_1ed29768")}</div>
       ) : viewTab === "cards" ? (
         /* ════════════ 视图 1：项目卡片看板 (Grid Cards) ════════════ */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -545,7 +539,7 @@ export default function ProjectsView() {
                       <span
                         className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold ${badgeStyle}`}
                       >
-                        {p.status || "进行中"}
+                        {text(p.status || "进行中")}
                       </span>
                     </div>
 
@@ -553,21 +547,20 @@ export default function ProjectsView() {
                       <button
                         onClick={() => handleEdit(p, true)}
                         className="px-2 py-0.5 rounded-md bg-[#00C776]/10 text-[#00C776] hover:bg-[#00C776]/20 text-[10px] font-bold transition-colors cursor-pointer"
-                        title="使用 AI 智能拆解并指派任务"
+                        title={tx("use_ai_to_break_down_and_assign_tasks_3b8c9eec")}
                       >
-                        ✨ AI 拆解
-                      </button>
+                        {tx("ai_breakdown_f0e9e3be")}</button>
                       <button
                         onClick={() => handleEdit(p)}
                         className="p-1 text-gray-400 hover:text-[#00C776] text-xs cursor-pointer"
-                        title="编辑"
+                        title={tx("edit_05183656")}
                       >
                         ✏️
                       </button>
                       <button
                         onClick={() => handleDelete(p.id)}
                         className="p-1 text-gray-400 hover:text-rose-500 text-xs cursor-pointer"
-                        title="删除"
+                        title={tx("delete_2f9daa82")}
                       >
                         🗑️
                       </button>
@@ -581,7 +574,7 @@ export default function ProjectsView() {
                   {/* 进度概览条 */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-gray-400">里程碑达成度</span>
+                      <span className="text-gray-400">{tx("milestone_completion_773618e0")}</span>
                       <span className="text-gray-700 dark:text-slate-300">
                         {percent}% ({done}/{total})
                       </span>
@@ -605,7 +598,7 @@ export default function ProjectsView() {
                       className="flex items-center gap-1.5 text-[11px] font-bold text-gray-600 dark:text-slate-300 hover:text-[#00C776] cursor-pointer"
                     >
                       <span>{isExpanded ? "▼" : "▶"}</span>
-                      <span>关联日程待办 ({done}/{total})</span>
+                      <span>{tx("related_schedules_df61e292")}{done}/{total})</span>
                     </button>
 
                     {p.url ? (
@@ -623,8 +616,7 @@ export default function ProjectsView() {
                       </a>
                     ) : (
                       <span className="text-[10px] text-gray-300 dark:text-slate-600">
-                        未绑定外部链接
-                      </span>
+                        {tx("no_external_link_6fd4049b")}</span>
                     )}
                   </div>
 
@@ -633,8 +625,7 @@ export default function ProjectsView() {
                     <div className="pt-2 space-y-1.5 border-t border-gray-100 dark:border-slate-800">
                       {projectTodos.length === 0 ? (
                         <p className="text-[11px] text-gray-400 py-1">
-                          暂无关联待办，可在上方点击「✨ AI 拆解」快速规划。
-                        </p>
+                          {tx("no_related_todos_use_ai_breakdown_above_to_plan__19ba7e80")}</p>
                       ) : (
                         projectTodos.map((t) => (
                           <div

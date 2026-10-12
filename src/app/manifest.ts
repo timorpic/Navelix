@@ -1,11 +1,13 @@
+import { getTranslations } from "next-intl/server";
 import type { MetadataRoute } from "next";
 import { DEFAULT_SITE_TITLE } from "@/lib/constants";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const tx = await getTranslations();
   return {
     name: DEFAULT_SITE_TITLE,
     short_name: "Navelix",
-    description: "你的个人数字工作空间：导航、待办、项目、AI 与模型额度一站式随身中枢。",
+    description: tx("your_personal_digital_workspace_bookmarks_todos__2379da0c"),
     start_url: "/",
     scope: "/",
     display: "standalone",
@@ -20,15 +22,15 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: "快速添加书签",
-        short_name: "存书签",
-        description: "快速收藏一条网址到 Navelix",
+        name: tx("quick_add_bookmark_2038ac4c"),
+        short_name: tx("save_bookmark_50bf91b0"),
+        description: tx("save_a_url_to_navelix_26e750e6"),
         url: "/?action=quick-add-bookmark",
       },
       {
-        name: "快速记待办",
-        short_name: "记待办",
-        description: "随手记录一条待办任务",
+        name: tx("quick_add_todo_889425e9"),
+        short_name: tx("add_todo_fc73f8c2"),
+        description: tx("capture_a_task_on_the_go_b7783296"),
         url: "/?action=quick-add-todo",
       },
     ],

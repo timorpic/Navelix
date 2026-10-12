@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Overlay from "./overlay";
 
 /**
@@ -16,6 +17,7 @@ export default function IcalExportModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const tx = useTranslations();
   if (!open) return null;
 
   return (
@@ -24,7 +26,7 @@ export default function IcalExportModal({
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
             <span>📲</span>
-            <span>外部日历订阅与导出 (iCal / .ics)</span>
+            <span>{tx("calendar_subscription_export_ical_ics_40b41d3c")}</span>
           </h3>
           <button
             onClick={onClose}
@@ -35,28 +37,25 @@ export default function IcalExportModal({
         </div>
 
         <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed">
-          您可以将 Navelix 中的数字化项目里程碑与待办日程无缝同步至手机
-          （Apple 日历、Google 日历、Outlook 等）。
-        </p>
+          {tx("sync_navelix_milestones_and_todo_schedules_to_ap_2721259a")}</p>
 
         <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 space-y-2">
           <span className="block text-[11px] font-bold text-gray-500 dark:text-slate-400">
-            标准 iCalendar 文件下载：
-          </span>
+            {tx("download_an_icalendar_file_b3b2bdaa")}</span>
           <a
             href="/api/calendar/export"
             download="navelix-schedule.ics"
             className="w-full py-2 bg-[#00C776] hover:bg-[#00B068] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <span>📥</span>
-            <span>下载 navelix-schedule.ics 文件</span>
+            <span>{tx("download_navelix_schedule_ics_6ecf282a")}</span>
           </a>
         </div>
 
         <div className="text-[11px] text-gray-400 space-y-1">
-          <p>💡 手机使用方法：</p>
-          <p>• iOS: 点击下载后在「文件」中打开，点击「全部添加到日历」；</p>
-          <p>• Google/Outlook: 在日历设置中选择「导入日历」即可。</p>
+          <p>{tx("on_your_phone_c7625a92")}</p>
+          <p>{tx("ios_open_the_download_in_files_and_choose_add_al_62c9b0c5")}</p>
+          <p>{tx("google_outlook_choose_import_calendar_in_calenda_b2925ef8")}</p>
         </div>
 
         <div className="flex justify-end pt-2">
@@ -64,8 +63,7 @@ export default function IcalExportModal({
             onClick={onClose}
             className="px-4 py-1.5 bg-gray-100 dark:bg-slate-800 text-xs font-bold rounded-xl"
           >
-            关闭
-          </button>
+            {tx("close_3fd47edc")}</button>
         </div>
       </div>
     </Overlay>

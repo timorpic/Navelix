@@ -1,5 +1,7 @@
 "use client";
 
+import LanguageSwitcher from "@/components/language-switcher";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -7,6 +9,7 @@ import BrandLogo from "@/components/brand-logo";
 import BrandLogoText from "@/components/brand-logo-text";
 
 function LoginForm() {
+  const tx = useTranslations();
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/";
@@ -40,7 +43,7 @@ function LoginForm() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setError(data.error || "登录失败，请检查用户名或密码");
+      setError(data.message || data.error || tx("sign_in_failed_check_your_username_and_password_7c744621"));
       setLoading(false);
       return;
     }
@@ -67,6 +70,7 @@ function LoginForm() {
         />
       </div>
 
+      <div className="absolute top-4 right-4 z-20 rounded-xl bg-white/95 p-2 shadow-sm"><LanguageSwitcher /></div>
       <div className="relative z-10 grid w-full max-w-5xl items-center gap-12 lg:grid-cols-2">
         {/* 左侧品牌区 */}
         <div className="hidden flex-col gap-8 text-white lg:flex animate-slide-up">
@@ -79,11 +83,9 @@ function LoginForm() {
 
           <div>
             <h1 className="text-4xl font-extrabold leading-tight">
-              你的数字工作空间
-            </h1>
+              {tx("your_digital_workspace_f0451d58")}</h1>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-emerald-100/80">
-              把常用入口、AI 助手与个人项目收进同一个首页，打开浏览器就是进入你的工作空间。
-            </p>
+              {tx("keep_your_links_ai_assistant_and_personal_projec_a02fce7b")}</p>
           </div>
 
           <ul className="flex flex-col gap-3 text-sm text-emerald-50/90">
@@ -91,20 +93,17 @@ function LoginForm() {
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/15 text-sm">
                 🔗
               </span>
-              网址导航与快捷访问
-            </li>
+              {tx("bookmarks_quick_access_c1dbfaa1")}</li>
             <li className="flex items-center gap-2.5">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/15 text-sm">
                 🤖
               </span>
-              AI 智能助手
-            </li>
+              {tx("ai_assistant_363770a0")}</li>
             <li className="flex items-center gap-2.5">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/15 text-sm">
                 🎨
               </span>
-              个性化个人工作台
-            </li>
+              {tx("your_personal_dashboard_416482fc")}</li>
           </ul>
 
           <div className="flex items-center gap-2 text-xs text-emerald-100/60">
@@ -122,19 +121,17 @@ function LoginForm() {
                 <BrandLogo />
               </div>
               <h1 className="text-xl font-bold text-gray-900">
-                登录到 <BrandLogoText className="text-xl font-bold text-gray-900" />
+                {tx("sign_in_to_70901ee4")}<BrandLogoText className="text-xl font-bold text-gray-900" />
               </h1>
               <p className="mt-1 text-xs text-gray-400">
-                欢迎回到你的数字工作空间
-              </p>
+                {tx("welcome_back_to_your_digital_workspace_91737dbd")}</p>
             </div>
 
             {/* 桌面端标题 */}
             <div className="mb-8 hidden lg:block">
-              <h1 className="text-2xl font-bold text-gray-900">欢迎回来 👋</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{tx("welcome_back_c75b0c11")}</h1>
               <p className="mt-1.5 text-sm text-gray-500">
-                登录后继续你的数字工作空间之旅
-              </p>
+                {tx("sign_in_to_continue_to_your_workspace_0964607b")}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -143,8 +140,7 @@ function LoginForm() {
                   htmlFor="login-username"
                   className="mb-1.5 block text-xs font-medium text-gray-600"
                 >
-                  用户名
-                </label>
+                  {tx("username_1a3f0617")}</label>
                 <div className="relative">
                   <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
                     <svg
@@ -166,7 +162,7 @@ function LoginForm() {
                     name="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="请输入用户名"
+                    placeholder={tx("enter_your_username_c723b1fa")}
                     autoComplete="username"
                     autoFocus
                     className={`${fieldClass} pl-10 pr-4`}
@@ -179,8 +175,7 @@ function LoginForm() {
                   htmlFor="login-password"
                   className="mb-1.5 block text-xs font-medium text-gray-600"
                 >
-                  密码
-                </label>
+                  {tx("password_a621ab60")}</label>
                 <div className="relative">
                   <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
                     <svg
@@ -210,7 +205,7 @@ function LoginForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? "隐藏密码" : "显示密码"}
+                    aria-label={showPassword ? tx("hide_password_dd1d07bd") : tx("show_password_ffe21a67")}
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 transition-colors hover:text-gray-600 cursor-pointer"
                   >
                     {showPassword ? (
@@ -287,18 +282,14 @@ function LoginForm() {
                 </button>
                 <details className="text-right">
                   <summary className="cursor-pointer text-xs font-medium text-gray-400 transition-colors hover:text-[#009a5a] list-none">
-                    忘记密码？
-                  </summary>
+                    {tx("forgot_password_1d02d7f1")}</summary>
                   <div className="mt-2 w-64 rounded-xl border border-gray-100 bg-white p-3 text-left text-[11px] leading-relaxed text-gray-500 shadow-sm">
                     <p>
-                      ① 普通账号：请联系管理员，在后台「账号管理」中重置你的密码；
-                    </p>
+                      {tx("user_accounts_ask_an_administrator_to_reset_your_9eaa2a0b")}</p>
                     <p className="mt-1">
-                      ② 管理员账号：无自助找回入口。环境变量 <code className="font-mono text-[10px] text-[#009a5a]">NAVELIX_ADMIN_PASSWORD</code> 只在首次初始化（库中无用户）或密码仍为 <code className="font-mono text-[10px] text-[#009a5a]">admin123</code> 时生效，并非通用改密开关。
-                    </p>
+                      {tx("administrator_accounts_there_is_no_self_service__35fb4393")}<code className="font-mono text-[10px] text-[#009a5a]">NAVELIX_ADMIN_PASSWORD</code> {tx("only_applies_during_first_initialization_when_th_b2926ac2")}<code className="font-mono text-[10px] text-[#009a5a]">admin123</code> {tx("it_is_not_a_general_password_reset_switch_ea6ffb5e")}</p>
                     <p className="mt-1">
-                      可行路径：查看数据目录下的 <code className="font-mono text-[10px] text-[#009a5a]">navelix-admin-password.txt</code>（改过密码后即失效），或用一份你知道密码时期的 <code className="font-mono text-[10px] text-[#009a5a]">.db</code> 备份还原。
-                    </p>
+                      {tx("recovery_options_check_6bbee042")}<code className="font-mono text-[10px] text-[#009a5a]">navelix-admin-password.txt</code>{tx("in_the_data_directory_invalid_after_a_password_c_5dae17f9")}<code className="font-mono text-[10px] text-[#009a5a]">.db</code> {tx("backup_from_a_time_when_you_knew_the_password_9bbb693b")}</p>
                   </div>
                 </details>
               </div>
@@ -329,40 +320,36 @@ function LoginForm() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                       />
                     </svg>
-                    正在登录…
-                  </span>
+                    {tx("signing_in_d8712b0d")}</span>
                 ) : (
-                  "立即登录"
+                  tx("sign_in_19e976b0")
                 )}
               </button>
             </form>
 
             <div className="my-6 flex items-center gap-3 text-xs text-gray-400">
               <span className="h-px flex-1 bg-gray-200" />
-              或
-              <span className="h-px flex-1 bg-gray-200" />
+              {tx("or_a2123d69")}<span className="h-px flex-1 bg-gray-200" />
             </div>
 
             <p className="text-center text-sm text-gray-500">
               {allowRegistration ? (
                 <>
-                  还没有账号？{" "}
+                  {tx("don_t_have_an_account_23e52653")}{" "}
                   <Link
                     href="/register"
                     className="font-semibold text-[#009a5a] transition-colors hover:text-[#00C776]"
                   >
-                    立即注册
-                  </Link>
+                    {tx("register_5bddf41d")}</Link>
                 </>
               ) : (
-                "新用户注册已关闭，请联系管理员开通账号"
+                tx("registration_is_closed_contact_an_administrator__e4d24e32")
               )}
             </p>
           </div>
 
           <p className="mt-6 text-center text-xs text-emerald-100/60">
-            © 2026 Navelix · 让每一个常用入口都在它该在的地方
-          </p>
+            {tx("2026_navelix_every_everyday_entry_point_right_wh_47e32b09")}</p>
         </div>
       </div>
     </div>

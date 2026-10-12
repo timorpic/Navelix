@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import { parseEEDriverStatus, type EEDriverStatus } from "@/lib/ee-driver-status";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -56,6 +58,8 @@ export function useAdminLicense({
   flash,
   confirm,
 }: UseAdminLicenseOptions): UseAdminLicenseResult {
+  const tx = useTranslations();
+  const text = useText();
   // ── License 授权状态 ──
   const [licenseStatus, setLicenseStatus] = useState<LicenseStatus>({
     isPro: false,
@@ -102,8 +106,8 @@ export function useAdminLicense({
 
   const copyFingerprint = useCallback(() => {
     navigator.clipboard.writeText(machineFingerprint);
-    flash("已复制机器指纹到剪贴板");
-  }, [machineFingerprint, flash]);
+    flash(tx("instance_fingerprint_copied_to_clipboard_be17c988"));
+  }, [machineFingerprint, flash, tx]);
 
   const activateLicense = useCallback(
     async (e: React.FormEvent) => {
@@ -123,36 +127,36 @@ export function useAdminLicense({
           setLicenseStatus(outcome.status);
           setLicenseInput("");
           setLicenseModalOpen(false);
-          flash("🎉 Navelix Pro 商业许可证激活成功！全站 Pro 特权已解锁。");
+          flash(tx("navelix_pro_activated_pro_features_are_now_unloc_a8620536"));
         } else {
-          flash(outcome.message);
+          flash(text(outcome.message));
         }
       } catch {
-        flash("❌ 激活请求失败，请检查网络");
+        flash(tx("activation_failed_check_your_connection_961f770f"));
       } finally {
         setIsActivatingLicense(false);
       }
     },
-    [licenseInput, flash],
+    [licenseInput, flash, tx, text],
   );
 
   const removeLicense = useCallback(async () => {
     const okToRemove = await confirm({
-      title: "注销许可证",
-      message: "确定要注销当前商业许可证吗？Pro 授权功能将停用，EE 驱动加载状态保持不变。",
-      confirmLabel: "注销",
+      title: tx("deactivate_license_7da4ac20"),
+      message: tx("deactivate_this_license_licensed_pro_features_wi_a0ba8dc6"),
+      confirmLabel: tx("deactivate_a48fa610"),
     });
     if (!okToRemove) return;
     try {
       const res = await fetch("/api/admin/license", { method: "DELETE" });
       if (res.ok) {
         setLicenseStatus(previous => ({ ...previous, isPro: false, payload: undefined, error: undefined }));
-        flash("许可证已注销");
+        flash(tx("license_deactivated_ae38ae38"));
       }
     } catch {
-      flash("注销失败");
+      flash(tx("deactivation_failed_130b4f7f"));
     }
-  }, [confirm, flash]);
+  }, [confirm, flash, tx]);
 
   return {
     driverStatus, driverStatusLoading, driverStatusError, refreshStatus: fetchLicense,

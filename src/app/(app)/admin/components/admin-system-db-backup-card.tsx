@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useRef } from "react";
 import ConfirmDialog from "@/components/confirm-dialog";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -19,6 +20,7 @@ export default function AdminSystemDbBackupCard({
 }: {
   db: UseAdminDbBackupResult;
 }) {
+  const tx = useTranslations();
   const dbRestoreFileRef = useRef<HTMLInputElement>(null);
   const confirmDialog = useConfirm();
 
@@ -27,9 +29,9 @@ export default function AdminSystemDbBackupCard({
     const file = input.files?.[0];
     if (!file) return;
     const okToRestore = await confirmDialog.confirm({
-      title: "还原数据库",
-      message: "⚠️ 警告：恢复数据库将同步覆盖当前全量数据。确定要还原此数据库备份文件吗？",
-      confirmLabel: "还原",
+      title: tx("restore_database_e735c566"),
+      message: tx("restoring_a_database_overwrites_all_current_data_6073ad42"),
+      confirmLabel: tx("restore_ddde0894"),
     });
     if (!okToRestore) {
       // 取消时清空 input，否则再次选择同一文件不会触发 change 事件
@@ -47,11 +49,10 @@ export default function AdminSystemDbBackupCard({
       <div>
         <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
           <span>💾</span>
-          <span>数据库物理快照与备份还原</span>
+          <span>{tx("database_snapshots_restore_f1d98d6a")}</span>
         </h3>
         <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-          一键下载当前 SQLite 数据库文件（.db），或上传历史快照无缝恢复全量数据
-        </p>
+          {tx("download_a_sqlite_database_db_or_restore_all_dat_4726afab")}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -59,11 +60,10 @@ export default function AdminSystemDbBackupCard({
           <div>
             <h4 className="text-xs font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
               <span>📥</span>
-              <span>下载 SQLite 数据库备份</span>
+              <span>{tx("download_sqlite_backup_202ef55c")}</span>
             </h4>
             <p className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80 mt-1 leading-relaxed">
-              在线无锁生成当前完整数据库物理文件（.db），换机、迁移或容灾备份首选。
-            </p>
+              {tx("create_a_complete_online_database_snapshot_db_fo_d98d9f16")}</p>
           </div>
           <button
             type="button"
@@ -71,7 +71,7 @@ export default function AdminSystemDbBackupCard({
             className="w-full py-2 bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
           >
             <span>📥</span>
-            <span>下载数据库备份 (.db)</span>
+            <span>{tx("download_database_backup_db_923bf239")}</span>
           </button>
         </div>
 
@@ -79,11 +79,10 @@ export default function AdminSystemDbBackupCard({
           <div>
             <h4 className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
               <span>📤</span>
-              <span>上传还原数据库</span>
+              <span>{tx("upload_restore_database_863e0b23")}</span>
             </h4>
             <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-1 leading-relaxed">
-              选择先前导出的 .db 文件一键还原（还原后自动重新校验数据库版本）。
-            </p>
+              {tx("restore_a_previously_exported_db_file_the_databa_37002108")}</p>
           </div>
           <input
             ref={dbRestoreFileRef}
@@ -99,7 +98,7 @@ export default function AdminSystemDbBackupCard({
             className="w-full py-2 bg-gray-900 dark:bg-slate-700 hover:bg-black dark:hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
           >
             <span>📤</span>
-            <span>{db.isRestoringDb ? "正在还原中..." : "选择 .db 备份并还原"}</span>
+            <span>{db.isRestoringDb ? tx("restoring_005d3f2a") : tx("choose_db_backup_restore_bd33f26e")}</span>
           </button>
         </div>
       </div>

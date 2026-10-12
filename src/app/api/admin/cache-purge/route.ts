@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const adminUser = await requireAdmin(req);
   if (!adminUser) {
-    return NextResponse.json({ error: "无权访问，仅管理员可执行清理操作" }, { status: 403 });
+    return localizedJson({ error: "无权访问，仅管理员可执行清理操作" }, { status: 403 });
   }
 
   const body = await req.json().catch(() => ({}));
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
     } catch {}
   }
 
-  return NextResponse.json({
+  return localizedJson({
     success: true,
     message: `清理维护已完成，共释放/清理了 ${purgedCount} 条历史操作记录`,
     purgedCount,

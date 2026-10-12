@@ -35,6 +35,8 @@ Zero external database dependencies, single lightweight container, and 100% of y
 
 💬 Join the [Telegram community group](https://t.me/+c6qtFiK5Lk9hZDZl) to discuss deployment and share tips.
 
+🌐 **Bilingual interface**: choose 简体中文 / English in the sidebar or User settings → Personalization. Signed-in language preferences sync across devices.
+
 ### Why Navelix?
 
 - 🧭 **One-stop workspace**: bookmarks, AI assistant, project board, Gantt, calendar & productivity tools in a single home page

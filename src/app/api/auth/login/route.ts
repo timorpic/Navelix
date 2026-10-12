@@ -1,3 +1,5 @@
+import { translateText } from "@/lib/server-translations";
+import { localizedJson } from "@/lib/localized-json";
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
@@ -33,7 +35,7 @@ export async function POST(req: Request) {
   const { allowed, lockRemainingMs } = checkLoginRateLimit(limitKey);
   if (!allowed) {
     const minutes = Math.max(1, Math.ceil(lockRemainingMs / 60000));
-    return NextResponse.json(
+    return localizedJson(
       { error: `尝试次数过多，请 ${minutes} 分钟后再试` },
       { status: 429 },
     );
@@ -62,18 +64,18 @@ export async function POST(req: Request) {
     // 连续失败达到阈值：向 Telegram 推送登录异常安全告警
     if (status.remaining <= LOGIN_ALERT_THRESHOLD) {
       sendTelegramNotification(
-        `🚨 Navelix 登录安全告警\n\n检测到对账号「${username}」的连续登录失败。\n${new Date().toLocaleString("zh-CN")}\n剩余允许尝试：${status.remaining} 次\n${status.lockRemainingMs > 0 ? `锁定中，剩余 ${Math.ceil(status.lockRemainingMs / 60000)} 分钟` : ""}`,
+        locale => translateText(locale, `🚨 Navelix 登录安全告警\n\n检测到对账号「${username}」的连续登录失败。\n${new Date().toLocaleString(locale)}\n剩余允许尝试：${status.remaining} 次\n${status.lockRemainingMs > 0 ? translateText(locale, `锁定中，剩余 ${Math.ceil(status.lockRemainingMs / 60000)} 分钟`) : ""}`),
         "system",
       ).catch(() => {});
     }
     // 统一中文错误信息：避免通过语言差异泄露"用户是否存在"，同时兼容客户端提示
-    return NextResponse.json(
+    return localizedJson(
       { error: "用户名或密码错误" },
       { status: 401 },
     );
   }
 
-  if (row.disabled) return NextResponse.json({ error: "账号已停用，请联系管理员" }, { status: 403 });
+  if (row.disabled) return localizedJson({ error: "账号已停用，请联系管理员" }, { status: 403 });
 
   resetLoginRateLimit(limitKey);
   // 管理员首次登录成功后自动删除初始密码提示文件
@@ -88,7 +90,7 @@ export async function POST(req: Request) {
 
   let token: string;
   try { token = await createSession(row.id, req); }
-  catch { return NextResponse.json({ error: "账号不可用，请重新登录或联系管理员" }, { status: 403 }); }
+  catch { return localizedJson({ error: "账号不可用，请重新登录或联系管理员" }, { status: 403 }); }
   const user = toPublicUser(row);
   const res = NextResponse.json({ user });
   res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());

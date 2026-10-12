@@ -1,4 +1,6 @@
-import { NextResponse } from "next/server";
+import { getLocale } from "next-intl/server";
+import { translateText } from "@/lib/server-translations";
+import { localizedJson } from "@/lib/localized-json";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
@@ -20,55 +22,58 @@ function generateRuleBasedBreakdown(
   projectName: string,
   baseDate: string,
   defaultAssignee?: { id: string; name: string },
+  locale = "zh-CN",
 ): BreakdownTask[] {
   const p = projectName.toLowerCase();
   const aId = defaultAssignee?.id || "";
   const aName = defaultAssignee?.name || "";
 
-  if (p.includes("部署") || p.includes("运维") || p.includes("集群") || p.includes("nas") || p.includes("docker") || p.includes("server")) {
+  if ((p.includes("部署") || p.includes("deploy")) || (p.includes("运维") || p.includes("operations")) || (p.includes("集群") || p.includes("cluster")) || p.includes("nas") || p.includes("docker") || p.includes("server")) {
     return [
-      { title: `环境准备与 ${projectName} 依赖评估`, priority: "high", dueDate: addDaysLocal(baseDate, 1), assigneeId: aId, assigneeName: aName },
-      { title: `核心服务容器化编排与配置文件编写`, priority: "high", dueDate: addDaysLocal(baseDate, 3), assigneeId: aId, assigneeName: aName },
-      { title: `网络端口、反向代理与 SSL 证书配置`, priority: "medium", dueDate: addDaysLocal(baseDate, 6), assigneeId: aId, assigneeName: aName },
-      { title: `数据持久化卷与自动备份策略验证`, priority: "medium", dueDate: addDaysLocal(baseDate, 9), assigneeId: aId, assigneeName: aName },
-      { title: `全链路健康探针与监控告警接入`, priority: "low", dueDate: addDaysLocal(baseDate, 14), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Prepare environment and assess dependencies for ${projectName}` : `环境准备与 ${projectName} 依赖评估`, priority: "high", dueDate: addDaysLocal(baseDate, 1), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Containerize core services and write configuration` : `核心服务容器化编排与配置文件编写`, priority: "high", dueDate: addDaysLocal(baseDate, 3), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Configure network ports, reverse proxy and TLS` : `网络端口、反向代理与 SSL 证书配置`, priority: "medium", dueDate: addDaysLocal(baseDate, 6), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Verify persistent volumes and automated backups` : `数据持久化卷与自动备份策略验证`, priority: "medium", dueDate: addDaysLocal(baseDate, 9), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Set up health probes, monitoring and alerts` : `全链路健康探针与监控告警接入`, priority: "low", dueDate: addDaysLocal(baseDate, 14), assigneeId: aId, assigneeName: aName },
     ];
   }
 
-  if (p.includes("重构") || p.includes("优化") || p.includes("升级") || p.includes("整改")) {
+  if ((p.includes("重构") || p.includes("refactor")) || (p.includes("优化") || p.includes("optimize")) || (p.includes("升级") || p.includes("upgrade")) || (p.includes("整改") || p.includes("improve"))) {
     return [
-      { title: `梳理现有架构痛点与制定 ${projectName} 目标`, priority: "high", dueDate: addDaysLocal(baseDate, 2), assigneeId: aId, assigneeName: aName },
-      { title: `核心模块代码重构与解耦设计`, priority: "high", dueDate: addDaysLocal(baseDate, 6), assigneeId: aId, assigneeName: aName },
-      { title: `UI/UX 交互升级与高频操作体验优化`, priority: "medium", dueDate: addDaysLocal(baseDate, 10), assigneeId: aId, assigneeName: aName },
-      { title: `编写自动化单元测试并修复边缘回归`, priority: "medium", dueDate: addDaysLocal(baseDate, 13), assigneeId: aId, assigneeName: aName },
-      { title: `发布新版本并归档阶段总结`, priority: "low", dueDate: addDaysLocal(baseDate, 15), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Review architecture and define goals for ${projectName}` : `梳理现有架构痛点与制定 ${projectName} 目标`, priority: "high", dueDate: addDaysLocal(baseDate, 2), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Refactor and decouple core modules` : `核心模块代码重构与解耦设计`, priority: "high", dueDate: addDaysLocal(baseDate, 6), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Improve UI/UX and common workflows` : `UI/UX 交互升级与高频操作体验优化`, priority: "medium", dueDate: addDaysLocal(baseDate, 10), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Add unit tests and fix edge-case regressions` : `编写自动化单元测试并修复边缘回归`, priority: "medium", dueDate: addDaysLocal(baseDate, 13), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Release the update and document outcomes` : `发布新版本并归档阶段总结`, priority: "low", dueDate: addDaysLocal(baseDate, 15), assigneeId: aId, assigneeName: aName },
     ];
   }
 
-  if (p.includes("设计") || p.includes("视觉") || p.includes("官网") || p.includes("前端") || p.includes("ui")) {
+  if ((p.includes("设计") || p.includes("design")) || (p.includes("视觉") || p.includes("visual")) || (p.includes("官网") || p.includes("website")) || (p.includes("前端") || p.includes("frontend")) || p.includes("ui")) {
     return [
-      { title: `竞品分析与 ${projectName} 设计系统/配色定义`, priority: "high", dueDate: addDaysLocal(baseDate, 2), assigneeId: aId, assigneeName: aName },
-      { title: `核心页面高保真原型与响应式排版制作`, priority: "high", dueDate: addDaysLocal(baseDate, 5), assigneeId: aId, assigneeName: aName },
-      { title: `前端组件库开发与交互微动画实现`, priority: "medium", dueDate: addDaysLocal(baseDate, 9), assigneeId: aId, assigneeName: aName },
-      { title: `跨浏览器与移动端适配测试`, priority: "medium", dueDate: addDaysLocal(baseDate, 12), assigneeId: aId, assigneeName: aName },
-      { title: `上线部署与 SEO 关键元数据配置`, priority: "low", dueDate: addDaysLocal(baseDate, 15), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Research alternatives and define the design system for ${projectName}` : `竞品分析与 ${projectName} 设计系统/配色定义`, priority: "high", dueDate: addDaysLocal(baseDate, 2), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Create high-fidelity prototypes and responsive layouts` : `核心页面高保真原型与响应式排版制作`, priority: "high", dueDate: addDaysLocal(baseDate, 5), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Build UI components and interaction animations` : `前端组件库开发与交互微动画实现`, priority: "medium", dueDate: addDaysLocal(baseDate, 9), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Test across browsers and mobile devices` : `跨浏览器与移动端适配测试`, priority: "medium", dueDate: addDaysLocal(baseDate, 12), assigneeId: aId, assigneeName: aName },
+      { title: locale === "en" ? `Deploy and configure SEO metadata` : `上线部署与 SEO 关键元数据配置`, priority: "low", dueDate: addDaysLocal(baseDate, 15), assigneeId: aId, assigneeName: aName },
     ];
   }
 
   // 通用敏捷工程拆解
   return [
-    { title: `明确 ${projectName} 核心需求与可行性验证`, priority: "high", dueDate: addDaysLocal(baseDate, 2), assigneeId: aId, assigneeName: aName },
-    { title: `完成核心功能原型设计与技术选型`, priority: "high", dueDate: addDaysLocal(baseDate, 5), assigneeId: aId, assigneeName: aName },
-    { title: `核心功能编码实现与接口联调`, priority: "high", dueDate: addDaysLocal(baseDate, 9), assigneeId: aId, assigneeName: aName },
-    { title: `联调测试、细节打磨与体验验收`, priority: "medium", dueDate: addDaysLocal(baseDate, 13), assigneeId: aId, assigneeName: aName },
-    { title: `项目正式交付与后续维护规划`, priority: "low", dueDate: addDaysLocal(baseDate, 16), assigneeId: aId, assigneeName: aName },
+    { title: locale === "en" ? `Define requirements and validate feasibility for ${projectName}` : `明确 ${projectName} 核心需求与可行性验证`, priority: "high", dueDate: addDaysLocal(baseDate, 2), assigneeId: aId, assigneeName: aName },
+    { title: locale === "en" ? `Prototype core features and choose the technology` : `完成核心功能原型设计与技术选型`, priority: "high", dueDate: addDaysLocal(baseDate, 5), assigneeId: aId, assigneeName: aName },
+    { title: locale === "en" ? `Implement core features and integrate APIs` : `核心功能编码实现与接口联调`, priority: "high", dueDate: addDaysLocal(baseDate, 9), assigneeId: aId, assigneeName: aName },
+    { title: locale === "en" ? `Run integration tests and validate the experience` : `联调测试、细节打磨与体验验收`, priority: "medium", dueDate: addDaysLocal(baseDate, 13), assigneeId: aId, assigneeName: aName },
+    { title: locale === "en" ? `Deliver the project and plan maintenance` : `项目正式交付与后续维护规划`, priority: "low", dueDate: addDaysLocal(baseDate, 16), assigneeId: aId, assigneeName: aName },
   ];
 }
 
 export async function POST(req: Request) {
+  const locale = await getLocale();
+  const text = (value: string) => translateText(locale, value);
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   try {
@@ -80,7 +85,7 @@ export async function POST(req: Request) {
       : toLocalDateStr();
 
     if (!projectName) {
-      return NextResponse.json({ error: "项目名称不能为空" }, { status: 400 });
+      return localizedJson({ error: "项目名称不能为空" }, { status: 400 });
     }
 
     // 查询系统中所有注册成员列表
@@ -102,12 +107,12 @@ export async function POST(req: Request) {
 
     // 若未配置 API Key，直接使用智能工程规则拆解
     if (!apiKey) {
-      const fallbackTasks = generateRuleBasedBreakdown(projectName, startDate, defaultAssignee);
-      return NextResponse.json({
+      const fallbackTasks = generateRuleBasedBreakdown(projectName, startDate, defaultAssignee, locale);
+      return localizedJson({
         success: true,
         source: "smart_rules",
         tasks: fallbackTasks,
-        message: "已使用内置敏捷拆分引擎为您智能规划日程。在后台配置 AI Key 可开启大模型专属拆解！",
+        message: text("已使用内置敏捷拆分引擎为您智能规划日程。在后台配置 AI Key 可开启大模型专属拆解！"),
       });
     }
 
@@ -145,7 +150,7 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           model: modelName,
           messages: [
-            { role: "system", content: systemPrompt },
+            { role: "system", content: systemPrompt + (locale === "en" ? "\nOUTPUT LANGUAGE: Use English for all natural-language titles, descriptions and advice. Preserve JSON field names, priority enum values, dates and user/member names exactly." : "\n使用简体中文输出自然语言内容，保持 JSON 字段名、枚举值、日期和用户名称不变。") },
             { role: "user", content: userPrompt },
           ],
           temperature: 0.3,
@@ -198,7 +203,7 @@ export async function POST(req: Request) {
             assigneeName = defaultAssignee.name;
           }
           return {
-            title: String(t.title || `阶段任务 ${idx + 1}`).trim(),
+            title: String(t.title || (locale === "en" ? `Stage task ${idx + 1}` : `阶段任务 ${idx + 1}`)).trim(),
             priority: t.priority === "high" || t.priority === "low" ? t.priority : "medium",
             dueDate: t.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(t.dueDate) ? t.dueDate : addDaysLocal(startDate, (idx + 1) * 3),
             assigneeId,
@@ -206,7 +211,7 @@ export async function POST(req: Request) {
           };
         });
 
-        return NextResponse.json({
+        return localizedJson({
           success: true,
           source: "ai_model",
           tasks: validatedTasks,
@@ -216,15 +221,15 @@ export async function POST(req: Request) {
       throw new Error("Invalid tasks format from model response");
     } catch (modelError) {
       console.warn("[AI Project Breakdown] Model call failed, fallback to rule generator:", modelError);
-      const fallbackTasks = generateRuleBasedBreakdown(projectName, startDate, defaultAssignee);
-      return NextResponse.json({
+      const fallbackTasks = generateRuleBasedBreakdown(projectName, startDate, defaultAssignee, locale);
+      return localizedJson({
         success: true,
         source: "smart_rules_fallback",
         tasks: fallbackTasks,
       });
     }
   } catch (error) {
-    return NextResponse.json(
+    return localizedJson(
       { error: error instanceof Error ? error.message : "拆解项目失败" },
       { status: 500 },
     );

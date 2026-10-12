@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 
 interface StatusTarget { id: string; username: string; disabled: boolean }
@@ -8,6 +9,7 @@ export function useAdminUserStatus({ onUpdated, flash }: {
   onUpdated: () => Promise<void>;
   flash: (message: string) => void;
 }) {
+  const tx = useTranslations();
   const [target, setTarget] = useState<StatusTarget | null>(null);
   const [saving, setSaving] = useState(false);
   const inFlight = useRef(false);
@@ -25,14 +27,14 @@ export function useAdminUserStatus({ onUpdated, flash }: {
       const result: unknown = await response.json();
       if (!response.ok) {
         const error = result && typeof result === "object" && "error" in result && typeof result.error === "string"
-          ? result.error : "操作失败";
+          ? result.error : tx("operation_failed_0c3b4cf7");
         flash(error);
         return;
       }
-      flash(`账号 @${target.username} 已${target.disabled ? "启用" : "停用"}`);
+      flash(tx("message_679d1ca5b5cc", {v0: target.username, v1: target.disabled ? tx("enable_f4f0ead1") : tx("disable_4e6fd0e2")}));
       await onUpdated();
     } catch {
-      flash("网络请求失败，请重试");
+      flash(tx("network_request_failed_try_again_887f6067"));
     } finally {
       inFlight.current = false;
       setSaving(false);

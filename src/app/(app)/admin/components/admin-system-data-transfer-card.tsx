@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useRef } from "react";
 import type { UseAdminDataTransferResult } from "@/hooks/use-admin-data-transfer";
 
@@ -16,6 +17,7 @@ export default function AdminSystemDataTransferCard({
 }: {
   transfer: UseAdminDataTransferResult;
 }) {
+  const tx = useTranslations();
   const navelixFileRef = useRef<HTMLInputElement>(null);
   const bookmarkFileRef = useRef<HTMLInputElement>(null);
   const sunPanelFileRef = useRef<HTMLInputElement>(null);
@@ -25,11 +27,10 @@ export default function AdminSystemDataTransferCard({
       <div>
         <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
           <span>📦</span>
-          <span>个人数据导入导出</span>
+          <span>{tx("personal_data_import_export_6753412e")}</span>
         </h3>
         <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-          支持一键导出 Navelix 个人配置，或从 Sun-Panel / Chrome HTML 书签导入数据
-        </p>
+          {tx("export_personal_navelix_settings_or_import_sun_p_a2ae5a01")}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -38,18 +39,16 @@ export default function AdminSystemDataTransferCard({
           <div className="flex items-center gap-2">
             <span className="text-base">☀️</span>
             <h4 className="text-xs font-bold text-gray-900 dark:text-white">
-              导入 Sun-Panel 配置文件
-            </h4>
+              {tx("import_sun_panel_configuration_9db1351b")}</h4>
           </div>
           <p className="text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
-            无缝兼容 Sun-Panel 导出的 JSON 配置文件，自动解析分类与网址并合并。
-          </p>
+            {tx("import_a_sun_panel_json_export_categories_and_ur_b44e3934")}</p>
           <input
             ref={sunPanelFileRef}
             type="file"
             name="sun-panel-file"
             accept=".json,application/json"
-            aria-label="选择 Sun-Panel JSON 文件"
+            aria-label={tx("choose_sun_panel_json_d8b45a9d")}
             className="hidden"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               const file = e.target.files?.[0];
@@ -62,7 +61,7 @@ export default function AdminSystemDataTransferCard({
             className="w-full py-1.5 bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
           >
             <span>☀️</span>
-            <span>选择 JSON 文件</span>
+            <span>{tx("choose_json_file_405a583f")}</span>
           </button>
         </div>
 
@@ -71,18 +70,16 @@ export default function AdminSystemDataTransferCard({
           <div className="flex items-center gap-2">
             <span className="text-base">🌐</span>
             <h4 className="text-xs font-bold text-gray-900 dark:text-white">
-              导入 Chrome / HTML 书签
-            </h4>
+              {tx("import_chrome_html_bookmarks_10de654c")}</h4>
           </div>
           <p className="text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
-            解析 Chrome、Edge 或 Safari 导出的 HTML 书签文件并智能归类。
-          </p>
+            {tx("parse_and_categorize_html_bookmarks_exported_fro_93e27c73")}</p>
           <input
             ref={bookmarkFileRef}
             type="file"
             name="bookmark-file"
             accept=".html,text/html"
-            aria-label="选择 HTML 书签文件"
+            aria-label={tx("choose_html_bookmarks_1e65810e")}
             className="hidden"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               const file = e.target.files?.[0];
@@ -95,36 +92,33 @@ export default function AdminSystemDataTransferCard({
             className="w-full py-1.5 bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-sky-600 dark:text-sky-400 text-xs font-semibold rounded-xl border border-sky-200 dark:border-sky-900 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
           >
             <span>🌐</span>
-            <span>选择 HTML 文件</span>
+            <span>{tx("choose_html_file_fcfbf03c")}</span>
           </button>
         </div>
 
         {/* Card 3: 导出个人 Navelix JSON */}
         <div className="bg-gray-50/50 dark:bg-slate-900/40 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 space-y-2.5">
-          <h4 className="text-xs font-bold text-gray-900 dark:text-white">导出个人配置 JSON</h4>
+          <h4 className="text-xs font-bold text-gray-900 dark:text-white">{tx("export_personal_json_ee7b119f")}</h4>
           <p className="text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
-            导出包含个人书签、分组与个性化外观在内的 Navelix JSON 文件。
-          </p>
+            {tx("export_a_navelix_json_file_containing_your_bookm_e482aecb")}</p>
           <button
             onClick={transfer.exportAllData}
             className="w-full py-1.5 bg-gray-900 dark:bg-slate-700 hover:bg-black dark:hover:bg-slate-600 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
           >
-            导出 Navelix JSON
-          </button>
+            {tx("export_navelix_json_9d614735")}</button>
         </div>
 
         {/* Card 4: 导入个人 Navelix JSON */}
         <div className="bg-gray-50/50 dark:bg-slate-900/40 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 space-y-2.5">
-          <h4 className="text-xs font-bold text-gray-900 dark:text-white">导入个人 Navelix JSON</h4>
+          <h4 className="text-xs font-bold text-gray-900 dark:text-white">{tx("import_personal_navelix_json_e73fc3d9")}</h4>
           <p className="text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
-            选择 Navelix 导出的 JSON 文件一键还原书签与外观配置。
-          </p>
+            {tx("restore_bookmarks_and_preferences_from_a_navelix_3dbbdf16")}</p>
           <input
             ref={navelixFileRef}
             type="file"
             name="navelix-config-file"
             accept=".json,application/json"
-            aria-label="选择 Navelix JSON 文件"
+            aria-label={tx("choose_navelix_json_file_01f4f0d2")}
             className="hidden"
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               const file = e.target.files?.[0];
@@ -136,8 +130,7 @@ export default function AdminSystemDataTransferCard({
             onClick={() => navelixFileRef.current?.click()}
             className="w-full py-1.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
           >
-            选择 Navelix JSON
-          </button>
+            {tx("choose_navelix_json_e7140520")}</button>
         </div>
       </div>
     </div>

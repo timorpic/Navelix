@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useState, useMemo } from "react";
 import type { Category, SiteLink } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
@@ -18,18 +19,19 @@ export default function TopStatsBar({
   categories,
   onSelectCategory,
 }: TopStatsBarProps) {
+  const tx = useTranslations();
   const { weeklyData, todayMinutes } = useFocusTracker();
   const currentDayIdx = (new Date().getDay() + 6) % 7;
   const todayFocusHours = weeklyData[currentDayIdx] || 0;
   const yesterdayFocusHours = weeklyData[(currentDayIdx + 6) % 7] || 0;
 
   const focusTrend = useMemo(() => {
-    if (yesterdayFocusHours === 0) return todayMinutes > 0 ? "↑ 良好" : "— 待开始";
+    if (yesterdayFocusHours === 0) return todayMinutes > 0 ? tx("on_track_f9de9a02") : tx("not_started_a00d8da6");
     const diff = ((todayFocusHours - yesterdayFocusHours) / yesterdayFocusHours) * 100;
     if (diff > 0) return `↑ ${Math.round(diff)}%`;
     if (diff < 0) return `↓ ${Math.abs(Math.round(diff))}%`;
-    return "= 持平";
-  }, [todayFocusHours, yesterdayFocusHours, todayMinutes]);
+    return tx("unchanged_10ad8178");
+  }, [todayFocusHours, yesterdayFocusHours, todayMinutes, tx]);
 
   const { todos, projects, refreshData, addLink } = useNavelixData();
   const [showAddLinkModal, setShowAddLinkModal] = useState(false);
@@ -86,9 +88,9 @@ export default function TopStatsBar({
         body: JSON.stringify({ prompt: aiQuery }),
       });
       const data = await res.json();
-      setAiResponse(data.text || data.reply || "AI 助手已接收您的请求");
+      setAiResponse(data.text || data.reply || tx("ai_assistant_received_your_request_419c3721"));
     } catch {
-      setAiResponse("请求 AI 助手失败，请检查网络设置。");
+      setAiResponse(tx("ai_request_failed_check_your_connection_e5953896"));
     } finally {
       setAiLoading(false);
     }
@@ -102,14 +104,14 @@ export default function TopStatsBar({
       const list = JSON.parse(existing);
       list.push({ text: quickNote, time: Date.now() });
       localStorage.setItem("navelix.quick.notes", JSON.stringify(list));
-      setNoteNotice("随记保存成功！");
+      setNoteNotice(tx("note_saved_3497f59a"));
       setQuickNote("");
       setTimeout(() => {
         setNoteNotice("");
         setShowQuickNoteModal(false);
       }, 1200);
     } catch {
-      setNoteNotice("保存失败");
+      setNoteNotice(tx("failed_to_save_6309a3bb"));
     }
   };
 
@@ -127,7 +129,7 @@ export default function TopStatsBar({
         }),
       });
       if (res.ok) {
-        setTaskNotice("待办创建成功！");
+        setTaskNotice(tx("todo_created_1c68bdcd"));
         setTaskTitle("");
         refreshData();
         setTimeout(() => {
@@ -136,7 +138,7 @@ export default function TopStatsBar({
         }, 1200);
       }
     } catch {
-      setTaskNotice("创建失败");
+      setTaskNotice(tx("failed_to_create_7e6a71ef"));
     }
   };
 
@@ -151,7 +153,7 @@ export default function TopStatsBar({
               <span className="p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 🎯
               </span>
-              <span>今日专注</span>
+              <span>{tx("focus_today_4372b8b6")}</span>
             </div>
             <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded">
               {focusTrend}
@@ -162,12 +164,10 @@ export default function TopStatsBar({
               {todayMinutes}
             </span>
             <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400 ml-1">
-              分钟
-            </span>
+              {tx("minutes_bd957bc4")}</span>
           </div>
           <p className="text-[10px] text-gray-400 dark:text-slate-500">
-            今日专注时长
-          </p>
+            {tx("focus_time_today_4a45ac8c")}</p>
         </div>
 
         {/* 卡片 2：⚡ 进行中项目 */}
@@ -180,23 +180,20 @@ export default function TopStatsBar({
               <span className="p-1 rounded-md bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center">
                 ⚡
               </span>
-              <span>进行中</span>
+              <span>{tx("in_progress_dc9591e5")}</span>
             </div>
             <span className="text-[10px] text-sky-500 opacity-0 group-hover:opacity-100 transition-opacity">
-              查看 →
-            </span>
+              {tx("view_12ab391b")}</span>
           </div>
           <div className="my-1">
             <span className="text-xl font-extrabold text-gray-900 dark:text-white">
               {inProgressProjectsCount}
             </span>
             <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400 ml-1">
-              个项目
-            </span>
+              {tx("projects_5e7e8850")}</span>
           </div>
           <p className="text-[10px] text-gray-400 dark:text-slate-500">
-            当前核心研发
-          </p>
+            {tx("active_work_e697b419")}</p>
         </div>
 
         {/* 卡片 3：📋 待处理任务 */}
@@ -209,23 +206,20 @@ export default function TopStatsBar({
               <span className="p-1 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                 📋
               </span>
-              <span>待处理</span>
+              <span>{tx("pending_999a459c")}</span>
             </div>
             <span className="text-[10px] text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity">
-              清单 →
-            </span>
+              {tx("list_e18c4b3f")}</span>
           </div>
           <div className="my-1">
             <span className="text-xl font-extrabold text-gray-900 dark:text-white">
               {pendingTodosCount}
             </span>
             <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400 ml-1">
-              项任务
-            </span>
+              {tx("tasks_8d1eaae6")}</span>
           </div>
           <p className="text-[10px] text-gray-400 dark:text-slate-500">
-            待执行事项
-          </p>
+            {tx("pending_actions_8d98dca6")}</p>
         </div>
 
         {/* 卡片 4：✅ 本周完成 */}
@@ -238,30 +232,27 @@ export default function TopStatsBar({
               <span className="p-1 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                 ✅
               </span>
-              <span>本周完成</span>
+              <span>{tx("completed_this_week_940cc3d9")}</span>
             </div>
             <span className="text-[10px] text-purple-500 opacity-0 group-hover:opacity-100 transition-opacity">
-              记录 →
-            </span>
+              {tx("history_64b72870")}</span>
           </div>
           <div className="my-1">
             <span className="text-xl font-extrabold text-gray-900 dark:text-white">
               {weeklyCompletedCount}
             </span>
             <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400 ml-1">
-              项
-            </span>
+              {tx("items_49ccde43")}</span>
           </div>
           <p className="text-[10px] text-gray-400 dark:text-slate-500">
-            工作闭环
-          </p>
+            {tx("work_completed_413a7eb0")}</p>
         </div>
 
         {/* 卡片 5：⚡ 快速操作 (Quick Actions 4 cols) */}
         <div className="lg:col-span-4 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-500 mb-1.5">
             <span className="p-0.5 rounded bg-amber-50 dark:bg-amber-950/60">⚡</span>
-            <span>快速操作</span>
+            <span>{tx("quick_actions_2cf085b4")}</span>
           </div>
 
           <div className="grid grid-cols-3 gap-1.5">
@@ -270,7 +261,7 @@ export default function TopStatsBar({
               className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>📝</span>
-              <span className="truncate">新建书签</span>
+              <span className="truncate">{tx("new_bookmark_56c28f8d")}</span>
             </button>
 
             <button
@@ -278,7 +269,7 @@ export default function TopStatsBar({
               className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>💡</span>
-              <span className="truncate">记录想法</span>
+              <span className="truncate">{tx("capture_idea_e3097d3e")}</span>
             </button>
 
             <button
@@ -286,7 +277,7 @@ export default function TopStatsBar({
               className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>📤</span>
-              <span className="truncate">上传文件</span>
+              <span className="truncate">{tx("upload_file_bb5caa9c")}</span>
             </button>
 
             <button
@@ -294,7 +285,7 @@ export default function TopStatsBar({
               className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>☑️</span>
-              <span className="truncate">创建任务</span>
+              <span className="truncate">{tx("create_task_d2ff17f4")}</span>
             </button>
 
             <button
@@ -302,7 +293,7 @@ export default function TopStatsBar({
               className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>📂</span>
-              <span className="truncate">新建项目</span>
+              <span className="truncate">{tx("new_project_0e1a7040")}</span>
             </button>
 
             <button
@@ -310,7 +301,7 @@ export default function TopStatsBar({
               className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>🤖</span>
-              <span className="truncate">AI 助手</span>
+              <span className="truncate">{tx("ai_assistant_1b0049fc")}</span>
             </button>
           </div>
         </div>
@@ -332,14 +323,13 @@ export default function TopStatsBar({
         <Overlay>
           <div className="w-full max-w-sm rounded-xl bg-white dark:bg-slate-900 p-4 shadow-xl border border-gray-100 dark:border-slate-800">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
-              💡 记录想法 / 随记
-            </h3>
+              {tx("capture_an_idea_note_013680b3")}</h3>
             <form onSubmit={handleSaveQuickNote} className="space-y-3">
               <textarea
                 name="quickNote"
                 value={quickNote}
                 onChange={(e) => setQuickNote(e.target.value)}
-                placeholder="在此快速记录随想、灵感或临时备忘..."
+                placeholder={tx("quickly_jot_down_thoughts_ideas_or_reminders_ff82d5ee")}
                 rows={3}
                 className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
               />
@@ -352,14 +342,12 @@ export default function TopStatsBar({
                   onClick={() => setShowQuickNoteModal(false)}
                   className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700"
                 >
-                  取消
-                </button>
+                  {tx("cancel_2cd0f3be")}</button>
                 <button
                   type="submit"
                   className="px-3 py-1 bg-[#00C776] text-white text-xs font-bold rounded-lg hover:bg-[#00B068]"
                 >
-                  保存
-                </button>
+                  {tx("save_a3030bf8")}</button>
               </div>
             </form>
           </div>
@@ -371,15 +359,14 @@ export default function TopStatsBar({
         <Overlay>
           <div className="w-full max-w-sm rounded-xl bg-white dark:bg-slate-900 p-4 shadow-xl border border-gray-100 dark:border-slate-800">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
-              ☑️ 创建待办任务
-            </h3>
+              {tx("create_todo_78d5d585")}</h3>
             <form onSubmit={handleCreateTask} className="space-y-3">
               <input
                 type="text"
                 name="taskTitle"
                 value={taskTitle}
                 onChange={(e) => setTaskTitle(e.target.value)}
-                placeholder="输入待办事项标题..."
+                placeholder={tx("enter_a_task_title_76dbbf63")}
                 className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
               />
               {taskNotice && (
@@ -391,14 +378,12 @@ export default function TopStatsBar({
                   onClick={() => setShowTaskModal(false)}
                   className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700"
                 >
-                  取消
-                </button>
+                  {tx("cancel_2cd0f3be")}</button>
                 <button
                   type="submit"
                   className="px-3 py-1 bg-[#00C776] text-white text-xs font-bold rounded-lg hover:bg-[#00B068]"
                 >
-                  创建
-                </button>
+                  {tx("create_cde2cd07")}</button>
               </div>
             </form>
           </div>
@@ -410,19 +395,18 @@ export default function TopStatsBar({
         <Overlay>
           <div className="w-full max-w-md rounded-xl bg-white dark:bg-slate-900 p-4 shadow-xl border border-gray-100 dark:border-slate-800">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
-              🤖 快速咨询 AI Copilot
-            </h3>
+              {tx("ask_ai_copilot_91824cdb")}</h3>
             <form onSubmit={handleAiAsk} className="space-y-3">
               <input
                 type="text"
                 name="aiQuery"
                 value={aiQuery}
                 onChange={(e) => setAiQuery(e.target.value)}
-                placeholder="输入你想咨询或分析的内容..."
+                placeholder={tx("what_would_you_like_to_ask_or_analyze_955df7ef")}
                 className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
               />
               {aiLoading && (
-                <p className="text-[11px] text-gray-400">AI 正在思考中...</p>
+                <p className="text-[11px] text-gray-400">{tx("ai_is_thinking_b67cf8f5")}</p>
               )}
               {aiResponse && (
                 <div className="p-2.5 rounded-lg bg-gray-50 dark:bg-slate-800 text-xs text-gray-800 dark:text-slate-200 max-h-40 overflow-y-auto leading-relaxed border border-gray-100 dark:border-slate-700">
@@ -435,15 +419,13 @@ export default function TopStatsBar({
                   onClick={() => setShowAiModal(false)}
                   className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700"
                 >
-                  关闭
-                </button>
+                  {tx("close_3fd47edc")}</button>
                 <button
                   type="submit"
                   disabled={aiLoading}
                   className="px-3 py-1 bg-[#00C776] text-white text-xs font-bold rounded-lg hover:bg-[#00B068] disabled:opacity-50"
                 >
-                  发送
-                </button>
+                  {tx("send_edecf0ae")}</button>
               </div>
             </form>
           </div>

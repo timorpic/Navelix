@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useMemo } from "react";
 import type { Category, SiteLink } from "@/types";
 import { recordLinkUsage } from "@/lib/client/link-usage";
@@ -23,12 +24,13 @@ export default function KnowledgeGraph({
   categories,
   links,
 }: KnowledgeGraphProps) {
+  const tx = useTranslations();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [hoveredLinkId, setHoveredLinkId] = useState<string | null>(null);
 
   // Active Category Name & Icon
   const activeCatObj = categories.find((c) => c.id === activeCategory);
-  const centerTitle = activeCatObj ? activeCatObj.name : "知识图谱";
+  const centerTitle = activeCatObj ? activeCatObj.name : tx("knowledge_graph_60dd357b");
   const centerIcon = activeCatObj ? activeCatObj.icon : "✨";
 
   // Filter links for graph visualization
@@ -70,7 +72,7 @@ export default function KnowledgeGraph({
               : "bg-gray-100 dark:bg-slate-900 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700"
           }`}
         >
-          全部分类 ({links.length})
+          {tx("all_categories_f3aadca6")}{links.length})
         </button>
         {categories.map((c) => {
           const isSelected = activeCategory === c.id;

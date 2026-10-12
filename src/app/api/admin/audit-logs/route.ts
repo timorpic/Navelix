@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
+import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { listAuditLogs } from "@/lib/audit";
 
@@ -6,7 +7,7 @@ import { listAuditLogs } from "@/lib/audit";
 export async function GET(req: NextRequest) {
   const adminUser = await requireAdmin(req);
   if (!adminUser) {
-    return NextResponse.json({ error: "需要管理员权限" }, { status: 403 });
+    return localizedJson({ error: "需要管理员权限" }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);
@@ -20,5 +21,5 @@ export async function GET(req: NextRequest) {
 
   const { logs, total } = listAuditLogs({ limit, offset, action, q });
 
-  return NextResponse.json({ logs, total });
+  return localizedJson({ logs, total });
 }

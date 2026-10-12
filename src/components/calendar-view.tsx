@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { TodoItem, WorkspaceMember } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
@@ -13,6 +14,7 @@ import { useAiSchedule } from "@/hooks/use-ai-schedule";
 type CalendarViewMode = "month" | "week" | "today";
 
 export default function CalendarView() {
+  const tx = useTranslations();
   const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
@@ -96,8 +98,8 @@ export default function CalendarView() {
       if (data.success) {
         window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
         pushNotification(
-          "⏩ 智能日程顺延完成",
-          data.message || `已成功处理 ${data.count} 项待办任务！`,
+          tx("schedule_rollover_completed_5ecd6101"),
+          data.message || tx("message_5dcab593f527", {v0: data.count}),
           "calendar",
         );
         refreshData();
@@ -138,7 +140,7 @@ export default function CalendarView() {
     const monday = new Date(curr.setDate(diff));
 
     const weekDays: Array<{ date: Date; dateStr: string; label: string }> = [];
-    const labels = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+    const labels = [tx("mon_c430f4c1"), tx("tue_d1378a68"), tx("wed_29611689"), tx("thu_e9d3b01a"), tx("fri_572388f3"), tx("sat_f9aa11db"), tx("sun_ee239f39")];
 
     for (let i = 0; i < 7; i++) {
       const d = new Date(monday);
@@ -150,7 +152,7 @@ export default function CalendarView() {
       });
     }
     return weekDays;
-  }, [selectedDate]);
+  }, [selectedDate, tx]);
 
   const prevWeek = () => {
     const d = new Date(selectedDate);
@@ -186,7 +188,7 @@ export default function CalendarView() {
         setNewProjectId("");
         window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
         refreshData();
-        pushNotification("📅 日程新建成功", newTitle.trim(), "calendar");
+        pushNotification(tx("schedule_created_278d4cc2"), newTitle.trim(), "calendar");
       }
     } catch {
       // ignore
@@ -235,10 +237,10 @@ export default function CalendarView() {
 
   // 负载热力计算 helper
   const getWorkloadStatus = (count: number) => {
-    if (count === 0) return { label: "空闲", badge: "bg-gray-100 dark:bg-slate-800 text-gray-400", dot: "bg-gray-300 dark:bg-slate-600" };
-    if (count <= 3) return { label: "适中", badge: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400", dot: "bg-emerald-500" };
-    if (count <= 6) return { label: "饱满", badge: "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400", dot: "bg-amber-500" };
-    return { label: "超载", badge: "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 font-bold animate-pulse", dot: "bg-rose-500" };
+    if (count === 0) return { label: tx("free_dae661d1"), badge: "bg-gray-100 dark:bg-slate-800 text-gray-400", dot: "bg-gray-300 dark:bg-slate-600" };
+    if (count <= 3) return { label: tx("moderate_fe4e7b3d"), badge: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400", dot: "bg-emerald-500" };
+    if (count <= 6) return { label: tx("busy_d4ca680e"), badge: "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400", dot: "bg-amber-500" };
+    return { label: tx("overloaded_5844e8b9"), badge: "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 font-bold animate-pulse", dot: "bg-rose-500" };
   };
 
   return (
@@ -248,14 +250,12 @@ export default function CalendarView() {
         <div>
           <h2 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
             <span>📅</span>
-            <span>日历日程与精力调度中心</span>
+            <span>{tx("calendar_focus_planning_c282d614")}</span>
             <span className="px-2 py-0.5 rounded-full bg-[#00C776]/10 text-[#00C776] text-[10px] font-bold border border-[#00C776]/20">
-              智能排期
-            </span>
+              {tx("smart_scheduling_39139b8e")}</span>
           </h2>
           <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-            多维视角掌控时间流、负载热力感知、智能顺延与精力时段分块
-          </p>
+            {tx("manage_your_time_with_multiple_views_workload_he_b1962c03")}</p>
         </div>
 
         {/* 视图切换按钮组 + 操作 */}
@@ -271,8 +271,7 @@ export default function CalendarView() {
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
-              📅 月视图
-            </button>
+              {tx("month_552f4946")}</button>
             <button
               type="button"
               onClick={() => handleViewModeChange("week")}
@@ -282,8 +281,7 @@ export default function CalendarView() {
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
-              🗓️ 周看板
-            </button>
+              {tx("week_fbd7b1fc")}</button>
             <button
               type="button"
               onClick={() => {
@@ -296,8 +294,7 @@ export default function CalendarView() {
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
-              ⚡ 今日流
-            </button>
+              {tx("today_2044085b")}</button>
           </div>
 
           <button
@@ -306,17 +303,17 @@ export default function CalendarView() {
             className="px-3 py-1.5 bg-gradient-to-r from-[#00C776] to-teal-500 text-white rounded-xl text-xs font-bold hover:from-[#00B068] hover:to-teal-600 shadow-2xs flex items-center gap-1.5 cursor-pointer"
           >
             <span>✨</span>
-            <span>AI 智能排程</span>
+            <span>{tx("ai_scheduling_b7410df7")}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setShowIcalModal(true)}
             className="px-3 py-1.5 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 rounded-xl text-xs font-bold border border-gray-200/80 dark:border-slate-700 transition-all flex items-center gap-1 cursor-pointer"
-            title="订阅或导出至手机/Apple/Google日历"
+            title={tx("subscribe_or_export_to_apple_google_mobile_calen_1144184e")}
           >
             <span>📲</span>
-            <span>iCal 订阅</span>
+            <span>{tx("ical_subscription_bdca5e0d")}</span>
           </button>
         </div>
       </div>
@@ -328,11 +325,9 @@ export default function CalendarView() {
             <span className="text-lg">⚠️</span>
             <div>
               <p className="text-xs font-black text-amber-800 dark:text-amber-200">
-                检测到过去有 {overdueTodos.length} 项未完成的遗留待办事项
-              </p>
+                {tx("found_a43be7f2")}{overdueTodos.length} {tx("unfinished_overdue_tasks_610bdce2")}</p>
               <span className="text-[11px] text-amber-700/80 dark:text-amber-300/80">
-                无需逐个手动修改，可一键自动排期顺延
-              </span>
+                {tx("automatically_reschedule_them_without_editing_ea_0e103ca6")}</span>
             </div>
           </div>
 
@@ -343,7 +338,7 @@ export default function CalendarView() {
               onClick={() => handleRollover("today")}
               className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
             >
-              <span>一键顺延至今日 ⏩</span>
+              <span>{tx("move_all_to_today_9cc00c7c")}</span>
             </button>
             <button
               type="button"
@@ -351,7 +346,7 @@ export default function CalendarView() {
               onClick={() => handleRollover("week")}
               className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 text-amber-800 dark:text-amber-300 text-xs font-bold border border-amber-300 dark:border-amber-700 hover:bg-amber-50 transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50"
             >
-              <span>均匀平摊至本周 📅</span>
+              <span>{tx("spread_across_this_week_977a8cd4")}</span>
             </button>
           </div>
         </div>
@@ -360,8 +355,7 @@ export default function CalendarView() {
       {/* ── 3. 视图渲染区 ── */}
       {!hydrated ? (
         <div className="py-16 text-center text-xs text-gray-400">
-          加载日程数据中...
-        </div>
+          {tx("loading_schedules_9eebb162")}</div>
       ) : viewMode === "month" ? (
         /* ════════════ 模式 A：月矩阵视图 (Month Matrix) ════════════ */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -371,14 +365,12 @@ export default function CalendarView() {
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
                 <h3 className="text-base font-black text-gray-900 dark:text-white">
-                  {year} 年 {month + 1} 月
-                </h3>
+                  {year} {tx("year_62ef900a")}{month + 1} {tx("month_1625179b")}</h3>
                 <button
                   onClick={todayMonth}
                   className="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 text-gray-700 dark:text-slate-300 text-xs font-bold cursor-pointer"
                 >
-                  今天
-                </button>
+                  {tx("today_d5f5a7a0")}</button>
               </div>
 
               <div className="flex items-center gap-1">
@@ -399,14 +391,14 @@ export default function CalendarView() {
 
             {/* 星期表头 */}
             <div className="grid grid-cols-7 gap-1 text-center mb-2">
-              {["一", "二", "三", "四", "五", "六", "日"].map((d, i) => (
+              {[tx("mon_51a75f46"), tx("tue_084b42f6"), tx("wed_a4c3313d"), tx("thu_754a9d58"), tx("fri_c9b87f51"), tx("sat_de07b538"), tx("sun_85217f7a")].map((d, i) => (
                 <span
                   key={d}
                   className={`text-[11px] font-bold ${
                     i >= 5 ? "text-amber-500" : "text-gray-400 dark:text-slate-500"
                   }`}
                 >
-                  周{d}
+                  {tx("week_5c553ec3")}{d}
                 </span>
               ))}
             </div>
@@ -458,7 +450,7 @@ export default function CalendarView() {
                       {dayTodos.length > 0 && (
                         <span
                           className={`w-2 h-2 rounded-full ${workload.dot}`}
-                          title={`${dayTodos.length} 项任务 (${workload.label})`}
+                          title={tx("message_a3f1c0aabae0", {v0: dayTodos.length, v1: workload.label})}
                         />
                       )}
                     </div>
@@ -478,17 +470,14 @@ export default function CalendarView() {
 
             {/* 底部热力指示图例 */}
             <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100 dark:border-slate-800 text-[11px] text-gray-400">
-              <span>负载指示：</span>
+              <span>{tx("workload_0157d731")}</span>
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> 适中 (1-3)
-                </span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> {tx("moderate_1_3_0cae3b9d")}</span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" /> 饱满 (4-6)
-                </span>
+                  <span className="w-2 h-2 rounded-full bg-amber-500" /> {tx("busy_4_6_f81fdc6c")}</span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-rose-500" /> 超载 (7+)
-                </span>
+                  <span className="w-2 h-2 rounded-full bg-rose-500" /> {tx("overloaded_7_dad47160")}</span>
               </div>
             </div>
           </div>
@@ -499,24 +488,22 @@ export default function CalendarView() {
               <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-slate-800">
                 <div>
                   <h3 className="text-sm font-black text-gray-900 dark:text-white">
-                    {selectedDate.getMonth() + 1} 月 {selectedDate.getDate()} 日 · {
-                      ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][
+                    {selectedDate.getMonth() + 1} {tx("month_1625179b")}{selectedDate.getDate()} {tx("text_8bc213d2")}{
+                      [tx("sun_ee239f39"), tx("mon_c430f4c1"), tx("tue_d1378a68"), tx("wed_29611689"), tx("thu_e9d3b01a"), tx("fri_572388f3"), tx("sat_f9aa11db")][
                         selectedDate.getDay()
                       ]
                     }
                   </h3>
                   <p className="text-[11px] text-gray-400">
-                    {selectedDateStr === todayStr ? "📍 今天" : "选定日期日程"} · 共{" "}
-                    {selectedDateTodos.length} 项
-                  </p>
+                    {selectedDateStr === todayStr ? tx("today_057ab0b8") : tx("schedule_for_selected_date_4dd0ded2")} {tx("total_c8b28178")}{" "}
+                    {selectedDateTodos.length} {tx("items_49ccde43")}</p>
                 </div>
                 <span
                   className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                     getWorkloadStatus(selectedDateTodos.length).badge
                   }`}
                 >
-                  {getWorkloadStatus(selectedDateTodos.length).label}负载
-                </span>
+                  {getWorkloadStatus(selectedDateTodos.length).label}{tx("workload_dccf0e30")}</span>
               </div>
 
               {/* 3 大精力时段分块 */}
@@ -524,11 +511,11 @@ export default function CalendarView() {
                 {/* 🌅 上午 · 深度专注 */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-black text-rose-600 dark:text-rose-400 bg-rose-50/60 dark:bg-rose-950/40 px-2 py-1 rounded-lg">
-                    <span>🌅 上午 · 深度专注攻坚 (高优)</span>
-                    <span>{energyBuckets.morning.length} 项</span>
+                    <span>{tx("morning_deep_focus_high_priority_d6157001")}</span>
+                    <span>{energyBuckets.morning.length} {tx("items_49ccde43")}</span>
                   </div>
                   {energyBuckets.morning.length === 0 ? (
-                    <p className="text-[11px] text-gray-400 pl-2 py-0.5">暂无高优攻坚项</p>
+                    <p className="text-[11px] text-gray-400 pl-2 py-0.5">{tx("no_high_priority_tasks_b5e8578d")}</p>
                   ) : (
                     energyBuckets.morning.map((t) => (
                       <div
@@ -566,11 +553,11 @@ export default function CalendarView() {
                 {/* ☀️ 下午 · 协同推进 */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-black text-amber-600 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-950/40 px-2 py-1 rounded-lg">
-                    <span>☀️ 下午 · 协同执行推进 (中优)</span>
-                    <span>{energyBuckets.afternoon.length} 项</span>
+                    <span>{tx("afternoon_collaboration_medium_priority_cfc6fef4")}</span>
+                    <span>{energyBuckets.afternoon.length} {tx("items_49ccde43")}</span>
                   </div>
                   {energyBuckets.afternoon.length === 0 ? (
-                    <p className="text-[11px] text-gray-400 pl-2 py-0.5">暂无协同执行项</p>
+                    <p className="text-[11px] text-gray-400 pl-2 py-0.5">{tx("no_collaboration_tasks_1ebf1fff")}</p>
                   ) : (
                     energyBuckets.afternoon.map((t) => (
                       <div
@@ -608,11 +595,11 @@ export default function CalendarView() {
                 {/* 🌙 晚上 · 复盘沉淀 */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-black text-sky-600 dark:text-sky-400 bg-sky-50/60 dark:bg-sky-950/40 px-2 py-1 rounded-lg">
-                    <span>🌙 晚上 · 复盘沉淀与收尾</span>
-                    <span>{energyBuckets.evening.length} 项</span>
+                    <span>{tx("evening_review_wrap_up_4e2da757")}</span>
+                    <span>{energyBuckets.evening.length} {tx("items_49ccde43")}</span>
                   </div>
                   {energyBuckets.evening.length === 0 ? (
-                    <p className="text-[11px] text-gray-400 pl-2 py-0.5">暂无收尾项</p>
+                    <p className="text-[11px] text-gray-400 pl-2 py-0.5">{tx("no_wrap_up_tasks_8e120d74")}</p>
                   ) : (
                     energyBuckets.evening.map((t) => (
                       <div
@@ -660,7 +647,7 @@ export default function CalendarView() {
                   name="newTodoTitle"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder={`添加 ${selectedDate.getMonth() + 1}/${selectedDate.getDate()} 新日程...`}
+                  placeholder={tx("message_bfa3e9bcee4f", {v0: selectedDate.getMonth() + 1, v1: selectedDate.getDate()})}
                   className="flex-1 px-3 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
                 />
                 <select
@@ -671,16 +658,15 @@ export default function CalendarView() {
                   }
                   className="px-2 py-1 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold cursor-pointer"
                 >
-                  <option value="high">高优(上午)</option>
-                  <option value="medium">中优(下午)</option>
-                  <option value="low">普通(晚上)</option>
+                  <option value="high">{tx("high_morning_13d04faa")}</option>
+                  <option value="medium">{tx("medium_afternoon_1d40cd0b")}</option>
+                  <option value="low">{tx("normal_evening_5f477a10")}</option>
                 </select>
                 <button
                   type="submit"
                   className="px-3 py-1.5 bg-[#00C776] text-white text-xs font-bold rounded-xl hover:bg-[#00B068] cursor-pointer shrink-0"
                 >
-                  添加
-                </button>
+                  {tx("add_7a8a11ea")}</button>
               </div>
             </form>
           </div>
@@ -691,14 +677,13 @@ export default function CalendarView() {
           <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-800">
             <div className="flex items-center gap-3">
               <h3 className="text-base font-black text-gray-900 dark:text-white">
-                周看板 · {currentWeekDays[0].dateStr} 至 {currentWeekDays[6].dateStr}
+                {tx("week_83826b44")}{currentWeekDays[0].dateStr} {tx("to_65edbf9f")}{currentWeekDays[6].dateStr}
               </h3>
               <button
                 onClick={() => setSelectedDate(new Date())}
                 className="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 text-gray-700 dark:text-slate-300 text-xs font-bold cursor-pointer"
               >
-                本周
-              </button>
+                {tx("this_week_b4c6c3eb")}</button>
             </div>
 
             <div className="flex items-center gap-1">
@@ -706,14 +691,12 @@ export default function CalendarView() {
                 onClick={prevWeek}
                 className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-slate-400 cursor-pointer"
               >
-                ◀ 上周
-              </button>
+                {tx("previous_week_e7060c00")}</button>
               <button
                 onClick={nextWeek}
                 className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-slate-400 cursor-pointer"
               >
-                下周 ▶
-              </button>
+                {tx("next_week_44e04efe")}</button>
             </div>
           </div>
 
@@ -751,16 +734,14 @@ export default function CalendarView() {
                       <span
                         className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${workload.badge}`}
                       >
-                        {dayTodos.length} 项
-                      </span>
+                        {dayTodos.length} {tx("items_49ccde43")}</span>
                     </div>
 
                     {/* 卡片列表 */}
                     <div className="space-y-1.5 max-h-56 overflow-y-auto pr-0.5">
                       {dayTodos.length === 0 ? (
                         <p className="text-[10px] text-gray-400 py-6 text-center">
-                          无安排
-                        </p>
+                          {tx("no_tasks_0f02b2f2")}</p>
                       ) : (
                         dayTodos.map((t) => (
                           <div
@@ -796,10 +777,10 @@ export default function CalendarView() {
                                   }
                                 >
                                   {t.priority === "high"
-                                    ? "高优"
+                                    ? tx("high_323a1d5c")
                                     : t.priority === "low"
-                                    ? "普通"
-                                    : "中优"}
+                                    ? tx("normal_de907d10")
+                                    : tx("medium_7319b6d5")}
                                 </span>
                                 {t.assigneeName && (
                                   <span className="text-[9px] font-bold text-sky-600 dark:text-sky-400">
@@ -825,7 +806,7 @@ export default function CalendarView() {
                     type="button"
                     onClick={() => {
                       setSelectedDate(new Date(dateStr + "T00:00:00"));
-                      const input = prompt(`为 ${dateStr} 添加新待办事项:`);
+                      const input = prompt(tx("message_6a89d97f7657", {v0: dateStr}));
                       if (input?.trim()) {
                         fetch("/api/todos", {
                           method: "POST",
@@ -840,8 +821,7 @@ export default function CalendarView() {
                     }}
                     className="w-full py-1 mt-2 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-gray-200/50 dark:border-slate-700/60 text-[10px] font-bold text-gray-500 hover:text-[#00C776] transition-all cursor-pointer"
                   >
-                    + 添加
-                  </button>
+                    {tx("add_42bb5c11")}</button>
                 </div>
               );
             })}
@@ -854,24 +834,21 @@ export default function CalendarView() {
             <div>
               <h3 className="text-base font-black text-gray-900 dark:text-white flex items-center gap-2">
                 <span>⚡</span>
-                <span>今日时间线与执行流 (Today Stream)</span>
+                <span>{tx("today_s_timeline_execution_stream_6ce91739")}</span>
               </h3>
               <p className="text-xs text-gray-400 mt-0.5">
-                {todayStr} · 专注执行闭环
-              </p>
+                {todayStr} {tx("focus_completion_577a9232")}</p>
             </div>
             <span className="text-xs font-bold text-[#00C776]">
-              已完成{" "}
+              {tx("completed_f28461bb")}{" "}
               {todos.filter((t) => t.dueDate === todayStr && t.done).length} /{" "}
-              {todos.filter((t) => t.dueDate === todayStr).length} 项
-            </span>
+              {todos.filter((t) => t.dueDate === todayStr).length} {tx("items_49ccde43")}</span>
           </div>
 
           <div className="space-y-4">
             {todos.filter((t) => t.dueDate === todayStr).length === 0 ? (
               <div className="py-12 text-center text-xs text-gray-400">
-                ☕ 今日暂无安排任务，点击上方快速新增！
-              </div>
+                {tx("no_tasks_today_add_one_above_96072e01")}</div>
             ) : (
               todos
                 .filter((t) => t.dueDate === todayStr)
@@ -911,10 +888,10 @@ export default function CalendarView() {
                           }`}
                         >
                           {item.priority === "high"
-                            ? "🌅 深度专注"
+                            ? tx("deep_focus_bce78cab")
                             : item.priority === "low"
-                            ? "🌙 复盘收尾"
-                            : "☀️ 协同推进"}
+                            ? tx("wrap_up_6f2965b3")
+                            : tx("collaboration_a98d5754")}
                         </span>
                       </div>
                     </div>

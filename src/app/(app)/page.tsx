@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import { useMemo, useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Sidebar from "@/components/sidebar";
@@ -23,6 +25,8 @@ import { useToast } from "@/hooks/use-toast";
 import { copyShareLink } from "@/lib/share-link";
 
 function HomeContent() {
+  const tx = useTranslations();
+  const text = useText();
   const { categories, links, hydrated, addLink } = useNavelixData();
   const { config, updateConfig } = useNavelixConfig();
   const searchParams = useSearchParams();
@@ -152,8 +156,7 @@ function HomeContent() {
   if (!hydrated) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F6F8FA] dark:bg-[#151218] text-sm text-gray-400">
-        加载中…
-      </div>
+        {tx("loading_4927a53b")}</div>
     );
   }
 
@@ -248,11 +251,10 @@ function HomeContent() {
                   <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-4 shadow-2xs">
                     <div className="flex items-center gap-3">
                       <h2 className="text-base font-bold text-gray-900 dark:text-white">
-                        {categories.find((c) => c.id === activeCategory)?.name || "分类书签"}
+                        {categories.find((c) => c.id === activeCategory)?.name || tx("category_bookmarks_9dcc3bfc")}
                       </h2>
                       <span className="text-xs px-2.5 py-0.5 rounded-md bg-[#00C776]/10 text-[#00C776] font-medium">
-                        {filteredLinks.length} 个书签
-                      </span>
+                        {filteredLinks.length} {tx("bookmarks_d85aebef")}</span>
                     </div>
                     <div className="flex items-center gap-2.5">
                       <button
@@ -260,15 +262,15 @@ function HomeContent() {
                           const r = await copyShareLink(
                             "category",
                             activeCategory,
-                            categories.find((c) => c.id === activeCategory)?.name || "当前分类",
+                            categories.find((c) => c.id === activeCategory)?.name || tx("current_category_1d8c6fd3"),
                           );
-                          flashAction(r.message);
+                          flashAction(text(r.message));
                         }}
                         className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:border-[#00C776] hover:text-[#00C776] dark:hover:border-[#00C776] transition-colors cursor-pointer"
-                        title="复制该分类的免登录公开分享链接"
+                        title={tx("copy_a_public_share_link_for_this_category_29ef87e6")}
                       >
                         <span>🔗</span>
-                        <span>分享此分类</span>
+                        <span>{tx("share_category_656f2ddf")}</span>
                       </button>
                       <button
                         onClick={() => {
@@ -277,8 +279,7 @@ function HomeContent() {
                         }}
                         className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 px-2 py-1 cursor-pointer"
                       >
-                        返回总览
-                      </button>
+                        {tx("back_to_overview_c55a0736")}</button>
                     </div>
                   </div>
                   <CardGrid links={filteredLinks} statuses={statuses} />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import BrandIcon from "@/components/brand-icon";
 import { getStatusType, type LinkProbeInfo, type LinkStatus } from "@/hooks/use-link-status";
 import { categoryName } from "@/lib/admin-links";
@@ -71,6 +72,7 @@ export default function AdminLinksTableCard({
   onDeleteLink: (link: SiteLink) => void;
   onClearAll: () => void;
 }) {
+  const tx = useTranslations();
   return (
     <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100/90 dark:border-slate-700 shadow-2xs transition-colors">
       {/* Table Top Controls Bar */}
@@ -89,8 +91,8 @@ export default function AdminLinksTableCard({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              aria-label="搜索链接标题或网址"
-              placeholder="搜索链接标题或网址..."
+              aria-label={tx("search_link_title_or_url_34c4e0ae")}
+              placeholder={tx("search_link_title_or_url_9998d382")}
               className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#00C776]/30 focus:border-[#00C776]"
             />
           </div>
@@ -103,10 +105,10 @@ export default function AdminLinksTableCard({
               setFilterCategory(e.target.value);
               setCurrentPage(1);
             }}
-            aria-label="按分组筛选"
+            aria-label={tx("filter_by_category_fbd61854")}
             className="h-9 px-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-xs text-gray-700 dark:text-slate-200 font-medium focus:outline-none focus:border-[#00C776]"
           >
-            <option value="all">所有分组</option>
+            <option value="all">{tx("all_categories_f68e866a")}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -120,7 +122,7 @@ export default function AdminLinksTableCard({
             className="h-9 px-3 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-gray-700 dark:text-slate-200 flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <span>↻</span>
-            <span>检查连通性</span>
+            <span>{tx("check_connectivity_9bf3a507")}</span>
           </button>
         </div>
 
@@ -131,7 +133,7 @@ export default function AdminLinksTableCard({
               className="h-9 px-3.5 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/80 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <span>🗑️</span>
-              <span>一键清空所有链接 ({links.length})</span>
+              <span>{tx("clear_all_links_bd88d7dd")}{links.length})</span>
             </button>
           )}
 
@@ -141,7 +143,7 @@ export default function AdminLinksTableCard({
             className="h-9 px-4 bg-[#00C776] hover:bg-[#009a5a] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
           >
             <span className="text-sm">+</span>
-            <span>添加新链接</span>
+            <span>{tx("add_link_00f2a7fe")}</span>
           </button>
         </div>
       </div>
@@ -151,11 +153,11 @@ export default function AdminLinksTableCard({
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="border-b border-gray-100 dark:border-slate-700 text-gray-400 dark:text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
-              <th className="pb-3 pr-4">网站</th>
-              <th className="pb-3 pr-4">网址</th>
-              <th className="pb-3 pr-4">所属分组</th>
-              <th className="pb-3 pr-4">网络状态</th>
-              <th className="pb-3 text-right">操作</th>
+              <th className="pb-3 pr-4">{tx("website_fb8d739d")}</th>
+              <th className="pb-3 pr-4">{tx("url_a8ecb4b6")}</th>
+              <th className="pb-3 pr-4">{tx("category_6c49c1f9")}</th>
+              <th className="pb-3 pr-4">{tx("network_status_872428a7")}</th>
+              <th className="pb-3 text-right">{tx("actions_ed31fbb4")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
@@ -219,14 +221,12 @@ export default function AdminLinksTableCard({
                         onClick={() => onEditLink(link)}
                         className="text-gray-500 dark:text-slate-400 hover:text-[#00C776] dark:hover:text-[#00C776] font-medium flex items-center gap-1 transition-colors cursor-pointer"
                       >
-                        <span>✏️</span> 修改
-                      </button>
+                        <span>✏️</span> {tx("edit_37090f45")}</button>
                       <button
                         onClick={() => onDeleteLink(link)}
                         className="text-gray-400 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 font-medium flex items-center gap-1 transition-colors cursor-pointer"
                       >
-                        <span>🗑️</span> 删除
-                      </button>
+                        <span>🗑️</span> {tx("delete_2f9daa82")}</button>
                     </div>
                   </td>
                 </tr>
@@ -236,8 +236,7 @@ export default function AdminLinksTableCard({
             {paginatedLinks.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-12 text-center text-gray-400 dark:text-slate-400">
-                  暂无匹配链接
-                </td>
+                  {tx("no_matching_links_1067b881")}</td>
               </tr>
             )}
           </tbody>
@@ -246,7 +245,7 @@ export default function AdminLinksTableCard({
 
       {/* Table Bottom Pagination Footer */}
       <div className="mt-6 pt-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
-        <span>共 {filteredLinks.length} 条数据</span>
+        <span>{tx("total_76e547a8")}{filteredLinks.length} {tx("records_2a090e4c")}</span>
 
         <div className="flex items-center gap-4">
           {/* Page Controls */}
@@ -288,12 +287,12 @@ export default function AdminLinksTableCard({
               setPageSize(Number(e.target.value));
               setCurrentPage(1);
             }}
-            aria-label="每页显示条数"
+            aria-label={tx("rows_per_page_d577b91f")}
             className="h-7 px-2 border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-xs text-gray-600 dark:text-slate-300"
           >
-            <option value={10}>10 条/页</option>
-            <option value={20}>20 条/页</option>
-            <option value={50}>50 条/页</option>
+            <option value={10}>{tx("10_per_page_68487531")}</option>
+            <option value={20}>{tx("20_per_page_c0c4a643")}</option>
+            <option value={50}>{tx("50_per_page_390ec07e")}</option>
           </select>
         </div>
       </div>

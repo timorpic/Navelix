@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Modal from "./modal";
 
 interface ConfirmDialogProps {
@@ -20,12 +21,13 @@ export default function ConfirmDialog({
   open,
   title,
   message,
-  confirmLabel = "Delete",
-  cancelLabel = "取消",
+  confirmLabel,
+  cancelLabel,
   onConfirm,
   onCancel,
   onClose,
 }: ConfirmDialogProps) {
+  const tx = useTranslations();
   // 确认处理器可能是异步的（如上传还原、删除请求）。
   // 此前实现是 onConfirm(); onClose(); —— 异步不会被等待，弹窗会在请求完成前关闭。
   const handleConfirm = async () => {
@@ -49,13 +51,13 @@ export default function ConfirmDialog({
           onClick={handleCancel}
           className="h-9 rounded-lg px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100"
         >
-          {cancelLabel}
+          {cancelLabel || tx("cancel_2cd0f3be")}
         </button>
         <button
           onClick={handleConfirm}
           className="h-9 rounded-lg bg-red-500 px-4 text-sm font-medium text-white transition-colors hover:bg-red-600"
         >
-          {confirmLabel}
+          {confirmLabel || tx("confirm_delete_a3ea3c17")}
         </button>
       </div>
     </Modal>

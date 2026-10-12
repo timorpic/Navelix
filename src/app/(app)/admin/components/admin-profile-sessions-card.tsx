@@ -1,5 +1,7 @@
 "use client";
+import { useLocale } from "next-intl";
 
+import { useTranslations } from "next-intl";
 import { sessionLabel } from "@/lib/admin-profile";
 import type { UseAdminProfileAccountResult } from "@/hooks/use-admin-profile-account";
 
@@ -14,17 +16,18 @@ export default function AdminProfileSessionsCard({
 }: {
   account: UseAdminProfileAccountResult;
 }) {
+  const locale = useLocale();
+  const tx = useTranslations();
   return (
     <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
       <div className="flex items-center justify-between gap-2">
         <div>
           <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
             <span>🛡️</span>
-            <span>已登录设备</span>
+            <span>{tx("signed_in_devices_38fc93b2")}</span>
           </h3>
           <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-            实时监控所有登录本账号的设备会话与 IP
-          </p>
+            {tx("view_device_sessions_and_ip_addresses_signed_in__aa76beea")}</p>
         </div>
 
         <button
@@ -32,15 +35,14 @@ export default function AdminProfileSessionsCard({
           onClick={account.handleRevokeOtherSessions}
           className="px-3 py-1.5 rounded-lg text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 transition-colors cursor-pointer shrink-0"
         >
-          踢出其他设备
-        </button>
+          {tx("sign_out_other_devices_f64c326e")}</button>
       </div>
 
       <div className="space-y-2.5 max-h-64 overflow-y-auto">
         {account.loadingSessions ? (
-          <p className="text-xs text-gray-400 py-4 text-center">加载设备会话中…</p>
+          <p className="text-xs text-gray-400 py-4 text-center">{tx("loading_device_sessions_a76215fc")}</p>
         ) : account.activeSessions.length === 0 ? (
-          <p className="text-xs text-gray-400 py-4 text-center">暂无活动会话</p>
+          <p className="text-xs text-gray-400 py-4 text-center">{tx("no_active_sessions_d3a91aa2")}</p>
         ) : (
           account.activeSessions.map((s) => (
             <div
@@ -58,12 +60,11 @@ export default function AdminProfileSessionsCard({
                   </span>
                   {s.isCurrent && (
                     <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#00C776] text-white">
-                      当前设备
-                    </span>
+                      {tx("this_device_c6897853")}</span>
                   )}
                 </div>
                 <p className="text-[10px] text-gray-400 dark:text-slate-400 font-mono truncate">
-                  IP: {s.ipAddress} · 活跃于 {new Date(s.lastActiveAt).toLocaleString("zh-CN")}
+                  IP: {s.ipAddress} {tx("active_203b77c1")}{new Date(s.lastActiveAt).toLocaleString(locale)}
                 </p>
               </div>
 
@@ -73,8 +74,7 @@ export default function AdminProfileSessionsCard({
                   onClick={() => account.handleRevokeSession(s.tokenHash)}
                   className="text-[11px] text-red-500 hover:text-red-700 font-semibold cursor-pointer shrink-0"
                 >
-                  强退
-                </button>
+                  {tx("sign_out_61d61718")}</button>
               )}
             </div>
           ))

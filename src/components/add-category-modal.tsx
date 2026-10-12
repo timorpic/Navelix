@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import Modal from "./modal";
 import Toast from "./toast";
@@ -37,6 +39,8 @@ export default function AddCategoryModal({
   onClose,
   onAdd,
 }: AddCategoryModalProps) {
+  const tx = useTranslations();
+  const text = useText();
   // Parent remounts this modal via `key` on open, so props are the source of truth.
   const [name, setName] = useState(category?.name ?? "");
   const [icon, setIcon] = useState(category?.icon ?? "📁");
@@ -112,7 +116,7 @@ export default function AddCategoryModal({
               onChange={(e) => setIsTeamShared(e.target.checked)}
               className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776]/30 cursor-pointer"
             />
-            <span className="font-semibold">👥 设为团队公开分类（允许其他团队成员订阅挂载）</span>
+            <span className="font-semibold">{tx("share_this_category_with_the_team_other_members__366fc3d9")}</span>
           </label>
         </div>
 
@@ -124,12 +128,11 @@ export default function AddCategoryModal({
               type="button"
               onClick={async () => {
                 const r = await copyShareLink("category", category.id, category.name);
-                flash(r.message);
+                flash(text(r.message));
               }}
               className="inline-flex items-center gap-1 text-xs text-[#00C776] hover:text-[#009a5a] font-medium py-1 px-2 rounded hover:bg-[#00C776]/10 transition-colors"
             >
-              🔗 复制分享链接
-            </button>
+              {tx("copy_share_link_c2503385")}</button>
           ) : <div />}
           <div className="flex items-center gap-3">
             <button

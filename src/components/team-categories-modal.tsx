@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useEffect, useCallback } from "react";
 
 interface TeamCategory {
@@ -27,6 +28,7 @@ export default function TeamCategoriesModal({
   onClose,
   onRefreshData,
 }: TeamCategoriesModalProps) {
+  const tx = useTranslations();
   const [categories, setCategories] = useState<TeamCategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
@@ -98,11 +100,9 @@ export default function TeamCategoriesModal({
             <span className="text-xl">👥</span>
             <div>
               <h2 className="text-base font-bold text-gray-900 dark:text-white">
-                团队共享分类大厅
-              </h2>
+                {tx("team_category_directory_00469b97")}</h2>
               <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-                发现并订阅团队成员公开的精选书签分类，实时同步挂载至个人工作台
-              </p>
+                {tx("discover_and_subscribe_to_shared_bookmark_catego_d0eb019c")}</p>
             </div>
           </div>
           <button
@@ -117,12 +117,10 @@ export default function TeamCategoriesModal({
         <div className="p-5 overflow-y-auto flex-1 divide-y divide-gray-100 dark:divide-slate-700/60">
           {loading ? (
             <div className="py-12 text-center text-xs text-gray-400">
-              正在加载团队分类…
-            </div>
+              {tx("loading_team_categories_8edf4b2c")}</div>
           ) : categories.length === 0 ? (
             <div className="py-12 text-center text-xs text-gray-400">
-              暂无团队公开分类。您可以在分类设置中勾选「公开给团队成员」分享您的收藏。
-            </div>
+              {tx("no_shared_categories_yet_enable_team_sharing_in__ee9a074c")}</div>
           ) : (
             categories.map((cat) => {
               const key = `${cat.ownerId}:${cat.id}`;
@@ -142,21 +140,20 @@ export default function TeamCategoriesModal({
                         </span>
                         {cat.isOwner && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 font-semibold border border-emerald-200/60 dark:border-emerald-800">
-                            我创建的
-                          </span>
+                            {tx("created_by_me_7a2c2a0f")}</span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400 dark:text-slate-400">
-                        <span>由 @{cat.ownerName} 提供</span>
+                        <span>{tx("by_d6340d99")}{cat.ownerName} {tx("provided_by_9e947047")}</span>
                         <span>•</span>
-                        <span>{cat.linkCount} 个链接</span>
+                        <span>{cat.linkCount} {tx("links_68b2c804")}</span>
                       </div>
                     </div>
                   </div>
 
                   <div>
                     {cat.isOwner ? (
-                      <span className="text-xs text-gray-400 px-3 py-1.5">已拥有</span>
+                      <span className="text-xs text-gray-400 px-3 py-1.5">{tx("owned_70ddc405")}</span>
                     ) : (
                       <button
                         onClick={() => handleToggleSubscribe(cat)}
@@ -168,10 +165,10 @@ export default function TeamCategoriesModal({
                         }`}
                       >
                         {isProcessing
-                          ? "处理中…"
+                          ? tx("processing_d3d21191")
                           : cat.isSubscribed
-                          ? "已订阅 · 取消"
-                          : "+ 订阅到侧栏"}
+                          ? tx("subscribed_unsubscribe_de4767fa")
+                          : tx("add_to_sidebar_0fb36c15")}
                       </button>
                     )}
                   </div>
@@ -187,8 +184,7 @@ export default function TeamCategoriesModal({
             onClick={onClose}
             className="px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-slate-200 text-xs font-semibold rounded-xl hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors cursor-pointer"
           >
-            完成
-          </button>
+            {tx("done_c0b3fbff")}</button>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
 import { getSessionUser } from "@/lib/auth";
 import { markAllRead } from "@/lib/notification-store";
 
@@ -6,9 +6,9 @@ import { markAllRead } from "@/lib/notification-store";
 export async function POST() {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   markAllRead(user.id);
-  return NextResponse.json({ ok: true });
+  return localizedJson({ ok: true });
 }

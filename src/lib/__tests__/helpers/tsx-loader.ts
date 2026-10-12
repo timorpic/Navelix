@@ -166,7 +166,7 @@ export async function loadTsx(relPath: string): Promise<CompiledComponent> {
     target: "es2022",
     jsx: "automatic",
     // React 与 react-dom 走 node_modules 解析，不打进产物
-    external: ["react", "react-dom", "react/jsx-runtime", "react-dom/client"],
+    external: ["next-intl", "next-intl/server", "use-intl", "react", "react-dom", "react/jsx-runtime", "react-dom/client"],
     plugins: [tsxPlugin as never],
     logLevel: "silent",
   });

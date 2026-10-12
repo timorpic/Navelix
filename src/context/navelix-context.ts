@@ -5,6 +5,7 @@ import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/type
 import { DEFAULT_SITE_TITLE, DEFAULT_CUSTOM_FOOTER } from "@/lib/constants";
 
 export const defaultConfig: SystemConfig = {
+  language: "zh-CN",
   logoText: "Navelix",
   logoImage: "",
   showSearchBar: true,
@@ -84,6 +85,7 @@ export interface NavelixConfigApi {
   isDark: boolean;
   updateConfig: (patch: Partial<SystemConfig>) => void;
   resetConfig: () => void;
+  changeLanguage: (language: SystemConfig["language"]) => Promise<void>;
 }
 
 export const NavelixDataContext = createContext<NavelixDataApi | null>(null);

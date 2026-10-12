@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import type { Category } from "@/types";
 
@@ -18,9 +19,10 @@ export default function Header({
   user,
   onLogout,
 }: HeaderProps) {
+  const tx = useTranslations();
   // 动态导航：基于实际分类数据生成，与数据库保持一致
   const navTabs = [
-    { id: "all", label: "总览" },
+    { id: "all", label: tx("overview_a33db573") },
     ...categories.map((c) => ({ id: c.id, label: c.label || c.name })),
   ];
 

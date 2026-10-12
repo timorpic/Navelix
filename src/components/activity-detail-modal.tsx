@@ -1,5 +1,7 @@
 "use client";
+import { useLocale } from "next-intl";
 
+import { useTranslations } from "next-intl";
 import { formatRelativeTime } from "@/lib/date-utils";
 import { formatExactTime } from "@/lib/recent-activities";
 import type { ActivityItem } from "@/lib/recent-activities";
@@ -21,8 +23,10 @@ export default function ActivityDetailModal({
   item: ActivityItem | null;
   onClose: () => void;
 }) {
+  const locale = useLocale();
+  const tx = useTranslations();
   return (
-    <Modal open={Boolean(item)} title="活动详情" onClose={onClose}>
+    <Modal open={Boolean(item)} title={tx("activity_details_68d94dc5")} onClose={onClose}>
       {item && (
         <div className="space-y-4 text-xs">
           <div className="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-slate-800">
@@ -33,15 +37,14 @@ export default function ActivityDetailModal({
               </h4>
               <p className="text-[11px] text-gray-400 dark:text-slate-400">
                 {formatExactTime(item.ts)} (
-                {formatRelativeTime(item.ts, { fallbackAfterDays: 7 })})
+                {formatRelativeTime(item.ts, { fallbackAfterDays: 7 , locale})})
               </p>
             </div>
           </div>
 
           <div className="space-y-1.5">
             <span className="font-bold text-gray-700 dark:text-slate-300">
-              来源模块：
-            </span>
+              {tx("source_fce84be7")}</span>
             <div>
               <span
                 className={`inline-block px-2.5 py-0.5 rounded-md text-[10px] font-semibold ${item.sourceBadgeClass}`}
@@ -54,8 +57,7 @@ export default function ActivityDetailModal({
           {item.detail && (
             <div className="space-y-1.5">
               <span className="font-bold text-gray-700 dark:text-slate-300">
-                详细描述与执行日志：
-              </span>
+                {tx("description_execution_log_66537e44")}</span>
               <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900/80 border border-gray-100 dark:border-slate-800 text-gray-700 dark:text-slate-200 leading-relaxed break-words font-mono text-[11px] max-h-60 overflow-y-auto whitespace-pre-line">
                 {item.detail}
               </div>
@@ -68,8 +70,7 @@ export default function ActivityDetailModal({
               onClick={onClose}
               className="px-4 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-white font-bold transition-colors cursor-pointer"
             >
-              关闭
-            </button>
+              {tx("close_3fd47edc")}</button>
           </div>
         </div>
       )}

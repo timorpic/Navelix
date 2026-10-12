@@ -1,3 +1,7 @@
+import { getLocale } from "next-intl/server";
+import { normalizeLocale } from "@/lib/i18n";
+import { saveUserConfigs } from "@/lib/user-data";
+import { localizedJson } from "@/lib/localized-json";
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { db, SESSION_COOKIE } from "@/lib/db";
@@ -7,10 +11,11 @@ import { canRegister } from "@/lib/registration";
 // GET /api/auth/register - 公开读取注册开关（登录页/注册页为未登录页面，无法走需 session 的 /api/user/data）。
 // allowRegistration 是纯布尔策略，不含用户列表/用户名等敏感信息，且该状态本可经 POST 试探得出，故无需鉴权。
 export async function GET() {
-  return NextResponse.json({ allowRegistration: canRegister() });
+  return localizedJson({ allowRegistration: canRegister() });
 }
 
 export async function POST(req: Request) {
+  const language = normalizeLocale(await getLocale());
   const body = await req.json().catch(() => null);
   const username = String(body?.username ?? "")
     .trim()
@@ -19,13 +24,13 @@ export async function POST(req: Request) {
   const displayName = String(body?.displayName ?? "").trim();
 
   if (!/^[a-z0-9_]{3,20}$/.test(username)) {
-    return NextResponse.json(
+    return localizedJson(
       { error: "Username must be 3-20 characters (letters, numbers, underscore)" },
       { status: 400 },
     );
   }
   if (password.length < 6) {
-    return NextResponse.json(
+    return localizedJson(
       { error: "Password must be at least 6 characters" },
       { status: 400 },
     );
@@ -67,6 +72,7 @@ export async function POST(req: Request) {
         Date.now(),
       );
 
+      saveUserConfigs(id, { language });
       db.exec("COMMIT");
       return role;
     } catch (err) {
@@ -87,7 +93,7 @@ export async function POST(req: Request) {
   });
 
   if (typeof role !== "string") {
-    return NextResponse.json(
+    return localizedJson(
       { error: (role as { error: string }).error },
       { status: (role as { status: number }).status },
     );

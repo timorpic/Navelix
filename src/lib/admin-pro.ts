@@ -76,15 +76,15 @@ export function licensePlanLabel(payload?: LicensePayload): string {
 }
 
 /** 有效期文案：0 表示永久；缺失时按 0 处理（与原实现 `expiresAt || 0` 一致）。 */
-export function licenseExpiryLabel(expiresAt?: number): string {
+export function licenseExpiryLabel(expiresAt?: number, locale?: string): string {
   if (expiresAt === 0) return "永久有效 (Lifetime)";
-  return new Date(expiresAt || 0).toLocaleDateString();
+  return new Date(expiresAt || 0).toLocaleDateString(locale);
 }
 
 /** Pro 授权信息行：授权客户 / 有效期 / 席位配额。 */
-export function licenseSummaryLine(payload?: LicensePayload): string {
+export function licenseSummaryLine(payload?: LicensePayload, locale?: string): string {
   return `授权客户：${payload?.customer} (${payload?.email}) · 有效期：${licenseExpiryLabel(
-    payload?.expiresAt,
+    payload?.expiresAt, locale,
   )} · 席位配额：${payload?.maxSeats || 1} 人`;
 }
 
@@ -201,6 +201,6 @@ export function formatBackupSize(size: number): string {
 }
 
 /** 快照时间展示：跟随运行环境的本地化格式（与原实现一致）。 */
-export function formatBackupTime(lastModified: string): string {
-  return new Date(lastModified).toLocaleString();
+export function formatBackupTime(lastModified: string, locale?: string): string {
+  return new Date(lastModified).toLocaleString(locale);
 }

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
+import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { deleteNotification, patchNotification } from "@/lib/notification-store";
 
@@ -8,16 +9,16 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getSessionUser(req);
-  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
 
   const { id } = await params;
   const body = await req.json().catch(() => null);
 
   if (!patchNotification(id, user.id, body ?? {})) {
-    return NextResponse.json({ error: "无更新内容" }, { status: 400 });
+    return localizedJson({ error: "无更新内容" }, { status: 400 });
   }
 
-  return NextResponse.json({ ok: true });
+  return localizedJson({ ok: true });
 }
 
 // DELETE /api/notifications/[id] - 删除单条通知/活动记录
@@ -26,10 +27,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getSessionUser(req);
-  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
 
   const { id } = await params;
   deleteNotification(id, user.id);
 
-  return NextResponse.json({ ok: true });
+  return localizedJson({ ok: true });
 }

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
 import { getSessionUser, toPublicUser } from "@/lib/auth";
 import { getUserRow, updateProfile } from "@/lib/profile";
 
@@ -6,7 +6,7 @@ import { getUserRow, updateProfile } from "@/lib/profile";
 export async function PATCH(req: Request) {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   const body = await req.json().catch(() => null);
@@ -15,11 +15,11 @@ export async function PATCH(req: Request) {
   if (!result.ok) {
     // 「账号不存在」是 404，其余是校验失败 400
     const status = result.error === "用户账号不存在" ? 404 : 400;
-    return NextResponse.json({ error: result.error }, { status });
+    return localizedJson({ error: result.error }, { status });
   }
 
   const updatedRow = getUserRow(user.id);
-  return NextResponse.json({
+  return localizedJson({
     success: true,
     user: updatedRow ? toPublicUser(updatedRow) : undefined,
     message: result.passwordChanged ? "个人资料与密码已成功更新" : "个人资料更新成功",

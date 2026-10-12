@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
 import { db } from "@/lib/db";
 import fs from "node:fs";
 import path from "node:path";
@@ -86,5 +86,5 @@ export async function GET() {
     payload.error = err instanceof Error ? err.message : String(err);
   }
 
-  return NextResponse.json(payload, { status: healthy ? 200 : 503 });
+  return localizedJson(payload, { status: healthy ? 200 : 503 });
 }

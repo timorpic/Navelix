@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { parseDbRestoreResult } from "@/lib/admin-system";
 
@@ -29,19 +31,21 @@ export interface UseAdminDbBackupResult {
 export function useAdminDbBackup({
   notify,
 }: UseAdminDbBackupOptions): UseAdminDbBackupResult {
+  const tx = useTranslations();
+  const text = useText();
   const [isRestoringDb, setIsRestoringDb] = useState(false);
   const [backupNotice, setBackupNotice] = useState("");
 
   // ── 下载：浏览器直接打开备份接口，另给一条通知中心提示 ──
   const downloadDbBackup = useCallback(() => {
     window.open("/api/admin/backup", "_blank");
-    notify("数据库备份", "正在生成并下载数据库物理快照");
-  }, [notify]);
+    notify(tx("database_backup_4431acae"), tx("creating_and_downloading_a_database_snapshot_ec9075ce"));
+  }, [notify, tx]);
 
   const restoreDatabase = useCallback(
     async (file: File) => {
       setIsRestoringDb(true);
-      setBackupNotice("正在还原数据库，请稍候...");
+      setBackupNotice(tx("restoring_database_please_wait_1f497c09"));
       try {
         const fd = new FormData();
         fd.append("file", file);
@@ -51,18 +55,18 @@ export function useAdminDbBackup({
         });
         const data = await res.json();
         const outcome = parseDbRestoreResult(res.ok, data);
-        setBackupNotice(outcome.notice);
+        setBackupNotice(text(outcome.notice));
         if (outcome.ok) {
-          notify("数据库还原", "数据还原成功，页面即将刷新");
+          notify(tx("database_restore_5b0921b2"), tx("data_restored_the_page_will_refresh_shortly_6ee33262"));
           setTimeout(() => window.location.reload(), 1500);
         }
       } catch {
-        setBackupNotice("❌ 还原请求失败，请检查网络");
+        setBackupNotice(tx("restore_failed_check_your_connection_66a068f3"));
       } finally {
         setIsRestoringDb(false);
       }
     },
-    [notify],
+    [notify, tx, text],
   );
 
   return { isRestoringDb, backupNotice, downloadDbBackup, restoreDatabase };

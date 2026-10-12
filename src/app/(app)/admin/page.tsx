@@ -1,5 +1,8 @@
 "use client";
+import { useLocale } from "next-intl";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/components/confirm-dialog";
@@ -28,6 +31,9 @@ interface AdminNavItem {
 }
 
 export default function AdminPage() {
+  const locale = useLocale();
+  const text = useText();
+  const tx = useTranslations();
   const router = useRouter();
   const { categories, links, hydrated, resetData } = useNavelixData();
   const { config, updateConfig, resetConfig } = useNavelixConfig();
@@ -128,24 +134,23 @@ export default function AdminPage() {
   if (!hydrated) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F6F8FA] dark:bg-[#151218] text-sm text-gray-400">
-        加载中…
-      </div>
+        {tx("loading_4927a53b")}</div>
     );
   }
 
   const adminNavItems: AdminNavItem[] = [
-    { id: "links", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 14a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 10a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>, label: "链接管理", badge: links.length },
-    { id: "categories", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /></svg>, label: "分组管理", badge: categories.length },
-    { id: "quickAccess", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>, label: "快捷访问", badge: links.filter((l) => l.isQuickAccess).length },
-    { id: "projects", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h6v8h-6z" /><path d="M14 4h6v4h-6z" /><path d="M14 12h6v8h-6z" /><path d="M4 16h6v4h-6z" /></svg>, label: "项目管理" },
-    { id: "schedules", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>, label: "日程管理" },
+    { id: "links", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 14a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 10a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>, label: tx("link_management_09f9a1cb"), badge: links.length },
+    { id: "categories", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /></svg>, label: tx("category_management_49243080"), badge: categories.length },
+    { id: "quickAccess", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>, label: tx("quick_access_0a704163"), badge: links.filter((l) => l.isQuickAccess).length },
+    { id: "projects", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h6v8h-6z" /><path d="M14 4h6v4h-6z" /><path d="M14 12h6v8h-6z" /><path d="M4 16h6v4h-6z" /></svg>, label: tx("projects_a049dca9") },
+    { id: "schedules", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>, label: tx("schedules_de72966b") },
     ...(currentUser?.role === "admin"
-      ? [{ id: "users" as AdminTab, icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>, label: "账号管理", badge: users.length || 1 }]
+      ? [{ id: "users" as AdminTab, icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>, label: tx("account_management_eba54690"), badge: users.length || 1 }]
       : []),
     ...(currentUser?.role === "admin"
-      ? [{ id: "auditLogs" as AdminTab, icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /><path d="M9 14l2 2 4-4" /></svg>, label: "审计日志" }]
+      ? [{ id: "auditLogs" as AdminTab, icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /><path d="M9 14l2 2 4-4" /></svg>, label: tx("audit_logs_a0f79e91") }]
       : []),
-    ...(currentUser?.role === "admin" ? [{ id: "pro" as AdminTab, icon: <span>💎</span>, label: "Pro 高级功能", badge: "PRO" }] : []),
+    ...(currentUser?.role === "admin" ? [{ id: "pro" as AdminTab, icon: <span>💎</span>, label: tx("pro_features_f1c252c0"), badge: "PRO" }] : []),
     ...(currentUser?.role === "admin" ? getSystemSettingsNav(config.showProMenus !== false).map(item => ({ ...item, badge: item.pro ? "PRO" : undefined, icon: <span>⚙</span> })) : []),
     ...USER_SETTINGS_NAV.map(item => ({ ...item, icon: <span>·</span> })),
   ];
@@ -162,11 +167,10 @@ export default function AdminPage() {
             </button>
             <div className="min-w-0">
               <h1 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5 truncate">
-                欢迎回来，{currentUser?.displayName || currentUser?.username || "Admin"} 👋
+                {tx("welcome_back_1bc95b8b")}{currentUser?.displayName || currentUser?.username || "Admin"} 👋
               </h1>
               <p className="hidden sm:block text-xs text-gray-400 dark:text-slate-400">
-                今天是美好的一天，继续高效管理你的导航链接吧！
-              </p>
+                {tx("a_new_day_to_keep_your_workspace_organized_e4cfd392")}</p>
             </div>
           </div>
 
@@ -178,7 +182,7 @@ export default function AdminPage() {
                 updateConfig({ theme: order[(idx + 1) % order.length] });
               }}
               className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-gray-100 dark:border-slate-700 transition-all cursor-pointer shadow-2xs"
-              title={config.theme === "system" ? "跟随系统" : config.theme === "dark" ? "切换至浅色模式" : "切换至深色模式"}
+              title={config.theme === "system" ? tx("system_theme_217cfe7d") : config.theme === "dark" ? tx("switch_to_light_mode_fe05df6e") : tx("switch_to_dark_mode_65ec2b0d")}
             >
               {config.theme === "system" ? (
                 <svg className="w-4 h-4 text-[#00C776]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" /></svg>
@@ -193,7 +197,7 @@ export default function AdminPage() {
               onClick={handleOpenAdminNotifications}
               className={`relative p-2 rounded-xl transition-colors cursor-pointer ${
                 showAdminNotifications ? "bg-[#00C776]/10 text-[#00C776]" : "text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800"
-              }`} title="消息通知"
+              }`} title={tx("notifications_4cfc2a36")}
             >
               🔔
               {adminUnread && <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-rose-500 animate-ping" />}
@@ -204,25 +208,25 @@ export default function AdminPage() {
               <div ref={adminNotifRef} className="absolute top-12 right-24 w-72 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 p-3.5 z-50 animate-fadeIn text-left">
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-100 dark:border-slate-700">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-gray-900 dark:text-white">后台消息通知</span>
+                    <span className="text-xs font-bold text-gray-900 dark:text-white">{tx("admin_notifications_81f3f9ab")}</span>
                     {adminUnread && <span className="px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600 text-[10px] font-bold">{adminUnreadCount > 99 ? "99+" : adminUnreadCount}</span>}
                   </div>
                   <div className="flex items-center gap-2">
                     {adminUnread && (
-                      <button onClick={() => { fetch("/api/notifications/read", { method: "POST" }).catch(() => {}); setAdminNotifications((prev) => prev.map((n) => ({ ...n, read: true }))); setShowAdminNotifications(false); }} className="text-[10px] text-[#00C776] hover:underline cursor-pointer">全部已读</button>
+                      <button onClick={() => { fetch("/api/notifications/read", { method: "POST" }).catch(() => {}); setAdminNotifications((prev) => prev.map((n) => ({ ...n, read: true }))); setShowAdminNotifications(false); }} className="text-[10px] text-[#00C776] hover:underline cursor-pointer">{tx("mark_all_as_read_231cbc43")}</button>
                     )}
-                    <button onClick={() => setShowAdminNotifications(false)} className="w-5 h-5 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors cursor-pointer text-xs" title="关闭消息">✕</button>
+                    <button onClick={() => setShowAdminNotifications(false)} className="w-5 h-5 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors cursor-pointer text-xs" title={tx("close_notifications_ed9af108")}>✕</button>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 max-h-56 overflow-y-auto">
                   {adminNotifications.length === 0 ? (
-                    <div className="py-6 text-center text-[11px] text-gray-400 dark:text-slate-400">暂无操作记录</div>
+                    <div className="py-6 text-center text-[11px] text-gray-400 dark:text-slate-400">{tx("no_activity_records_68c16d82")}</div>
                   ) : (
                     adminNotifications.map((n) => (
                       <div key={n.id} className={`p-2 rounded-xl text-xs ${!n.read ? "bg-teal-50/60 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900" : "bg-gray-50/60 dark:bg-slate-700/40"}`}>
                         <div className="flex items-center justify-between mb-0.5">
                           <p className="font-bold text-gray-900 dark:text-white truncate">{n.title}</p>
-                          <span className="text-[9px] text-gray-400 shrink-0 ml-2">{formatRelativeTime(n.createdAt)}</span>
+                          <span className="text-[9px] text-gray-400 shrink-0 ml-2">{formatRelativeTime(n.createdAt, { locale })}</span>
                         </div>
                         <p className="text-[11px] text-gray-600 dark:text-slate-300 break-all">{n.content}</p>
                       </div>
@@ -243,9 +247,9 @@ export default function AdminPage() {
 
             {showAdminUserMenu && (
               <div className="absolute top-12 right-0 w-44 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 z-50 animate-fadeIn flex flex-col gap-1 text-xs font-semibold text-gray-700 dark:text-slate-200">
-                <button onClick={() => { setShowAdminUserMenu(false); selectTab("profile"); }} className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 text-left transition-colors cursor-pointer"><span>👤</span><span>个人中心</span></button>
+                <button onClick={() => { setShowAdminUserMenu(false); selectTab("profile"); }} className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 text-left transition-colors cursor-pointer"><span>👤</span><span>{tx("my_account_5a2cac68")}</span></button>
                 <div className="my-1 border-t border-gray-100 dark:border-slate-700" />
-                <button onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); router.push("/login"); router.refresh(); }} className="flex items-center gap-2 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-left transition-colors cursor-pointer"><span>🚪</span><span>退出当前登录</span></button>
+                <button onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); router.push("/login"); router.refresh(); }} className="flex items-center gap-2 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-left transition-colors cursor-pointer"><span>🚪</span><span>{tx("sign_out_cf3d59d7")}</span></button>
               </div>
             )}
           </div>
@@ -254,7 +258,7 @@ export default function AdminPage() {
         <div className="lg:hidden sticky top-16 z-10 flex gap-1.5 overflow-x-auto border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2">
           {adminNavItems.map((item) => (
             <button key={item.id} onClick={() => selectTab(item.id)} className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${activeTab === item.id ? "bg-[#00C776] text-white" : "bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-300"}`}>
-              <span>{item.icon}</span><span>{item.label}</span>
+              <span>{item.icon}</span><span>{text(item.label)}</span>
               {typeof item.badge !== "undefined" && <span className="text-[10px] opacity-70">{item.badge}</span>}
             </button>
           ))}
@@ -266,33 +270,33 @@ export default function AdminPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100/90 dark:border-slate-700 shadow-2xs flex items-start justify-between transition-colors">
               <div className="flex flex-col">
-                <span className="text-xs font-medium text-gray-400 dark:text-slate-400 mb-1">链接总数</span>
+                <span className="text-xs font-medium text-gray-400 dark:text-slate-400 mb-1">{tx("total_links_28cf726e")}</span>
                 <div className="flex items-baseline gap-1"><span className="text-2xl font-extrabold text-gray-900 dark:text-white">{links.length}</span></div>
-                <span className="text-[11px] text-gray-400 dark:text-slate-400 mt-2">实时统计</span>
+                <span className="text-[11px] text-gray-400 dark:text-slate-400 mt-2">{tx("live_statistics_5f8faa43")}</span>
               </div>
               <div className="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-950/60 flex items-center justify-center text-[#00C776] text-lg font-bold">🔗</div>
             </div>
             <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100/90 dark:border-slate-700 shadow-2xs flex items-start justify-between transition-colors">
               <div className="flex flex-col">
-                <span className="text-xs font-medium text-gray-400 dark:text-slate-400 mb-1">分组总数</span>
+                <span className="text-xs font-medium text-gray-400 dark:text-slate-400 mb-1">{tx("total_categories_bd12dda8")}</span>
                 <div className="flex items-baseline gap-1"><span className="text-2xl font-extrabold text-gray-900 dark:text-white">{categories.length}</span></div>
-                <span className="text-[11px] text-gray-400 dark:text-slate-400 mt-2">实时统计</span>
+                <span className="text-[11px] text-gray-400 dark:text-slate-400 mt-2">{tx("live_statistics_5f8faa43")}</span>
               </div>
               <div className="w-10 h-10 rounded-2xl bg-sky-50 dark:bg-sky-950/60 flex items-center justify-center text-sky-500 text-lg font-bold">🗂️</div>
             </div>
             <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100/90 dark:border-slate-700 shadow-2xs flex items-start justify-between transition-colors">
               <div className="flex flex-col">
-                <span className="text-xs font-medium text-gray-400 dark:text-slate-400 mb-1">注册用户数</span>
+                <span className="text-xs font-medium text-gray-400 dark:text-slate-400 mb-1">{tx("registered_users_ed322a5e")}</span>
                 <div className="flex items-baseline gap-1"><span className="text-2xl font-extrabold text-gray-900 dark:text-white">{currentUser?.role === "admin" ? users.length : "—"}</span></div>
-                <span className="text-[11px] text-gray-400 dark:text-slate-400 mt-2">{currentUser?.role === "admin" ? "系统内全部账号" : "仅管理员可见"}</span>
+                <span className="text-[11px] text-gray-400 dark:text-slate-400 mt-2">{currentUser?.role === "admin" ? tx("all_accounts_in_this_instance_b6bf3fc9") : tx("administrators_only_fc66e66e")}</span>
               </div>
               <div className="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-950/60 flex items-center justify-center text-purple-500 text-lg font-bold">👤</div>
             </div>
             <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100/90 dark:border-slate-700 shadow-2xs flex items-start justify-between transition-colors">
               <div className="flex flex-col">
-                <span className="text-xs font-medium text-gray-400 dark:text-slate-400 mb-1">内容区域宽度</span>
+                <span className="text-xs font-medium text-gray-400 dark:text-slate-400 mb-1">{tx("content_width_c060d93e")}</span>
                 <div className="flex items-baseline gap-1"><span className="text-2xl font-extrabold text-gray-900 dark:text-white">{config.maxWidth}</span></div>
-                <span className="text-[11px] text-gray-400 dark:text-slate-400 mt-2">当前设置</span>
+                <span className="text-[11px] text-gray-400 dark:text-slate-400 mt-2">{tx("current_setting_a99f56d8")}</span>
               </div>
               <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-500 text-lg font-bold">💻</div>
             </div>
@@ -324,10 +328,10 @@ export default function AdminPage() {
       {/* Modals */}
       <ConfirmDialog
         open={showReset}
-        title="重置默认配置"
-        message="确定要将所有分组、链接与系统个性化设置重置为初始状态吗？"
-        confirmLabel="确定重置"
-        onConfirm={() => { resetData(); resetConfig(); notify("系统设置", "全量配置已成功重置"); }}
+        title={tx("reset_to_defaults_0409c0da")}
+        message={tx("reset_all_categories_links_and_customization_set_7cf3278c")}
+        confirmLabel={tx("confirm_reset_d7cf94d8")}
+        onConfirm={() => { resetData(); resetConfig(); notify(tx("system_settings_68ea5dd4"), tx("all_settings_reset_successfully_34b5dd01")); }}
         onClose={() => setShowReset(false)}
       />
     </div>

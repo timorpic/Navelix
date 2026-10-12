@@ -1,5 +1,8 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import LanguageSwitcher from "@/components/language-switcher";
+import { useTranslations } from "next-intl";
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -47,6 +50,8 @@ export default function AdminSidebar({
   adminNavItems,
   currentUser,
 }: AdminSidebarProps) {
+  const text = useText();
+  const tx = useTranslations();
   const router = useRouter();
   const [systemOpen, setSystemOpen] = useState(true);
   const [userOpen, setUserOpen] = useState(true);
@@ -77,7 +82,7 @@ export default function AdminSidebar({
       >
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-sm flex items-center justify-center">{item.icon}</span>
-          <span className="truncate">{item.label}</span>
+          <span className="truncate">{text(item.label)}</span>
         </div>
         {typeof item.badge !== "undefined" && (
           <span
@@ -107,8 +112,7 @@ export default function AdminSidebar({
               <BrandLogoText />
             </span>
             <span className="text-[10px] font-medium text-gray-400 dark:text-slate-400">
-              后台管理控制台
-            </span>
+              {tx("administration_console_ceb0c289")}</span>
           </div>
         </div>
 
@@ -116,12 +120,12 @@ export default function AdminSidebar({
         <nav className="flex flex-col gap-1.5">
           {adminNavItems.filter(item => !isSystemSettingsTab(item.id) && !USER_SETTINGS_NAV.some(child => child.id === item.id)).map(renderNavButton)}
           {[
-            ...(currentUser?.role === "admin" ? [{ label: "系统设置", items: adminNavItems.filter(item => isSystemSettingsTab(item.id)), open: systemOpen, toggle: () => setSystemOpen(v => !v) }] : []),
-            { label: "用户设置", items: USER_SETTINGS_NAV, open: userOpen, toggle: () => setUserOpen(v => !v) },
+            ...(currentUser?.role === "admin" ? [{ label: tx("system_settings_68ea5dd4"), items: adminNavItems.filter(item => isSystemSettingsTab(item.id)), open: systemOpen, toggle: () => setSystemOpen(v => !v) }] : []),
+            { label: tx("user_settings_7ce710f6"), items: USER_SETTINGS_NAV, open: userOpen, toggle: () => setUserOpen(v => !v) },
           ].map(group => (
-            <div key={group.label} className="flex flex-col gap-1 pt-2 border-t border-gray-100 dark:border-slate-800 mt-1">
+            <div key={text(group.label)} className="flex flex-col gap-1 pt-2 border-t border-gray-100 dark:border-slate-800 mt-1">
               <button type="button" aria-expanded={group.open} onClick={group.toggle} className="flex justify-between px-3.5 py-2.5 text-xs font-semibold text-gray-700 dark:text-slate-200 cursor-pointer">
-                <span>{group.label}</span><span aria-hidden="true">{group.open ? "⌃" : "⌄"}</span>
+                <span>{text(group.label)}</span><span aria-hidden="true">{group.open ? "⌃" : "⌄"}</span>
               </button>
               {group.open && <div className="pl-3 flex flex-col gap-1 border-l border-gray-200 dark:border-slate-700 ml-4">
                 {group.items.map(item => renderNavButton({ ...item, badge: "badge" in item ? item.badge : undefined, icon: <span aria-hidden="true">·</span> }))}
@@ -129,6 +133,7 @@ export default function AdminSidebar({
             </div>
           ))}
         </nav>
+        <LanguageSwitcher />
       </div>
 
       {/* Bottom Profile Card */}
@@ -142,7 +147,7 @@ export default function AdminSidebar({
               className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
             >
               <span>🏠</span>
-              <span>返回前台主页</span>
+              <span>{tx("back_to_home_d3886609")}</span>
             </Link>
             <div className="my-1 border-t border-gray-100 dark:border-slate-700" />
             <button
@@ -154,7 +159,7 @@ export default function AdminSidebar({
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-left transition-colors cursor-pointer"
             >
               <span>🚪</span>
-              <span>退出当前登录</span>
+              <span>{tx("sign_out_cf3d59d7")}</span>
             </button>
           </div>
         )}
@@ -177,7 +182,7 @@ export default function AdminSidebar({
                 {currentUser?.displayName || currentUser?.username || "Admin"}
               </span>
               <span className="text-[10px] text-gray-400 dark:text-slate-400 truncate">
-                {currentUser?.role === "admin" ? "超级管理员" : "普通用户"}
+                {currentUser?.role === "admin" ? tx("administrator_56db2484") : tx("user_f6a2faaa")}
               </span>
             </div>
           </div>

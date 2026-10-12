@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Modal from "@/components/modal";
 import AvatarPicker from "@/components/avatar-picker";
 import type { UseAdminProfileAccountResult } from "@/hooks/use-admin-profile-account";
@@ -15,10 +16,11 @@ export default function AdminProfileAvatarModal({
 }: {
   account: UseAdminProfileAccountResult;
 }) {
+  const tx = useTranslations();
   return (
     <Modal
       open={account.showAvatarModal}
-      title="修改头像"
+      title={tx("change_avatar_da46d55d")}
       onClose={account.closeAvatarModal}
     >
       <AvatarPicker
@@ -34,8 +36,7 @@ export default function AdminProfileAvatarModal({
           onClick={account.closeAvatarModal}
           className="h-9 rounded-lg px-4 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer"
         >
-          完成
-        </button>
+          {tx("done_c0b3fbff")}</button>
       </div>
     </Modal>
   );

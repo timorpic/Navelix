@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useId, useMemo, useRef, useState } from "react";
 import {
   AVATAR_STYLE_OPTIONS,
@@ -20,6 +21,7 @@ export default function AvatarPicker({
   username,
   onChange,
 }: AvatarPickerProps) {
+  const tx = useTranslations();
   const [mode, setMode] = useState<"preset" | "generator" | "custom">("preset");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [generatorStyle, setGeneratorStyle] = useState<string>("notionists");
@@ -83,23 +85,22 @@ export default function AvatarPicker({
             {/* eslint-disable-next-line @next/next/no-img-element -- 头像支持外部 URL 或 data URL */}
             <img
               src={resolveAvatar(value, username)}
-              alt="头像预览"
+              alt={tx("avatar_preview_d416b006")}
               className="h-full w-full object-cover"
             />
           </div>
           <div>
             <p className="text-xs font-bold text-gray-900 dark:text-white">
               {value.startsWith("preset:")
-                ? "使用系统精选头像"
+                ? tx("choose_a_curated_avatar_26bb7c5f")
                 : value.startsWith("data:")
-                ? "使用本地上传图片"
+                ? tx("upload_a_local_image_c0f989d4")
                 : value
-                ? "使用在线自定义图片"
-                : "使用默认智能手绘头像"}
+                ? tx("use_an_image_url_6a66c7e6")
+                : tx("use_the_default_generated_avatar_f315351b")}
             </p>
             <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
-              可随时切换风格、随机生成或上传个性照片
-            </p>
+              {tx("choose_a_style_generate_a_random_avatar_or_uploa_cbfe3768")}</p>
           </div>
         </div>
 
@@ -112,8 +113,7 @@ export default function AvatarPicker({
             }}
             className="rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:text-rose-500 hover:border-rose-200 transition-colors cursor-pointer"
           >
-            恢复默认
-          </button>
+            {tx("reset_to_default_ba2e93e7")}</button>
         )}
       </div>
 
@@ -128,8 +128,7 @@ export default function AvatarPicker({
               : "text-gray-500 dark:text-slate-400 hover:text-gray-800"
           }`}
         >
-          🎨 精选风格库
-        </button>
+          {tx("curated_styles_deaa15d2")}</button>
         <button
           type="button"
           onClick={() => setMode("generator")}
@@ -139,8 +138,7 @@ export default function AvatarPicker({
               : "text-gray-500 dark:text-slate-400 hover:text-gray-800"
           }`}
         >
-          🎲 智能生成器
-        </button>
+          {tx("generator_4cd0c301")}</button>
         <button
           type="button"
           onClick={() => setMode("custom")}
@@ -150,8 +148,7 @@ export default function AvatarPicker({
               : "text-gray-500 dark:text-slate-400 hover:text-gray-800"
           }`}
         >
-          📤 上传与 URL
-        </button>
+          {tx("upload_url_a36dce37")}</button>
       </div>
 
       {/* 3.1 模式 A：精选高颜值风格库 */}
@@ -160,13 +157,13 @@ export default function AvatarPicker({
           {/* 分类筛选 Chips */}
           <div className="flex flex-wrap gap-1.5 text-[11px]">
             {[
-              { id: "all", label: "全部" },
-              { id: "notion", label: "Notion 手绘" },
-              { id: "adventurer", label: "精致插画" },
-              { id: "anime", label: "二次元美型" },
-              { id: "cute", label: "3D 萌系" },
-              { id: "robot", label: "科技机器人" },
-              { id: "geometric", label: "艺术几何" },
+              { id: "all", label: tx("all_5c55a679") },
+              { id: "notion", label: tx("notion_sketches_ef351cb8") },
+              { id: "adventurer", label: tx("illustrations_49ab14e3") },
+              { id: "anime", label: tx("anime_09ba441a") },
+              { id: "cute", label: tx("3d_cute_6c8f603e") },
+              { id: "robot", label: tx("robots_45c7cca9") },
+              { id: "geometric", label: tx("geometric_art_0d4e728b") },
             ].map((cat) => (
               <button
                 key={cat.id}
@@ -218,8 +215,7 @@ export default function AvatarPicker({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <label className="text-xs font-bold text-gray-700 dark:text-slate-300">
-                生成风格：
-              </label>
+                {tx("style_ec1b2fa9")}</label>
               <select
                 name="avatarStyle"
                 value={generatorStyle}
@@ -240,7 +236,7 @@ export default function AvatarPicker({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-[#00C776] hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-xs font-bold transition-colors cursor-pointer"
             >
               <span>🎲</span>
-              <span>换一批随机生成</span>
+              <span>{tx("generate_another_batch_fca2fe10")}</span>
             </button>
           </div>
 
@@ -252,7 +248,7 @@ export default function AvatarPicker({
                   key={c.id}
                   type="button"
                   onClick={() => onChange(c.url)}
-                  title={`点击应用候选头像 ${i + 1}`}
+                  title={tx("message_b2d2d8348d02", {v0: i + 1})}
                   className={`group relative aspect-square overflow-hidden rounded-full border-2 transition-all cursor-pointer p-0.5 ${
                     isCurrent
                       ? "border-[#00C776] ring-2 ring-[#00C776]/30 scale-105"
@@ -262,7 +258,7 @@ export default function AvatarPicker({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={c.url}
-                    alt={`候选头像 ${i + 1}`}
+                    alt={tx("message_8c4a41dd883c", {v0: i + 1})}
                     className="h-full w-full rounded-full object-cover"
                   />
                 </button>
@@ -270,8 +266,7 @@ export default function AvatarPicker({
             })}
           </div>
           <p className="text-[10px] text-gray-400 dark:text-slate-500 text-center">
-            点击任意一个生成的头像即可直接应用为你的账号头像
-          </p>
+            {tx("click_any_generated_avatar_to_apply_it_to_your_a_f022ae1a")}</p>
         </div>
       )}
 
@@ -284,23 +279,21 @@ export default function AvatarPicker({
               htmlFor={avatarUrlInputId}
               className="block text-xs font-bold text-gray-700 dark:text-slate-300"
             >
-              网络图片直链 URL
-            </label>
+              {tx("direct_image_url_efeae7d0")}</label>
             <div className="flex gap-2">
               <input
                 id={avatarUrlInputId}
                 type="url"
                 value={customUrlInput}
                 onChange={(e) => setCustomUrlInput(e.target.value)}
-                placeholder="https://example.com/my-avatar.png (支持 GitHub/QQ/Gravatar 头像)"
+                placeholder={tx("https_example_com_my_avatar_png_github_qq_gravat_6f1d4207")}
                 className="flex-1 h-9 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-xs text-gray-900 dark:text-white"
               />
               <button
                 type="submit"
                 className="px-3.5 py-1.5 bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shrink-0"
               >
-                应用链接
-              </button>
+                {tx("apply_url_213f5505")}</button>
             </div>
           </form>
 
@@ -310,25 +303,22 @@ export default function AvatarPicker({
               htmlFor="avatar-local-upload"
               className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
             >
-              本地图片上传
-            </label>
+              {tx("upload_local_image_3ef52813")}</label>
             <input
               id="avatar-local-upload"
               ref={fileRef}
               type="file"
               name="avatar-upload"
               accept="image/*"
-              aria-label="上传头像图片"
+              aria-label={tx("upload_avatar_e2ab9635")}
               onChange={handleFile}
               className="w-full text-xs text-gray-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[#00C776]/10 file:text-[#009a5a] file:text-xs file:font-semibold file:cursor-pointer cursor-pointer"
             />
             <p className="mt-1 text-[10px] text-gray-400 dark:text-slate-400">
-              支持 PNG / JPG / SVG / WebP，上传后自动智能压缩为 128×128 本地保存
-            </p>
+              {tx("supports_png_jpg_svg_webp_resized_to_128_128_bef_3ad5249e")}</p>
             {uploading && (
               <p className="mt-1 text-[11px] text-emerald-500 font-medium">
-                正在处理压缩头像…
-              </p>
+                {tx("processing_avatar_f8b38bb7")}</p>
             )}
           </div>
         </div>

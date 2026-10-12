@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
+import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import {
   countUnread,
@@ -11,10 +12,10 @@ import {
 export async function GET(req: NextRequest) {
   const user = await getSessionUser(req);
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
-  return NextResponse.json({
+  return localizedJson({
     notifications: listNotifications(user.id),
     unreadCount: countUnread(user.id),
   });
@@ -24,15 +25,15 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const user = await getSessionUser(req);
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   const body = await req.json().catch(() => null);
   if (!String(body?.title ?? "").trim()) {
-    return NextResponse.json({ error: "通知标题不能为空" }, { status: 400 });
+    return localizedJson({ error: "通知标题不能为空" }, { status: 400 });
   }
 
-  return NextResponse.json(
+  return localizedJson(
     { notification: createNotification(user.id, body ?? {}) },
     { status: 201 },
   );
@@ -42,9 +43,9 @@ export async function POST(req: NextRequest) {
 export async function DELETE() {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   deleteAllNotifications(user.id);
-  return NextResponse.json({ ok: true });
+  return localizedJson({ ok: true });
 }

@@ -576,3 +576,16 @@ Content-Type: application/json
 ### EE 驱动状态
 
 管理员 `GET /api/admin/license` 在原有 `isEE`、`isPro`、`isDockerBuild` 外返回 `eeDriverStatus`：`state` 为 `loaded`／`partial`／`missing`／`failed`／`unknown`，`storageRegistered` 和 `probeRegistered` 为布尔值，`failure` 为 `null` 或固定分类 `incompatible-runtime`／`loader-unavailable`／`load-error`。`isEE` 仍表示存储和探针都已注册，与许可证无关；具体错误详情看服务启动日志。未登录或非管理员访问返回 403。
+
+
+## 界面语言偏好
+
+`POST /api/user/locale`，JSON 请求体：
+
+```json
+{ "language": "en" }
+```
+
+只接受 `zh-CN`、`en`，成功返回 `{ "language": "en" }` 并设置语言 Cookie。登录时同步保存当前账号的个人配置；未登录时仅保存当前浏览器的语言。写请求仍需通过 Origin / CSRF 校验，不接受指定其他用户 ID。非法语言返回 HTTP 400，`code` 为 `INVALID_LOCALE`。
+
+登录用户请求按账号语言返回展示文案，访客依次使用语言 Cookie、Accept-Language 和中文默认值。业务错误响应保留原有 `error`，新增 `message`（本地化展示文案）与 `code`（错误标识）；前端可优先展示 `message`，兼容仍仅提供 `error` 的代理／协议错误响应。不要依赖翻译后的文案判断业务分支。用户创建的任务、项目、笔记与名称保持原文。

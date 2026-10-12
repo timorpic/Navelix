@@ -48,6 +48,7 @@ export function buildGanttTimeline(
   scale: GanttScale,
   offset: number,
   todayStr: string,
+  locale = "zh-CN",
 ): GanttTimeline {
   const cols: GanttColumn[] = [];
   const now = new Date();
@@ -66,16 +67,16 @@ export function buildGanttTimeline(
       cols.push({
         key: dStr,
         label: String(d.getDate()),
-        subLabel: `周${DAY_NAMES[dayOfWeek]}`,
+        subLabel: locale === "en" ? d.toLocaleDateString("en", { weekday: "short" }) : `周${DAY_NAMES[dayOfWeek]}`,
         isCurrent: dStr === todayStr,
         isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
       });
     }
     return {
       columns: cols,
-      timelineLabel: `日排期视界：${cols[0].key} ~ ${cols[cols.length - 1].key}`,
-      prevLabel: "◀ 前移 7 天",
-      nextLabel: "后移 7 天 ▶",
+      timelineLabel: locale === "en" ? `Daily planning: ${cols[0].key} – ${cols[cols.length - 1].key}` : `日排期视界：${cols[0].key} ~ ${cols[cols.length - 1].key}`,
+      prevLabel: locale === "en" ? "◀ Previous 7 days" : "◀ 前移 7 天",
+      nextLabel: locale === "en" ? "Next 7 days ▶" : "后移 7 天 ▶",
       stepAmount: 7,
     };
   }
@@ -89,16 +90,16 @@ export function buildGanttTimeline(
       const key = `${yr}-${String(mo).padStart(2, "0")}`;
       cols.push({
         key,
-        label: `${mo}月`,
-        subLabel: `${yr}年`,
+        label: locale === "en" ? d.toLocaleDateString("en", { month: "short" }) : `${mo}月`,
+        subLabel: locale === "en" ? String(yr) : `${yr}年`,
         isCurrent: yr === currentYear && mo === currentMonth + 1,
       });
     }
     return {
       columns: cols,
-      timelineLabel: `月推进视界：${cols[0].subLabel}${cols[0].label} ~ ${cols[cols.length - 1].subLabel}${cols[cols.length - 1].label}`,
-      prevLabel: "◀ 前移 3 个月",
-      nextLabel: "后移 3 个月 ▶",
+      timelineLabel: locale === "en" ? `Monthly planning: ${cols[0].label} ${cols[0].subLabel} – ${cols[cols.length - 1].label} ${cols[cols.length - 1].subLabel}` : `月推进视界：${cols[0].subLabel}${cols[0].label} ~ ${cols[cols.length - 1].subLabel}${cols[cols.length - 1].label}`,
+      prevLabel: locale === "en" ? "◀ Previous 3 months" : "◀ 前移 3 个月",
+      nextLabel: locale === "en" ? "Next 3 months ▶" : "后移 3 个月 ▶",
       stepAmount: 3,
     };
   }
@@ -111,16 +112,16 @@ export function buildGanttTimeline(
       cols.push({
         key,
         label: `Q${q}`,
-        subLabel: `${yr}年`,
+        subLabel: locale === "en" ? String(yr) : `${yr}年`,
         isCurrent: yr === currentYear && q === currentQuarter,
       });
     }
   }
   return {
     columns: cols,
-    timelineLabel: `年路线图视界：${baseYear}年 ~ ${baseYear + 2}年 (12 个季度)`,
-    prevLabel: "◀ 前移 1 年",
-    nextLabel: "后移 1 年 ▶",
+    timelineLabel: locale === "en" ? `Roadmap: ${baseYear} – ${baseYear + 2} (12 quarters)` : `年路线图视界：${baseYear}年 ~ ${baseYear + 2}年 (12 个季度)`,
+    prevLabel: locale === "en" ? "◀ Previous year" : "◀ 前移 1 年",
+    nextLabel: locale === "en" ? "Next year ▶" : "后移 1 年 ▶",
     stepAmount: 1,
   };
 }

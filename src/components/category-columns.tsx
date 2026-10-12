@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import BrandIcon from "./brand-icon";
 import Toast from "./toast";
 import type { Category, SiteLink } from "@/types";
@@ -18,6 +20,8 @@ export default function CategoryColumns({
   links,
   onViewCategory,
 }: CategoryColumnsProps) {
+  const tx = useTranslations();
+  const text = useText();
   // 展示用户创建的所有分类卡片
   const displayCategories = categories;
   const { notice, flash } = useToast();
@@ -46,10 +50,10 @@ export default function CategoryColumns({
                 <button
                   onClick={async () => {
                     const r = await copyShareLink("category", cat.id, cat.name);
-                    flash(r.message);
+                    flash(text(r.message));
                   }}
                   className="text-gray-400 dark:text-slate-400 hover:text-[#00C776] dark:hover:text-[#00C776] p-1 rounded-md transition-colors text-xs"
-                  title="复制免登录分享链接"
+                  title={tx("copy_public_share_link_99f1df95")}
                 >
                   🔗
                 </button>
@@ -82,8 +86,7 @@ export default function CategoryColumns({
               ))}
               {catLinks.length === 0 && (
                 <div className="flex-1 flex items-center justify-center py-6 text-[11px] text-gray-400 dark:text-slate-500">
-                  暂无相关书签链接
-                </div>
+                  {tx("no_related_bookmarks_e6af7fbc")}</div>
               )}
             </div>
 
@@ -93,7 +96,7 @@ export default function CategoryColumns({
                 onClick={() => onViewCategory && onViewCategory(cat.id)}
                 className="flex items-center gap-1 text-xs font-medium text-gray-400 dark:text-slate-400 hover:text-[#00C776] transition-colors cursor-pointer"
               >
-                <span>查看全部 ({links.filter((l) => l.category === cat.id).length})</span>
+                <span>{tx("view_all_aae985bd")}{links.filter((l) => l.category === cat.id).length})</span>
                 <span className="text-sm">→</span>
               </button>
             </div>

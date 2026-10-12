@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { emitUserEvent } from "@/lib/events";
@@ -6,7 +7,7 @@ import { emitUserEvent } from "@/lib/events";
 export async function GET() {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   // 1. 查询全站所有标记为团队公开的分类（来自除自己以外或包含自己的所有公开分类）
@@ -54,20 +55,20 @@ export async function GET() {
     isSubscribed: subSet.has(`${r.owner_id}:${r.id}`),
   }));
 
-  return NextResponse.json({ categories: teamCategories });
+  return localizedJson({ categories: teamCategories });
 }
 
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   let body: { categoryId?: unknown; ownerId?: unknown; action?: unknown };
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "请求格式错误" }, { status: 400 });
+    return localizedJson({ error: "请求格式错误" }, { status: 400 });
   }
 
   const categoryId = typeof body.categoryId === "string" ? body.categoryId.trim() : "";
@@ -75,13 +76,13 @@ export async function POST(req: NextRequest) {
   const action = body.action === "unsubscribe" ? "unsubscribe" : "subscribe";
 
   if (!categoryId || !ownerId) {
-    return NextResponse.json({ error: "缺少分类或所有者参数" }, { status: 400 });
+    return localizedJson({ error: "缺少分类或所有者参数" }, { status: 400 });
   }
 
   if (action === "subscribe") {
     // 不能订阅自己本身的分类（自身本来就拥有）
     if (ownerId === user.id) {
-      return NextResponse.json({ error: "无法订阅自己的分类" }, { status: 400 });
+      return localizedJson({ error: "无法订阅自己的分类" }, { status: 400 });
     }
 
     // 安全校验：被订阅的分类必须存在且被其所有者明确设为 is_team_shared = 1
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
       .get(categoryId, ownerId);
 
     if (!targetCat) {
-      return NextResponse.json(
+      return localizedJson(
         { error: "目标分类不存在或未向团队公开" },
         { status: 403 },
       );
@@ -104,7 +105,7 @@ export async function POST(req: NextRequest) {
     `).run(user.id, categoryId, ownerId, Date.now());
 
     emitUserEvent(user.id, "categories:change");
-    return NextResponse.json({ success: true, isSubscribed: true });
+    return localizedJson({ success: true, isSubscribed: true });
   } else {
     db.prepare(`
       DELETE FROM user_category_subscriptions
@@ -112,6 +113,6 @@ export async function POST(req: NextRequest) {
     `).run(user.id, categoryId, ownerId);
 
     emitUserEvent(user.id, "categories:change");
-    return NextResponse.json({ success: true, isSubscribed: false });
+    return localizedJson({ success: true, isSubscribed: false });
   }
 }

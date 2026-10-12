@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
 import { getSessionUser } from "@/lib/auth";
 import { getBuildInfo } from "@/lib/build-info";
 
@@ -52,7 +52,7 @@ function versionGt(a: number[], b: number[]): boolean {
 export async function GET() {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   const githubRepo = process.env.NAVELIX_GITHUB_REPO?.trim() || DEFAULT_GITHUB_REPO;
@@ -66,7 +66,7 @@ export async function GET() {
   };
 
   if (cache && cache.expiresAt > Date.now()) {
-    return NextResponse.json({ ...cache.data, local });
+    return localizedJson({ ...cache.data, local });
   }
 
   try {
@@ -94,7 +94,7 @@ export async function GET() {
         error: null,
       };
       cache = { data, expiresAt: Date.now() + CACHE_MS };
-      return NextResponse.json(data);
+      return localizedJson(data);
     }
 
     if (!ghRes.ok) {
@@ -105,7 +105,7 @@ export async function GET() {
         error: `GitHub API 请求失败 (HTTP ${ghRes.status})`,
       };
       cache = { data, expiresAt: Date.now() + 60 * 1000 };
-      return NextResponse.json(data);
+      return localizedJson(data);
     }
 
     const ghData = await ghRes.json();
@@ -140,10 +140,10 @@ export async function GET() {
     };
 
     cache = { data: result, expiresAt: Date.now() + CACHE_MS };
-    return NextResponse.json(result);
+    return localizedJson(result);
   } catch (err: unknown) {
     const isAbort = (err as { name?: string })?.name === "AbortError";
-    return NextResponse.json({
+    return localizedJson({
       local,
       remote: null,
       updateAvailable: null,

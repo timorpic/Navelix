@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { SiteLink } from "@/types";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -91,6 +92,7 @@ export interface UseRecentActivitiesResult {
 }
 
 export function useRecentActivities(links: SiteLink[]): UseRecentActivitiesResult {
+  const tx = useTranslations();
   const confirmDialog = useConfirm();
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -288,9 +290,9 @@ export function useRecentActivities(links: SiteLink[]): UseRecentActivitiesResul
   const deleteItem = useCallback(
     async (item: ActivityItem) => {
       const okToDelete = await confirmDialog.confirm({
-        title: "删除记录",
-        message: `确定要删除记录 “${item.title}” 吗？`,
-        confirmLabel: "删除",
+        title: tx("delete_record_f2cf9101"),
+        message: tx("message_984d4d174306", {v0: item.title}),
+        confirmLabel: tx("delete_2f9daa82"),
       });
       if (!okToDelete) return;
       setDeletingId(item.id);
@@ -318,16 +320,16 @@ export function useRecentActivities(links: SiteLink[]): UseRecentActivitiesResul
         setDeletingId(null);
       }
     },
-    [confirmDialog, loadActivities],
+    [confirmDialog, loadActivities, tx],
   );
 
   // 批量删除所选项
   const batchDelete = useCallback(async () => {
     if (selectedIds.size === 0) return;
     const okToBatch = await confirmDialog.confirm({
-      title: "批量删除",
-      message: `确定要批量删除选中的 ${selectedIds.size} 条记录吗？`,
-      confirmLabel: "删除",
+      title: tx("delete_selected_ddae7a0f"),
+      message: tx("message_d69faebf0960", {v0: selectedIds.size}),
+      confirmLabel: tx("delete_2f9daa82"),
     });
     if (!okToBatch) return;
     setBatchDeleting(true);
@@ -358,14 +360,14 @@ export function useRecentActivities(links: SiteLink[]): UseRecentActivitiesResul
     } finally {
       setBatchDeleting(false);
     }
-  }, [confirmDialog, items, selectedIds, loadActivities]);
+  }, [confirmDialog, items, selectedIds, loadActivities, tx]);
 
   // 清空全部记录
   const clearAll = useCallback(async () => {
     const okToClear = await confirmDialog.confirm({
-      title: "清空记录",
-      message: "⚠️ 确定要清空全部活动记录吗？此操作无法撤销。",
-      confirmLabel: "清空",
+      title: tx("clear_records_80e015bf"),
+      message: tx("clear_all_activity_records_this_action_cannot_be_73661e1a"),
+      confirmLabel: tx("clear_1ef3de06"),
     });
     if (!okToClear) return;
     try {
@@ -376,7 +378,7 @@ export function useRecentActivities(links: SiteLink[]): UseRecentActivitiesResul
     } catch {
       // ignore
     }
-  }, [confirmDialog, loadActivities]);
+  }, [confirmDialog, loadActivities, tx]);
 
   // 来源标签列表
   const sourceTabs = useMemo(() => buildSourceTabs(counts), [counts]);

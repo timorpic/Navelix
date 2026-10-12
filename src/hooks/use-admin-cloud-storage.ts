@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import {
   DEFAULT_CLOUD_STORAGE_CONFIG,
@@ -61,6 +63,8 @@ export function useAdminCloudStorage({
   flash,
   confirm,
 }: UseAdminCloudStorageOptions): UseAdminCloudStorageResult {
+  const tx = useTranslations();
+  const text = useText();
   // ── 云存储配置与操作 ──
   const [storageConfig, setStorageConfig] = useState<CloudStorageConfig>(
     DEFAULT_CLOUD_STORAGE_CONFIG,
@@ -101,12 +105,12 @@ export function useAdminCloudStorage({
           body: JSON.stringify(cfg),
         });
         const data = await res.json();
-        flash(storageSaveMessage(res.ok, data));
+        flash(text(storageSaveMessage(res.ok, data)));
       } catch {
-        flash("❌ 请求失败");
+        flash(tx("request_failed_10d559a3"));
       }
     },
-    [storageConfig, flash],
+    [storageConfig, flash, tx, text],
   );
 
   // 切换存储类型：先本地生效，再整份提交（enabled 随「关闭云备份」推导）
@@ -128,13 +132,13 @@ export function useAdminCloudStorage({
         body: JSON.stringify({ action: "test", tempConfig: storageConfig }),
       });
       const data = await res.json();
-      flash(storageTestMessage(res.ok, data));
+      flash(text(storageTestMessage(res.ok, data)));
     } catch {
-      flash("❌ 测试请求超时或失败");
+      flash(tx("connection_test_timed_out_or_failed_986fbc96"));
     } finally {
       setTestingStorage(false);
     }
-  }, [storageConfig, flash]);
+  }, [storageConfig, flash, tx, text]);
 
   const backupNow = useCallback(async () => {
     setBackingUpNow(true);
@@ -145,13 +149,13 @@ export function useAdminCloudStorage({
         body: JSON.stringify({ action: "backup_now", tempConfig: storageConfig }),
       });
       const data = await res.json();
-      flash(storageBackupMessage(res.ok, data));
+      flash(text(storageBackupMessage(res.ok, data)));
     } catch {
-      flash("❌ 备份请求失败");
+      flash(tx("backup_request_failed_4d5cd5f1"));
     } finally {
       setBackingUpNow(false);
     }
-  }, [storageConfig, flash]);
+  }, [storageConfig, flash, tx, text]);
 
   const openRemoteBackupList = useCallback(async () => {
     setShowBackupListModal(true);
@@ -168,20 +172,20 @@ export function useAdminCloudStorage({
         setRemoteBackups(backups);
       }
     } catch {
-      flash("获取云端快照列表失败");
+      flash(tx("failed_to_fetch_cloud_snapshots_eb2fa6bc"));
     } finally {
       setLoadingBackups(false);
     }
-  }, [storageConfig, flash]);
+  }, [storageConfig, flash, tx]);
 
   const closeBackupListModal = useCallback(() => setShowBackupListModal(false), []);
 
   const restoreFromCloud = useCallback(
     async (fileName: string) => {
       const okToRestore = await confirm({
-        title: "从云端还原",
-        message: `⚠️ 确定要从云端快照【${fileName}】还原数据库吗？\n\n系统将自动创建本地回滚保护快照，并覆盖当前数据库。`,
-        confirmLabel: "还原",
+        title: tx("restore_from_cloud_3d2bb2b2"),
+        message: tx("message_e77af1045916", {v0: fileName}),
+        confirmLabel: tx("restore_ddde0894"),
       });
       if (!okToRestore) {
         return;
@@ -198,18 +202,18 @@ export function useAdminCloudStorage({
         if (outcome.ok) {
           // 此处刻意保留原生 alert：紧随其后的整页刷新会立刻卸载 React 树，
           // 换成 Toast 用户根本来不及看清。
-          alert("🎉 数据库还原成功！系统将自动刷新页面。");
+          alert(tx("database_restored_the_page_will_refresh_automati_4887460e"));
           window.location.reload();
         } else {
-          flash(outcome.message);
+          flash(text(outcome.message));
         }
       } catch {
-        flash("❌ 还原请求失败");
+        flash(tx("restore_request_failed_0d58cc52"));
       } finally {
         setRestoringFileName(null);
       }
     },
-    [confirm, storageConfig, flash],
+    [confirm, storageConfig, flash, tx, text],
   );
 
   return {

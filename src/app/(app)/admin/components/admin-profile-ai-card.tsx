@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useSystemSecretClear } from "@/hooks/use-system-secret-clear";
 import { useState } from "react";
 import { useNavelixConfig } from "@/context/navelix-context";
@@ -17,6 +18,7 @@ export default function AdminProfileAiCard({
   /** 展示提示并写入通知中心（来自 useToast） */
   notify: (title: string, msg: string) => void;
 }) {
+  const tx = useTranslations();
   const secret = useSystemSecretClear();
   const { config, updateConfig } = useNavelixConfig();
   // 密钥不会从服务端回传；输入框仅在本次填写时保存，提交后立即清空。
@@ -28,22 +30,21 @@ export default function AdminProfileAiCard({
         <div>
           <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
             <span>🤖</span>
-            <span>AI Copilot 配置</span>
+            <span>{tx("ai_copilot_settings_ac770287")}</span>
           </h3>
           <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-            配置 OpenAI 兼容接口，支持 OpenAI、DeepSeek、通义千问、Ollama 等服务。
-          </p>
+            {tx("configure_an_openai_compatible_endpoint_for_open_75900e77")}</p>
         </div>
         <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
           config.aiKeyConfigured
             ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900"
             : "bg-gray-50 text-gray-500 border-gray-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-700"
         }`}>
-          {config.aiKeyConfigured ? "密钥已配置" : "尚未配置密钥"}
+          {config.aiKeyConfigured ? tx("api_key_configured_7e358a91") : tx("no_api_key_configured_f76931eb")}
         </span>
       </div>
 
-      <button type="button" onClick={() => secret.clear("aiApiKey")} className="text-xs text-rose-600">清除 AI 密钥</button>
+      <button type="button" onClick={() => secret.clear("aiApiKey")} className="text-xs text-rose-600">{tx("clear_ai_api_key_b59bde75")}</button>
       {secret.error && <p role="alert">{secret.error}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="sm:col-span-2">
@@ -66,8 +67,7 @@ export default function AdminProfileAiCard({
 
         <div>
           <label htmlFor="admin-ai-model" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
-            模型名称
-          </label>
+            {tx("model_name_cb2f1709")}</label>
           <input
             id="admin-ai-model"
             name="aiModel"
@@ -77,7 +77,7 @@ export default function AdminProfileAiCard({
               const value = e.target.value.trim();
               if (value !== (config.aiModel || "")) updateConfig({ aiModel: value });
             }}
-            placeholder="gpt-4o-mini 或 deepseek-chat"
+            placeholder={tx("gpt_4o_mini_or_deepseek_chat_6b894e21")}
             className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
           />
         </div>
@@ -97,9 +97,9 @@ export default function AdminProfileAiCard({
               if (!value) return;
               updateConfig({ aiApiKey: value, aiKeyConfigured: true });
               setAiApiKeyInput("");
-              notify("AI Copilot", "API Key 已安全保存");
+              notify("AI Copilot", tx("api_key_saved_securely_0ef08164"));
             }}
-            placeholder={config.aiKeyConfigured ? "已配置；填入新值即可覆盖" : "sk-..."}
+            placeholder={config.aiKeyConfigured ? tx("configured_enter_a_new_value_to_replace_it_35ac33bc") : "sk-..."}
             autoComplete="new-password"
             className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
           />
@@ -107,8 +107,7 @@ export default function AdminProfileAiCard({
       </div>
 
       <p className="text-[10px] text-gray-400 dark:text-slate-500">
-        地址与模型在失焦后保存；密钥仅用于提交，保存后不会再次显示。
-      </p>
+        {tx("endpoint_and_model_are_saved_on_blur_keys_are_su_514ab0b4")}</p>
     </div>
   );
 }

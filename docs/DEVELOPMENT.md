@@ -86,3 +86,11 @@ node scripts/sync-changelog.mjs --print
 发布操作：`node scripts/sync-changelog.mjs --publish` 会创建或编辑 GitHub Release，需要维护者授权和已登录的 `gh`。**该脚本只操作 Release，不会创建 git tag**——需先 `git tag vX.Y.Z` 并推送，否则 Docker 工作流的版本一致性闸门（Release tag == `package.json` version）会直接失败。tag 应指向准备发布的提交。
 
 发布 Release 将触发 Docker 工作流的镜像推送和冒烟检查；扩展 Release 使用独立 tag，但当前 Docker 工作流未按 tag 排除扩展发布，安排扩展发布前需核对触发策略，避免应用版本校验失败。构建分发见 [REGISTRY](REGISTRY.md)，运行与回滚见 [DEPLOYMENT](DEPLOYMENT.md)。
+
+## 中英文文案维护
+
+- 新界面文案在 `messages/zh-CN.json`、`messages/en.json` 同时添加相同 key，客户端用 `useTranslations()`，服务端用 `getTranslations()`；完整句子使用 ICU 参数，避免直接拼接用户输入或动态生成 key。
+- 展示层翻译静态标签，不翻译数据库中的用户标题、笔记、分类名或状态枚举。时间展示显式传入当前 locale，不改写业务日期。
+- 现有辅助函数及后台通知的中文文案通过 `messages/source-index.json` 与 `messages/templates.json` 桥接。新增模板应锚定完整句子，默认保留参数原文；仅应用自己生成的嵌套标签可以声明 `translateValues`。新组件优先直接使用字典 key。
+- `src/lib/__tests__/i18n.test.ts` 验证两份字典、ICU 参数、实际调用 key、旧语言兼容与格式化；个人 Telegram 测试验证收件人语言与原始任务标题。`e2e/i18n.spec.ts` 覆盖访客、跨设备个人设置、账号隔离、移动端及中文内容保留。
+- 测试和构建使用独立 `NAVELIX_DATA_DIR`。中文和英文都需检查按钮长度、弹窗、空状态、错误提示与移动端布局。

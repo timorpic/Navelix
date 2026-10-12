@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
+import { NextRequest } from "next/server";
 import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
@@ -26,7 +27,7 @@ interface LinkInput {
 export async function GET() {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   const links = db
@@ -42,26 +43,26 @@ export async function GET() {
     )
     .all(user.id);
 
-  return NextResponse.json({ links, categories });
+  return localizedJson({ links, categories });
 }
 
 // POST /api/links - 单条新增书签（幂等：同 URL 已存在则返回既有记录）
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   const body = (await req.json().catch(() => null)) as LinkInput | null;
   if (!body || typeof body.url !== "string" || !body.url.trim()) {
-    return NextResponse.json({ error: "url 不能为空" }, { status: 400 });
+    return localizedJson({ error: "url 不能为空" }, { status: 400 });
   }
 
   // 显式给出非 http/https 协议的（如 ftp://, file://）一律拒绝，避免错误前缀绕过校验
   const rawUrl = body.url.trim();
   const schemeMatch = rawUrl.match(/^([a-z][a-z0-9+.-]*?):\/\//i);
   if (schemeMatch && !/^https?$/i.test(schemeMatch[1])) {
-    return NextResponse.json({ error: "仅支持 http/https 链接" }, { status: 400 });
+    return localizedJson({ error: "仅支持 http/https 链接" }, { status: 400 });
   }
 
   const url = normalizeUrl(rawUrl);
@@ -69,10 +70,10 @@ export async function POST(req: NextRequest) {
   try {
     parsed = new URL(url);
   } catch {
-    return NextResponse.json({ error: "URL 格式无效" }, { status: 400 });
+    return localizedJson({ error: "URL 格式无效" }, { status: 400 });
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    return NextResponse.json({ error: "仅支持 http/https 链接" }, { status: 400 });
+    return localizedJson({ error: "仅支持 http/https 链接" }, { status: 400 });
   }
 
   const title = typeof body.title === "string" && body.title.trim()
@@ -89,7 +90,7 @@ export async function POST(req: NextRequest) {
     .prepare("SELECT * FROM user_links WHERE user_id = ? AND url = ?")
     .get(user.id, url) as Record<string, unknown> | undefined;
   if (existing) {
-    return NextResponse.json({ link: existing, duplicate: true });
+    return localizedJson({ link: existing, duplicate: true });
   }
 
   const id = `link-${Date.now()}-${randomBytes(3).toString("hex")}`;
@@ -101,7 +102,7 @@ export async function POST(req: NextRequest) {
   // 触发实时同步通知（供网页端 / 其他终端秒级感知）
   emitUserEvent(user.id, "links:change", { linkId: id, url, title });
 
-  return NextResponse.json(
+  return localizedJson(
     { link: { id, title, url, description, icon, category, notes, isQuickAccess }, duplicate: false },
     { status: 201 },
   );

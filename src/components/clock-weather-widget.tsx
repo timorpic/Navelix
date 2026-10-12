@@ -1,5 +1,7 @@
 "use client";
+import { useLocale } from "next-intl";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { useNavelixConfig } from "@/context/navelix-context";
 
@@ -24,6 +26,8 @@ interface WeatherData {
 }
 
 export default function ClockWeatherWidget() {
+  const locale = useLocale();
+  const tx = useTranslations();
   const { config } = useNavelixConfig();
 
   // 初始值直接取自配置，无需 effect 同步
@@ -57,10 +61,10 @@ export default function ClockWeatherWidget() {
         setWeather({
           temp: NaN,
           windSpeed: 0,
-          desc: "数据更新中",
+          desc: tx("updating_a58ca5f4"),
           icon: "🔄",
           isDay: true,
-          location: data.location || "实时",
+          location: data.location || tx("live_c69ec2ff"),
           updatedAt: "",
         });
         return;
@@ -68,16 +72,16 @@ export default function ClockWeatherWidget() {
       setWeather({
         temp: data.temp || 24,
         windSpeed: data.windSpeed || 12,
-        desc: data.desc || "晴",
+        desc: data.desc || tx("clear_6379ede5"),
         icon: "☀️",
         isDay: true,
-        location: data.location || "实时",
+        location: data.location || tx("live_c69ec2ff"),
         updatedAt: data.updatedAt || "",
       });
     } catch {
       setWeather(null);
     }
-  }, []);
+  }, [tx]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -99,7 +103,7 @@ export default function ClockWeatherWidget() {
               : "text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300"
           }`}
         >
-          <span>时钟</span>
+          <span>{tx("clock_0f58fd2a")}</span>
         </button>
         <button
           onClick={() => setClockTab("weather")}
@@ -109,7 +113,7 @@ export default function ClockWeatherWidget() {
               : "text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300"
           }`}
         >
-          <span>天气</span>
+          <span>{tx("weather_4d947325")}</span>
         </button>
         <button
           onClick={() => setClockTab("analog")}
@@ -119,18 +123,17 @@ export default function ClockWeatherWidget() {
               : "text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300"
           }`}
         >
-          <span>指针</span>
+          <span>{tx("analog_022abde1")}</span>
         </button>
       </div>
 
         {clockTab === "time" ? (
           <>
             <p suppressHydrationWarning className="text-lg font-bold tabular-nums leading-tight">
-              {now.toLocaleTimeString("zh-CN", { hour12: false })}
+              {now.toLocaleTimeString(locale, { hour12: false })}
             </p>
             <p suppressHydrationWarning className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
-              {now.getMonth() + 1}月{now.getDate()}日{" "}
-              {["周日", "周一", "周二", "周三", "周四", "周五", "周六"][now.getDay()]}
+              {now.toLocaleDateString(locale, { month: "short", day: "numeric", weekday: "short" })}
             </p>
           </>
         ) : clockTab === "analog" ? (
@@ -166,7 +169,7 @@ export default function ClockWeatherWidget() {
               <circle cx="50" cy="50" r="3" className="fill-rose-500" />
             </svg>
             <p suppressHydrationWarning className="text-[10px] text-gray-400 dark:text-slate-400 mt-1 font-mono">
-              {now.toLocaleTimeString("zh-CN", { hour12: false })}
+              {now.toLocaleTimeString(locale, { hour12: false })}
             </p>
           </div>
         ) : weather ? (
@@ -190,8 +193,7 @@ export default function ClockWeatherWidget() {
           <>
             <p className="text-lg font-bold tabular-nums leading-tight">--°C</p>
             <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
-              未配置天气
-            </p>
+              {tx("weather_not_configured_3207c857")}</p>
           </>
         )}
     </div>

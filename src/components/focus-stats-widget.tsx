@@ -1,12 +1,14 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useFocusTracker } from "@/hooks/use-focus-tracker";
 export default function FocusStatsWidget() {
+  const tx = useTranslations();
   const { totalHours, weeklyChange, dailyAverage, isPositive, weeklyData } =
     useFocusTracker();
 
   const maxHours = Math.max(...weeklyData, 1);
-  const dayNames = ["一", "二", "三", "四", "五", "六", "日"];
+  const dayNames = [tx("mon_51a75f46"), tx("tue_084b42f6"), tx("wed_a4c3313d"), tx("thu_754a9d58"), tx("fri_c9b87f51"), tx("sat_de07b538"), tx("sun_85217f7a")];
   const currentDayIdx = (new Date().getDay() + 6) % 7; // 0=Mon, 6=Sun
 
   return (
@@ -20,35 +22,31 @@ export default function FocusStatsWidget() {
             </svg>
           </span>
           <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1">
-            <span>专注统计</span>
+            <span>{tx("focus_statistics_305471d2")}</span>
           </h3>
         </div>
         <span className="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 text-[10px] font-bold">
-          本周
-        </span>
+          {tx("this_week_b4c6c3eb")}</span>
       </div>
 
       {/* Main Metric Numbers */}
       <div className="flex items-baseline justify-between my-1">
         <div>
           <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">
-            本周专注总时长
-          </span>
+            {tx("total_focus_this_week_fc6e8b73")}</span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
               {totalHours}
             </span>
             <span className="text-xs font-bold text-gray-500 dark:text-slate-400">
-              小时
-            </span>
+              {tx("hours_3b6fefc5")}</span>
           </div>
         </div>
 
         {/* Weekly Trend Badge */}
         <div className="flex flex-col items-end">
           <span className="text-[10px] text-gray-400 dark:text-slate-500 mb-0.5">
-            较上周
-          </span>
+            {tx("vs_last_week_1fb367f5")}</span>
           <div
             className={`px-2 py-0.5 rounded-lg text-xs font-bold flex items-center gap-0.5 ${
               isPositive
@@ -80,8 +78,7 @@ export default function FocusStatsWidget() {
               ))}
             </div>
             <p className="text-[10px] text-gray-400 dark:text-slate-500 text-center">
-              保持页面开着，专注时长会自动累积
-            </p>
+              {tx("keep_the_page_open_to_automatically_accumulate_f_85a06526")}</p>
           </div>
         ) : (
           <div className="flex items-end justify-between gap-1.5" style={{ height: "56px" }}>
@@ -119,11 +116,10 @@ export default function FocusStatsWidget() {
       {/* Sub Stats Footer */}
       <div className="mt-2 pt-2 border-t border-gray-100 dark:border-slate-700/60 flex items-center justify-between text-[11px]">
         <span className="text-gray-400 dark:text-slate-400">
-          日均专注 {dailyAverage} 小时
-        </span>
+          {tx("daily_average_focus_98575f09")}{dailyAverage} {tx("hours_3b6fefc5")}</span>
         <span className="font-semibold text-[#00C776] flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full bg-[#00C776] animate-pulse" />
-          <span>进行中</span>
+          <span>{tx("in_progress_dc9591e5")}</span>
         </span>
       </div>
     </div>

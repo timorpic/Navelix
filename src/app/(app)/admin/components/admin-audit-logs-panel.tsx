@@ -1,5 +1,7 @@
 "use client";
+import { useLocale } from "next-intl";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 
 interface AuditLogItem {
@@ -54,6 +56,8 @@ function renderDetails(details: string): React.ReactNode {
 }
 
 export default function AdminAuditLogsPanel() {
+  const locale = useLocale();
+  const tx = useTranslations();
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -75,18 +79,18 @@ export default function AdminAuditLogsPanel() {
       const res = await fetch(`/api/admin/audit-logs?${params.toString()}`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error || "加载审计日志失败");
+        setError(data.message || data.error || tx("failed_to_load_audit_logs_ff154156"));
         return;
       }
       const data = await res.json();
       setLogs(data.logs || []);
       setTotal(data.total || 0);
     } catch {
-      setError("网络异常，无法加载审计日志");
+      setError(tx("network_error_unable_to_load_audit_logs_b32c9d67"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tx]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -106,11 +110,10 @@ export default function AdminAuditLogsPanel() {
       <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-gray-900 dark:text-white">
-            审计日志 ({total})
+            {tx("audit_logs_9fcaa59c")}{total})
           </h2>
           <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-            记录谁在何时改了什么（系统配置、备份/还原等敏感操作），仅管理员可见
-          </p>
+            {tx("administrator_only_records_of_sensitive_changes__8153cef8")}</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -119,7 +122,7 @@ export default function AdminAuditLogsPanel() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") applyFilter(); }}
-            placeholder="搜索用户名 / 动作 / 目标…"
+            placeholder={tx("search_username_action_target_bfe8e3d2")}
             className="h-9 w-48 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:outline-none focus:border-[#00C776]"
           />
           <select
@@ -127,7 +130,7 @@ export default function AdminAuditLogsPanel() {
             onChange={(e) => setAction(e.target.value)}
             className="h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-2 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:outline-none"
           >
-            <option value="">全部动作</option>
+            <option value="">{tx("all_actions_34cfec08")}</option>
             {Object.entries(ACTION_LABELS).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
             ))}
@@ -136,8 +139,7 @@ export default function AdminAuditLogsPanel() {
             onClick={applyFilter}
             className="h-9 px-4 bg-[#00C776] hover:bg-[#009a5a] text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
           >
-            筛选
-          </button>
+            {tx("filter_b5f15473")}</button>
         </div>
       </div>
 
@@ -147,32 +149,32 @@ export default function AdminAuditLogsPanel() {
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="border-b border-gray-100 dark:border-slate-700 text-gray-400 dark:text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
-              <th className="pb-3 pr-4">时间</th>
-              <th className="pb-3 pr-4">操作者</th>
-              <th className="pb-3 pr-4">动作</th>
-              <th className="pb-3 pr-4">目标</th>
-              <th className="pb-3">变更详情</th>
+              <th className="pb-3 pr-4">{tx("time_8b6ff498")}</th>
+              <th className="pb-3 pr-4">{tx("actor_e18e3f8a")}</th>
+              <th className="pb-3 pr-4">{tx("action_be37d841")}</th>
+              <th className="pb-3 pr-4">{tx("target_57060c88")}</th>
+              <th className="pb-3">{tx("change_details_fd2ae390")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
             {loading ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-400 dark:text-slate-500">加载中…</td>
+                <td colSpan={5} className="py-8 text-center text-gray-400 dark:text-slate-500">{tx("loading_4927a53b")}</td>
               </tr>
             ) : logs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-400 dark:text-slate-500">暂无审计记录</td>
+                <td colSpan={5} className="py-8 text-center text-gray-400 dark:text-slate-500">{tx("no_audit_records_yet_1fbef39b")}</td>
               </tr>
             ) : (
               logs.map((l) => (
                 <tr key={l.id} className="align-top hover:bg-gray-50/60 dark:hover:bg-slate-700/50 transition-colors">
                   <td className="py-3.5 pr-4 text-gray-400 dark:text-slate-400 whitespace-nowrap">
-                    {new Date(l.createdAt).toLocaleString("zh-CN")}
+                    {new Date(l.createdAt).toLocaleString(locale)}
                   </td>
                   <td className="py-3.5 pr-4 font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                     {l.username
                       ? `@${l.username}${l.displayName && l.displayName !== l.username ? `（${l.displayName}）` : ""}`
-                      : "已删除账号"}
+                      : tx("deleted_account_c77cf23b")}
                   </td>
                   <td className="py-3.5 pr-4">
                     <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 border border-teal-100 dark:border-teal-900 whitespace-nowrap">
@@ -191,23 +193,20 @@ export default function AdminAuditLogsPanel() {
       {totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
           <span className="text-xs text-gray-400 dark:text-slate-400">
-            第 {page + 1} / {totalPages} 页
-          </span>
+            {tx("page_af50a0fe")}{page + 1} / {totalPages} {tx("page_d24d3c99")}</span>
           <div className="flex items-center gap-2">
             <button
               disabled={page === 0 || loading}
               onClick={() => { const next = page - 1; setPage(next); fetchLogs(next, q, action); }}
               className="h-8 px-3 rounded-lg border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
-              上一页
-            </button>
+              {tx("previous_c9b9ae7a")}</button>
             <button
               disabled={page >= totalPages - 1 || loading}
               onClick={() => { const next = page + 1; setPage(next); fetchLogs(next, q, action); }}
               className="h-8 px-3 rounded-lg border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
-              下一页
-            </button>
+              {tx("next_8a8542f6")}</button>
           </div>
         </div>
       )}

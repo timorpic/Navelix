@@ -1,5 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { SystemConfig } from "@/types";
+import { normalizeLocale } from "./i18n.ts";
 import { ensureColumn } from "./db/columns.ts";
 import {
   DEFAULT_CUSTOM_FOOTER,
@@ -81,8 +82,8 @@ export const USER_CONFIG_COLUMNS: UserConfigColumnDef[] = [
     kind: "str",
     configDefault: DEFAULT_CUSTOM_FOOTER,
   },
-  // 仅存储列（历史遗留，不映射到前端配置）
-  { column: "language", def: "language TEXT NOT NULL DEFAULT 'zh'", kind: "str" },
+  // 语言为个人偏好，兼容历史库中的 zh 值。
+  { column: "language", def: "language TEXT NOT NULL DEFAULT 'zh'", kind: "str", configKey: "language", configDefault: "zh-CN" },
   {
     column: "theme",
     def: "theme TEXT NOT NULL DEFAULT 'light'",
@@ -449,6 +450,7 @@ export function mapUserConfigRow(
         break;
     }
   }
+  cfg.language = normalizeLocale(cfg.language);
   return cfg as Partial<SystemConfig>;
 }
 

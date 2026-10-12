@@ -44,3 +44,13 @@ Navelix 是可自托管的个人数字工作空间，包含网址导航、项目
 常用检查：`pnpm typecheck`、`pnpm lint`、`pnpm test`、`pnpm build`。CI 还运行 `pnpm test:coverage` 和 `pnpm test:e2e`，详见开发文档。
 
 行为修复增加能覆盖回归场景的测试；纯文档修改检查路径、链接、命令及事实一致性即可。测试、构建和启动可能初始化 SQLite，应设置独立的 `NAVELIX_DATA_DIR`，不使用真实业务库验证破坏性操作。
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import {
   parseProfileSaveResult,
@@ -77,6 +79,8 @@ export function useAdminProfileAccount({
   notify,
   updateConfig,
 }: UseAdminProfileAccountOptions): UseAdminProfileAccountResult {
+  const tx = useTranslations();
+  const text = useText();
   // ── Current user ──
   const [currentUser, setCurrentUser] = useState<ProfileUser | null>(null);
 
@@ -144,14 +148,14 @@ export function useAdminProfileAccount({
           body: JSON.stringify({ tokenHash }),
         });
         if (res.ok) {
-          notify("会话管理", "已安全下线选定的设备");
+          notify(tx("session_management_359656f3"), tx("selected_device_signed_out_securely_afa241df"));
           fetchSessions();
         }
       } catch {
         // ignore
       }
     },
-    [notify, fetchSessions],
+    [notify, fetchSessions, tx],
   );
 
   const handleRevokeOtherSessions = useCallback(async () => {
@@ -162,13 +166,13 @@ export function useAdminProfileAccount({
         body: JSON.stringify({ action: "revoke_others" }),
       });
       if (res.ok) {
-        notify("会话管理", "已注销其他所有设备的登录会话");
+        notify(tx("session_management_359656f3"), tx("all_other_device_sessions_signed_out_f2c56300"));
         fetchSessions();
       }
     } catch {
       // ignore
     }
-  }, [notify, fetchSessions]);
+  }, [notify, fetchSessions, tx]);
 
   const fetchApiTokens = useCallback(async () => {
     try {
@@ -199,14 +203,14 @@ export function useAdminProfileAccount({
         if (res.ok && data.token) {
           setCreatedSecretToken(data.token);
           setNewTokenNameInput("");
-          notify("API 密钥", "密钥生成成功");
+          notify(tx("api_token_5f600b30"), tx("token_generated_7976e94a"));
           fetchApiTokens();
         }
       } catch {
         // ignore
       }
     },
-    [newTokenNameInput, notify, fetchApiTokens],
+    [newTokenNameInput, notify, fetchApiTokens, tx],
   );
 
   const handleRevokeToken = useCallback(
@@ -218,14 +222,14 @@ export function useAdminProfileAccount({
           body: JSON.stringify({ id }),
         });
         if (res.ok) {
-          notify("API 密钥", "密钥已解绑撤销");
+          notify(tx("api_token_5f600b30"), tx("token_revoked_9cd0cc0d"));
           fetchApiTokens();
         }
       } catch {
         // ignore
       }
     },
-    [notify, fetchApiTokens],
+    [notify, fetchApiTokens, tx],
   );
 
   const saveProfile = useCallback(
@@ -240,16 +244,16 @@ export function useAdminProfileAccount({
         const outcome = parseProfileSaveResult(res.ok, data);
         if (outcome.ok) {
           setCurrentUser(outcome.user);
-          setProfilePasswordNotice(outcome.notice);
-          notify("个人账号", "个人资料与签名已保存");
+          setProfilePasswordNotice(text(outcome.notice));
+          notify(tx("my_account_78c6e04f"), tx("profile_and_bio_saved_2cd7352d"));
         } else {
-          setProfilePasswordNotice(outcome.notice);
+          setProfilePasswordNotice(text(outcome.notice));
         }
       } catch {
-        setProfilePasswordNotice("❌ 更新个人资料失败");
+        setProfilePasswordNotice(tx("failed_to_update_profile_90539276"));
       }
     },
-    [notify],
+    [notify, tx, text],
   );
 
   const handleModalPasswordSave = useCallback(
@@ -277,8 +281,8 @@ export function useAdminProfileAccount({
         const data = await res.json();
         if (res.ok && data.user) {
           setCurrentUser(data.user);
-          setModalPasswordNotice("🎉 密码修改成功！");
-          notify("个人账号", "登录密码已成功重置");
+          setModalPasswordNotice(tx("password_changed_adbcaa5a"));
+          notify(tx("my_account_78c6e04f"), tx("sign_in_password_updated_successfully_aa9bf492"));
           updateConfig({ securitySetupDone: true });
           setTimeout(() => {
             setShowChangePasswordModal(false);
@@ -288,19 +292,13 @@ export function useAdminProfileAccount({
             setModalPasswordNotice("");
           }, 1000);
         } else {
-          setModalPasswordNotice(`❌ ${data.error || "密码修改失败"}`);
+          setModalPasswordNotice(`❌ ${data.message || data.error || tx("failed_to_change_password_878b622b")}`);
         }
       } catch {
-        setModalPasswordNotice("❌ 网络或服务器错误，修改失败");
+        setModalPasswordNotice(tx("network_or_server_error_update_failed_0c94fbbc"));
       }
     },
-    [
-      modalOldPassword,
-      modalNewPassword,
-      modalConfirmPassword,
-      notify,
-      updateConfig,
-    ],
+    [modalOldPassword, modalNewPassword, modalConfirmPassword, notify, updateConfig, tx],
   );
 
   const handleAvatarSave = useCallback(
@@ -315,15 +313,15 @@ export function useAdminProfileAccount({
         const data = await res.json();
         if (res.ok && data.user) {
           setCurrentUser(data.user);
-          notify("系统设置", "头像更新成功");
+          notify(tx("system_settings_68ea5dd4"), tx("avatar_updated_ca41b3cb"));
         } else {
-          flash(data.error || "头像保存失败");
+          flash(data.message || data.error || tx("failed_to_save_avatar_c88b32f6"));
         }
       } catch {
-        flash("头像保存失败");
+        flash(tx("failed_to_save_avatar_c88b32f6"));
       }
     },
-    [avatarDraft, notify, flash],
+    [avatarDraft, notify, flash, tx],
   );
 
   // Initial load + sync form inputs from user
@@ -373,8 +371,8 @@ export function useAdminProfileAccount({
 
   const copyCreatedToken = useCallback(() => {
     navigator.clipboard.writeText(createdSecretToken);
-    notify("API 密钥", "密钥已复制到剪贴板");
-  }, [createdSecretToken, notify]);
+    notify(tx("api_token_5f600b30"), tx("token_copied_to_clipboard_dc670ce4"));
+  }, [createdSecretToken, notify, tx]);
 
   return {
     currentUser,

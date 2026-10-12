@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { TodoItem, WorkspaceMember } from "@/types";
 import Overlay from "./overlay";
@@ -27,6 +28,7 @@ export default function ScheduleEditModal({
   /** 保存或删除成功后回调，由父组件负责刷新工作区数据 */
   onSaved: () => void;
 }) {
+  const tx = useTranslations();
   const [title, setTitle] = useState(item.title);
   const [dueDate, setDueDate] = useState(item.dueDate || defaultDateStr);
   const [priority, setPriority] = useState<"high" | "medium" | "low">(
@@ -78,8 +80,7 @@ export default function ScheduleEditModal({
       <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-xl border border-gray-100 dark:border-slate-800 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-black text-gray-900 dark:text-white">
-            编辑日程事项
-          </h3>
+            {tx("edit_schedule_item_69676260")}</h3>
           <button
             onClick={onClose}
             className="text-xs text-gray-400 hover:text-gray-600"
@@ -91,8 +92,7 @@ export default function ScheduleEditModal({
         <form onSubmit={handleSave} className="space-y-3">
           <div>
             <label className="block text-[11px] font-bold text-gray-500 mb-1">
-              事项标题 *
-            </label>
+              {tx("title_02ebbc76")}</label>
             <input
               type="text"
               required
@@ -106,8 +106,7 @@ export default function ScheduleEditModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-gray-500 mb-1">
-                截止日期
-              </label>
+                {tx("due_date_31802424")}</label>
               <input
                 type="date"
                 name="formDueDate"
@@ -119,8 +118,7 @@ export default function ScheduleEditModal({
 
             <div>
               <label className="block text-[11px] font-bold text-gray-500 mb-1">
-                精力与优先级
-              </label>
+                {tx("focus_priority_ccc34154")}</label>
               <select
                 name="formPriority"
                 value={priority}
@@ -129,9 +127,9 @@ export default function ScheduleEditModal({
                 }
                 className="w-full px-2 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-gray-800 dark:text-white"
               >
-                <option value="high">🌅 高优 (上午深度)</option>
-                <option value="medium">☀️ 中优 (下午推进)</option>
-                <option value="low">🌙 普通 (晚上收尾)</option>
+                <option value="high">{tx("high_morning_focus_adf6f101")}</option>
+                <option value="medium">{tx("medium_afternoon_progress_d04b0515")}</option>
+                <option value="low">{tx("normal_evening_wrap_up_e0625616")}</option>
               </select>
             </div>
           </div>
@@ -139,15 +137,14 @@ export default function ScheduleEditModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-bold text-gray-500 mb-1">
-                关联项目
-              </label>
+                {tx("related_project_81b8238f")}</label>
               <select
                 name="formProjectId"
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
                 className="w-full px-2 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white"
               >
-                <option value="">未关联项目</option>
+                <option value="">{tx("no_related_project_46062b1a")}</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -158,15 +155,14 @@ export default function ScheduleEditModal({
 
             <div>
               <label className="block text-[11px] font-bold text-gray-500 mb-1">
-                指派责任人
-              </label>
+                {tx("assign_to_1c362011")}</label>
               <select
                 name="formAssigneeId"
                 value={assigneeId}
                 onChange={(e) => setAssigneeId(e.target.value)}
                 className="w-full px-2 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-gray-800 dark:text-white"
               >
-                <option value="">未指派 (自己)</option>
+                <option value="">{tx("unassigned_myself_bc4db75f")}</option>
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>
                     👤 {m.displayName || m.username}
@@ -182,22 +178,19 @@ export default function ScheduleEditModal({
               onClick={handleDelete}
               className="text-xs text-rose-500 hover:underline font-bold"
             >
-              删除事项
-            </button>
+              {tx("delete_item_9f1e8663")}</button>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={onClose}
                 className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700"
               >
-                取消
-              </button>
+                {tx("cancel_2cd0f3be")}</button>
               <button
                 type="submit"
                 className="px-4 py-1.5 bg-[#00C776] text-white text-xs font-bold rounded-xl hover:bg-[#00B068]"
               >
-                保存更新
-              </button>
+                {tx("save_changes_84b88b0f")}</button>
             </div>
           </div>
         </form>

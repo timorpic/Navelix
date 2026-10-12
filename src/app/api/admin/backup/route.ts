@@ -1,7 +1,9 @@
+import { NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
 import { restoreDatabaseSnapshot } from "@/lib/db-restore";
 import fs from "node:fs";
 import path from "node:path";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdmin, verifyPassword } from "@/lib/auth";
 import { performDatabaseBackup } from "@/lib/db-backup";
@@ -13,12 +15,12 @@ import { resolveDataDir } from "@/lib/data-dir";
 export async function GET(req: NextRequest) {
   const adminUser = await requireAdmin(req);
   if (!adminUser) {
-    return NextResponse.json({ error: "无权访问，仅管理员可下载数据库备份" }, { status: 403 });
+    return localizedJson({ error: "无权访问，仅管理员可下载数据库备份" }, { status: 403 });
   }
 
   const backupFilePath = performDatabaseBackup(adminUser.id);
   if (!backupFilePath || !fs.existsSync(backupFilePath)) {
-    return NextResponse.json({ error: "创建数据库快照失败" }, { status: 500 });
+    return localizedJson({ error: "创建数据库快照失败" }, { status: 500 });
   }
 
   const fileBuffer = fs.readFileSync(backupFilePath);
@@ -39,7 +41,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const adminUser = await requireAdmin(req);
   if (!adminUser) {
-    return NextResponse.json({ error: "无权访问，仅管理员可恢复数据库" }, { status: 403 });
+    return localizedJson({ error: "无权访问，仅管理员可恢复数据库" }, { status: 403 });
   }
 
   // 解析上传体单独处理：Content-Type 不对时 req.formData() 会抛错，
@@ -48,7 +50,7 @@ export async function POST(req: NextRequest) {
   try {
     formData = await req.formData();
   } catch {
-    return NextResponse.json(
+    return localizedJson(
       { error: "请求格式错误，请以 multipart/form-data 上传 .db 备份文件" },
       { status: 400 },
     );
@@ -56,7 +58,7 @@ export async function POST(req: NextRequest) {
 
   const file = formData.get("file") as File | null;
   if (!file) {
-    return NextResponse.json({ error: "请上传有效的 .db 备份文件" }, { status: 400 });
+    return localizedJson({ error: "请上传有效的 .db 备份文件" }, { status: 400 });
   }
 
   try {
@@ -67,7 +69,7 @@ export async function POST(req: NextRequest) {
       .prepare("SELECT password_hash FROM users WHERE id = ?")
       .get(adminUser.id) as { password_hash: string } | undefined;
     if (!adminRow || !verifyPassword(confirmPassword, adminRow.password_hash)) {
-      return NextResponse.json(
+      return localizedJson(
         { error: "恢复数据库需输入当前管理员密码进行二次确认" },
         { status: 403 },
       );
@@ -80,7 +82,7 @@ export async function POST(req: NextRequest) {
     const SQLITE_HEADER = "SQLite format 3\0";
     const headerString = buffer.subarray(0, 16).toString("utf-8");
     if (!headerString.startsWith(SQLITE_HEADER)) {
-      return NextResponse.json({ error: "上传的文件并非合法的 SQLite 数据库文件" }, { status: 400 });
+      return localizedJson({ error: "上传的文件并非合法的 SQLite 数据库文件" }, { status: 400 });
     }
 
     // 1. 先将当前数据库在线备份一份以防万一
@@ -106,13 +108,13 @@ export async function POST(req: NextRequest) {
       details: "管理员执行了数据库物理还原覆盖操作",
     });
 
-    return NextResponse.json({
+    return localizedJson({
       success: true,
       message: "数据库已成功还原恢复！",
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "恢复数据库失败";
     console.error("[Database Restore Error]:", err);
-    return NextResponse.json({ error: `数据库恢复失败: ${msg}` }, { status: 500 });
+    return localizedJson({ error: `数据库恢复失败: ${msg}` }, { status: 500 });
   }
 }

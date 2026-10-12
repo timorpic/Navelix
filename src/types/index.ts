@@ -72,6 +72,7 @@ export interface Project {
 }
 
 export interface SystemConfig {
+  language: "zh-CN" | "en";
   logoText: string;
   logoImage?: string;
   showSearchBar: boolean;

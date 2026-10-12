@@ -1,4 +1,6 @@
-import { NextResponse } from "next/server";
+import { getLocale } from "next-intl/server";
+import { translateText } from "@/lib/server-translations";
+import { localizedJson } from "@/lib/localized-json";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
@@ -14,9 +16,11 @@ interface ScheduledTask {
 }
 
 export async function POST(req: Request) {
+  const locale = await getLocale();
+  const text = (value: string) => translateText(locale, value);
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   try {
@@ -46,42 +50,42 @@ export async function POST(req: Request) {
       const tasks: ScheduledTask[] = [];
       if (activeProjects.length > 0) {
         tasks.push({
-          title: `【深度专注】推进项目「${activeProjects[0].name}」核心阶段开发`,
+          title: locale === "en" ? `[Deep focus] Advance core work on “${activeProjects[0].name}”` : `【深度专注】推进项目「${activeProjects[0].name}」核心阶段开发`,
           priority: "high",
           dueDate: targetDate,
         });
       } else {
         tasks.push({
-          title: `【深度专注】数字化工作空间系统架构梳理与攻坚`,
+          title: locale === "en" ? "[Deep focus] Review and improve workspace architecture" : `【深度专注】数字化工作空间系统架构梳理与攻坚`,
           priority: "high",
           dueDate: targetDate,
         });
       }
 
       tasks.push({
-        title: `【协同推进】接口联调、验证测试与边缘异常排查`,
+        title: locale === "en" ? "[Collaboration] Integrate APIs, test and investigate edge cases" : `【协同推进】接口联调、验证测试与边缘异常排查`,
         priority: "medium",
         dueDate: targetDate,
       });
 
       tasks.push({
-        title: `【复盘沉淀】整理今日知识笔记与服务器备份检查`,
+        title: locale === "en" ? `[Review] Organize notes and check server backups` : `【复盘沉淀】整理今日知识笔记与服务器备份检查`,
         priority: "low",
         dueDate: targetDate,
       });
 
       return {
-        advice: `💡 建议在上午精力充沛时集中攻坚重点项目任务，下午进行协同联调，晚上完成工作区整理与复盘。`,
+        advice: locale === "en" ? "💡 Focus on key projects in the morning, collaborate in the afternoon, then organize and review your work in the evening." : `💡 建议在上午精力充沛时集中攻坚重点项目任务，下午进行协同联调，晚上完成工作区整理与复盘。`,
         tasks,
       };
     };
 
     if (!apiKey) {
       const fallback = generateFallback();
-      return NextResponse.json({
+      return localizedJson({
         success: true,
         source: "smart_rules",
-        advice: fallback.advice,
+        advice: text(fallback.advice),
         tasks: fallback.tasks,
       });
     }
@@ -117,7 +121,7 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           model: modelName,
           messages: [
-            { role: "system", content: systemPrompt },
+            { role: "system", content: systemPrompt + (locale === "en" ? "\nOUTPUT LANGUAGE: Use English for all natural-language titles, descriptions and advice. Preserve JSON field names, priority enum values, dates and user/member names exactly." : "\n使用简体中文输出自然语言内容，保持 JSON 字段名、枚举值、日期和用户名称不变。") },
             { role: "user", content: contextSummary },
           ],
           temperature: 0.3,
@@ -142,30 +146,30 @@ export async function POST(req: Request) {
       const parsed = JSON.parse(cleaned);
       if (Array.isArray(parsed?.tasks) && parsed.tasks.length > 0) {
         const validatedTasks: ScheduledTask[] = parsed.tasks.map((t: { title?: string; priority?: string }) => ({
-          title: String(t.title || "今日执行任务").trim(),
+          title: String(t.title || text("今日执行任务")).trim(),
           priority: t.priority === "high" || t.priority === "low" ? t.priority : "medium",
           dueDate: targetDate,
         }));
 
-        return NextResponse.json({
+        return localizedJson({
           success: true,
           source: "ai_model",
-          advice: parsed.advice || "已为您根据当前工作区状态生成今日最佳执行排期。",
+          advice: parsed.advice || text("已为您根据当前工作区状态生成今日最佳执行排期。"),
           tasks: validatedTasks,
         });
       }
       throw new Error("Invalid format");
     } catch {
       const fallback = generateFallback();
-      return NextResponse.json({
+      return localizedJson({
         success: true,
         source: "smart_rules_fallback",
-        advice: fallback.advice,
+        advice: text(fallback.advice),
         tasks: fallback.tasks,
       });
     }
   } catch (error) {
-    return NextResponse.json(
+    return localizedJson(
       { error: error instanceof Error ? error.message : "智能排程失败" },
       { status: 500 },
     );

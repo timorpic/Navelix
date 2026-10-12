@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { useNavelixData } from "@/context/navelix-context";
 import { useWorkspaceTodos } from "@/hooks/use-workspace-todos";
@@ -18,6 +19,7 @@ export default function ScheduleOverviewColumn({
 }: {
   onSelectCategory: (id: string) => void;
 }) {
+  const tx = useTranslations();
   const { projects, todos, hydrated } = useNavelixData();
   const todosLoading = !hydrated;
   const { todayStr, toggleTodo: handleToggleTodo, postponeOneDay: handlePostponeOneDay, quickAddTodo } = useWorkspaceTodos();
@@ -61,7 +63,7 @@ const currentWeekDays = useMemo(() => {
   const monday = new Date(curr.getFullYear(), curr.getMonth(), diff);
 
   const days = [];
-  const labels = ["一", "二", "三", "四", "五", "六", "日"];
+  const labels = [tx("mon_51a75f46"), tx("tue_084b42f6"), tx("wed_a4c3313d"), tx("thu_754a9d58"), tx("fri_c9b87f51"), tx("sat_de07b538"), tx("sun_85217f7a")];
   for (let i = 0; i < 7; i++) {
     const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
     const dStr = toLocalDateStr(d);
@@ -75,7 +77,7 @@ const currentWeekDays = useMemo(() => {
     });
   }
   return days;
-}, [todos, todayStr]);
+}, [todos, todayStr, tx]);
 
 // 根据当前选中的 Tab 过滤待办列表
 const displayedTodos = useMemo(() => {
@@ -110,10 +112,9 @@ const getProjectName = (pid?: string) => {
     <div className="flex items-center gap-2">
       <span className="text-base">📅</span>
       <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-        日程概览
-      </h3>
+        {tx("schedule_overview_eadb6af8")}</h3>
       <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-[#00C776] text-[10px] font-bold">
-        {todayCompletedCount}/{todayTodos.length} 闭环 · {todayProgressPercent}%
+        {todayCompletedCount}/{todayTodos.length} {tx("completed_bc3a7758")}{todayProgressPercent}%
       </span>
     </div>
 
@@ -132,8 +133,7 @@ const getProjectName = (pid?: string) => {
               : "text-gray-500 hover:text-gray-800 dark:text-slate-400"
           }`}
         >
-          今日聚焦
-        </button>
+          {tx("today_97f0b215")}</button>
         <button
           type="button"
           onClick={() => {
@@ -146,8 +146,7 @@ const getProjectName = (pid?: string) => {
               : "text-gray-500 hover:text-gray-800 dark:text-slate-400"
           }`}
         >
-          近7日
-        </button>
+          {tx("next_7_days_19b7bedd")}</button>
         <button
           type="button"
           onClick={() => {
@@ -160,16 +159,15 @@ const getProjectName = (pid?: string) => {
               : "text-gray-500 hover:text-gray-800 dark:text-slate-400"
           }`}
         >
-          已完成
-        </button>
+          {tx("completed_f28461bb")}</button>
       </div>
 
       <button
         onClick={() => onSelectCategory("feature-calendar")}
         className="text-xs font-semibold text-[#00C776] hover:underline flex items-center gap-0.5 ml-1 cursor-pointer shrink-0"
-        title="进入完整日历中枢"
+        title={tx("open_full_calendar_eea24503")}
       >
-        <span>日历</span>
+        <span>{tx("calendar_a00f295c")}</span>
         <span>→</span>
       </button>
     </div>
@@ -216,17 +214,16 @@ const getProjectName = (pid?: string) => {
   <div className="flex flex-col gap-2 flex-1 min-h-[140px] max-h-[190px] overflow-y-auto pr-1">
     {todosLoading ? (
       <div className="flex-1 flex items-center justify-center text-xs text-gray-400">
-        加载日程待办中...
-      </div>
+        {tx("loading_todos_and_schedules_045a21e2")}</div>
     ) : displayedTodos.length === 0 ? (
       <div className="flex-1 flex flex-col items-center justify-center py-6 text-xs text-gray-400 gap-1 text-center">
         <span>☕</span>
         <span>
           {selectedDayFilter
-            ? "该日期暂无安排任务"
+            ? tx("no_tasks_on_this_date_61b916c7")
             : agendaTab === "completed"
-            ? "暂无已完成的待办事项"
-            : "当前无待办任务，可在下方快速创建！"}
+            ? tx("no_completed_todos_yet_c85f8662")
+            : tx("no_pending_tasks_quickly_add_one_below_40a9d3ec")}
         </span>
       </div>
     ) : (
@@ -247,7 +244,7 @@ const getProjectName = (pid?: string) => {
                 type="checkbox"
                 checked={item.done}
                 onChange={() => handleToggleTodo(item.id, item.done)}
-                aria-label={`标记待办事项 ${item.title}`}
+                aria-label={tx("message_ac34883a8f3d", {v0: item.title})}
                 className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] border-gray-300 dark:border-slate-600 cursor-pointer shrink-0"
               />
 
@@ -269,14 +266,14 @@ const getProjectName = (pid?: string) => {
               )}
               {item.isDelegated ? (
                 <span
-                  title={`此任务由 @${item.ownerName || "成员"} 指派给您`}
+                  title={tx("message_67622b005ca2", {v0: item.ownerName || tx("member_6e6d6ddb")})}
                   className="hidden sm:inline-block px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 shrink-0 truncate max-w-[90px]"
                 >
-                  📥 来自 @{item.ownerName || "成员"}
+                  {tx("from_0188c132")}{item.ownerName || tx("member_6e6d6ddb")}
                 </span>
               ) : item.assigneeName ? (
                 <span
-                  title={`此任务已委托给 @${item.assigneeName}`}
+                  title={tx("message_357129d9aafa", {v0: item.assigneeName})}
                   className="hidden sm:inline-block px-1.5 py-0.2 rounded text-[9px] font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 shrink-0 truncate max-w-[90px]"
                 >
                   📤 @{item.assigneeName}
@@ -288,20 +285,16 @@ const getProjectName = (pid?: string) => {
               {/* 状态 / 优先级胶囊 */}
               {isOverdue ? (
                 <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
-                  ⚠️ 逾期
-                </span>
+                  {tx("overdue_1d40bb81")}</span>
               ) : item.priority === "high" ? (
                 <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
-                  高优
-                </span>
+                  {tx("high_323a1d5c")}</span>
               ) : item.priority === "low" ? (
                 <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold text-gray-400">
-                  普通
-                </span>
+                  {tx("normal_de907d10")}</span>
               ) : (
                 <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold text-amber-500">
-                  中优
-                </span>
+                  {tx("medium_7319b6d5")}</span>
               )}
 
               {item.dueDate && (
@@ -316,10 +309,9 @@ const getProjectName = (pid?: string) => {
                   type="button"
                   onClick={() => handlePostponeOneDay(item)}
                   className="opacity-0 group-hover:opacity-100 p-1 text-[10px] text-gray-400 hover:text-[#00C776] transition-opacity cursor-pointer"
-                  title="顺延至明天"
+                  title={tx("move_to_tomorrow_15f4d177")}
                 >
-                  +1天
-                </button>
+                  {tx("1_day_fdeaec10")}</button>
               )}
             </div>
           </div>
@@ -336,11 +328,11 @@ const getProjectName = (pid?: string) => {
       type="text"
       value={quickTodoTitle}
       onChange={(e) => setQuickTodoTitle(e.target.value)}
-      aria-label="快捷添加日程事项"
+      aria-label={tx("quick_add_schedule_8e31762e")}
       placeholder={
         selectedDayFilter
-          ? `为 ${selectedDayFilter.slice(5)} 快捷添加日程...`
-          : "快捷添加今日日程事项..."
+          ? tx("message_a5c1b0090662", {v0: selectedDayFilter.slice(5)})
+          : tx("quick_add_a_task_for_today_c92cbc93")
       }
       className="flex-1 px-3 py-1.5 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 text-gray-800 dark:text-slate-100"
     />
@@ -352,16 +344,15 @@ const getProjectName = (pid?: string) => {
       }
       className="px-2 py-1 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl font-bold cursor-pointer"
     >
-      <option value="high">高优</option>
-      <option value="medium">中优</option>
-      <option value="low">普通</option>
+      <option value="high">{tx("high_323a1d5c")}</option>
+      <option value="medium">{tx("medium_7319b6d5")}</option>
+      <option value="low">{tx("normal_de907d10")}</option>
     </select>
     <button
       type="submit"
       className="px-3.5 py-1.5 bg-[#00C776] text-white text-xs font-bold rounded-xl hover:bg-[#00B068] transition-colors cursor-pointer shrink-0"
     >
-      添加
-    </button>
+      {tx("add_7a8a11ea")}</button>
   </form>
 </div>
   );

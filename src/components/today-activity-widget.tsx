@@ -1,5 +1,7 @@
 "use client";
+import { useLocale } from "next-intl";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { formatRelativeTime } from "@/lib/date-utils";
 
@@ -13,6 +15,8 @@ interface TodayActivityItem {
 
 /** 右侧侧边栏小组件：今日动态（最近通知与系统活动预览） */
 export default function TodayActivityWidget() {
+  const locale = useLocale();
+  const tx = useTranslations();
   const [items, setItems] = useState<TodayActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,13 +59,13 @@ export default function TodayActivityWidget() {
     <div className="rounded-2xl p-4 bg-white/90 dark:bg-slate-900/70 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-3 transition-colors">
       <div className="flex items-center gap-2">
         <span className="text-sm">⚡</span>
-        <h3 className="text-xs font-black text-gray-900 dark:text-white tracking-wide">今日动态</h3>
+        <h3 className="text-xs font-black text-gray-900 dark:text-white tracking-wide">{tx("today_s_activity_09e08032")}</h3>
       </div>
 
       {loading ? (
-        <p className="py-3 text-center text-[10px] text-gray-400 dark:text-slate-500">加载中…</p>
+        <p className="py-3 text-center text-[10px] text-gray-400 dark:text-slate-500">{tx("loading_4927a53b")}</p>
       ) : items.length === 0 ? (
-        <p className="py-3 text-center text-[10px] text-gray-400 dark:text-slate-500">暂无动态</p>
+        <p className="py-3 text-center text-[10px] text-gray-400 dark:text-slate-500">{tx("no_activity_yet_b5046209")}</p>
       ) : (
         <div className="space-y-2">
           {items.map((item) => (
@@ -71,7 +75,7 @@ export default function TodayActivityWidget() {
                 {item.text}
               </span>
               <span className="text-[9px] text-gray-400 dark:text-slate-500 shrink-0">
-                {formatRelativeTime(item.ts, { style: "compact", fallbackAfterDays: Infinity })}
+                {formatRelativeTime(item.ts, { style: "compact", fallbackAfterDays: Infinity , locale})}
               </span>
             </div>
           ))}

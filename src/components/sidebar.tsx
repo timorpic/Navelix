@@ -1,5 +1,8 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import LanguageSwitcher from "@/components/language-switcher";
+import { useTranslations } from "next-intl";
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -32,6 +35,8 @@ export default function Sidebar({
   collapsed = false,
   onToggle,
 }: SidebarProps) {
+  const tx = useTranslations();
+  const text = useText();
   const router = useRouter();
   const { config, updateConfig, isDark } = useNavelixConfig();
   const { user } = useNavelixData();
@@ -93,7 +98,7 @@ export default function Sidebar({
   const dynamicNavItems = [
     {
       id: "all",
-      name: "首页总览",
+      name: tx("home_overview_123e43e8"),
       icon: "🏠",
       isSubscribed: false,
       isTeamShared: false,
@@ -110,10 +115,10 @@ export default function Sidebar({
   ];
 
   const workspaceTools = [
-    { id: "feature-calendar", name: "日历日程", icon: "📅" },
-    { id: "feature-projects", name: "项目管理", icon: "🗂️" },
-    { id: "feature-dashboard", name: "数据看板", icon: "📈" },
-    { id: "feature-activities", name: "消息通知", icon: "🔔" },
+    { id: "feature-calendar", name: tx("calendar_72e10d04"), icon: "📅" },
+    { id: "feature-projects", name: tx("projects_a049dca9"), icon: "🗂️" },
+    { id: "feature-dashboard", name: tx("dashboard_d8b1aeba"), icon: "📈" },
+    { id: "feature-activities", name: tx("notifications_4cfc2a36"), icon: "🔔" },
   ];
 
   return (
@@ -124,7 +129,7 @@ export default function Sidebar({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMobileOpen(true)}
-            aria-label="打开导航菜单"
+            aria-label={tx("open_navigation_menu_34f94202")}
             className="p-2 -ml-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,7 +147,7 @@ export default function Sidebar({
           <button
             onClick={handleToggleDarkMode}
             className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            title={config.theme === "system" ? "跟随系统" : isDark ? "切换至浅色模式" : "切换至深色模式"}
+            title={config.theme === "system" ? tx("system_theme_217cfe7d") : isDark ? tx("switch_to_light_mode_fe05df6e") : tx("switch_to_dark_mode_65ec2b0d")}
           >
             {config.theme === "system" ? (
               <svg className="w-4 h-4 text-[#00C776]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,8 +167,7 @@ export default function Sidebar({
             href="/admin"
             className="px-3 py-1.5 rounded-lg bg-[#00C776] text-white text-xs font-semibold transition-colors hover:bg-[#009a5a]"
           >
-            ⚙️ 后台
-          </Link>
+            {tx("admin_2e0bd135")}</Link>
         </div>
       </div>
 
@@ -206,7 +210,7 @@ export default function Sidebar({
                 <button
                   onClick={handleToggleDarkMode}
                   className="p-1.5 rounded-xl transition-colors cursor-pointer hover:bg-gray-100 text-gray-600 dark:bg-slate-800/80 dark:text-amber-400 dark:hover:bg-slate-700 shrink-0 border border-transparent dark:border-slate-700/60"
-                  title={config.theme === "system" ? "跟随系统" : isDark ? "切换至浅色模式" : "切换至深色模式"}
+                  title={config.theme === "system" ? tx("system_theme_217cfe7d") : isDark ? tx("switch_to_light_mode_fe05df6e") : tx("switch_to_dark_mode_65ec2b0d")}
                 >
                   {config.theme === "system" ? (
                     <svg className="w-4 h-4 text-[#00C776]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,8 +234,7 @@ export default function Sidebar({
           <nav className="flex-1 min-h-0 flex flex-col gap-1.5 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {!collapsed && (
               <div className="px-3.5 mb-1 text-[10px] font-bold tracking-wider text-gray-400 dark:text-slate-500 uppercase">
-                分类书签
-              </div>
+                {tx("category_bookmarks_9dcc3bfc")}</div>
             )}
             {dynamicNavItems.map((item) => {
               const isSelected = activeCategory === item.id;
@@ -263,11 +266,10 @@ export default function Sidebar({
                         <span className="truncate">{item.name}</span>
                         {item.isSubscribed && (
                           <span
-                            title={item.ownerName ? `来自 @${item.ownerName}` : "团队共享"}
+                            title={item.ownerName ? tx("message_39a0b6db228d", {v0: item.ownerName}) : tx("team_shared_1d31c7a1")}
                             className="text-[9px] px-1 py-0.2 rounded font-bold bg-teal-500/20 text-teal-700 dark:text-teal-300"
                           >
-                            团队
-                          </span>
+                            {tx("team_acdf17f4")}</span>
                         )}
                       </div>
                     )}
@@ -278,9 +280,9 @@ export default function Sidebar({
                       onClick={async (e) => {
                         e.stopPropagation();
                         const r = await copyShareLink("category", item.id, item.name);
-                        flash(r.message);
+                        flash(text(r.message));
                       }}
-                      title="复制免登录分享链接"
+                      title={tx("copy_public_share_link_99f1df95")}
                       className={`absolute right-2 p-1 rounded-md text-xs transition-opacity ${
                         isSelected
                           ? "text-white/80 hover:text-white hover:bg-white/20"
@@ -300,15 +302,14 @@ export default function Sidebar({
                 className="flex items-center gap-2 px-3 py-1.5 mt-1 rounded-xl text-[11px] font-medium text-gray-500 hover:text-[#00C776] hover:bg-[#00C776]/10 dark:text-slate-400 dark:hover:text-[#00C776] transition-colors cursor-pointer"
               >
                 <span>👥</span>
-                <span>+ 订阅团队分类</span>
+                <span>{tx("subscribe_to_team_categories_35d0292a")}</span>
               </button>
             )}
 
             {/* 工作空间应用扩展：日历日程、项目管理、数据看板 */}
             {!collapsed && (
               <div className="px-3.5 mt-4 mb-1 text-[10px] font-bold tracking-wider text-gray-400 dark:text-slate-500 uppercase">
-                工作空间
-              </div>
+                {tx("workspace_6fed7e86")}</div>
             )}
             {workspaceTools.map((tool) => {
               const isSelected = activeCategory === tool.id;
@@ -339,6 +340,7 @@ export default function Sidebar({
               );
             })}
           </nav>
+        <LanguageSwitcher />
         </div>
 
         {/* Bottom Section 抽屉 */}
@@ -355,7 +357,7 @@ export default function Sidebar({
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
             </svg>
-            <span>{bottomOpen ? "收起工具" : "展开工具"}</span>
+            <span>{bottomOpen ? tx("hide_tools_77be0cc2") : tx("show_tools_dd1f7103")}</span>
           </button>
 
           {/* 可折叠内容 */}
@@ -381,7 +383,7 @@ export default function Sidebar({
                   className="flex items-center gap-2 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   <span>⚙️</span>
-                  <span>后台管理</span>
+                  <span>{tx("administration_41119eca")}</span>
                 </Link>
                 <div className="my-0.5 border-t border-gray-100 dark:border-slate-700" />
                 <button
@@ -392,7 +394,7 @@ export default function Sidebar({
                   className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-left transition-colors cursor-pointer w-full"
                 >
                   <span>🚪</span>
-                  <span>退出当前登录</span>
+                  <span>{tx("sign_out_cf3d59d7")}</span>
                 </button>
               </div>
             )}
@@ -406,18 +408,18 @@ export default function Sidebar({
                   {/* eslint-disable-next-line @next/next/no-img-element -- 头像可能是任意图片地址或 data URL */}
                   <img
                     src={resolveAvatar(currentUser?.avatar, currentUser?.username)}
-                    alt={currentUser?.displayName || "用户"}
+                    alt={currentUser?.displayName || tx("user_0d0e1a86")}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-xs font-bold truncate text-gray-900 dark:text-white">
-                    {currentUser?.displayName || "用户"}
+                    {currentUser?.displayName || tx("user_0d0e1a86")}
                   </span>
                   <span className="text-[10px] text-gray-400 dark:text-slate-400 truncate">
                     {currentUser?.bio || (currentUser?.role === "admin"
-                      ? "👑 管理员"
-                      : "构建 · 设计 · AI · 技术")}
+                      ? tx("administrator_5775c0be")
+                      : tx("build_design_ai_tech_1493f8f8"))}
                   </span>
                 </div>
               </div>
@@ -430,12 +432,12 @@ export default function Sidebar({
           {/* Custom Footer Copyright + 收起按钮 */}
           <div className="flex items-center justify-between px-1 mt-2">
             <p className="text-[10px] text-gray-400 dark:text-slate-400 truncate">
-              {config.customFooter || DEFAULT_CUSTOM_FOOTER}
+              {!config.customFooter || config.customFooter === DEFAULT_CUSTOM_FOOTER ? text(DEFAULT_CUSTOM_FOOTER) : config.customFooter}
             </p>
             <button
               onClick={onToggle}
               className="p-1 rounded-md transition-colors cursor-pointer text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 shrink-0"
-              title={collapsed ? "展开侧边栏" : "收起侧边栏"}
+              title={collapsed ? tx("expand_sidebar_eea954b9") : tx("collapse_sidebar_ce1d67c2")}
             >
               <svg
                 className="w-3.5 h-3.5 transition-transform duration-300"
@@ -453,7 +455,7 @@ export default function Sidebar({
             <button
               onClick={onToggle}
               className="w-10 h-10 flex items-center justify-center rounded-xl transition-colors cursor-pointer text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-800 shrink-0"
-              title="展开侧边栏"
+              title={tx("expand_sidebar_eea954b9")}
             >
               <svg
                 className="w-4 h-4"
@@ -469,7 +471,7 @@ export default function Sidebar({
       {/* Profile Center Modal (我的信息) */}
       <Modal
         open={showProfileModal}
-        title="我的信息与个人中心"
+        title={tx("my_profile_account_66ad55c2")}
         onClose={() => setShowProfileModal(false)}
       >
         <div className="flex flex-col items-center p-3 text-center space-y-4">
@@ -477,46 +479,46 @@ export default function Sidebar({
             {/* eslint-disable-next-line @next/next/no-img-element -- 头像可能是任意图片地址或 data URL */}
             <img
               src={resolveAvatar(currentUser?.avatar, currentUser?.username)}
-              alt={currentUser?.displayName || "用户"}
+              alt={currentUser?.displayName || tx("user_0d0e1a86")}
               className="w-full h-full object-cover"
             />
           </div>
 
           <div>
             <h3 className="text-base font-bold text-gray-900 dark:text-white">
-              {currentUser?.displayName || "用户"}
+              {currentUser?.displayName || tx("user_0d0e1a86")}
             </h3>
             <p className="text-xs text-gray-400 dark:text-slate-400">
-              账号: <span className="font-mono text-gray-700 dark:text-slate-300">@{currentUser?.username || "admin"}</span>
+              {tx("account_b2e2e972")}<span className="font-mono text-gray-700 dark:text-slate-300">@{currentUser?.username || "admin"}</span>
             </p>
             <div className="mt-1.5 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-600 border border-teal-200 dark:bg-teal-950/60 dark:text-teal-400 dark:border-teal-900">
-              {currentUser?.role === "admin" ? "👑 系统管理员 (Admin)" : "👤 普通注册用户"}
+              {currentUser?.role === "admin" ? tx("administrator_admin_ddd26fb7") : tx("registered_user_7fb8c713")}
             </div>
           </div>
 
           {/* Detailed Info Grid */}
           <div className="w-full text-left space-y-2.5 p-3 rounded-xl bg-gray-50 dark:bg-slate-800/80 border border-gray-100 dark:border-slate-700 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-gray-400 dark:text-slate-400">当前账号</span>
+              <span className="text-gray-400 dark:text-slate-400">{tx("current_account_1bb1e785")}</span>
               <span className="font-bold text-gray-800 dark:text-slate-200">@{currentUser?.username || "admin"}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-400 dark:text-slate-400">显示昵称</span>
-              <span className="font-bold text-gray-800 dark:text-slate-200">{currentUser?.displayName || "用户"}</span>
+              <span className="text-gray-400 dark:text-slate-400">{tx("display_name_1769d007")}</span>
+              <span className="font-bold text-gray-800 dark:text-slate-200">{currentUser?.displayName || tx("user_0d0e1a86")}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-400 dark:text-slate-400">主题模式</span>
+              <span className="text-gray-400 dark:text-slate-400">{tx("theme_44fb814b")}</span>
               <span className="font-bold text-amber-600 dark:text-amber-400">
                 {config.theme === "system"
-                  ? `跟随系统（${isDark ? "深色" : "浅色"}）`
+                  ? tx("message_1ee845a62bec", {v0: isDark ? tx("dark_a6b75d06") : tx("light_aa0819df")})
                   : isDark
-                  ? "深色模式"
-                  : "浅色模式"}
+                  ? tx("dark_mode_94d2bd01")
+                  : tx("light_mode_d31a4d6b")}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-400 dark:text-slate-400">已登录 Session</span>
-              <span className="font-mono text-emerald-600 dark:text-emerald-400">Active (已认证)</span>
+              <span className="text-gray-400 dark:text-slate-400">{tx("signed_in_session_9def25d7")}</span>
+              <span className="font-mono text-emerald-600 dark:text-emerald-400">{tx("active_authenticated_c02f0524")}</span>
             </div>
           </div>
 
@@ -526,15 +528,13 @@ export default function Sidebar({
               onClick={() => setShowProfileModal(false)}
               className="w-full h-9 rounded-lg bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
             >
-              ⚙️ 打开个人后台管理面板
-            </Link>
+              {tx("open_my_administration_panel_0684e9a1")}</Link>
 
             <button
               onClick={handleLogout}
               className="w-full h-9 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-100 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
-              🚪 退出当前账号登录
-            </button>
+              {tx("sign_out_5bddbfe7")}</button>
           </div>
         </div>
       </Modal>

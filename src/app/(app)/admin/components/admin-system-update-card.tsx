@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import {
   formatUpdateTime,
   versionLabel,
@@ -18,6 +19,8 @@ export default function AdminSystemUpdateCard({
 }: {
   update: UseAdminUpdateCheckResult;
 }) {
+  const tx = useTranslations();
+  const locale = useLocale();
   const { checkingUpdate, updateResult, checkUpdate } = update;
 
   return (
@@ -26,11 +29,9 @@ export default function AdminSystemUpdateCard({
         <span className="text-lg">🔄</span>
         <div>
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-            版本与更新
-          </h3>
+            {tx("version_updates_cebbc1f6")}</h3>
           <p className="text-xs text-gray-400 dark:text-slate-400">
-            连接 GitHub Releases 官方发布源自检版本
-          </p>
+            {tx("check_for_updates_from_the_official_github_relea_d6648c43")}</p>
         </div>
       </div>
 
@@ -40,13 +41,12 @@ export default function AdminSystemUpdateCard({
           disabled={checkingUpdate}
           className="h-9 px-4 rounded-lg bg-[#14B8A6] hover:bg-[#0D9488] text-white text-xs font-semibold transition-colors disabled:opacity-60 cursor-pointer"
         >
-          {checkingUpdate ? "检查中…" : "检查更新"}
+          {checkingUpdate ? tx("checking_fb11aa6f") : tx("check_for_updates_7f68ebad")}
         </button>
         <span className="text-[11px] text-gray-400 dark:text-slate-400">
-          当前版本：
-          {versionLabel(updateResult?.local?.version)}
+          {tx("current_version_435bd0f8")}{versionLabel(updateResult?.local?.version)}
           {updateResult?.local?.buildDate
-            ? ` · ${formatUpdateTime(updateResult.local.buildDate)}`
+            ? ` · ${formatUpdateTime(updateResult.local.buildDate, locale)}`
             : ""}
         </span>
       </div>
@@ -59,8 +59,7 @@ export default function AdminSystemUpdateCard({
           {!updateResult.error &&
             updateResult.updateAvailable === false && (
               <p className="text-xs text-emerald-600">
-                ✅ Release 最新
-                {updateResult.remote?.versionTag
+                {tx("latest_release_b4546a80")}{updateResult.remote?.versionTag
                   ? ` ${updateResult.remote.versionTag}`
                   : ""}
               </p>
@@ -70,7 +69,7 @@ export default function AdminSystemUpdateCard({
               <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40 p-3 space-y-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-                    🚀 检测到 GitHub 新版本：{updateResult.remote?.versionTag || updateResult.remote?.title}
+                    {tx("new_github_release_a8a7aa5e")}{updateResult.remote?.versionTag || updateResult.remote?.title}
                   </p>
                   {updateResult.remote?.htmlUrl && (
                     <a
@@ -79,18 +78,16 @@ export default function AdminSystemUpdateCard({
                       rel="noreferrer"
                       className="text-[11px] text-amber-700 dark:text-amber-300 font-bold underline hover:opacity-80"
                     >
-                      查看发行日志 ↗
-                    </a>
+                      {tx("view_release_notes_496fd865")}</a>
                   )}
                 </div>
                 {updateResult.remote?.lastUpdated && (
                   <p className="text-[10px] text-gray-500 dark:text-slate-400">
-                    发布时间：{formatUpdateTime(updateResult.remote.lastUpdated)}
+                    {tx("published_fe0f0c22")}{formatUpdateTime(updateResult.remote.lastUpdated, locale)}
                   </p>
                 )}
                 <p className="text-[11px] text-amber-600 dark:text-amber-500/80">
-                  请拉取最新 Release 镜像或代码并重启容器完成更新。
-                </p>
+                  {tx("pull_the_latest_release_image_or_code_then_resta_06940de4")}</p>
               </div>
             )}
         </div>

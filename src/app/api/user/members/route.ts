@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 
 export async function GET() {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   // 返回当前系统中的全部成员列表（供任务指派与团队协同）
@@ -23,5 +23,5 @@ export async function GET() {
     role: string;
   }>;
 
-  return NextResponse.json({ members });
+  return localizedJson({ members });
 }

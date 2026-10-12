@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { useNavelixData } from "@/context/navelix-context";
 import { pushNotification } from "@/lib/client/notifications";
@@ -39,6 +40,7 @@ export interface UseAiScheduleResult {
 }
 
 export function useAiSchedule(): UseAiScheduleResult {
+  const tx = useTranslations();
   const { refreshData } = useNavelixData();
   const [open, setOpen] = useState(false);
   const [advice, setAdvice] = useState("");
@@ -66,19 +68,19 @@ export function useAiSchedule(): UseAiScheduleResult {
       });
       const data = await res.json();
       if (data.success && Array.isArray(data.tasks)) {
-        setAdvice(data.advice || "已为您规划今日精力时段与执行任务。");
+        setAdvice(data.advice || tx("your_focus_blocks_and_tasks_for_today_are_ready_0707545e"));
         setTasks(data.tasks);
         // 默认全选
         setSelectedIndices(new Set(data.tasks.map((_: AiScheduledTask, idx: number) => idx)));
       } else {
-        setAdvice("未获取到排程结果，请手动规划日程。");
+        setAdvice(tx("no_schedule_generated_please_plan_manually_2a0a6460"));
       }
     } catch {
-      setAdvice("请求 AI 排程服务失败，请稍后重试。");
+      setAdvice(tx("ai_scheduling_request_failed_try_again_later_1f70b2ec"));
     } finally {
       setPlanning(false);
     }
-  }, []);
+  }, [tx]);
 
   const toggleIndex = useCallback((index: number) => {
     setSelectedIndices((prev) => {
@@ -126,16 +128,16 @@ export function useAiSchedule(): UseAiScheduleResult {
       setSelectedIndices((s) => new Set([...s, newIdx]));
       return [
         ...prev,
-        { title: "新规划执行任务", priority: "medium" as const, dueDate: dateStr },
+        { title: tx("new_planned_task_2f61f188"), priority: "medium" as const, dueDate: dateStr },
       ];
     });
-  }, []);
+  }, [tx]);
 
   const applyToCalendar = useCallback(
     async (dateStr: string) => {
       const tasksToWrite = tasks.filter((_, idx) => selectedIndices.has(idx));
       if (tasksToWrite.length === 0) {
-        setWarning("请至少勾选一项任务以写入日历！");
+        setWarning(tx("select_at_least_one_task_to_add_to_the_calendar_c6f2be38"));
         return;
       }
 
@@ -158,20 +160,20 @@ export function useAiSchedule(): UseAiScheduleResult {
 
         window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
         pushNotification(
-          "🎉 AI 智能排程已写入日历",
-          `已成功将 ${tasksToWrite.length} 项日程任务写入 ${dateStr} 日历中枢！`,
+          tx("ai_schedule_added_to_calendar_ecb4b485"),
+          tx("message_c8513e0f56c9", {v0: tasksToWrite.length, v1: dateStr}),
           "calendar",
         );
 
         setOpen(false);
         refreshData();
       } catch {
-        setWarning("写入日历失败，请稍后重试。");
+        setWarning(tx("failed_to_add_to_calendar_try_again_later_b21100e6"));
       } finally {
         setApplying(false);
       }
     },
-    [tasks, selectedIndices, refreshData],
+    [tasks, selectedIndices, refreshData, tx],
   );
 
   return {

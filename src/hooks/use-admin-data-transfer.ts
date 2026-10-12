@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
 import { parseBookmarksHTML } from "@/lib/bookmarks";
@@ -48,6 +50,8 @@ export function useAdminDataTransfer({
   flash,
   notify,
 }: UseAdminDataTransferOptions): UseAdminDataTransferResult {
+  const tx = useTranslations();
+  const text = useText();
   const { config, updateConfig } = useNavelixConfig();
   const { categories, links, importData, mergeBookmarks } = useNavelixData();
 
@@ -80,15 +84,15 @@ export function useAdminDataTransfer({
       a.click();
       URL.revokeObjectURL(url);
 
-      notify("数据管理", fullExportSummary(payload));
+      notify(tx("data_management_9bb882c6"), text(fullExportSummary(payload)));
       void fetch("/api/user/telegram/data-transfer", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "export" }),
       }).catch(() => {});
     } catch {
-      flash("导出个人数据失败");
+      flash(tx("failed_to_export_personal_data_14055510"));
     }
-  }, [config, categories, links, notify, flash]);
+  }, [config, categories, links, notify, flash, tx, text]);
 
   // ── 导入个人 Navelix JSON ──
   // 原文件里该 input 未挂 ref，收尾的 value 清空不可达，故此处不做清空。
@@ -115,7 +119,7 @@ export function useAdminDataTransfer({
           });
 
           if (!saveRes.ok) {
-            throw new Error("保存数据到服务器失败");
+            throw new Error(tx("failed_to_save_data_to_server_f53e5080"));
           }
 
           writeLocalExportState(localStorage, payload.localStorageData);
@@ -125,19 +129,19 @@ export function useAdminDataTransfer({
           }
           importData(payload.categories, payload.links);
 
-          notify("数据管理", fullImportSummary(payload));
+          notify(tx("data_management_9bb882c6"), text(fullImportSummary(payload)));
 
           setTimeout(() => {
             window.location.reload();
           }, 1200);
         } catch {
-          flash("导入失败：无效或损坏的 JSON 配置文件");
+          flash(tx("import_failed_invalid_or_damaged_json_configurat_9c219538"));
         }
         resetFileInput(input);
       };
       reader.readAsText(file);
     },
-    [updateConfig, importData, notify, flash, resetFileInput],
+    [updateConfig, importData, notify, flash, resetFileInput, tx, text],
   );
 
   // ── 导入 Chrome / HTML 书签 ──
@@ -150,15 +154,15 @@ export function useAdminDataTransfer({
             String(reader.result),
           );
           mergeBookmarks(cats, lnks);
-          notify("数据管理", bookmarkImportSummary({ categories: cats.length, links: lnks.length }));
+          notify(tx("data_management_9bb882c6"), text(bookmarkImportSummary({ categories: cats.length, links: lnks.length })));
         } catch {
-          flash("导入失败：无效的书签文件");
+          flash(tx("import_failed_invalid_bookmark_file_4961896c"));
         }
         resetFileInput(input);
       };
       reader.readAsText(file);
     },
-    [mergeBookmarks, notify, flash, resetFileInput],
+    [mergeBookmarks, notify, flash, resetFileInput, tx, text],
   );
 
   // ── 导入 Sun-Panel JSON ──
@@ -171,15 +175,15 @@ export function useAdminDataTransfer({
             String(reader.result),
           );
           mergeBookmarks(cats, lnks);
-          notify("数据管理", sunPanelImportSummary({ categories: cats.length, links: lnks.length }));
+          notify(tx("data_management_9bb882c6"), text(sunPanelImportSummary({ categories: cats.length, links: lnks.length })));
         } catch {
-          flash("导入失败：无效的 Sun-Panel JSON 文件");
+          flash(tx("import_failed_invalid_sun_panel_json_c81afe41"));
         }
         resetFileInput(input);
       };
       reader.readAsText(file);
     },
-    [mergeBookmarks, notify, flash, resetFileInput],
+    [mergeBookmarks, notify, flash, resetFileInput, tx, text],
   );
 
   return { exportAllData, importAllData, importBookmarks, importSunPanel };

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useSystemSecretClear } from "@/hooks/use-system-secret-clear";
 import { useState } from "react";
 import { useNavelixConfig } from "@/context/navelix-context";
@@ -38,6 +39,7 @@ function AISettings() {
   return <><Toast message={notice} /><AdminProfileAiCard notify={notify} /></>;
 }
 function LicensedSettings({ tab }: { tab: string }) {
+  const tx = useTranslations();
   const { notice, flash } = useToast();
   const confirm = useConfirm();
   const license = useAdminLicense({ flash, confirm: confirm.confirm });
@@ -45,7 +47,7 @@ function LicensedSettings({ tab }: { tab: string }) {
   return <div className="space-y-6">
     <Toast message={notice} /><ConfirmDialog {...confirm.dialogProps} />
     {tab === "site" && <>
-      <label className="block text-sm">页脚<input aria-label="页脚" className="block w-full rounded-xl border p-3 dark:bg-slate-900" defaultValue={config.customFooter} onBlur={event => updateConfig({ customFooter: event.target.value })} /></label>
+      <label className="block text-sm">{tx("footer_db7eeb8d")}<input aria-label={tx("footer_db7eeb8d")} className="block w-full rounded-xl border p-3 dark:bg-slate-900" defaultValue={config.customFooter} onBlur={event => updateConfig({ customFooter: event.target.value })} /></label>
       <AdminProfileSocialCard />
     </>}
     {tab === "brand" && <AdminProBrandCard licenseStatus={license.licenseStatus} flash={flash} />}
@@ -55,19 +57,20 @@ function LicensedSettings({ tab }: { tab: string }) {
   </div>;
 }
 function WeatherSettings() {
+  const tx = useTranslations();
   const { config, updateConfig } = useNavelixConfig();
   const secret = useSystemSecretClear();
   const [key, setKey] = useState("");
   return <div className="space-y-5 p-6 rounded-2xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900">
-    <h2 className="font-bold">天气服务</h2>
-    <label className="flex gap-2"><input type="checkbox" checked={config.weatherEnabled} onChange={event => updateConfig({ weatherEnabled: event.target.checked })} />启用天气服务</label>
-    <label className="block text-sm">API Key（{config.weatherKeyConfigured ? "已配置" : "未配置"}）
-      <input type="password" autoComplete="new-password" className="block w-full border rounded-xl p-3 dark:bg-slate-800" value={key} onChange={event => setKey(event.target.value)} onBlur={() => { if (key.trim()) { updateConfig({ weatherApiKey: key.trim() }); setKey(""); } }} placeholder="输入新密钥，留空保持不变" />
+    <h2 className="font-bold">{tx("weather_service_85663f49")}</h2>
+    <label className="flex gap-2"><input type="checkbox" checked={config.weatherEnabled} onChange={event => updateConfig({ weatherEnabled: event.target.checked })} />{tx("enable_weather_service_e5832a1a")}</label>
+    <label className="block text-sm">API Key（{config.weatherKeyConfigured ? tx("configured_de8184da") : tx("not_configured_80a57e03")}）
+      <input type="password" autoComplete="new-password" className="block w-full border rounded-xl p-3 dark:bg-slate-800" value={key} onChange={event => setKey(event.target.value)} onBlur={() => { if (key.trim()) { updateConfig({ weatherApiKey: key.trim() }); setKey(""); } }} placeholder={tx("enter_a_new_key_leave_blank_to_keep_the_current__00942e07")} />
     </label>
-    <button type="button" onClick={() => secret.clear("weatherApiKey")} className="text-sm text-rose-600">清除天气密钥</button>
+    <button type="button" onClick={() => secret.clear("weatherApiKey")} className="text-sm text-rose-600">{tx("clear_weather_api_key_c60086fb")}</button>
     {secret.error && <p role="alert">{secret.error}</p>}
-    <label className="block text-sm">位置<input className="block w-full border rounded-xl p-3 dark:bg-slate-800" defaultValue={config.weatherLocation} onBlur={event => updateConfig({ weatherLocation: event.target.value })} /></label>
-    <label className="block text-sm">接口地址<input type="url" className="block w-full border rounded-xl p-3 dark:bg-slate-800" defaultValue={config.weatherApiBaseUrl} onBlur={event => updateConfig({ weatherApiBaseUrl: event.target.value })} /></label>
+    <label className="block text-sm">{tx("location_1fb4d574")}<input className="block w-full border rounded-xl p-3 dark:bg-slate-800" defaultValue={config.weatherLocation} onBlur={event => updateConfig({ weatherLocation: event.target.value })} /></label>
+    <label className="block text-sm">{tx("api_endpoint_03b11112")}<input type="url" className="block w-full border rounded-xl p-3 dark:bg-slate-800" defaultValue={config.weatherApiBaseUrl} onBlur={event => updateConfig({ weatherApiBaseUrl: event.target.value })} /></label>
   </div>;
 }
 export default function AdminSettingsTab({ tab, isAdmin }: { tab: string; isAdmin: boolean }) {

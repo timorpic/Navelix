@@ -1,4 +1,6 @@
-import { NextResponse } from "next/server";
+import { getLocale } from "next-intl/server";
+import { translateText } from "@/lib/server-translations";
+import { localizedJson } from "@/lib/localized-json";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
 import { resolveAIConfig } from "@/lib/ai-provider";
@@ -32,26 +34,28 @@ function extractTitle(html: string): string {
 }
 
 export async function POST(req: Request) {
+  const locale = await getLocale();
+  const text = (value: string) => translateText(locale, value);
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   try {
     const body = await req.json().catch(() => ({}));
     const rawUrl = typeof body?.url === "string" ? body.url.trim() : "";
     if (!rawUrl) {
-      return NextResponse.json({ error: "缺少 url 参数" }, { status: 400 });
+      return localizedJson({ error: "缺少 url 参数" }, { status: 400 });
     }
 
     let parsedUrl: URL;
     try {
       parsedUrl = new URL(rawUrl);
     } catch {
-      return NextResponse.json({ error: "URL 格式无效" }, { status: 400 });
+      return localizedJson({ error: "URL 格式无效" }, { status: 400 });
     }
     if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-      return NextResponse.json({ error: "仅支持 http/https 链接" }, { status: 400 });
+      return localizedJson({ error: "仅支持 http/https 链接" }, { status: 400 });
     }
 
     // 1. 抓取页面内容（safeFetch 内置 SSRF 防护）
@@ -90,7 +94,7 @@ export async function POST(req: Request) {
       const lines: string[] = [];
       if (pageTitle) lines.push(`# ${pageTitle}`);
       if (fetchError) {
-        lines.push("> ⚠️ " + fetchError);
+        lines.push("> ⚠️ " + text(fetchError));
       } else if (pageText) {
         lines.push(pageText.slice(0, 500) + (pageText.length > 500 ? "…" : ""));
       }
@@ -98,7 +102,7 @@ export async function POST(req: Request) {
     };
 
     if (!apiKey || !pageText) {
-      return NextResponse.json({ notes: makeFallbackNotes(), title: pageTitle });
+      return localizedJson({ notes: makeFallbackNotes(), title: pageTitle });
     }
 
     const systemPrompt = `你是一个网页内容摘要助手。请阅读下面抓取的网页正文，用简洁的中文 Markdown 格式输出要点摘要。
@@ -108,7 +112,7 @@ export async function POST(req: Request) {
 - 输出纯 Markdown，不要多余的前言或解释`;
 
     const messages = [
-      { role: "system", content: systemPrompt },
+      { role: "system", content: systemPrompt.replace("中文 Markdown", locale === "en" ? "英文 Markdown" : "中文 Markdown") },
       {
         role: "user",
         content: `网页标题：${pageTitle || "未知"}\n\n网页正文：\n${pageText}`,
@@ -136,11 +140,11 @@ export async function POST(req: Request) {
     }
 
     if (aiNotes) {
-      return NextResponse.json({ notes: aiNotes, title: pageTitle, generated: true });
+      return localizedJson({ notes: aiNotes, title: pageTitle, generated: true });
     }
-    return NextResponse.json({ notes: makeFallbackNotes(), title: pageTitle });
+    return localizedJson({ notes: makeFallbackNotes(), title: pageTitle });
   } catch (err) {
-    return NextResponse.json(
+    return localizedJson(
       { error: err instanceof Error ? err.message : "内部错误" },
       { status: 500 },
     );

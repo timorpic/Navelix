@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import LogoMark from "@/components/logo-mark";
 import { useNavelixConfig } from "@/context/navelix-context";
 import { fileToDataUrl } from "@/lib/image-utils";
@@ -22,6 +23,7 @@ export default function AdminProBrandCard({
   /** 仅展示 UI 提示（来自 useToast） */
   flash: (msg: string) => void;
 }) {
+  const tx = useTranslations();
   const { config, updateConfig } = useNavelixConfig();
 
   // ── Handler: Logo upload ──
@@ -31,9 +33,9 @@ export default function AdminProBrandCard({
     try {
       const dataUrl = await fileToDataUrl(file, 128);
       updateConfig({ logoImage: dataUrl });
-      flash("LOGO 图标已成功更新");
+      flash(tx("logo_updated_successfully_a632e96e"));
     } catch {
-      flash("图片读取失败");
+      flash(tx("failed_to_read_image_ddc0de2f"));
     }
     e.target.value = "";
   };
@@ -44,28 +46,24 @@ export default function AdminProBrandCard({
         <div>
           <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
             <span>🏷️</span>
-            <span>全站品牌与 LOGO 自定义</span>
+            <span>{tx("site_branding_logo_2be258a4")}</span>
           </h3>
           <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-            设置浏览器标签页标题及侧边栏展示的品牌 LOGO 文本/图标
-          </p>
+            {tx("set_the_browser_tab_title_and_the_logo_text_or_i_83a1c0db")}</p>
         </div>
         {licenseStatus.isPro ? (
           <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shrink-0">
-            ✨ 已解锁
-          </span>
+            {tx("unlocked_b9d9fa83")}</span>
         ) : (
           <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800 shrink-0">
-            🔒 PRO 功能
-          </span>
+            {tx("pro_feature_d54ea328")}</span>
         )}
       </div>
 
       <div className={`space-y-3.5 ${!licenseStatus.isPro ? "opacity-60 pointer-events-none" : ""}`}>
         <div>
           <label className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
-            站点标题（浏览器标签页）
-          </label>
+            {tx("site_title_browser_tab_931e8987")}</label>
           <input
             type="text"
             disabled={!licenseStatus.isPro}
@@ -78,22 +76,20 @@ export default function AdminProBrandCard({
 
         <div>
           <label className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
-            LOGO 显示文本内容
-          </label>
+            {tx("logo_text_1b5736a4")}</label>
           <input
             type="text"
             disabled={!licenseStatus.isPro}
             value={config.logoText}
             onChange={(e) => updateConfig({ logoText: e.target.value })}
-            placeholder="例如 Navelix"
+            placeholder={tx("e_g_navelix_43dab975")}
             className="w-full h-9 border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-medium rounded-xl"
           />
         </div>
 
         <div>
           <label className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
-            LOGO 图标上传
-          </label>
+            {tx("upload_logo_46795fa3")}</label>
           <div className="flex items-center gap-3">
             <LogoMark size="md" />
             <input
@@ -110,8 +106,7 @@ export default function AdminProBrandCard({
                 onClick={() => updateConfig({ logoImage: "" })}
                 className="shrink-0 text-xs text-rose-500 hover:text-rose-600 cursor-pointer"
               >
-                清除
-              </button>
+                {tx("clear_bce23772")}</button>
             )}
           </div>
         </div>

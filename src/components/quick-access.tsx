@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import BrandIcon from "./brand-icon";
 import type { SiteLink } from "@/types";
 import { recordLinkUsage } from "@/lib/client/link-usage";
@@ -10,6 +11,7 @@ interface QuickAccessProps {
 }
 
 export default function QuickAccess({ links }: QuickAccessProps) {
+  const tx = useTranslations();
   const { config } = useNavelixConfig();
   const target = config.linkOpenTarget === "_self" ? "_self" : "_blank";
 
@@ -28,11 +30,9 @@ export default function QuickAccess({ links }: QuickAccessProps) {
         <div className="flex items-center gap-2">
           <span className="text-amber-500 font-bold">⚡</span>
           <h2 className="text-base font-bold text-gray-900 dark:text-white">
-            快捷访问
-          </h2>
+            {tx("quick_access_0a704163")}</h2>
           <span className="text-xs text-gray-400 dark:text-slate-400 font-normal">
-            ({links.length} 个置顶网址)
-          </span>
+            ({links.length} {tx("pinned_websites_dc95a256")}</span>
         </div>
       </div>
 

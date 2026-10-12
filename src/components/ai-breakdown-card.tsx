@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { UseAiBreakdownResult, AssignableMember } from "@/hooks/use-ai-breakdown";
 
 /**
@@ -18,6 +19,7 @@ export default function AiBreakdownCard({
   /** 编辑已有项目时文案不同（追加阶段任务 vs 新建拆解） */
   isEditing: boolean;
 }) {
+  const tx = useTranslations();
   if (ai.tasks.length === 0) return null;
 
   return (
@@ -27,12 +29,11 @@ export default function AiBreakdownCard({
           <span className="text-base">✨</span>
           <h4 className="text-xs font-black text-gray-900 dark:text-white">
             {isEditing
-              ? "AI 为当前项目追加阶段任务与排期"
-              : "AI 里程碑任务拆解与团队指派预览"}
+              ? tx("ai_generated_stages_tasks_and_schedule_for_this__ac789e92")
+              : tx("ai_milestones_team_assignments_preview_b3ebbcb8")}
           </h4>
           <span className="text-[11px] text-gray-500 dark:text-slate-400">
-            (共 {ai.tasks.length} 个阶段)
-          </span>
+            {tx("total_897820a0")}{ai.tasks.length} {tx("stages_6daa37c5")}</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -43,7 +44,7 @@ export default function AiBreakdownCard({
               onChange={(e) => ai.setSyncToCalendar(e.target.checked)}
               className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776]"
             />
-            <span>自动同步写入日历日程 🗓️</span>
+            <span>{tx("sync_automatically_to_calendar_067bbfa8")}</span>
           </label>
         </div>
       </div>
@@ -75,7 +76,7 @@ export default function AiBreakdownCard({
               name="projectTaskTitle"
               value={task.title}
               onChange={(e) => ai.updateTitle(idx, e.target.value)}
-              placeholder="任务名称..."
+              placeholder={tx("task_name_f6a13c73")}
               className="flex-1 px-2.5 py-1 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#00C776]"
             />
 
@@ -88,7 +89,7 @@ export default function AiBreakdownCard({
                   ai.updateAssignee(idx, e.target.value)
                 }
                 className="px-2 py-1 text-xs font-bold rounded-lg border bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 cursor-pointer max-w-[110px] truncate"
-                title="指派责任人"
+                title={tx("assign_to_1c362011")}
               >
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>
@@ -116,16 +117,15 @@ export default function AiBreakdownCard({
                   : "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/60 dark:text-amber-400"
               }`}
             >
-              <option value="high">高优</option>
-              <option value="medium">中优</option>
-              <option value="low">普通</option>
+              <option value="high">{tx("high_323a1d5c")}</option>
+              <option value="medium">{tx("medium_7319b6d5")}</option>
+              <option value="low">{tx("normal_de907d10")}</option>
             </select>
 
             {/* 截止日期 */}
             <div className="flex items-center gap-1">
               <span className="text-[10px] font-bold text-gray-400">
-                截止:
-              </span>
+                {tx("due_f5638d46")}</span>
               <input
                 type="date"
                 name="projectTaskDueDate"
@@ -142,7 +142,7 @@ export default function AiBreakdownCard({
               type="button"
               onClick={() => ai.removeTask(idx)}
               className="p-1 text-gray-400 hover:text-rose-500 text-xs cursor-pointer"
-              title="删除此项"
+              title={tx("remove_item_63310bf6")}
             >
               ✕
             </button>
@@ -157,11 +157,10 @@ export default function AiBreakdownCard({
           className="text-xs text-[#00C776] hover:underline font-bold flex items-center gap-1 cursor-pointer"
         >
           <span>+</span>
-          <span>添加自定义阶段任务</span>
+          <span>{tx("add_custom_stage_task_79ef3419")}</span>
         </button>
         <span className="text-[11px] text-gray-400">
-          可自由增删、指派责任人与调整排期
-        </span>
+          {tx("add_or_remove_tasks_assign_owners_and_adjust_dat_9dc8c602")}</span>
       </div>
     </div>
   

@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import Modal from "@/components/modal";
 import BrandIcon from "@/components/brand-icon";
@@ -107,6 +109,8 @@ export default function AddLinkModal({
   onClose,
   onAdd,
 }: AddLinkModalProps) {
+  const text = useText();
+  const tx = useTranslations();
   // State is initialized from props; the parent remounts this modal via a
   // `key` whenever it opens, so no effect is needed to sync form values.
   const [title, setTitle] = useState(link?.title ?? "");
@@ -151,7 +155,7 @@ export default function AddLinkModal({
         setIconifyError("");
         try {
           const res = await fetch(ICONIFY_SEARCH_API + encodeURIComponent(q));
-          if (!res.ok) throw new Error("请求失败");
+          if (!res.ok) throw new Error(tx("request_failed_126fbf59"));
           const data = await res.json();
           if (cancelled) return;
           setIconifyIcons(
@@ -160,7 +164,7 @@ export default function AddLinkModal({
         } catch {
           if (cancelled) return;
           setIconifyIcons([]);
-          setIconifyError("Iconify 搜索失败，请检查网络后重试");
+          setIconifyError(tx("iconify_search_failed_check_your_connection_and__a12a53f9"));
         } finally {
           if (!cancelled) setIconifyLoading(false);
         }
@@ -172,7 +176,7 @@ export default function AddLinkModal({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [iconMode, iconifyQuery]);
+  }, [iconMode, iconifyQuery, tx]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -182,7 +186,7 @@ export default function AddLinkModal({
       setIcon(dataUrl);
       setIconifyError("");
     } catch {
-      setIconifyError("图片读取失败，请换一张图片重试");
+      setIconifyError(tx("failed_to_read_image_try_another_image_747d415e"));
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -194,7 +198,7 @@ export default function AddLinkModal({
   const handleFetchSiteIcon = async () => {
     let targetUrl = (customSiteUrl.trim() || url.trim() || link?.url || "").trim();
     if (!targetUrl) {
-      setSiteError("请先在上方填写网址或在下方输入官网链接");
+      setSiteError(tx("enter_a_url_above_or_a_website_url_below_first_9ce6e9bb"));
       return;
     }
     if (!/^https?:\/\//i.test(targetUrl)) {
@@ -203,7 +207,7 @@ export default function AddLinkModal({
     try {
       new URL(targetUrl);
     } catch {
-      setSiteError("请输入正确的网址（如 portainer.io）");
+      setSiteError(tx("enter_a_valid_url_e_g_portainer_io_01c417e6"));
       return;
     }
 
@@ -213,17 +217,17 @@ export default function AddLinkModal({
       const res = await fetch(`/api/favicon?url=${encodeURIComponent(targetUrl)}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.error || "获取网站图标失败");
+        throw new Error(data.message || data.error || tx("failed_to_fetch_website_icon_b6cc76b4"));
       }
       if (data.dataUrl) {
         setIcon(data.dataUrl);
       } else if (data.iconUrl) {
         setIcon(data.iconUrl);
       } else {
-        throw new Error("未找到网站图标");
+        throw new Error(tx("no_website_icon_found_3d44144e"));
       }
     } catch (err) {
-      setSiteError(err instanceof Error ? err.message : "获取网站图标失败");
+      setSiteError(err instanceof Error ? text(err.message) : tx("failed_to_fetch_website_icon_b6cc76b4"));
     } finally {
       setSiteLoading(false);
     }
@@ -232,11 +236,11 @@ export default function AddLinkModal({
   const handleSummarize = async () => {
     const targetUrl = url.trim();
     if (!targetUrl) {
-      setSummaryError("请先填写网址");
+      setSummaryError(tx("enter_a_url_first_3cbd5557"));
       return;
     }
     if (!/^https?:\/\//i.test(targetUrl)) {
-      setSummaryError("请输入完整的 http/https 网址");
+      setSummaryError(tx("enter_a_complete_http_https_url_50a4eebb"));
       return;
     }
     setSummarizing(true);
@@ -252,10 +256,10 @@ export default function AddLinkModal({
         setNotes(data.notes);
         if (data.title && !title.trim()) setTitle(data.title);
       } else {
-        setSummaryError(data.error || "生成摘要失败");
+        setSummaryError(data.message || data.error || tx("failed_to_generate_summary_d9488bc2"));
       }
     } catch {
-      setSummaryError("网络请求失败");
+      setSummaryError(tx("network_request_failed_8407ceab"));
     } finally {
       setSummarizing(false);
     }
@@ -304,11 +308,11 @@ export default function AddLinkModal({
 
   const iconPreviewText = icon
     ? icon.startsWith("data:")
-      ? "已获取图片（本地上传 / 网站图标）"
+      ? tx("image_ready_upload_website_icon_fa5036c2")
       : icon.startsWith("https://api.iconify.design/")
-        ? "Iconify 在线图标"
+        ? tx("iconify_icon_6775db10")
         : icon
-    : "未设置图标";
+    : tx("no_icon_set_c9dab094");
 
   return (
     <Modal
@@ -355,7 +359,7 @@ export default function AddLinkModal({
             disabled={summarizing}
             className="mt-2 w-full py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-[#00C776]/10 to-indigo-500/10 hover:from-[#00C776]/20 hover:to-indigo-500/20 text-[#00C776] border border-[#00C776]/25 transition-colors cursor-pointer disabled:opacity-50"
           >
-            {summarizing ? "⏳ 正在抓取并生成摘要…" : "✨ AI 抓取并生成 Markdown 摘要"}
+            {summarizing ? tx("fetching_page_and_generating_summary_eead3b28") : tx("generate_markdown_summary_with_ai_04496d16")}
           </button>
           {summaryError && (
             <p className="mt-1 text-[11px] text-red-500">{summaryError}</p>
@@ -387,8 +391,7 @@ export default function AddLinkModal({
         </div>
         <div>
           <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-slate-400">
-            Icon（可选）
-          </label>
+            {tx("icon_optional_e45153be")}</label>
           <div className="mb-2 flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-50 dark:bg-slate-800/80 border border-gray-100 dark:border-slate-700">
               <BrandIcon name={icon || title || "N"} className="w-6 h-6" />
@@ -402,8 +405,7 @@ export default function AddLinkModal({
                 onClick={() => setIcon("")}
                 className="text-[11px] text-red-400 hover:text-red-600 cursor-pointer"
               >
-                清除
-              </button>
+                {tx("clear_bce23772")}</button>
             )}
           </div>
 
@@ -417,8 +419,7 @@ export default function AddLinkModal({
                   : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
               }`}
             >
-              📁 本地上传
-            </button>
+              {tx("upload_3c33901a")}</button>
             <button
               type="button"
               onClick={() => setIconMode("iconify")}
@@ -428,8 +429,7 @@ export default function AddLinkModal({
                   : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
               }`}
             >
-              🌐 Iconify 在线
-            </button>
+              {tx("iconify_482455e3")}</button>
             <button
               type="button"
               onClick={() => setIconMode("site")}
@@ -439,8 +439,7 @@ export default function AddLinkModal({
                   : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200"
               }`}
             >
-              🖼️ 网站图标
-            </button>
+              {tx("website_icon_8181a793")}</button>
           </div>
 
           {iconMode === "upload" ? (
@@ -451,13 +450,12 @@ export default function AddLinkModal({
                 type="file"
                 name="link-icon-file"
                 accept="image/*"
-                aria-label="上传本地图标"
+                aria-label={tx("upload_icon_c2e19f9f")}
                 onChange={handleFileChange}
                 className="w-full text-xs text-gray-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[#00C776]/10 file:text-[#009a5a] file:text-xs file:font-semibold file:cursor-pointer cursor-pointer"
               />
               <p className="mt-1 text-[10px] text-gray-400 dark:text-slate-400">
-                支持 PNG / JPG / SVG / GIF，自动压缩为 96×96 后保存
-              </p>
+                {tx("supports_png_jpg_svg_gif_resized_to_96_96_before_5e07d9c4")}</p>
             </div>
           ) : iconMode === "iconify" ? (
             <div key="icon-iconify">
@@ -470,8 +468,8 @@ export default function AddLinkModal({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") e.preventDefault();
                 }}
-                aria-label="搜索 Iconify 图标"
-                placeholder="搜索图标，如 github、home、server…"
+                aria-label={tx("search_iconify_icons_9e80653f")}
+                placeholder={tx("search_icons_e_g_github_home_server_425aff16")}
                 className="h-9 w-full rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 bg-white dark:bg-slate-900/60 focus:border-[#00C776] focus:outline-none focus:ring-2 focus:ring-[#00C776]/20"
               />
               <div className="mt-2 grid max-h-40 grid-cols-6 gap-1.5 overflow-y-auto">
@@ -497,8 +495,7 @@ export default function AddLinkModal({
                 ))}
                 {iconifyLoading && (
                   <p className="col-span-6 py-4 text-center text-[11px] text-gray-400 dark:text-slate-400">
-                    搜索中…
-                  </p>
+                    {tx("searching_cc50237e")}</p>
                 )}
                 {!iconifyLoading && iconifyError && (
                   <p className="col-span-6 py-2 text-center text-[11px] text-red-400">
@@ -507,20 +504,18 @@ export default function AddLinkModal({
                 )}
                 {!iconifyLoading && !iconifyError && iconifyIcons.length === 0 && (
                   <p className="col-span-6 py-4 text-center text-[11px] text-gray-400 dark:text-slate-400">
-                    未找到相关图标
-                  </p>
+                    {tx("no_matching_icons_9655c6a6")}</p>
                 )}
               </div>
               <p className="mt-1 text-[10px] text-gray-400 dark:text-slate-400">
-                图标来自{" "}
+                {tx("icons_from_43eb0bc2")}{" "}
                 <a
                   href="https://icon-sets.iconify.design/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline"
                 >
-                  Iconify 图标库
-                </a>
+                  {tx("iconify_library_23a6b97b")}</a>
               </p>
             </div>
           ) : (
@@ -532,8 +527,8 @@ export default function AddLinkModal({
                   type="text"
                   value={customSiteUrl}
                   onChange={(e) => setCustomSiteUrl(e.target.value)}
-                  placeholder="输入官网或图标网址（留空则从上方 URL 抓取）"
-                  aria-label="输入官网或自定义网址抓取图标"
+                  placeholder={tx("website_or_icon_url_leave_blank_to_use_the_url_a_3d97821a")}
+                  aria-label={tx("enter_a_website_url_to_fetch_its_icon_88c038fe")}
                   className="h-9 flex-1 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 bg-white dark:bg-slate-900/60 focus:border-[#00C776] focus:outline-none focus:ring-2 focus:ring-[#00C776]/20"
                 />
                 <button
@@ -542,12 +537,11 @@ export default function AddLinkModal({
                   disabled={siteLoading}
                   className="h-9 shrink-0 rounded-lg bg-[#00C776] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#009a5a] disabled:opacity-60 cursor-pointer"
                 >
-                  {siteLoading ? "获取中…" : "抓取图标"}
+                  {siteLoading ? tx("fetching_146da2e2") : tx("fetch_icon_cefa78df")}
                 </button>
               </div>
               <p className="text-[10px] text-gray-400 dark:text-slate-400">
-                默认从上方 URL 自动获取 favicon；若为内网 IP，可在此输入其官网（如 portainer.io）提取官方图标
-              </p>
+                {tx("fetches_the_favicon_from_the_url_above_by_defaul_dbb96565")}</p>
               {siteError && (
                 <p className="text-[11px] text-red-400">{siteError}</p>
               )}
@@ -575,14 +569,14 @@ export default function AddLinkModal({
             htmlFor="link-notes"
             className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-slate-400"
           >
-            Markdown 笔记 <span className="text-[10px] text-gray-400 dark:text-slate-500">(可选，用于内容检索)</span>
+            {tx("markdown_notes_ae81304a")}<span className="text-[10px] text-gray-400 dark:text-slate-500">{tx("optional_searchable_a3535261")}</span>
           </label>
           <textarea
             id="link-notes"
             name="notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder={"记录页面要点、摘要或个人笔记，例如：\n- 核心功能：…\n- 使用场景：…"}
+            placeholder={tx("page_highlights_summaries_or_personal_notes_e_g__c048f9eb")}
             rows={4}
             className={`${inputClass} resize-y min-h-[84px]`}
           />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
 import SearchBar from "./search-bar";
@@ -15,32 +16,34 @@ export default function HeroBanner({
   searchQuery,
   onSearchChange,
 }: HeroBannerProps) {
+  const tx = useTranslations();
+  const locale = useLocale();
   const { config } = useNavelixConfig();
   const { user } = useNavelixData();
 
   // 1. 直接同步使用 SSR / 响应式注入的用户昵称，杜绝任何假名或旧名一闪而过
-  const userName = user?.displayName || user?.username || config.logoText || "朋友";
+  const userName = user?.displayName || user?.username || config.logoText || tx("friend_677aad1a");
 
   // 3. 计算时间与动态问候语
   const { greeting, dateString } = useMemo(() => {
     const now = new Date();
     const hour = now.getHours();
-    let greet = "你好";
-    if (hour >= 5 && hour < 12) greet = "早上好";
-    else if (hour >= 12 && hour < 14) greet = "中午好";
-    else if (hour >= 14 && hour < 19) greet = "下午好";
-    else greet = "晚上好";
+    let greet = tx("hello_670d9743");
+    if (hour >= 5 && hour < 12) greet = tx("good_morning_3cc2e31e");
+    else if (hour >= 12 && hour < 14) greet = tx("good_afternoon_fceb1962");
+    else if (hour >= 14 && hour < 19) greet = tx("good_afternoon_552594ef");
+    else greet = tx("good_evening_d8e9a7fa");
 
     const month = now.getMonth() + 1;
     const day = now.getDate();
-    const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+    const weekdays = [tx("sunday_7e06f314"), tx("monday_56451fdf"), tx("tuesday_8621c00d"), tx("wednesday_23ae0a11"), tx("thursday_478911d2"), tx("friday_6e5969e5"), tx("saturday_7bb2f5ec")];
     const weekday = weekdays[now.getDay()];
 
     return {
       greeting: greet,
-      dateString: `今天是 ${month} 月 ${day} 日 · ${weekday}`,
+      dateString: locale === "en" ? now.toLocaleDateString("en", { weekday: "long", month: "long", day: "numeric" }) : tx("message_fc8f0f8cce57", {v0: month, v1: day, v2: weekday}),
     };
-  }, []);
+  }, [tx, locale]);
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white/90 dark:bg-slate-900/80 backdrop-blur-md p-5 sm:p-7 border border-gray-200/80 dark:border-slate-800 shadow-2xs transition-colors">
@@ -69,11 +72,9 @@ export default function HeroBanner({
           {/* 当前状态 */}
           <div className="flex items-center gap-2 pt-0.5">
             <span className="text-xs font-bold text-gray-700 dark:text-slate-300">
-              当前状态
-            </span>
+              {tx("current_status_82b7cf40")}</span>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800">
-              ✨ 一切准备就绪
-            </span>
+              {tx("ready_to_go_f3aaaeaf")}</span>
           </div>
 
           {/* 搜索栏（如果用户启用了搜索栏配置） */}

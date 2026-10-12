@@ -1,5 +1,6 @@
+import { localizedJson } from "@/lib/localized-json";
 import { restoreDatabaseSnapshot } from "@/lib/db-restore";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import path from "node:path";
 import fs from "node:fs";
 import { requireAdmin } from "@/lib/auth";
@@ -22,7 +23,7 @@ import { recordAuditLog } from "@/lib/audit";
 export async function GET() {
   const user = await requireAdmin();
   if (!user) {
-    return NextResponse.json({ error: "需要管理员权限" }, { status: 403 });
+    return localizedJson({ error: "需要管理员权限" }, { status: 403 });
   }
 
   const isPro = isEEAvailable() && canAccessFeature("s3_backup");
@@ -38,28 +39,28 @@ export async function GET() {
     isEE: isEEAvailable(),
   };
 
-  return NextResponse.json(masked);
+  return localizedJson(masked);
 }
 
 export async function POST(req: NextRequest) {
   const user = await requireAdmin();
   if (!user) {
-    return NextResponse.json({ error: "需要管理员权限" }, { status: 403 });
+    return localizedJson({ error: "需要管理员权限" }, { status: 403 });
   }
 
   if (!isEEAvailable()) {
-    return NextResponse.json({ error: CE_PRO_MESSAGE }, { status: 403 });
+    return localizedJson({ error: CE_PRO_MESSAGE }, { status: 403 });
   }
 
   if (!canAccessFeature("s3_backup")) {
-    return NextResponse.json({ error: "异地云备份与还原为 Navelix Pro 专享功能，请先激活商业许可证" }, { status: 403 });
+    return localizedJson({ error: "异地云备份与还原为 Navelix Pro 专享功能，请先激活商业许可证" }, { status: 403 });
   }
 
   let body: Partial<CloudStorageConfig>;
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "无效的请求数据" }, { status: 400 });
+    return localizedJson({ error: "无效的请求数据" }, { status: 400 });
   }
 
   const existing = getCloudStorageConfig();
@@ -99,28 +100,28 @@ export async function POST(req: NextRequest) {
     details: `更新云端异地备份配置 (类型: ${nextConfig.type})`,
   });
 
-  return NextResponse.json({ success: true, message: "云存储配置已安全保存" });
+  return localizedJson({ success: true, message: "云存储配置已安全保存" });
 }
 
 export async function PUT(req: NextRequest) {
   const user = await requireAdmin();
   if (!user) {
-    return NextResponse.json({ error: "需要管理员权限" }, { status: 403 });
+    return localizedJson({ error: "需要管理员权限" }, { status: 403 });
   }
 
   if (!isEEAvailable()) {
-    return NextResponse.json({ error: CE_PRO_MESSAGE }, { status: 403 });
+    return localizedJson({ error: CE_PRO_MESSAGE }, { status: 403 });
   }
 
   if (!canAccessFeature("s3_backup")) {
-    return NextResponse.json({ error: "异地云备份与还原为 Navelix Pro 专享功能，请先激活商业许可证" }, { status: 403 });
+    return localizedJson({ error: "异地云备份与还原为 Navelix Pro 专享功能，请先激活商业许可证" }, { status: 403 });
   }
 
   let body: { action?: string; fileName?: string; tempConfig?: Partial<CloudStorageConfig> };
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "无效的请求格式" }, { status: 400 });
+    return localizedJson({ error: "无效的请求格式" }, { status: 400 });
   }
 
   const { action, fileName, tempConfig } = body;
@@ -136,24 +137,24 @@ export async function PUT(req: NextRequest) {
 
   if (action === "test") {
     const res = await testStorageConnection(effectiveConfig);
-    return NextResponse.json(res);
+    return localizedJson(res);
   }
 
   if (action === "backup_now") {
     if (effectiveConfig.type === "none") {
-      return NextResponse.json({ error: "请先配置并启用 S3 或 WebDAV 存储" }, { status: 400 });
+      return localizedJson({ error: "请先配置并启用 S3 或 WebDAV 存储" }, { status: 400 });
     }
 
     const localBackupPath = performDatabaseBackup(user.id);
     if (!localBackupPath) {
-      return NextResponse.json({ error: "生成本地 SQLite 数据库物理快照失败" }, { status: 500 });
+      return localizedJson({ error: "生成本地 SQLite 数据库物理快照失败" }, { status: 500 });
     }
 
     const snapshotFileName = path.basename(localBackupPath);
     const uploadRes = await uploadBackupToStorage(effectiveConfig, localBackupPath, snapshotFileName);
 
     if (!uploadRes.success) {
-      return NextResponse.json({ error: `上传至云端失败: ${uploadRes.error}` }, { status: 500 });
+      return localizedJson({ error: `上传至云端失败: ${uploadRes.error}` }, { status: 500 });
     }
 
     recordAuditLog({
@@ -163,7 +164,7 @@ export async function PUT(req: NextRequest) {
       details: `成功将物理快照上传至远程云存储: ${snapshotFileName}`,
     });
 
-    return NextResponse.json({
+    return localizedJson({
       success: true,
       message: `🎉 快照已成功加密上传至云端 (${snapshotFileName})`,
     });
@@ -171,15 +172,15 @@ export async function PUT(req: NextRequest) {
 
   if (action === "list") {
     if (effectiveConfig.type === "none") {
-      return NextResponse.json({ backups: [] });
+      return localizedJson({ backups: [] });
     }
     const backups = await listRemoteBackups(effectiveConfig);
-    return NextResponse.json({ backups });
+    return localizedJson({ backups });
   }
 
   if (action === "restore") {
     if (!fileName || typeof fileName !== "string" || !fileName.endsWith(".db")) {
-      return NextResponse.json({ error: "无效的快照文件名" }, { status: 400 });
+      return localizedJson({ error: "无效的快照文件名" }, { status: 400 });
     }
 
     const tempDir = path.join(resolveDataDir(), "temp_restore");
@@ -190,7 +191,7 @@ export async function PUT(req: NextRequest) {
 
     const dlRes = await downloadBackupFromStorage(effectiveConfig, fileName, tempFile);
     if (!dlRes.success) {
-      return NextResponse.json({ error: `从云端拉取快照失败: ${dlRes.error}` }, { status: 500 });
+      return localizedJson({ error: `从云端拉取快照失败: ${dlRes.error}` }, { status: 500 });
     }
 
     // 执行安全还原：先对当前库做回滚保护快照
@@ -205,7 +206,7 @@ export async function PUT(req: NextRequest) {
 
       if (!testCheck || testCheck[0]?.integrity_check !== "ok") {
         fs.unlinkSync(tempFile);
-        return NextResponse.json({ error: "云端拉取的数据库文件损坏，已终止还原" }, { status: 400 });
+        return localizedJson({ error: "云端拉取的数据库文件损坏，已终止还原" }, { status: 400 });
       }
 
       try {
@@ -221,17 +222,17 @@ export async function PUT(req: NextRequest) {
         details: `成功从云端快照还原系统数据库: ${fileName}`,
       });
 
-      return NextResponse.json({
+      return localizedJson({
         success: true,
         message: "🎉 数据库已从云端快照成功还原！建议刷新页面生效。",
       });
     } catch (err) {
-      return NextResponse.json(
+      return localizedJson(
         { error: `还原数据库异常: ${err instanceof Error ? err.message : String(err)}` },
         { status: 500 },
       );
     }
   }
 
-  return NextResponse.json({ error: "不支持的操作" }, { status: 400 });
+  return localizedJson({ error: "不支持的操作" }, { status: 400 });
 }

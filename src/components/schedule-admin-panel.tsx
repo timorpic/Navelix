@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useState, useMemo } from "react";
 import type { TodoItem } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
@@ -7,6 +8,7 @@ import { toLocalDateStr } from "@/lib/date-utils";
 import ConfirmDialog from "./confirm-dialog";
 
 export default function ScheduleAdminPanel() {
+  const tx = useTranslations();
   const { todos: schedules, projects, refreshData } = useNavelixData();
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
@@ -47,7 +49,7 @@ export default function ScheduleAdminPanel() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim()) {
-      setFormNotice("请输入日程标题");
+      setFormNotice(tx("enter_a_schedule_title_bc5110c3"));
       return;
     }
 
@@ -68,7 +70,7 @@ export default function ScheduleAdminPanel() {
           setShowModal(false);
           refreshData();
         } else {
-          setFormNotice("修改日程失败");
+          setFormNotice(tx("failed_to_update_schedule_e58f0093"));
         }
       } else {
         // Create Schedule
@@ -86,11 +88,11 @@ export default function ScheduleAdminPanel() {
           setShowModal(false);
           refreshData();
         } else {
-          setFormNotice("新建日程失败");
+          setFormNotice(tx("failed_to_create_schedule_961df7e5"));
         }
       }
     } catch {
-      setFormNotice("网络请求异常");
+      setFormNotice(tx("network_error_43c4db17"));
     }
   };
 
@@ -153,15 +155,12 @@ export default function ScheduleAdminPanel() {
           <div className="flex items-center gap-2">
             <span className="text-xl">📅</span>
             <h2 className="text-base font-bold text-gray-900 dark:text-white">
-              日历日程管理
-            </h2>
+              {tx("schedule_management_95968275")}</h2>
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-              共 {schedules.length} 项日程
-            </span>
+              {tx("total_76e547a8")}{schedules.length} {tx("schedules_4a2752c3")}</span>
           </div>
           <p className="text-xs text-gray-400 dark:text-slate-400 mt-1">
-            统一集中管理您的全局日历与计划日程，支持标题、日期、优先级与归属项目排期
-          </p>
+            {tx("manage_calendar_entries_titles_dates_priorities__65e18b9a")}</p>
         </div>
 
         <button
@@ -169,7 +168,7 @@ export default function ScheduleAdminPanel() {
           className="self-start sm:self-auto px-4 py-2 bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-bold rounded-xl shadow-xs hover:shadow-md transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
         >
           <span>✨</span>
-          <span>新建日程</span>
+          <span>{tx("new_schedule_5090d53a")}</span>
         </button>
       </div>
 
@@ -181,10 +180,10 @@ export default function ScheduleAdminPanel() {
             id="schedule-panel-search"
             name="searchQuery"
             type="text"
-            aria-label="搜索日程标题"
+            aria-label={tx("search_schedule_titles_517a5aba")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="搜索日程标题..."
+            placeholder={tx("search_schedule_titles_74510774")}
             className="w-full pl-8 pr-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
           />
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
@@ -196,48 +195,47 @@ export default function ScheduleAdminPanel() {
         <select
           id="schedule-panel-priority-filter"
           name="priorityFilter"
-          aria-label="按优先级筛选日程"
+          aria-label={tx("filter_schedules_by_priority_eaac7b54")}
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
           className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"
         >
-          <option value="all">全部优先级</option>
-          <option value="high">🔴 高优先级</option>
-          <option value="medium">🟡 中优先级</option>
-          <option value="low">🔵 低优先级</option>
+          <option value="all">{tx("all_priorities_73385818")}</option>
+          <option value="high">{tx("high_priority_b755604e")}</option>
+          <option value="medium">{tx("medium_priority_8642409d")}</option>
+          <option value="low">{tx("low_priority_9add2809")}</option>
         </select>
 
         {/* Status Filter */}
         <select
           id="schedule-panel-status-filter"
           name="statusFilter"
-          aria-label="按状态筛选日程"
+          aria-label={tx("filter_schedules_by_status_3806369f")}
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"
         >
-          <option value="all">全部状态 ({schedules.length})</option>
-          <option value="pending">⏳ 进行中 ({pendingCount})</option>
-          <option value="done">✅ 已完成 ({doneCount})</option>
+          <option value="all">{tx("all_statuses_cacda875")}{schedules.length})</option>
+          <option value="pending">{tx("in_progress_ad8d3439")}{pendingCount})</option>
+          <option value="done">{tx("completed_1dc0d897")}{doneCount})</option>
         </select>
       </div>
 
       {/* Schedules Table */}
       {filteredSchedules.length === 0 ? (
         <div className="py-12 text-center text-xs text-gray-400 bg-gray-50/50 dark:bg-slate-900/40 rounded-xl border border-dashed border-gray-200 dark:border-slate-800">
-          暂无匹配的日程安排
-        </div>
+          {tx("no_matching_schedules_15097b09")}</div>
       ) : (
         <div className="overflow-x-auto border border-gray-100 dark:border-slate-700/80 rounded-xl">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-gray-50/80 dark:bg-slate-900/60 border-b border-gray-100 dark:border-slate-700 text-gray-500 dark:text-slate-400">
-                <th className="p-3 font-bold w-12 text-center">状态</th>
-                <th className="p-3 font-bold">日程内容</th>
-                <th className="p-3 font-bold w-28">归属项目</th>
-                <th className="p-3 font-bold w-28">计划日期</th>
-                <th className="p-3 font-bold w-24">优先级</th>
-                <th className="p-3 font-bold w-28 text-right">操作</th>
+                <th className="p-3 font-bold w-12 text-center">{tx("status_6320b4a8")}</th>
+                <th className="p-3 font-bold">{tx("schedule_bbe160c4")}</th>
+                <th className="p-3 font-bold w-28">{tx("project_8cea37ab")}</th>
+                <th className="p-3 font-bold w-28">{tx("planned_date_01124721")}</th>
+                <th className="p-3 font-bold w-24">{tx("priority_565d6460")}</th>
+                <th className="p-3 font-bold w-28 text-right">{tx("actions_ed31fbb4")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-slate-700/60">
@@ -254,7 +252,7 @@ export default function ScheduleAdminPanel() {
                       <input
                         id={`schedule-item-check-${item.id}`}
                         name={`schedule-item-check-${item.id}`}
-                        aria-label={`标记 "${item.title}" 完成状态`}
+                        aria-label={tx("message_e72e425e69ab", {v0: item.title})}
                         type="checkbox"
                         checked={item.done}
                         onChange={() => handleToggleDone(item)}
@@ -286,7 +284,7 @@ export default function ScheduleAdminPanel() {
                           <span className="truncate max-w-[90px]">{matchedProj.name}</span>
                         </span>
                       ) : (
-                        <span className="text-gray-300 dark:text-slate-600 text-[10px]">无项目</span>
+                        <span className="text-gray-300 dark:text-slate-600 text-[10px]">{tx("no_project_335f6e2b")}</span>
                       )}
                     </td>
 
@@ -314,10 +312,10 @@ export default function ScheduleAdminPanel() {
                         }`}
                       >
                         {item.priority === "high"
-                          ? "高优先级"
+                          ? tx("high_priority_168b218c")
                           : item.priority === "low"
-                          ? "低优先级"
-                          : "中优先级"}
+                          ? tx("low_priority_fe1f521d")
+                          : tx("medium_priority_56fbc506")}
                       </span>
                     </td>
 
@@ -328,14 +326,12 @@ export default function ScheduleAdminPanel() {
                           onClick={() => handleOpenModal(item)}
                           className="text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 cursor-pointer"
                         >
-                          编辑
-                        </button>
+                          {tx("edit_05183656")}</button>
                         <button
                           onClick={() => setScheduleToDelete(item)}
                           className="text-xs font-semibold text-rose-500 hover:text-rose-600 cursor-pointer"
                         >
-                          删除
-                        </button>
+                          {tx("delete_2f9daa82")}</button>
                       </div>
                     </td>
                   </tr>
@@ -353,7 +349,7 @@ export default function ScheduleAdminPanel() {
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-700">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
                 <span>📅</span>
-                <span>{editingSchedule ? "编辑日程安排" : "新建日历日程"}</span>
+                <span>{editingSchedule ? tx("edit_schedule_a564a40b") : tx("new_calendar_entry_dbfa0a33")}</span>
               </h3>
               <button
                 onClick={() => setShowModal(false)}
@@ -370,8 +366,7 @@ export default function ScheduleAdminPanel() {
                   htmlFor="schedule-panel-form-title"
                   className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
                 >
-                  日程标题 *
-                </label>
+                  {tx("schedule_title_1e5349b0")}</label>
                 <input
                   id="schedule-panel-form-title"
                   name="formTitle"
@@ -379,7 +374,7 @@ export default function ScheduleAdminPanel() {
                   required
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="例如：准备 Q3 产品需求评审会议..."
+                  placeholder={tx("e_g_prepare_the_q3_requirements_review_5462992d")}
                   className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
                 />
               </div>
@@ -391,8 +386,7 @@ export default function ScheduleAdminPanel() {
                     htmlFor="schedule-panel-form-due-date"
                     className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
                   >
-                    计划日期
-                  </label>
+                    {tx("planned_date_01124721")}</label>
                   <input
                     id="schedule-panel-form-due-date"
                     name="formDueDate"
@@ -408,8 +402,7 @@ export default function ScheduleAdminPanel() {
                     htmlFor="schedule-panel-form-priority"
                     className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
                   >
-                    优先级
-                  </label>
+                    {tx("priority_565d6460")}</label>
                   <select
                     id="schedule-panel-form-priority"
                     name="formPriority"
@@ -419,9 +412,9 @@ export default function ScheduleAdminPanel() {
                     }
                     className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"
                   >
-                    <option value="high">🔴 高优先级</option>
-                    <option value="medium">🟡 中优先级</option>
-                    <option value="low">🔵 低优先级</option>
+                    <option value="high">{tx("high_priority_b755604e")}</option>
+                    <option value="medium">{tx("medium_priority_8642409d")}</option>
+                    <option value="low">{tx("low_priority_9add2809")}</option>
                   </select>
                 </div>
               </div>
@@ -432,8 +425,7 @@ export default function ScheduleAdminPanel() {
                   htmlFor="schedule-panel-form-project-id"
                   className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1"
                 >
-                  归属项目（选填）
-                </label>
+                  {tx("project_optional_4c4eb08b")}</label>
                 <select
                   id="schedule-panel-form-project-id"
                   name="formProjectId"
@@ -441,7 +433,7 @@ export default function ScheduleAdminPanel() {
                   onChange={(e) => setFormProjectId(e.target.value)}
                   className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"
                 >
-                  <option value="">独立日程（不绑定项目）</option>
+                  <option value="">{tx("independent_entry_no_project_40693cca")}</option>
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>
                       🗂️ {p.name}
@@ -461,14 +453,12 @@ export default function ScheduleAdminPanel() {
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-xs font-semibold rounded-xl hover:bg-gray-200 cursor-pointer"
                 >
-                  取消
-                </button>
+                  {tx("cancel_2cd0f3be")}</button>
                 <button
                   type="submit"
                   className="px-4 py-2 bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer"
                 >
-                  保存日程
-                </button>
+                  {tx("save_schedule_c0a55a7b")}</button>
               </div>
             </form>
           </div>
@@ -478,9 +468,9 @@ export default function ScheduleAdminPanel() {
       {/* Delete Confirmation */}
       <ConfirmDialog
         open={Boolean(scheduleToDelete)}
-        title="确认删除日程"
-        message={`确定要删除日程 “${scheduleToDelete?.title || ""}” 吗？此操作无法撤销。`}
-        confirmLabel="确认删除"
+        title={tx("delete_schedule_647ed44c")}
+        message={tx("message_8b5453aebeee", {v0: scheduleToDelete?.title || ""})}
+        confirmLabel={tx("confirm_delete_a3ea3c17")}
         onConfirm={handleDeleteConfirm}
         onClose={() => setScheduleToDelete(null)}
       />

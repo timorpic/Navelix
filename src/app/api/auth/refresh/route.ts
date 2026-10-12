@@ -1,3 +1,4 @@
+import { localizedJson } from "@/lib/localized-json";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE } from "@/lib/db";
@@ -11,12 +12,12 @@ export async function POST() {
   const [user, cookieStore] = await Promise.all([getSessionUser(), cookies()]);
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (!user || !token) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   const session = renewSession(token);
   if (!session) {
-    return NextResponse.json({ error: "登录会话已失效" }, { status: 401 });
+    return localizedJson({ error: "登录会话已失效" }, { status: 401 });
   }
 
   const res = NextResponse.json({ ok: true, expiresAt: session.expiresAt });

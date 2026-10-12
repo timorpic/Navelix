@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import Modal from "@/components/modal";
 import { toLocalDateStr } from "@/lib/date-utils";
@@ -24,6 +26,8 @@ const PRIORITIES = [
  * 表单状态在挂载时初始化；调用方通过变更 `key` 让每次打开都拿到全新表单。
  */
 export default function AddTodoModal({ open, onClose, onAdded }: AddTodoModalProps) {
+  const text = useText();
+  const tx = useTranslations();
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
   const [dueDate, setDueDate] = useState(() => toLocalDateStr());
@@ -45,31 +49,30 @@ export default function AddTodoModal({ open, onClose, onAdded }: AddTodoModalPro
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        setError(data?.error || "创建失败，请重试");
+        setError(data?.error || tx("failed_to_create_try_again_2bd59cb7"));
         return;
       }
       window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
       onAdded?.();
       onClose();
     } catch {
-      setError("网络异常，请重试");
+      setError(tx("network_error_try_again_2e704a3c"));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <Modal open={open} title="☑️ 快速记待办" onClose={onClose}>
+    <Modal open={open} title={tx("quick_add_todo_14383055")} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">
-            待办内容
-          </label>
+            {tx("task_4950de87")}</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="要做什么？"
+            placeholder={tx("what_needs_to_be_done_435a0c73")}
             autoFocus
             className="w-full rounded-lg border border-gray-200 bg-gray-50 p-2.5 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#00C776] dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           />
@@ -78,8 +81,7 @@ export default function AddTodoModal({ open, onClose, onAdded }: AddTodoModalPro
         <div className="flex gap-3">
           <div className="flex-1">
             <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">
-              优先级
-            </label>
+              {tx("priority_565d6460")}</label>
             <select
               value={priority}
               onChange={(e) =>
@@ -89,15 +91,14 @@ export default function AddTodoModal({ open, onClose, onAdded }: AddTodoModalPro
             >
               {PRIORITIES.map((p) => (
                 <option key={p.value} value={p.value}>
-                  {p.label}
+                  {text(p.label)}
                 </option>
               ))}
             </select>
           </div>
           <div className="flex-1">
             <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">
-              截止日期
-            </label>
+              {tx("due_date_31802424")}</label>
             <input
               type="date"
               value={dueDate}
@@ -115,14 +116,13 @@ export default function AddTodoModal({ open, onClose, onAdded }: AddTodoModalPro
             onClick={onClose}
             className="rounded-lg px-3 py-1.5 text-xs text-gray-500 transition-colors hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200"
           >
-            取消
-          </button>
+            {tx("cancel_2cd0f3be")}</button>
           <button
             type="submit"
             disabled={!title.trim() || submitting}
             className="rounded-lg bg-[#00C776] px-4 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#00B068] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting ? "创建中…" : "创建"}
+            {submitting ? tx("creating_56b63def") : tx("create_cde2cd07")}
           </button>
         </div>
       </form>

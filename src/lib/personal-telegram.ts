@@ -1,3 +1,5 @@
+import { translateText } from "./server-translations.ts";
+import { getUserConfigRow } from "./global-config.ts";
 import { randomUUID } from "node:crypto";
 import { db } from "./db.ts";
 import { toLocalDateStr } from "./date-utils.ts";
@@ -81,9 +83,10 @@ export async function runPersonalTelegramNotifications(now = new Date(), send: P
       db.prepare("UPDATE telegram_deliveries SET finished = 1 WHERE event_key = ?").run(event.event_key);
       continue;
     }
-    const text = event.kind === "assignment"
+    const rawText = event.kind === "assignment"
       ? `📌 Navelix：你收到一项任务\n${task.title.slice(0, 500)}${task.due_date ? `\n截止日期：${task.due_date}` : ""}`
       : `📅 Navelix：待办 / 日历今日到期\n${task.title.slice(0, 500)}\n截止日期：${task.due_date}`;
+    const text = translateText(getUserConfigRow(event.user_id)?.language, rawText);
     let sent = false;
     try { sent = await send(event.user_id, text, event.kind); } catch { /* retry without leaking transport credentials */ }
     if (sent || event.attempts + 1 >= 3) {

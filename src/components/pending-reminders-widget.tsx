@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useNavelixData } from "@/context/navelix-context";
 
 interface PendingTodo {
@@ -11,6 +12,7 @@ interface PendingTodo {
 
 /** 右侧侧边栏小组件：待处理提醒（未完成待办） */
 export default function PendingRemindersWidget() {
+  const tx = useTranslations();
   const { todos } = useNavelixData();
 
   const pending: PendingTodo[] = todos
@@ -33,7 +35,7 @@ export default function PendingRemindersWidget() {
     <div className="rounded-2xl p-4 bg-white/90 dark:bg-slate-900/70 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-3 transition-colors">
       <div className="flex items-center gap-2">
         <span className="text-sm">📌</span>
-        <h3 className="text-xs font-black text-gray-900 dark:text-white tracking-wide">待处理提醒</h3>
+        <h3 className="text-xs font-black text-gray-900 dark:text-white tracking-wide">{tx("pending_reminders_31e81252")}</h3>
         {pending.length > 0 && (
           <span className="px-1.5 py-0.5 rounded-full bg-[#00C776]/10 text-[#00C776] text-[9px] font-bold ml-auto">
             {pending.length}
@@ -42,7 +44,7 @@ export default function PendingRemindersWidget() {
       </div>
 
       {pending.length === 0 ? (
-        <p className="py-3 text-center text-[10px] text-gray-400 dark:text-slate-500">暂无待处理事项</p>
+        <p className="py-3 text-center text-[10px] text-gray-400 dark:text-slate-500">{tx("nothing_pending_e9f5dfa8")}</p>
       ) : (
         <div className="space-y-2">
           {pending.map((todo) => (

@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { createProject } from "@/lib/todos-projects";
 
 export async function GET() {
   const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const userId = user.id;
   const rows = db
     .prepare(
@@ -25,7 +26,7 @@ export async function GET() {
     created_at: number;
     updated_at: number;
   }[];
-  return NextResponse.json({
+  return localizedJson({
     projects: rows.map((r) => ({
       id: r.id,
       name: r.name,
@@ -43,13 +44,13 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const userId = user.id;
   try {
     const body = await req.json();
     const name = String(body.name || "").trim();
     if (!name) {
-      return NextResponse.json({ error: "项目名不能为空" }, { status: 400 });
+      return localizedJson({ error: "项目名不能为空" }, { status: 400 });
     }
 
     const project = createProject(userId, {
@@ -62,9 +63,9 @@ export async function POST(req: NextRequest) {
       todos: Array.isArray(body.todos) ? body.todos : undefined,
     });
 
-    return NextResponse.json({ success: true, project });
+    return localizedJson({ success: true, project });
   } catch (err) {
-    return NextResponse.json(
+    return localizedJson(
       { error: err instanceof Error ? err.message : "创建失败" },
       { status: 500 },
     );

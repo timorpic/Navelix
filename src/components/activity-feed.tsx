@@ -1,5 +1,7 @@
 "use client";
+import { useLocale } from "next-intl";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState, useCallback } from "react";
 import type { SiteLink } from "@/types"
 import { formatRelativeTime } from "@/lib/date-utils";
@@ -20,6 +22,8 @@ export default function ActivityFeed({
   links: SiteLink[];
   onSelectCategory?: (id: string) => void;
 }) {
+  const locale = useLocale();
+  const tx = useTranslations();
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,7 +64,7 @@ export default function ActivityFeed({
             linkActivities.push({
               id: `l-${id}`,
               type: "link",
-              text: `访问 ${link.title}`,
+              text: tx("message_6faa10eb8c62", {v0: link.title}),
               icon: link.icon || "🔗",
               ts: u.lastUsed,
             });
@@ -80,7 +84,7 @@ export default function ActivityFeed({
     } finally {
       setLoading(false);
     }
-  }, [links]);
+  }, [links, tx]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -107,28 +111,25 @@ export default function ActivityFeed({
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="text-sm">⚡</span>
           <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">
-            最近活动快速预览
-          </h3>
+            {tx("recent_activity_preview_eb87f81a")}</h3>
         </div>
         <button
           type="button"
           onClick={handleNavigateToNotifications}
           className="text-[11px] font-semibold text-[#00C776] hover:underline flex items-center gap-0.5 shrink-0 cursor-pointer"
-          title="跳转到消息通知与动态页面"
+          title={tx("go_to_notifications_and_activity_28d1591c")}
         >
-          <span>查看所有</span>
+          <span>{tx("view_all_ac4b7fbb")}</span>
           <span>→</span>
         </button>
       </div>
 
       {loading ? (
         <p className="py-4 text-center text-[11px] text-gray-400 dark:text-slate-400">
-          加载中…
-        </p>
+          {tx("loading_4927a53b")}</p>
       ) : items.length === 0 ? (
         <p className="py-4 text-center text-[11px] text-gray-400 dark:text-slate-400">
-          暂无活动记录
-        </p>
+          {tx("no_activity_yet_377b9ec3")}</p>
       ) : (
         <div className="relative pl-3 before:absolute before:left-[5px] before:top-1 before:bottom-1 before:w-px before:bg-gray-100 dark:before:bg-slate-700">
           {items.slice(0, 7).map((item) => (
@@ -152,7 +153,7 @@ export default function ActivityFeed({
                 {item.text}
               </span>
               <span className="text-[9px] text-gray-400 dark:text-slate-500 shrink-0">
-                {formatRelativeTime(item.ts, { style: "compact", fallbackAfterDays: 7 })}
+                {formatRelativeTime(item.ts, { style: "compact", fallbackAfterDays: 7 , locale})}
               </span>
             </div>
           ))}

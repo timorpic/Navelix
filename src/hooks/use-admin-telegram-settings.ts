@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import {
   buildTelegramPayload,
@@ -40,6 +41,7 @@ export interface UseAdminTelegramSettingsResult {
 export function useAdminTelegramSettings({
   flash,
 }: UseAdminTelegramSettingsOptions): UseAdminTelegramSettingsResult {
+  const tx = useTranslations();
   // ── Telegram 通知配置 ──
   const [personalSubscriptions, setPersonalSubscriptions] = useState({ notifyTodo: false, notifyAssignment: false, notifyDataTransfer: false });
   const [tgEnabled, setTgEnabled] = useState(false);
@@ -102,26 +104,17 @@ export function useAdminTelegramSettings({
             if (state) { setPersonalSubscriptions({ notifyTodo: state.notifyTodo, notifyAssignment: state.notifyAssignment, notifyDataTransfer: state.notifyDataTransfer }); setTgEnabled(state.enabled); setTgNotifyBackup(state.notifyBackup); setTgNotifySystem(state.notifySystem); }
           }
           setTgBotTokenInput("");
-          flash("✅ Telegram 配置已保存");
+          flash(tx("telegram_settings_saved_a4e53d9c"));
         } else {
           await fetchTelegramConfig();
-          flash(`❌ ${data.error || "保存失败"}`);
+          flash(`❌ ${data.message || data.error || tx("failed_to_save_6309a3bb")}`);
         }
       } catch {
         await fetchTelegramConfig();
-        flash("❌ 网络请求失败");
+        flash(tx("network_request_failed_32fed512"));
       }
     },
-    [
-      personalSubscriptions,
-      tgBotTokenInput,
-      tgChatId,
-      tgEnabled,
-      tgNotifyBackup,
-      tgNotifySystem,
-      flash,
-      fetchTelegramConfig,
-    ],
+    [personalSubscriptions, tgBotTokenInput, tgChatId, tgEnabled, tgNotifyBackup, tgNotifySystem, flash, fetchTelegramConfig, tx],
   );
 
   const tgTest = useCallback(async () => {
@@ -133,16 +126,16 @@ export function useAdminTelegramSettings({
       });
       const data = await res.json();
       if (res.ok) {
-        flash("✅ 测试消息已发送，请检查 Telegram");
+        flash(tx("test_message_sent_check_telegram_3ef13016"));
       } else {
-        flash(`❌ ${data.error || "发送失败"}`);
+        flash(`❌ ${data.message || data.error || tx("failed_to_send_ac77953a")}`);
       }
     } catch {
-      flash("❌ 网络请求失败");
+      flash(tx("network_request_failed_32fed512"));
     } finally {
       setTgTesting(false);
     }
-  }, [flash]);
+  }, [flash, tx]);
 
   const toggleTgEnabled = useCallback(() => {
     const next = !tgEnabled;

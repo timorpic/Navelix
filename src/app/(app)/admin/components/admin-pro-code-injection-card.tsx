@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useNavelixConfig } from "@/context/navelix-context";
 import type { LicenseStatus } from "@/lib/admin-pro";
 
@@ -15,6 +16,7 @@ export default function AdminProCodeInjectionCard({
 }: {
   licenseStatus: LicenseStatus;
 }) {
+  const tx = useTranslations();
   const { config, updateConfig } = useNavelixConfig();
 
   return (
@@ -23,48 +25,43 @@ export default function AdminProCodeInjectionCard({
         <div>
           <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
             <span>⚡</span>
-            <span>自定义代码与统计探针注入</span>
+            <span>{tx("custom_code_analytics_scripts_fe93df55")}</span>
           </h3>
           <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-            支持接入 Umami / Google Analytics / 百度统计探针及自定义全局 CSS 样式
-          </p>
+            {tx("add_umami_google_analytics_baidu_analytics_or_cu_030aa763")}</p>
         </div>
         {licenseStatus.isPro ? (
           <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shrink-0">
-            ✨ 已解锁
-          </span>
+            {tx("unlocked_b9d9fa83")}</span>
         ) : (
           <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800 shrink-0">
-            🔒 PRO 功能
-          </span>
+            {tx("pro_feature_d54ea328")}</span>
         )}
       </div>
 
       <div className={`space-y-4 ${!licenseStatus.isPro ? "opacity-60 pointer-events-none" : ""}`}>
         <div>
           <label className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
-            自定义 HTML / 统计脚本代码 (如 &lt;script&gt; 统计探针)
-          </label>
+            {tx("custom_html_analytics_scripts_e_g_lt_script_gt_bcda0347")}</label>
           <textarea
             rows={3}
             disabled={!licenseStatus.isPro}
             value={config.customHeadScripts || ""}
             onChange={(e) => updateConfig({ customHeadScripts: e.target.value })}
-            placeholder="<!-- 粘贴 Umami / Google Analytics / 百度统计等探针代码 -->&#10;<script defer src='https://analytics.example.com/script.js' data-website-id='...'></script>"
+            placeholder={tx("paste_your_analytics_script_here_10_script_defer_87a660da")}
             className="w-full border border-gray-200 dark:border-slate-700 rounded-xl p-3 text-xs font-mono bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400"
           />
         </div>
 
         <div>
           <label className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
-            自定义全局 CSS 样式
-          </label>
+            {tx("custom_global_css_99ecc1e8")}</label>
           <textarea
             rows={3}
             disabled={!licenseStatus.isPro}
             value={config.customCss || ""}
             onChange={(e) => updateConfig({ customCss: e.target.value })}
-            placeholder="/* 输入你想要覆盖的自定义 CSS 样式 */&#10;body { font-family: sans-serif; }"
+            placeholder={tx("enter_your_custom_css_overrides_10_body_font_fam_248439bc")}
             className="w-full border border-gray-200 dark:border-slate-700 rounded-xl p-3 text-xs font-mono bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400"
           />
         </div>

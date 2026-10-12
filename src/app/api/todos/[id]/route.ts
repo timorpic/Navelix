@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
+import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { emitUserEvent } from "@/lib/events";
@@ -10,7 +11,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const userId = user.id;
 
   const { id } = await params;
@@ -20,19 +21,19 @@ export async function PATCH(
     .get(id) as { user_id: string; assigned_to?: string; project_id?: string; due_date?: string } | undefined;
 
   if (!todoRow) {
-    return NextResponse.json({ error: "待办不存在" }, { status: 404 });
+    return localizedJson({ error: "待办不存在" }, { status: 404 });
   }
 
   // 允许所有者或被委托指派人修改（如打勾完成）
   if (todoRow.user_id !== userId && todoRow.assigned_to !== userId) {
-    return NextResponse.json({ error: "无权修改该待办" }, { status: 403 });
+    return localizedJson({ error: "无权修改该待办" }, { status: 403 });
   }
 
   const body = await req.json();
 
   const changed = updateTodoFields(id, body);
   if (changed.length === 0) {
-    return NextResponse.json({ error: "无更新字段" }, { status: 400 });
+    return localizedJson({ error: "无更新字段" }, { status: 400 });
   }
 
   // 触发实时通知，同时通知创建者与被委托人
@@ -41,7 +42,7 @@ export async function PATCH(
     emitUserEvent(todoRow.assigned_to, "todos:change");
   }
 
-  return NextResponse.json({ success: true });
+  return localizedJson({ success: true });
 }
 
 // DELETE /api/todos/[id] - delete a todo
@@ -50,7 +51,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const userId = user.id;
 
   const { id } = await params;
@@ -60,11 +61,11 @@ export async function DELETE(
     .get(id) as { user_id: string; assigned_to?: string } | undefined;
 
   if (!todoRow) {
-    return NextResponse.json({ success: true });
+    return localizedJson({ success: true });
   }
 
   if (todoRow.user_id !== userId) {
-    return NextResponse.json({ error: "仅任务创建者可删除该待办" }, { status: 403 });
+    return localizedJson({ error: "仅任务创建者可删除该待办" }, { status: 403 });
   }
 
   db.prepare("DELETE FROM user_todos WHERE id = ?").run(id);
@@ -74,5 +75,5 @@ export async function DELETE(
     emitUserEvent(todoRow.assigned_to, "todos:change");
   }
 
-  return NextResponse.json({ success: true });
+  return localizedJson({ success: true });
 }

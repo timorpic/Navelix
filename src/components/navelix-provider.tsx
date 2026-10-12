@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   defaultConfig,
@@ -45,6 +47,8 @@ export function NavelixProvider({
   children: React.ReactNode;
   initialData?: UserDataResult;
 }) {
+  const locale = useLocale();
+  const router = useRouter();
   const [user, setUser] = useState(initialData?.user ?? null);
   const [categories, setCategories] = useState<Category[]>(
     initialData?.categories ?? seedCategories,
@@ -117,6 +121,7 @@ export function NavelixProvider({
       body: JSON.stringify({ config: patch }),
     }).then(response => {
       if (!response.ok) throw new Error("保存配置失败");
+      if (patch.language) router.refresh();
     }).catch((e) => console.warn("[Navelix] 保存失败", e));
 
     try {
@@ -126,7 +131,7 @@ export function NavelixProvider({
     } catch (e) {
       console.warn("[Navelix] localStorage 操作失败", e);
     }
-  }, []);
+  }, [router]);
 
   // 3. 统一更新配置方法：即时触发 DOM 改变 + 存储 + 状态更新
   const updateConfig = useCallback(
@@ -145,6 +150,15 @@ export function NavelixProvider({
     },
     [saveConfigToServer, applyThemeToDom],
   );
+
+  const changeLanguage = useCallback(async (language: SystemConfig["language"]) => {
+    const response = await fetch("/api/user/locale", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ language }) });
+    if (!response.ok) throw new Error("Unable to save language");
+    const next = { ...configRef.current, language };
+    configRef.current = next;
+    setConfig(next);
+    try { localStorage.setItem("navelix.user.config", JSON.stringify(configForBrowser(next))); } catch { /* optional cache */ }
+  }, []);
 
   const resetConfig = useCallback(() => {
     updateConfig(defaultConfig);
@@ -170,6 +184,7 @@ export function NavelixProvider({
               ? localTheme
               : data.config.theme;
           setConfig({ ...defaultConfig, ...data.config, theme: activeTheme });
+          if (data.config.language !== locale) router.refresh();
           if (activeTheme) {
             applyThemeToDom(activeTheme);
           }
@@ -199,7 +214,7 @@ export function NavelixProvider({
         }
         setHydrated(true);
       });
-  }, [applyThemeToDom]);
+  }, [applyThemeToDom, locale, router]);
 
   // 5. 挂载加载与跨标签页 Storage 同步
   useEffect(() => {
@@ -510,6 +525,7 @@ export function NavelixProvider({
     isDark,
     updateConfig,
     resetConfig,
+    changeLanguage,
   };
 
   return (

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
 // 生产环境移除 'unsafe-eval'（Next.js 生产包无需 eval），开发保留以兼容 HMR
 const isProduction = process.env.NODE_ENV === "production";
@@ -61,4 +62,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default createNextIntlPlugin()(nextConfig);

@@ -1,5 +1,7 @@
 # ── PNPM Workspace Configuration ──
 allowBuilds:
+  '@parcel/watcher': false
+  '@swc/core': false
   esbuild: true
   simple-git-hooks: true
   unrs-resolver: true

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { Project, TodoItem } from "@/types";
 import type { UseGanttResult } from "@/hooks/use-gantt";
 
@@ -26,6 +27,7 @@ export default function ProjectGanttView({
   /** 点击项目上的 ✨ 呼出 AI 拆解 */
   onEditProject: (project: Project, triggerAi?: boolean) => void;
 }) {
+  const tx = useTranslations();
   return (
     <div className="bg-white dark:bg-slate-900/90 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-2xs overflow-hidden flex flex-col">
       {/* 甘特图工具栏 (Gantt Toolbar) */}
@@ -40,7 +42,7 @@ export default function ProjectGanttView({
                       onClick={() => gantt.setOffset(0)}
                       className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-700 dark:text-slate-300 hover:text-[#00C776] cursor-pointer shadow-2xs transition-colors"
                     >
-                      {gantt.scale === "day" ? "定位今天" : gantt.scale === "month" ? "定位本月" : "定位今年"}
+                      {gantt.scale === "day" ? tx("go_to_today_187aa111") : gantt.scale === "month" ? tx("go_to_this_month_9de73b6d") : tx("go_to_this_year_23c504b1")}
                     </button>
                     {/* 项目筛选下拉 */}
                     <select
@@ -48,7 +50,7 @@ export default function ProjectGanttView({
                       onChange={(e) => gantt.setProjectFilter(e.target.value)}
                       className="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-700 dark:text-slate-300 cursor-pointer shadow-2xs transition-colors focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
                     >
-                      <option value="all">全部项目</option>
+                      <option value="all">{tx("all_projects_e3040dfd")}</option>
                       {projects.map((p) => (
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
@@ -66,10 +68,9 @@ export default function ProjectGanttView({
                   ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
-              title="21 天微观敏捷排期视界"
+              title={tx("21_day_agile_planning_view_f4107594")}
             >
-              🌞 日 (21天)
-            </button>
+              {tx("day_21_days_b0f52c5c")}</button>
             <button
               type="button"
               onClick={() => gantt.handleScaleChange("month")}
@@ -78,10 +79,9 @@ export default function ProjectGanttView({
                   ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
-              title="12 个月中期推进视界"
+              title={tx("12_month_planning_view_d5863c1d")}
             >
-              📅 月 (年度推进)
-            </button>
+              {tx("month_yearly_25bf4d56")}</button>
             <button
               type="button"
               onClick={() => gantt.handleScaleChange("year")}
@@ -90,10 +90,9 @@ export default function ProjectGanttView({
                   ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
-              title="3 年跨度战略路线图"
+              title={tx("3_year_strategic_roadmap_e9028d8f")}
             >
-              🪐 年 (跨年路线图)
-            </button>
+              {tx("year_multi_year_c0d979d1")}</button>
           </div>
 
           {/* 前后翻页 */}
@@ -122,10 +121,9 @@ export default function ProjectGanttView({
           {/* 表头：左侧固定项目信息 (240px) + 右侧多尺度刻度 */}
           <div className="flex border-b border-gray-200 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/80 text-[11px] font-black text-gray-600 dark:text-slate-300">
             <div className="w-64 p-3 border-r border-gray-200 dark:border-slate-800 shrink-0 flex items-center justify-between">
-              <span>项目 / 里程碑阶段</span>
+              <span>{tx("project_milestone_stage_cdbb9296")}</span>
               <span className="text-[10px] text-gray-400 font-normal">
-                                  共 {gantt.projectFilter === "all" ? projects.length : 1} 项
-                                </span>
+                                  {tx("total_76e547a8")}{gantt.projectFilter === "all" ? projects.length : 1} {tx("items_49ccde43")}</span>
             </div>
 
             <div
@@ -197,7 +195,7 @@ export default function ProjectGanttView({
                         <button
                           onClick={() => onEditProject(p, true)}
                           className="p-1 text-gray-400 hover:text-[#00C776] text-xs cursor-pointer"
-                          title="使用 AI 拆解追加任务"
+                          title={tx("add_tasks_with_ai_breakdown_af3ef928")}
                         >
                           ✨
                         </button>
@@ -234,7 +232,7 @@ export default function ProjectGanttView({
                           backgroundColor: `${projectThemeColor}20`,
                           border: `1.5px solid ${projectThemeColor}`,
                         }}
-                        title={`${p.name} · 里程碑完成度 ${percent}% (${done}/${total})`}
+                        title={tx("message_5d011df21735", {v0: p.name, v1: percent, v2: done, v3: total})}
                       >
                         <div
                           className="absolute left-0 top-0 bottom-0 opacity-40 transition-all duration-300"
@@ -332,9 +330,7 @@ export default function ProjectGanttView({
                                 opacity: isDone ? 0.6 : 0.95,
                               }}
                               onClick={() => onToggleTodo(t.id, t.done)}
-                              title={`${t.title} · 截止: ${t.dueDate || "未设定"} · 责任人: ${
-                                t.assigneeName || "未指派"
-                              } (点击切换完成)`}
+                              title={tx("message_2d777619d691", {v0: t.title, v1: t.dueDate || tx("not_set_181f81e0"), v2: t.assigneeName || tx("unassigned_350c6830")})}
                             >
                               <span className="truncate flex items-center gap-1">
                                 <span>{isDone ? "✓" : "⚡"}</span>
@@ -362,18 +358,14 @@ export default function ProjectGanttView({
       <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50 text-[11px] text-gray-500 dark:text-slate-400">
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5 font-bold">
-            <span className="w-3 h-3 rounded-md bg-rose-500" /> 高优里程碑
-          </span>
+            <span className="w-3 h-3 rounded-md bg-rose-500" /> {tx("high_priority_milestone_e00f96d0")}</span>
           <span className="flex items-center gap-1.5 font-bold">
-            <span className="w-3 h-3 rounded-md bg-[#00C776]" /> 项目阶段推进
-          </span>
+            <span className="w-3 h-3 rounded-md bg-[#00C776]" /> {tx("project_stage_progress_d2767046")}</span>
           <span className="flex items-center gap-1.5 font-bold">
-            <span className="w-3 h-3 rounded-md bg-slate-400" /> 已达成闭环
-          </span>
+            <span className="w-3 h-3 rounded-md bg-slate-400" /> {tx("completed_a69a6412")}</span>
         </div>
         <p className="text-[10px] text-gray-400">
-          💡 提示：在甘特图上直接点击任务条块可快速标记完成，点击项目可一键呼出 AI 智能拆解追加。
-        </p>
+          {tx("click_a_task_bar_to_mark_it_complete_click_a_pro_f4d4f66c")}</p>
       </div>
     </div>  );
 }

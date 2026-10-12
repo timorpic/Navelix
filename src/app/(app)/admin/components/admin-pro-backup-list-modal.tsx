@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations, useLocale } from "next-intl";
 import { formatBackupSize, formatBackupTime } from "@/lib/admin-pro";
 import type { RemoteBackupItem } from "@/lib/storage-provider";
 
@@ -24,6 +25,8 @@ export default function AdminProBackupListModal({
   onRestore: (fileName: string) => void;
   onClose: () => void;
 }) {
+  const tx = useTranslations();
+  const locale = useLocale();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl border border-gray-100 dark:border-slate-800 space-y-5">
@@ -34,11 +37,9 @@ export default function AdminProBackupListModal({
             </div>
             <div>
               <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                云端物理快照列表与一键还原
-              </h3>
+                {tx("cloud_snapshots_restore_5ddec194")}</h3>
               <p className="text-xs text-gray-400 dark:text-slate-400">
-                可随时拉取历史备份覆盖还原，还原前系统将自动生成安全回滚快照
-              </p>
+                {tx("restore_a_previous_backup_a_safety_snapshot_is_c_ad611448")}</p>
             </div>
           </div>
           <button
@@ -52,9 +53,9 @@ export default function AdminProBackupListModal({
 
         <div className="max-h-72 overflow-y-auto space-y-2.5">
           {loading ? (
-            <div className="py-8 text-center text-xs text-gray-400 animate-pulse">正在连接远程存储检索快照列表中…</div>
+            <div className="py-8 text-center text-xs text-gray-400 animate-pulse">{tx("connecting_to_remote_storage_and_retrieving_snap_0d936141")}</div>
           ) : backups.length === 0 ? (
-            <div className="py-8 text-center text-xs text-gray-400">云存储中暂无历史备份快照</div>
+            <div className="py-8 text-center text-xs text-gray-400">{tx("no_backup_snapshots_in_cloud_storage_c3e45ffd")}</div>
           ) : (
             backups.map((b) => (
               <div
@@ -64,7 +65,7 @@ export default function AdminProBackupListModal({
                 <div>
                   <p className="text-xs font-bold text-gray-900 dark:text-white font-mono">{b.name}</p>
                   <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-0.5">
-                    大小：{formatBackupSize(b.size)} · 备份时间：{formatBackupTime(b.lastModified)}
+                    {tx("size_888d070c")}{formatBackupSize(b.size)} {tx("backed_up_1fa540a3")}{formatBackupTime(b.lastModified, locale)}
                   </p>
                 </div>
                 <button
@@ -73,7 +74,7 @@ export default function AdminProBackupListModal({
                   onClick={() => onRestore(b.name)}
                   className="px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold text-xs shrink-0 cursor-pointer shadow-xs transition-colors disabled:opacity-50"
                 >
-                  {restoringFileName === b.name ? "正在还原中…" : "🔄 一键还原"}
+                  {restoringFileName === b.name ? tx("restoring_e893b49f") : tx("restore_644fb8ff")}
                 </button>
               </div>
             ))
@@ -86,8 +87,7 @@ export default function AdminProBackupListModal({
             onClick={onClose}
             className="px-4 py-2 text-xs font-semibold text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
           >
-            关闭
-          </button>
+            {tx("close_3fd47edc")}</button>
         </div>
       </div>
     </div>

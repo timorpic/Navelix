@@ -36,7 +36,7 @@ export interface UpdateCheckResult {
 }
 
 /** 服务端未回传版本号时展示的内置默认版本。由 scripts/sync-version.mjs 同步。 */
-export const FALLBACK_VERSION = "v2.10.5";
+export const FALLBACK_VERSION = "v2.10.6";
 
 /** 版本号展示：缺失时回退内置默认版本，缺少 `v` 前缀时补上。 */
 export function versionLabel(version?: string | null): string {
@@ -45,8 +45,8 @@ export function versionLabel(version?: string | null): string {
 }
 
 /** 构建时间 / 发布时间的 zh-CN 本地化展示。 */
-export function formatUpdateTime(iso: string): string {
-  return new Date(iso).toLocaleString("zh-CN");
+export function formatUpdateTime(iso: string, locale = "zh-CN"): string {
+  return new Date(iso).toLocaleString(locale);
 }
 
 /** 检查更新请求失败时的兜底结果。 */
@@ -146,6 +146,7 @@ export function personalBackupConfig(input: unknown): Partial<SystemConfig> {
     if (isGlobalScoped(col) || !col.configKey || col.kind === "secret") continue;
     const value = source[col.configKey] ?? source[col.column];
     if (value === undefined) continue;
+    if (col.configKey === "language") { result.language = value === "en" ? "en" : "zh-CN"; continue; }
     result[col.configKey] = col.kind === "bool" ? value === true || value === 1 || value === "1" : value;
   }
   return result as Partial<SystemConfig>;

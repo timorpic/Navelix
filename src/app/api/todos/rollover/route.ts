@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
+import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { toZonedLocalDateStr } from "@/lib/date-utils";
 import { rolloverOverdueTodos } from "@/lib/todos-projects";
@@ -6,7 +7,7 @@ import { rolloverOverdueTodos } from "@/lib/todos-projects";
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   try {
@@ -20,14 +21,14 @@ export async function POST(req: NextRequest) {
     const { count } = rolloverOverdueTodos(user.id, todayStr, action);
 
     if (count === 0) {
-      return NextResponse.json({
+      return localizedJson({
         success: true,
         count: 0,
         message: "当前没有需要顺延的过期待办事项",
       });
     }
 
-    return NextResponse.json({
+    return localizedJson({
       success: true,
       count,
       action,
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
           : `已成功将 ${count} 项过期任务均匀平摊至本周！`,
     });
   } catch (err) {
-    return NextResponse.json(
+    return localizedJson(
       { error: err instanceof Error ? err.message : "顺延失败" },
       { status: 500 },
     );

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 
 interface SearchBarProps {
@@ -9,6 +10,7 @@ interface SearchBarProps {
 }
 
 export default function SearchBar({ value, onChange, className = "" }: SearchBarProps) {
+  const tx = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
 
   // ⌘K / Ctrl+K 聚焦，Esc 清空搜索
@@ -57,8 +59,8 @@ export default function SearchBar({ value, onChange, className = "" }: SearchBar
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          aria-label="搜索系统内内容..."
-          placeholder="搜索书签、日程、项目、消息..."
+          aria-label={tx("search_workspace_6092a58a")}
+          placeholder={tx("search_bookmarks_schedules_projects_messages_37e8fdf8")}
           className="h-12 w-full bg-transparent pl-2 pr-14 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none"
         />
 
@@ -67,8 +69,8 @@ export default function SearchBar({ value, onChange, className = "" }: SearchBar
             <button
               type="button"
               onClick={() => onChange("")}
-              aria-label="清空搜索"
-              title="清空搜索"
+              aria-label={tx("clear_search_b6f00afa")}
+              title={tx("clear_search_b6f00afa")}
               className="w-5 h-5 rounded-full flex items-center justify-center text-xs text-gray-400 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 hover:text-white hover:bg-[#00C776] transition-colors cursor-pointer"
             >
               ✕

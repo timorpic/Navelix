@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
+import { NextRequest } from "next/server";
 import { createHash } from "node:crypto";
 import { db, type UserRow } from "@/lib/db";
 import { getSessionUser, toPublicUser } from "@/lib/auth";
@@ -71,7 +73,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (!user) {
-    return NextResponse.json({ error: "未登录或日历订阅密钥无效" }, { status: 401 });
+    return localizedJson({ error: "未登录或日历订阅密钥无效" }, { status: 401 });
   }
 
   try {
@@ -149,7 +151,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
+    return localizedJson(
       { error: error instanceof Error ? error.message : "导出日历失败" },
       { status: 500 },
     );

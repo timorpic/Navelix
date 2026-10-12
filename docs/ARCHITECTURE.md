@@ -89,3 +89,13 @@ Schema v18 在 `users` 增加 `disabled`（0 启用、1 停用），已有账号
 Schema v19 移除使用事件采集、后台使用统计与匿名遥测周报。升级前对旧事件表创建物理快照，然后删除 `analytics_events` 及 `analytics_*`／`telemetry_*` 系统设置；旧快照恢复时也先迁移到当前结构。升级前备份仍可能包含历史事件，遵循现有备份保留策略。
 
 后台 Pro 子菜单显示由全站布尔设置 `showProMenus`（`show_pro_menus`）控制，默认开启，不受许可证激活限制。配置沿用元数据生成首次建表与启动列补齐、全站默认值读取和系统设置持久化，旧实例无需手工变更数据库。导航中的 `pro` 标记统一控制徽章与子菜单过滤，一级 Pro 入口独立保留。
+
+## 界面国际化
+
+使用 next-intl 的请求配置与 `NextIntlClientProvider`，支持 `zh-CN`、`en`，不新增语言 URL 前缀。`src/i18n/request.ts` 按当前会话读取个人 `user_configs.language`；访客依次使用 `navelix_locale` Cookie、Accept-Language、中文默认值，公开工作空间的所有者语言不影响访客。历史 `zh` 读取时规范为 `zh-CN`，不需要新增数据库列。
+
+`POST /api/user/locale` 接受 `{ "language": "zh-CN" | "en" }`，登录时只更新当前账号，访客仅写 Cookie，沿用 API 写请求的 CSRF 保护。语言切换成功后刷新服务端组件，使 HTML 的 `lang`、SSR 文案和客户端字典一致。个人配置仍由 `NavelixProvider` 协调，不创建独立用户状态。
+
+字典在 `messages/`；`useTranslations()` / `getTranslations()` 用于界面，`useText()` / `translateText()` 用于现有业务展示文案及已知模板的桥接。用户标题、笔记、分类、自定义品牌与历史存储枚举不随语言改写。日期显示传入 locale，不改变任务日期和服务器时区的调度规则。AI 请求传入输出语言要求；Telegram 在发送时读取各收件人的个人语言。错误 JSON 保留旧 `error`，追加稳定 `code` 和本地化 `message`，客户端优先显示 `message`。
+
+新账号自主注册时继承注册页面的访客语言；管理员创建的账号默认中文，用户可登录后自行切换。

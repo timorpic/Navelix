@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 /**
  * 「消息通知与活动动态」卡片头部：标题与条数徽标 + 组合检索/刷新/清空三个全局操作。
  *
@@ -22,16 +23,16 @@ export default function RecentActivitiesHeader({
   onRefresh: () => void;
   onClearAll: () => void;
 }) {
+  const tx = useTranslations();
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-slate-700/60">
       <div className="flex items-center gap-2.5">
         <span className="text-base">🔔</span>
         <div>
           <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <span>消息通知与活动动态</span>
+            <span>{tx("notifications_activity_0aefceb5")}</span>
             <span className="px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/60 text-[#00C776] text-[10px] font-bold">
-              共 {totalCount} 条
-            </span>
+              {tx("total_76e547a8")}{totalCount} {tx("results_f004f1d8")}</span>
           </h3>
         </div>
       </div>
@@ -48,7 +49,7 @@ export default function RecentActivitiesHeader({
           }`}
         >
           <span>⚙️</span>
-          <span>{showAdvancedFilter ? "收起筛选" : "组合检索"}</span>
+          <span>{showAdvancedFilter ? tx("hide_filters_619325e1") : tx("advanced_filters_3ab46e7c")}</span>
           {isFilterActive && (
             <span className="w-1.5 h-1.5 rounded-full bg-[#00C776]" />
           )}
@@ -59,10 +60,10 @@ export default function RecentActivitiesHeader({
           type="button"
           onClick={onRefresh}
           className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-          title="刷新数据"
+          title={tx("refresh_data_0468ee76")}
         >
           <span>🔄</span>
-          <span>刷新</span>
+          <span>{tx("refresh_aee88743")}</span>
         </button>
 
         {/* 清空所有 */}
@@ -72,8 +73,7 @@ export default function RecentActivitiesHeader({
             onClick={onClearAll}
             className="px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/60 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
           >
-            清空
-          </button>
+            {tx("clear_1ef3de06")}</button>
         )}
       </div>
     </div>

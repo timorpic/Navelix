@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
 import { getSessionUser } from "@/lib/auth";
 import { issueApiToken, listApiTokens, revokeApiToken } from "@/lib/auth/api-tokens";
 
@@ -6,29 +6,29 @@ import { issueApiToken, listApiTokens, revokeApiToken } from "@/lib/auth/api-tok
 export async function GET() {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
-  return NextResponse.json({ tokens: listApiTokens(user.id) });
+  return localizedJson({ tokens: listApiTokens(user.id) });
 }
 
 // POST /api/auth/api-tokens - 创建新的个人 API Token
 export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   const body = await req.json().catch(() => null);
   const name = String(body?.name || "默认 API 密钥").trim();
 
   if (!name) {
-    return NextResponse.json({ error: "请提供密钥名称" }, { status: 400 });
+    return localizedJson({ error: "请提供密钥名称" }, { status: 400 });
   }
 
   const issued = issueApiToken(user.id, name);
 
-  return NextResponse.json({
+  return localizedJson({
     success: true,
     token: issued.token,
     tokenId: issued.tokenId,
@@ -42,19 +42,19 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   const body = await req.json().catch(() => null);
   const tokenId = body?.id;
 
   if (!tokenId) {
-    return NextResponse.json({ error: "缺少 id 参数" }, { status: 400 });
+    return localizedJson({ error: "缺少 id 参数" }, { status: 400 });
   }
 
   revokeApiToken(user.id, String(tokenId));
 
-  return NextResponse.json({
+  return localizedJson({
     success: true,
     message: "已撤销并删除指定的 API 密钥",
   });

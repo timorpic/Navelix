@@ -1,5 +1,6 @@
+import { localizedJson } from "@/lib/localized-json";
 import { sendUserTelegramNotification } from "@/lib/telegram";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { validateConfigPatch } from "@/lib/config-validation";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
@@ -20,26 +21,26 @@ import { GLOBAL_SCOPE_CONFIG_KEYS } from "@/lib/user-config-columns";
 export async function GET() {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   // 与 SSR 路径共用同一实现（含 EE 门禁与订阅团队分类并入）。
   // 历史上此处曾逐表重写一遍查询，与 lib/user-data.ts 长期漂移。
-  return NextResponse.json(getUserData(user.id));
+  return localizedJson(getUserData(user.id));
 }
 
 // POST /api/user/data - Save full categories, links, projects, todos, or config for current user
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
   const userId = user.id;
   // 注：middleware.ts 已对该路由统一执行 CSRF 校验，此处为纵深防御的第二道校验。
   // checkCSRF 返回对象，必须检查 .success 属性（对象本身恒为 truthy）
   const csrfResult = checkCSRF(req);
   if (!csrfResult.success) {
-    return NextResponse.json(
+    return localizedJson(
       { error: csrfResult.error || "CSRF 验证失败" },
       { status: csrfResult.status || 403 },
     );
@@ -49,10 +50,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     if (body.config !== undefined) {
       try { validateConfigPatch(body.config); }
-      catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "配置无效" }, { status: 400 }); }
+      catch (error) { return localizedJson({ error: error instanceof Error ? error.message : "配置无效" }, { status: 400 }); }
     }
     if (body.dataTransferAction !== undefined && body.dataTransferAction !== "import") {
-      return NextResponse.json({ error: "无效数据传输操作" }, { status: 400 });
+      return localizedJson({ error: "无效数据传输操作" }, { status: 400 });
     }
     db.exec("BEGIN IMMEDIATE");
 
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest) {
     if (body.dataTransferAction === "import") {
       await sendUserTelegramNotification(userId, "📦 Navelix：个人 JSON 数据导入成功。", "dataTransfer");
     }
-    return NextResponse.json({ success: true });
+    return localizedJson({ success: true });
   } catch (err) {
     try {
       db.exec("ROLLBACK");
@@ -121,6 +122,6 @@ export async function POST(req: NextRequest) {
       // rollback error ignore
     }
     const message = err instanceof Error ? err.message : "保存配置失败";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return localizedJson({ error: message }, { status: 500 });
   }
 }

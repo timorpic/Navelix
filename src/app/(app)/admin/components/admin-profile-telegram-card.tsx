@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { UseAdminTelegramSettingsResult } from "@/hooks/use-admin-telegram-settings";
 
 /**
@@ -16,16 +17,16 @@ export default function AdminProfileTelegramCard({
   tg: UseAdminTelegramSettingsResult;
   isAdmin?: boolean;
 }) {
+  const tx = useTranslations();
   return (
     <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
       <div>
         <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
           <span>📮</span>
-          <span>Telegram Bot 通知</span>
+          <span>{tx("telegram_bot_notifications_95d4e070")}</span>
         </h3>
         <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-          此通知渠道仅属于当前账号。个人通知和系统通知分别订阅。
-        </p>
+          {tx("this_channel_belongs_to_your_account_only_person_a2aa1f3a")}</p>
       </div>
 
       <div className="space-y-3">
@@ -40,7 +41,7 @@ export default function AdminProfileTelegramCard({
                 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
                 : "bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-400"
             }`}>
-              {tg.tgBotTokenConfigured ? "已配置" : "未配置"}
+              {tg.tgBotTokenConfigured ? tx("configured_de8184da") : tx("not_configured_80a57e03")}
             </span>
           </div>
           <input
@@ -51,12 +52,12 @@ export default function AdminProfileTelegramCard({
               const v = tg.tgBotTokenInput.trim();
               if (v) tg.tgSave({ botToken: v });
             }}
-            placeholder={tg.tgBotTokenConfigured ? "已保存 - 输入新 Token 可覆盖（留空保持不变）" : "123456:ABC-DEF...（向 @BotFather 获取）"}
+            placeholder={tg.tgBotTokenConfigured ? tx("saved_enter_a_new_token_to_replace_it_leave_blan_be84c7dd") : tx("123456_abc_def_get_it_from_botfather_595865f0")}
             className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
           />
         </div>
 
-        <button type="button" onClick={() => tg.tgSave({ clearBotToken: true })} className="text-xs text-rose-600">清除 Bot Token</button>
+        <button type="button" onClick={() => tg.tgSave({ clearBotToken: true })} className="text-xs text-rose-600">{tx("clear_bot_token_89747480")}</button>
         {/* Chat ID */}
         <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
           <div className="flex items-center justify-between mb-1.5">
@@ -68,7 +69,7 @@ export default function AdminProfileTelegramCard({
                 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
                 : "bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-400"
             }`}>
-              {tg.tgChatIdConfigured ? "已配置" : "未配置"}
+              {tg.tgChatIdConfigured ? tx("configured_de8184da") : tx("not_configured_80a57e03")}
             </span>
           </div>
           <input
@@ -76,7 +77,7 @@ export default function AdminProfileTelegramCard({
             value={tg.tgChatId}
             onChange={(e) => tg.setTgChatId(e.target.value)}
             onBlur={() => tg.tgSave({ chatId: tg.tgChatId.trim() })}
-            placeholder="例如 123456789（向 @userinfobot 查询你的 ID）"
+            placeholder={tx("e_g_123456789_ask_userinfobot_for_your_id_06f33bb9")}
             className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono"
           />
         </div>
@@ -85,11 +86,9 @@ export default function AdminProfileTelegramCard({
         <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700">
           <div>
             <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
-              Telegram 通知总开关
-            </p>
+              {tx("enable_telegram_notifications_15c3e4e2")}</p>
             <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
-              关闭后当前账号的 Telegram 推送不再发送
-            </p>
+              {tx("when_off_no_telegram_notifications_are_sent_for__283a03ea")}</p>
           </div>
           <button
             type="button"
@@ -100,16 +99,16 @@ export default function AdminProfileTelegramCard({
                 : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
             }`}
           >
-            {tg.tgEnabled ? "已开启" : "已关闭"}
+            {tg.tgEnabled ? tx("on_8a4ef3e4") : tx("off_6744b4c6")}
           </button>
         </div>
 
         <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-3">
-          <p className="text-xs font-bold text-gray-800 dark:text-slate-200">个人通知</p>
+          <p className="text-xs font-bold text-gray-800 dark:text-slate-200">{tx("personal_notifications_a8273278")}</p>
           {([
-            ["notifyTodo", "待办 / 日历到期", "按服务器时区，当天 9 点后提醒一次"],
-            ["notifyAssignment", "任务指派", "收到其他用户新建或转交的任务"],
-            ["notifyDataTransfer", "个人数据导入导出", "个人 JSON 导入成功或导出文件已生成"],
+            ["notifyTodo", tx("todo_calendar_due_reminders_effb0102"), tx("once_after_09_00_on_the_due_date_in_the_server_s_161750b6")],
+            ["notifyAssignment", tx("task_assignments_7b9f0879"), tx("tasks_created_or_reassigned_to_you_by_another_us_1ca58eae")],
+            ["notifyDataTransfer", tx("personal_data_import_export_6753412e"), tx("personal_json_import_completed_or_export_file_ge_8b33ca70")],
           ] as const).map(([key, label, description]) => (
             <div key={key} className="flex items-center justify-between gap-3">
               <div>
@@ -119,7 +118,7 @@ export default function AdminProfileTelegramCard({
               <button type="button" aria-label={label} aria-pressed={tg.personalSubscriptions[key]}
                 onClick={() => tg.togglePersonalSubscription(key)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${tg.personalSubscriptions[key] ? "bg-[#00C776] text-white" : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"}`}>
-                {tg.personalSubscriptions[key] ? "已开启" : "已关闭"}
+                {tg.personalSubscriptions[key] ? tx("on_8a4ef3e4") : tx("off_6744b4c6")}
               </button>
             </div>
           ))}
@@ -129,12 +128,11 @@ export default function AdminProfileTelegramCard({
         {/* 场景开关 */}
         <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-700 space-y-2">
           <p className="text-xs font-bold text-gray-800 dark:text-slate-200">
-            系统通知（仅管理员）
-          </p>
+            {tx("system_notifications_administrators_only_85c2ff0d")}</p>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[11px] text-gray-600 dark:text-slate-300">备份结果</p>
-              <p className="text-[10px] text-gray-400 dark:text-slate-400">本地/云备份成功与失败</p>
+              <p className="text-[11px] text-gray-600 dark:text-slate-300">{tx("backup_results_bce1d1d1")}</p>
+              <p className="text-[10px] text-gray-400 dark:text-slate-400">{tx("local_cloud_backup_successes_and_failures_c81a7e88")}</p>
             </div>
             <button
               type="button"
@@ -145,13 +143,13 @@ export default function AdminProfileTelegramCard({
                   : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
               }`}
             >
-              {tg.tgNotifyBackup ? "已开启" : "已关闭"}
+              {tg.tgNotifyBackup ? tx("on_8a4ef3e4") : tx("off_6744b4c6")}
             </button>
           </div>
           <div className="flex items-center justify-between pt-1.5 border-t border-gray-200/80 dark:border-slate-700">
             <div>
-              <p className="text-[11px] text-gray-600 dark:text-slate-300">系统异常</p>
-              <p className="text-[10px] text-gray-400 dark:text-slate-400">服务重启 / 磁盘占用 / 登录异常</p>
+              <p className="text-[11px] text-gray-600 dark:text-slate-300">{tx("system_alerts_bf8c7903")}</p>
+              <p className="text-[10px] text-gray-400 dark:text-slate-400">{tx("service_restart_disk_usage_sign_in_alerts_dbf0af71")}</p>
             </div>
             <button
               type="button"
@@ -162,7 +160,7 @@ export default function AdminProfileTelegramCard({
                   : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
               }`}
             >
-              {tg.tgNotifySystem ? "已开启" : "已关闭"}
+              {tg.tgNotifySystem ? tx("on_8a4ef3e4") : tx("off_6744b4c6")}
             </button>
           </div>
         </div>
@@ -176,14 +174,13 @@ export default function AdminProfileTelegramCard({
             onClick={tg.tgTest}
             className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
           >
-            {tg.tgTesting ? "发送中…" : "📨 发送测试消息"}
+            {tg.tgTesting ? tx("sending_364970d8") : tx("send_test_message_d90631d2")}
           </button>
         </div>
 
         {!tg.tgBotTokenConfigured && (
           <p className="text-[10px] text-gray-400 dark:text-slate-500">
-            💡 使用提示：通过 @BotFather 创建 Bot 获取 Token；用 @userinfobot 查询你的 Chat ID。
-          </p>
+            {tx("create_a_bot_with_botfather_to_get_a_token_ask_u_19b4615a")}</p>
         )}
       </div>
     </div>

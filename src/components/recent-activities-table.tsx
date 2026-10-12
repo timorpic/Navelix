@@ -1,5 +1,7 @@
 "use client";
+import { useLocale } from "next-intl";
 
+import { useTranslations } from "next-intl";
 import { formatRelativeTime } from "@/lib/date-utils";
 import { formatExactTime } from "@/lib/recent-activities";
 import type { ActivityItem } from "@/lib/recent-activities";
@@ -47,25 +49,25 @@ export default function RecentActivitiesTable({
   onResetFilters: () => void;
   onPageChange: (page: number) => void;
 }) {
+  const locale = useLocale();
+  const tx = useTranslations();
   return (
     <>
       {/* 4. 结构化数据表格展示 (Table View) */}
       {loading ? (
         <div className="py-14 text-center text-xs text-gray-400 dark:text-slate-400">
-          加载通知与活动数据中…
-        </div>
+          {tx("loading_notifications_and_activity_fe429f69")}</div>
       ) : paginatedItems.length === 0 ? (
         <div className="py-14 text-center text-xs text-gray-400 dark:text-slate-400 flex flex-col items-center justify-center gap-2">
           <span className="text-2xl">🔍</span>
-          <span>在当前筛选条件下未找到匹配的通知记录</span>
+          <span>{tx("no_notifications_match_the_current_filters_bece78bf")}</span>
           {isFilterActive && (
             <button
               type="button"
               onClick={onResetFilters}
               className="mt-1 px-3 py-1.5 rounded-xl bg-[#00C776]/10 text-[#00C776] font-bold hover:bg-[#00C776]/20 transition-colors cursor-pointer"
             >
-              清除所有筛选条件
-            </button>
+              {tx("clear_all_filters_711bebe8")}</button>
           )}
         </div>
       ) : (
@@ -78,15 +80,15 @@ export default function RecentActivitiesTable({
                     type="checkbox"
                     checked={isAllSelected}
                     onChange={onToggleSelectAll}
-                    aria-label="全选当前页"
+                    aria-label={tx("select_all_on_this_page_bd082d9a")}
                     className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] border-gray-300 dark:border-slate-600 cursor-pointer"
                   />
                 </th>
                 <th className="py-2.5 px-3 w-12 text-center">#</th>
-                <th className="py-2.5 px-3 w-40">时间</th>
-                <th className="py-2.5 px-3 min-w-[240px]">内容与描述</th>
-                <th className="py-2.5 px-3 w-28 text-center">来源</th>
-                <th className="py-2.5 px-3 w-28 text-center">操作</th>
+                <th className="py-2.5 px-3 w-40">{tx("time_8b6ff498")}</th>
+                <th className="py-2.5 px-3 min-w-[240px]">{tx("content_description_32636a2d")}</th>
+                <th className="py-2.5 px-3 w-28 text-center">{tx("source_a488e93d")}</th>
+                <th className="py-2.5 px-3 w-28 text-center">{tx("actions_ed31fbb4")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100/80 dark:divide-slate-800/80 text-xs bg-white dark:bg-slate-800/40">
@@ -109,7 +111,7 @@ export default function RecentActivitiesTable({
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => onToggleSelectOne(item.id)}
-                        aria-label={`选择条目 ${item.title}`}
+                        aria-label={tx("message_e9d637c0cb75", {v0: item.title})}
                         className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] border-gray-300 dark:border-slate-600 cursor-pointer"
                       />
                     </td>
@@ -126,7 +128,7 @@ export default function RecentActivitiesTable({
                           {formatExactTime(item.ts)}
                         </span>
                         <span className="text-[10px] text-gray-400 dark:text-slate-400">
-                          {formatRelativeTime(item.ts, { fallbackAfterDays: 7 })}
+                          {formatRelativeTime(item.ts, { fallbackAfterDays: 7 , locale})}
                         </span>
                       </div>
                     </td>
@@ -166,19 +168,17 @@ export default function RecentActivitiesTable({
                             target="_blank"
                             rel="noopener noreferrer"
                             className="px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-[#00C776] hover:bg-emerald-100 font-semibold text-[11px] transition-colors"
-                            title="访问目标网址"
+                            title={tx("open_target_url_2ec6a66a")}
                           >
-                            访问 ↗
-                          </a>
+                            {tx("open_fbde27b8")}</a>
                         ) : (
                           <button
                             type="button"
                             onClick={() => onShowDetail(item)}
                             className="px-2 py-1 rounded-md bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-200 font-semibold text-[11px] transition-colors cursor-pointer"
-                            title="查看详情"
+                            title={tx("view_details_a748cc07")}
                           >
-                            详情
-                          </button>
+                            {tx("details_979a3329")}</button>
                         )}
 
                         {/* 单条删除 */}
@@ -187,7 +187,7 @@ export default function RecentActivitiesTable({
                           disabled={deletingId === item.id}
                           onClick={() => onDeleteItem(item)}
                           className="p-1 rounded-md text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer disabled:opacity-50"
-                          title="删除此记录"
+                          title={tx("delete_record_f15adcaa")}
                         >
                           🗑️
                         </button>
@@ -205,8 +205,7 @@ export default function RecentActivitiesTable({
       {totalPages > 1 && (
         <div className="flex flex-wrap items-center justify-between gap-3 pt-4 text-xs">
           <span className="text-gray-500 dark:text-slate-400">
-            第 {currentPage} / {totalPages} 页 · 共 {filteredCount} 条记录
-          </span>
+            {tx("page_af50a0fe")}{currentPage} / {totalPages} {tx("page_total_edf75360")}{filteredCount} {tx("records_6016bf63")}</span>
 
           <div className="flex items-center gap-1.5">
             <button
@@ -215,16 +214,14 @@ export default function RecentActivitiesTable({
               onClick={() => onPageChange(Math.max(1, currentPage - 1))}
               className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
-              ← 上一页
-            </button>
+              {tx("previous_00c03b05")}</button>
             <button
               type="button"
               disabled={currentPage >= totalPages}
               onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
               className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
-              下一页 →
-            </button>
+              {tx("next_64ae71dc")}</button>
           </div>
         </div>
       )}

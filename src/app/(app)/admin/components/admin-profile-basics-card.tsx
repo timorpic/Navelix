@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { resolveAvatar } from "@/lib/avatars";
 import { profileNoticeColor } from "@/lib/admin-profile";
 import type { UseAdminProfileAccountResult } from "@/hooks/use-admin-profile-account";
@@ -16,6 +17,7 @@ export default function AdminProfileBasicsCard({
 }: {
   account: UseAdminProfileAccountResult;
 }) {
+  const tx = useTranslations();
   const { currentUser } = account;
 
   return (
@@ -25,7 +27,7 @@ export default function AdminProfileBasicsCard({
           <div
             className="relative group cursor-pointer shrink-0"
             onClick={account.openAvatarModal}
-            title="点击修改头像"
+            title={tx("click_to_change_avatar_fa41f745")}
           >
             <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#3B82F6] via-[#00C776] to-[#8B5CF6] flex items-center justify-center text-white text-xl font-bold shadow-md overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -36,8 +38,7 @@ export default function AdminProfileBasicsCard({
               />
             </div>
             <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-semibold transition-opacity">
-              修改
-            </div>
+              {tx("edit_37090f45")}</div>
           </div>
 
           <div className="space-y-1 min-w-0">
@@ -45,10 +46,10 @@ export default function AdminProfileBasicsCard({
               {currentUser?.displayName || currentUser?.username || "Admin"}
             </h3>
             <p className="text-xs text-gray-400 font-mono">
-              账号: @{currentUser?.username || "admin"}
+              {tx("account_c3e7fb5d")}{currentUser?.username || "admin"}
             </p>
             <div className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 border border-teal-200 dark:border-teal-900">
-              {currentUser?.role === "admin" ? "👑 超级系统管理员" : "👤 普通注册用户"}
+              {currentUser?.role === "admin" ? tx("system_administrator_c1b496dd") : tx("registered_user_7fb8c713")}
             </div>
           </div>
         </div>
@@ -61,7 +62,7 @@ export default function AdminProfileBasicsCard({
             className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 shadow-2xs transition-all cursor-pointer flex items-center gap-1"
           >
             <span>🖼️</span>
-            <span>头像</span>
+            <span>{tx("avatar_3ea2d23c")}</span>
           </button>
 
           <button
@@ -70,7 +71,7 @@ export default function AdminProfileBasicsCard({
             className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 shadow-2xs transition-all cursor-pointer flex items-center gap-1"
           >
             <span>🔐</span>
-            <span>密码</span>
+            <span>{tx("password_a621ab60")}</span>
           </button>
         </div>
       </div>
@@ -79,8 +80,7 @@ export default function AdminProfileBasicsCard({
       <div className="space-y-4">
         <div className="space-y-1">
           <label htmlFor="admin-profile-display-name" className="block text-xs font-bold text-gray-700 dark:text-slate-200">
-            显示名称 (昵称)
-          </label>
+            {tx("display_name_nickname_55710267")}</label>
           <input
             id="admin-profile-display-name"
             name="displayName"
@@ -88,15 +88,14 @@ export default function AdminProfileBasicsCard({
             value={account.profileDisplayNameInput}
             onChange={(e) => account.setProfileDisplayNameInput(e.target.value)}
             onBlur={() => account.saveProfile({ displayName: account.profileDisplayNameInput })}
-            placeholder="例如 亚历克斯"
+            placeholder={tx("e_g_alex_a34224f8")}
             className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
           />
         </div>
 
         <div className="space-y-1">
           <label htmlFor="admin-profile-email" className="block text-xs font-bold text-gray-700 dark:text-slate-200">
-            个人邮箱地址
-          </label>
+            {tx("email_address_796bf60e")}</label>
           <input
             id="admin-profile-email"
             name="email"
@@ -111,8 +110,7 @@ export default function AdminProfileBasicsCard({
 
         <div className="space-y-1">
           <label htmlFor="admin-profile-bio" className="block text-xs font-bold text-gray-700 dark:text-slate-200">
-            个人座右铭 / 签名
-          </label>
+            {tx("bio_signature_eca686de")}</label>
           <input
             id="admin-profile-bio"
             name="bio"
@@ -120,12 +118,11 @@ export default function AdminProfileBasicsCard({
             value={account.profileBioInput}
             onChange={(e) => account.setProfileBioInput(e.target.value)}
             onBlur={() => account.saveProfile({ bio: account.profileBioInput })}
-            placeholder="例如：极客致远 · 构建与探索"
+            placeholder={tx("e_g_build_explore_repeat_2ef4aaa9")}
             className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
           />
           <p className="text-[10px] text-gray-400 dark:text-slate-400">
-            个性签名将同步展示在侧边栏底部名片卡片上
-          </p>
+            {tx("your_bio_is_also_displayed_in_the_profile_card_a_42d550ae")}</p>
         </div>
 
         {account.profilePasswordNotice && (

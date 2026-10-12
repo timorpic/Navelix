@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { Project } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
@@ -12,6 +14,8 @@ const STATUS_OPTIONS = [
 ];
 
 export default function ProjectAdminPanel() {
+  const text = useText();
+  const tx = useTranslations();
   const { projects, todos, refreshData } = useNavelixData();
   const [name, setName] = useState("");
   const [status, setStatus] = useState("进行中");
@@ -31,7 +35,7 @@ export default function ProjectAdminPanel() {
 
   const submit = async () => {
     const n = name.trim();
-    if (!n) { setError("请输入项目名称"); return; }
+    if (!n) { setError(tx("enter_a_project_name_0fb3237e")); return; }
     try {
       if (editing) {
         await fetch(`/api/projects/${editing.id}`, {
@@ -49,7 +53,7 @@ export default function ProjectAdminPanel() {
       resetForm();
       refreshData();
     } catch {
-      setError("保存失败");
+      setError(tx("failed_to_save_6309a3bb"));
     }
   };
 
@@ -74,10 +78,9 @@ export default function ProjectAdminPanel() {
     <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100/90 dark:border-slate-700 shadow-2xs space-y-5 transition-colors">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-bold text-gray-900 dark:text-white">项目管理</h2>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">{tx("projects_a049dca9")}</h2>
           <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-            管理数字化项目、运行状态与关联 URL，形成「项目 → 任务」的管理结构
-          </p>
+            {tx("manage_projects_status_and_related_urls_in_a_pro_3cc9d0d9")}</p>
         </div>
       </div>
 
@@ -87,7 +90,7 @@ export default function ProjectAdminPanel() {
           <div className="flex items-center gap-2">
             <span className="text-sm">{editing ? "✏️" : "➕"}</span>
             <span className="text-xs font-bold text-gray-800 dark:text-slate-200">
-              {editing ? "编辑项目" : "新建项目"}
+              {editing ? tx("edit_project_577feeef") : tx("new_project_0e1a7040")}
             </span>
           </div>
           {editing && (
@@ -95,8 +98,7 @@ export default function ProjectAdminPanel() {
               onClick={resetForm}
               className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
             >
-              取消编辑
-            </button>
+              {tx("cancel_editing_4b29ce8e")}</button>
           )}
         </div>
 
@@ -106,8 +108,7 @@ export default function ProjectAdminPanel() {
               htmlFor="project-admin-name"
               className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1"
             >
-              项目名称
-            </label>
+              {tx("project_name_867698fb")}</label>
             <input
               id="project-admin-name"
               name="projectName"
@@ -115,7 +116,7 @@ export default function ProjectAdminPanel() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && submit()}
-              placeholder="例如：Hermes AI 节点..."
+              placeholder={tx("e_g_hermes_ai_node_9d714c24")}
               className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
             />
           </div>
@@ -125,8 +126,7 @@ export default function ProjectAdminPanel() {
               htmlFor="project-admin-url"
               className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1"
             >
-              项目 URL（选填）
-            </label>
+              {tx("project_url_optional_15c0721f")}</label>
             <input
               id="project-admin-url"
               name="projectUrl"
@@ -144,8 +144,7 @@ export default function ProjectAdminPanel() {
                 htmlFor="project-admin-status"
                 className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1"
               >
-                状态标记
-              </label>
+                {tx("status_ce28a3c7")}</label>
               <select
                 id="project-admin-status"
                 name="projectStatus"
@@ -154,8 +153,8 @@ export default function ProjectAdminPanel() {
                 className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-2 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white cursor-pointer"
               >
                 {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.label} value={opt.label}>
-                    {opt.label}
+                  <option key={text(opt.label)} value={text(opt.label)}>
+                    {text(opt.label)}
                   </option>
                 ))}
               </select>
@@ -165,17 +164,16 @@ export default function ProjectAdminPanel() {
                 htmlFor="project-admin-color"
                 className="block text-[10px] font-semibold text-gray-500 dark:text-slate-400 mb-1"
               >
-                主题色
-              </label>
+                {tx("theme_color_0f132a45")}</label>
               <input
                 id="project-admin-color"
                 name="projectColor"
                 type="color"
-                aria-label="选择项目主题颜色"
+                aria-label={tx("choose_project_theme_color_fe817d92")}
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
                 className="h-9 w-10 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 cursor-pointer p-0.5"
-                title="项目主题颜色"
+                title={tx("project_theme_color_a7b1aed8")}
               />
             </div>
           </div>
@@ -183,10 +181,10 @@ export default function ProjectAdminPanel() {
 
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-gray-400 dark:text-slate-400">快速状态:</span>
+            <span className="text-[10px] text-gray-400 dark:text-slate-400">{tx("quick_status_9411738e")}</span>
             {STATUS_OPTIONS.map((opt) => (
               <button
-                key={opt.label}
+                key={text(opt.label)}
                 type="button"
                 onClick={() => setStatus(opt.label)}
                 className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all cursor-pointer ${
@@ -195,7 +193,7 @@ export default function ProjectAdminPanel() {
                     : "opacity-60 hover:opacity-100"
                 } ${opt.color}`}
               >
-                {opt.label}
+                {text(opt.label)}
               </button>
             ))}
           </div>
@@ -204,7 +202,7 @@ export default function ProjectAdminPanel() {
             onClick={submit}
             className="h-8 px-4 bg-[#00C776] hover:bg-[#009a5a] text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
           >
-            {editing ? "保存项目" : "添加项目"}
+            {editing ? tx("save_project_a637cf46") : tx("add_project_8964f53a")}
           </button>
         </div>
 
@@ -215,8 +213,7 @@ export default function ProjectAdminPanel() {
       <div>
         {projects.length === 0 ? (
           <p className="py-8 text-center text-xs text-gray-400 dark:text-slate-400">
-            暂无项目，在上方新建一个开始规划吧
-          </p>
+            {tx("no_projects_yet_create_one_above_to_start_planni_732af2df")}</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((p) => {
@@ -244,14 +241,14 @@ export default function ProjectAdminPanel() {
                       <button
                         onClick={() => startEdit(p)}
                         className="text-gray-400 hover:text-[#00C776] transition-colors cursor-pointer text-xs"
-                        title="编辑"
+                        title={tx("edit_05183656")}
                       >
                         ✏️
                       </button>
                       <button
                         onClick={() => remove(p.id)}
                         className="text-gray-400 hover:text-rose-500 transition-colors cursor-pointer text-xs"
-                        title="删除"
+                        title={tx("delete_2f9daa82")}
                       >
                         🗑️
                       </button>
@@ -260,7 +257,7 @@ export default function ProjectAdminPanel() {
 
                   <div className="flex items-center justify-between text-xs">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${badgeClass}`}>
-                      {p.status || "进行中"}
+                      {text(p.status || "进行中")}
                     </span>
                     {p.url && (
                       <a
@@ -278,7 +275,7 @@ export default function ProjectAdminPanel() {
                   <div className="flex items-end justify-between pt-1">
                     <div>
                       <p className="text-xl font-bold text-gray-900 dark:text-white">{todoCount(p.id)}</p>
-                      <p className="text-[10px] text-gray-400 dark:text-slate-400">关联待办</p>
+                      <p className="text-[10px] text-gray-400 dark:text-slate-400">{tx("related_todos_6f0251e2")}</p>
                     </div>
                     {todoCount(p.id) > 0 && (
                       <div className="w-20">
@@ -292,8 +289,7 @@ export default function ProjectAdminPanel() {
                           />
                         </div>
                         <p className="text-[9px] text-gray-400 dark:text-slate-400 mt-1 text-right">
-                          {Math.round((doneCount(p.id) / todoCount(p.id)) * 100)}% 完成
-                        </p>
+                          {Math.round((doneCount(p.id) / todoCount(p.id)) * 100)}{tx("complete_ac2c8e23")}</p>
                       </div>
                     )}
                   </div>

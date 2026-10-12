@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { UseAdminCloudStorageResult } from "@/hooks/use-admin-cloud-storage";
 import type { LicenseStatus } from "@/lib/admin-pro";
 import type { CloudStorageConfig } from "@/lib/storage-provider";
@@ -60,6 +61,7 @@ export default function AdminProStorageCard({
   /** 未激活时各处「点击激活」统一打开授权弹窗 */
   openLicenseModal: () => void;
 }) {
+  const tx = useTranslations();
   const { storageConfig, setStorageConfig, saveStorageConfig } = storage;
 
   // 输入框：本地更新 + 失焦保存（原实现为每个字段各写一遍的同一段逻辑）
@@ -75,37 +77,33 @@ export default function AdminProStorageCard({
         <div>
           <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <span>💾</span>
-            <span>S3 / WebDAV 异地云容灾备份与一键还原</span>
+            <span>{tx("s3_webdav_cloud_disaster_recovery_restore_91be10fc")}</span>
           </h3>
           <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-            支持 AWS S3、Cloudflare R2、阿里云 OSS、腾讯云 COS、MinIO 及坚果云/群晖 WebDAV
-          </p>
+            {tx("supports_aws_s3_cloudflare_r2_alibaba_cloud_oss__7c54853a")}</p>
         </div>
         {licenseStatus.isPro ? (
           <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-            ✨ PRO 功能已解锁
-          </span>
+            {tx("pro_features_unlocked_7f4d075c")}</span>
         ) : (
           <button
             type="button"
             onClick={openLicenseModal}
             className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800 hover:opacity-80 transition-opacity cursor-pointer"
           >
-            🔒 PRO 功能 (点击激活)
-          </button>
+            {tx("pro_feature_activate_49c38c86")}</button>
         )}
       </div>
 
       {!licenseStatus.isPro && (
         <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between gap-3">
-          <span>🔒 异地云备份与一键跨机还原为 <strong>Navelix Pro</strong> 高级特性。激活后系统可自动将 SQLite 快照加密同步至云端。</span>
+          <span>{tx("cloud_backups_and_cross_instance_restore_are_1a82addc")}<strong>Navelix Pro</strong> {tx("premium_features_after_activation_sqlite_snapsho_7c47fb50")}</span>
           <button
             type="button"
             onClick={openLicenseModal}
             className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs shrink-0 cursor-pointer shadow-xs"
           >
-            输入激活码
-          </button>
+            {tx("enter_license_key_a2deadce")}</button>
         </div>
       )}
 
@@ -113,9 +111,9 @@ export default function AdminProStorageCard({
         {/* 存储类型选择 */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { id: "none", title: "🚫 关闭云备份", desc: "仅保留本地 SQLite 物理快照" },
-            { id: "s3", title: "☁️ S3 兼容对象存储", desc: "AWS S3 / Cloudflare R2 / OSS / COS / MinIO" },
-            { id: "webdav", title: "📂 WebDAV 协议", desc: "坚果云 / 群晖 WebDAV / Nextcloud" },
+            { id: "none", title: tx("disable_cloud_backups_30d4d59d"), desc: tx("keep_local_sqlite_snapshots_only_16419770") },
+            { id: "s3", title: tx("s3_compatible_object_storage_9ffefb8a"), desc: "AWS S3 / Cloudflare R2 / OSS / COS / MinIO" },
+            { id: "webdav", title: tx("webdav_bc1baf8b"), desc: tx("jianguoyun_synology_webdav_nextcloud_90669bcf") },
           ].map((item) => (
             <button
               key={item.id}
@@ -138,28 +136,28 @@ export default function AdminProStorageCard({
           <div className="p-4 sm:p-5 rounded-2xl bg-gray-50/80 dark:bg-slate-900/60 border border-gray-200 dark:border-slate-700 space-y-4 animate-fadeIn">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <StorageField
-                label="S3 Endpoint (端点地址)"
-                placeholder="例如 https://s3.us-east-1.amazonaws.com 或 R2 端点"
+                label={tx("s3_endpoint_a670d6c5")}
+                placeholder={tx("e_g_https_s3_us_east_1_amazonaws_com_or_an_r2_en_d0dc2ef4")}
                 value={storageConfig.s3Endpoint || ""}
                 onLocalChange={(v) => setStorageConfig({ ...storageConfig, s3Endpoint: v })}
                 onSave={(v) => patchField({ s3Endpoint: v })}
               />
               <StorageField
-                label="Bucket (存储桶名称)"
-                placeholder="例如 my-navelix-backups"
+                label={tx("bucket_name_34b55c08")}
+                placeholder={tx("e_g_my_navelix_backups_cb508137")}
                 value={storageConfig.s3Bucket || ""}
                 onLocalChange={(v) => setStorageConfig({ ...storageConfig, s3Bucket: v })}
                 onSave={(v) => patchField({ s3Bucket: v })}
               />
               <StorageField
-                label="Access Key ID (访问凭证)"
+                label={tx("access_key_id_6fbbcaa8")}
                 placeholder="AKIAIOSFODNN7EXAMPLE"
                 value={storageConfig.s3AccessKey || ""}
                 onLocalChange={(v) => setStorageConfig({ ...storageConfig, s3AccessKey: v })}
                 onSave={(v) => patchField({ s3AccessKey: v })}
               />
               <StorageField
-                label="Secret Access Key (私密密钥)"
+                label={tx("secret_access_key_392433f0")}
                 type="password"
                 placeholder="••••••••••••••••"
                 value={storageConfig.s3SecretKey || ""}
@@ -167,14 +165,14 @@ export default function AdminProStorageCard({
                 onSave={(v) => patchField({ s3SecretKey: v })}
               />
               <StorageField
-                label="Region (区域，选填)"
-                placeholder="auto 或 us-east-1"
+                label={tx("region_optional_3884edca")}
+                placeholder={tx("auto_or_us_east_1_398d9caf")}
                 value={storageConfig.s3Region || ""}
                 onLocalChange={(v) => setStorageConfig({ ...storageConfig, s3Region: v })}
                 onSave={(v) => patchField({ s3Region: v })}
               />
               <StorageField
-                label="Path Prefix (路径前缀，选填)"
+                label={tx("path_prefix_optional_44601e5d")}
                 placeholder="navelix-backups/"
                 value={storageConfig.s3PathPrefix || ""}
                 onLocalChange={(v) => setStorageConfig({ ...storageConfig, s3PathPrefix: v })}
@@ -189,22 +187,22 @@ export default function AdminProStorageCard({
           <div className="p-4 sm:p-5 rounded-2xl bg-gray-50/80 dark:bg-slate-900/60 border border-gray-200 dark:border-slate-700 space-y-4 animate-fadeIn">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <StorageField
-                label="WebDAV 服务器 URL"
-                placeholder="例如 https://dav.jianguoyun.com/dav/navelix-backups/"
+                label={tx("webdav_server_url_09c0f891")}
+                placeholder={tx("e_g_https_dav_jianguoyun_com_dav_navelix_backups_f725d7d2")}
                 span2
                 value={storageConfig.webdavUrl || ""}
                 onLocalChange={(v) => setStorageConfig({ ...storageConfig, webdavUrl: v })}
                 onSave={(v) => patchField({ webdavUrl: v })}
               />
               <StorageField
-                label="WebDAV 登录用户名"
-                placeholder="用户名或邮箱"
+                label={tx("webdav_username_6b55598e")}
+                placeholder={tx("username_or_email_70eadbef")}
                 value={storageConfig.webdavUsername || ""}
                 onLocalChange={(v) => setStorageConfig({ ...storageConfig, webdavUsername: v })}
                 onSave={(v) => patchField({ webdavUsername: v })}
               />
               <StorageField
-                label="WebDAV 应用密码 / 授权码"
+                label={tx("webdav_app_password_access_code_b49739fe")}
                 type="password"
                 placeholder="••••••••••••••••"
                 value={storageConfig.webdavPassword || ""}
@@ -227,8 +225,7 @@ export default function AdminProStorageCard({
                 className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
               />
               <label htmlFor="autoBackupDaily" className="text-xs font-bold text-gray-800 dark:text-slate-200 cursor-pointer">
-                每日凌晨自动创建加密快照并同步至云端
-              </label>
+                {tx("automatically_create_a_snapshot_and_sync_to_clou_d6c0a435")}</label>
             </div>
 
             <div className="flex items-center gap-2.5 flex-wrap">
@@ -238,7 +235,7 @@ export default function AdminProStorageCard({
                 onClick={storage.testStorage}
                 className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-gray-200/80 dark:bg-slate-700 text-gray-800 dark:text-slate-200 hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors cursor-pointer"
               >
-                {storage.testingStorage ? "测试中…" : "🔍 测试连通性"}
+                {storage.testingStorage ? tx("testing_105a9082") : tx("test_connection_acb13f2a")}
               </button>
 
               <button
@@ -247,7 +244,7 @@ export default function AdminProStorageCard({
                 onClick={storage.backupNow}
                 className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-sky-500 hover:bg-sky-600 text-white transition-colors cursor-pointer shadow-xs"
               >
-                {storage.backingUpNow ? "备份上传中…" : "☁️ 立即备份到云端"}
+                {storage.backingUpNow ? tx("uploading_backup_04980811") : tx("back_up_to_cloud_now_74b497de")}
               </button>
 
               <button
@@ -255,8 +252,7 @@ export default function AdminProStorageCard({
                 onClick={storage.openRemoteBackupList}
                 className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white transition-colors cursor-pointer shadow-xs"
               >
-                📋 云端快照列表 &amp; 一键还原
-              </button>
+                {tx("cloud_snapshots_amp_restore_52508b2e")}</button>
             </div>
           </div>
         )}

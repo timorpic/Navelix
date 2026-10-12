@@ -1,5 +1,7 @@
 "use client";
+import { useLocale } from "next-intl";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import Modal from "@/components/modal";
 import ConfirmDialog from "@/components/confirm-dialog";
@@ -19,6 +21,8 @@ interface ManagedUser {
 }
 
 export default function AdminUsersPanel() {
+  const locale = useLocale();
+  const tx = useTranslations();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [showAddUser, setShowAddUser] = useState(false);
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
@@ -55,15 +59,15 @@ export default function AdminUsersPanel() {
 
   const handleAddUser = async () => {
     if (!newUsername.trim()) {
-      setUserFormError("用户名不能为空");
+      setUserFormError(tx("username_is_required_390ccdec"));
       return;
     }
     if (!editingUser && !newPassword) {
-      setUserFormError("创建新账号时密码不能为空");
+      setUserFormError(tx("a_password_is_required_for_a_new_account_30e9a5e3"));
       return;
     }
     if (newPassword && newPassword.length < 6) {
-      setUserFormError("密码长度至少为 6 位");
+      setUserFormError(tx("password_must_contain_at_least_6_characters_cdbb896e"));
       return;
     }
     const res = await fetch("/api/admin/users", {
@@ -89,7 +93,7 @@ export default function AdminUsersPanel() {
       ),
     });
     if (res.ok) {
-      notify("账号管理", editingUser ? `用户 @${newUsername} 已更新` : `用户 @${newUsername} 创建成功`);
+      notify(tx("account_management_eba54690"), editingUser ? tx("message_34c8448e067f", {v0: newUsername}) : tx("message_98b001432e15", {v0: newUsername}));
       setShowAddUser(false);
       setEditingUser(null);
       setNewUsername("");
@@ -101,7 +105,7 @@ export default function AdminUsersPanel() {
       fetchUsers();
     } else {
       const data = await res.json().catch(() => ({}));
-      setUserFormError(data.error || "操作失败");
+      setUserFormError(data.message || data.error || tx("operation_failed_0c3b4cf7"));
     }
   };
 
@@ -109,12 +113,12 @@ export default function AdminUsersPanel() {
     if (!userToDelete) return;
     const res = await fetch(`/api/admin/users?id=${userToDelete.id}`, { method: "DELETE" });
     if (res.ok) {
-      notify("账号管理", `用户 @${userToDelete.username} 已成功删除`);
+      notify(tx("account_management_eba54690"), tx("message_d0904e870db9", {v0: userToDelete.username}));
       setUserToDelete(null);
       fetchUsers();
     } else {
       const data = await res.json().catch(() => ({}));
-      flash(`删除失败: ${data.error || "无法删除用户"}`);
+      flash(tx("message_0d5ebcfa9a71", {v0: data.message || data.error || tx("unable_to_delete_user_b935ffda")}));
       setUserToDelete(null);
     }
   };
@@ -126,11 +130,10 @@ export default function AdminUsersPanel() {
         <div className="mb-5 flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-gray-900 dark:text-white">
-              账号管理功能 ({users.length})
+              {tx("account_management_93070662")}{users.length})
             </h2>
             <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-              添加、修改、停用、启用及删除系统用户账号
-            </p>
+              {tx("add_edit_disable_enable_and_delete_user_accounts_7faf8672")}</p>
           </div>
           <button
             onClick={() => {
@@ -146,7 +149,7 @@ export default function AdminUsersPanel() {
             className="h-9 px-4 bg-[#00C776] hover:bg-[#009a5a] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <span className="text-sm">+</span>
-            <span>添加新账号</span>
+            <span>{tx("add_account_7d76fa80")}</span>
           </button>
         </div>
 
@@ -154,12 +157,12 @@ export default function AdminUsersPanel() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-gray-100 dark:border-slate-700 text-gray-400 dark:text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
-                <th className="pb-3 pr-4">账号</th>
-                <th className="pb-3 pr-4">显示名称</th>
-                <th className="pb-3 pr-4">权限角色</th>
-                <th className="pb-3 pr-4">账号状态</th>
-                <th className="pb-3 pr-4">注册时间</th>
-                <th className="pb-3 text-right">操作</th>
+                <th className="pb-3 pr-4">{tx("account_311bb313")}</th>
+                <th className="pb-3 pr-4">{tx("display_name_a9858587")}</th>
+                <th className="pb-3 pr-4">{tx("role_e0394913")}</th>
+                <th className="pb-3 pr-4">{tx("account_status_449636a1")}</th>
+                <th className="pb-3 pr-4">{tx("registered_4adc3461")}</th>
+                <th className="pb-3 text-right">{tx("actions_ed31fbb4")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
@@ -169,16 +172,16 @@ export default function AdminUsersPanel() {
                   <td className="py-3.5 pr-4 text-gray-700 dark:text-slate-200">{u.displayName || u.username}</td>
                   <td className="py-3.5 pr-4">
                     <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold ${u.role === "admin" ? "bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 border border-teal-100 dark:border-teal-900" : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300"}`}>
-                      {u.role === "admin" ? "👑 管理员 (Admin)" : "👤 普通用户"}
+                      {u.role === "admin" ? tx("administrator_admin_bade20be") : tx("user_597691ea")}
                     </span>
                   </td>
                   <td className="py-3.5 pr-4">
                     <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold ${u.disabled ? "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"}`}>
-                      {u.disabled ? "已停用" : "正常"}
+                      {u.disabled ? tx("disabled_a8c3698b") : tx("active_296de0e3")}
                     </span>
                   </td>
                   <td className="py-3.5 pr-4 text-gray-400 dark:text-slate-400">
-                    {new Date(u.createdAt).toLocaleDateString("zh-CN")}
+                    {new Date(u.createdAt).toLocaleDateString(locale)}
                   </td>
                   <td className="py-3.5 text-right">
                     <div className="flex items-center justify-end gap-3">
@@ -195,20 +198,18 @@ export default function AdminUsersPanel() {
                         }}
                         className="text-gray-500 dark:text-slate-400 hover:text-[#00C776] font-medium transition-colors cursor-pointer"
                       >
-                        ✏️ 修改
-                      </button>
+                        {tx("edit_a2e86c4b")}</button>
                       <button type="button" disabled={status.saving || u.id === currentUser?.id}
-                        title={u.id === currentUser?.id ? "不能停用当前登录账号" : undefined}
+                        title={u.id === currentUser?.id ? tx("you_cannot_disable_your_current_account_0946df8f") : undefined}
                         onClick={() => status.setTarget(u)}
                         className="text-amber-600 dark:text-amber-400 font-medium cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
-                        {u.disabled ? "启用" : "停用"}
+                        {u.disabled ? tx("enable_f4f0ead1") : tx("disable_4e6fd0e2")}
                       </button>
                       <button
                         onClick={() => setUserToDelete(u)}
                         className="text-gray-400 dark:text-slate-400 hover:text-rose-500 font-medium transition-colors cursor-pointer"
                       >
-                        🗑️ 删除
-                      </button>
+                        {tx("delete_a6c5bde8")}</button>
                     </div>
                   </td>
                 </tr>
@@ -221,14 +222,13 @@ export default function AdminUsersPanel() {
       {/* Add/Edit User Modal */}
       <Modal
         open={showAddUser}
-        title={editingUser ? `编辑账号 @${editingUser.username}` : "添加新账号"}
+        title={editingUser ? tx("message_d6ca1eba7748", {v0: editingUser.username}) : tx("add_account_7d76fa80")}
         onClose={() => setShowAddUser(false)}
       >
         <div className="flex flex-col gap-3 p-2">
           <div>
             <label htmlFor="admin-user-name-input" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
-              用户名
-            </label>
+              {tx("username_1a3f0617")}</label>
             <input
               id="admin-user-name-input"
               name="username"
@@ -236,14 +236,13 @@ export default function AdminUsersPanel() {
               autoComplete="username"
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
-              placeholder="用户名 (3-20 位字母数字下划线)"
+              placeholder={tx("username_3_20_letters_numbers_or_underscores_88a89683")}
               className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
             />
           </div>
           <div>
             <label htmlFor="admin-user-displayname-input" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
-              显示名称
-            </label>
+              {tx("display_name_a9858587")}</label>
             <input
               id="admin-user-displayname-input"
               name="displayName"
@@ -251,14 +250,13 @@ export default function AdminUsersPanel() {
               autoComplete="name"
               value={newDisplayName}
               onChange={(e) => setNewDisplayName(e.target.value)}
-              placeholder="可选，默认与用户名相同"
+              placeholder={tx("optional_defaults_to_your_username_d3daafce")}
               className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
             />
           </div>
           <div>
             <label htmlFor="admin-user-password-input" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
-              密码
-            </label>
+              {tx("password_a621ab60")}</label>
             <input
               id="admin-user-password-input"
               name="password"
@@ -266,14 +264,13 @@ export default function AdminUsersPanel() {
               autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder={editingUser ? "留空则不修改密码" : "至少 6 位"}
+              placeholder={editingUser ? tx("leave_blank_to_keep_the_current_password_5346863a") : tx("at_least_6_characters_041568c2")}
               className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
             />
           </div>
           <div>
             <label htmlFor="admin-user-role-select" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
-              权限角色
-            </label>
+              {tx("role_e0394913")}</label>
             <select
               id="admin-user-role-select"
               name="role"
@@ -281,8 +278,8 @@ export default function AdminUsersPanel() {
               onChange={(e) => setNewRole(e.target.value as "admin" | "user")}
               className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white"
             >
-              <option value="user">👤 普通用户</option>
-              <option value="admin">👑 管理员</option>
+              <option value="user">{tx("user_597691ea")}</option>
+              <option value="admin">{tx("administrator_5775c0be")}</option>
             </select>
           </div>
           {userFormError && (
@@ -292,18 +289,18 @@ export default function AdminUsersPanel() {
             onClick={handleAddUser}
             className="h-9 rounded-lg bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-semibold transition-colors cursor-pointer"
           >
-            {editingUser ? "保存修改" : "创建账号"}
+            {editingUser ? tx("save_changes_991bb7cf") : tx("create_account_f48d12cf")}
           </button>
         </div>
       </Modal>
 
       <ConfirmDialog
         open={!!status.target}
-        title={status.target?.disabled ? "启用账号确认" : "停用账号确认"}
+        title={status.target?.disabled ? tx("enable_this_account_f277ebca") : tx("disable_this_account_ae776e99")}
         message={status.target?.disabled
-          ? `确定启用账号 @${status.target.username} 吗？启用后需重新登录，已撤销的 API Token 需重新创建。`
-          : `确定停用账号 @${status.target?.username} 吗？用户数据将保留，现有登录会话和 API Token 将被撤销。`}
-        confirmLabel={status.target?.disabled ? "确认启用" : "确认停用"}
+          ? tx("message_1e9001633562", {v0: status.target.username})
+          : tx("message_0c7e6c67191f", {v0: status.target?.username || ""})}
+        confirmLabel={status.target?.disabled ? tx("confirm_enable_e08a9527") : tx("confirm_disable_b6c82c2d")}
         onConfirm={status.confirm}
         onClose={() => status.setTarget(null)}
       />
@@ -311,8 +308,8 @@ export default function AdminUsersPanel() {
       {/* Delete User Confirm */}
       <ConfirmDialog
         open={!!userToDelete}
-        title="删除账号确认"
-        message={`确定要彻底删除账号 "@${userToDelete?.username}" 吗？`}
+        title={tx("delete_this_account_e33fa5d8")}
+        message={tx("message_d6113d1850a6", {v0: userToDelete?.username || ""})}
         onConfirm={handleDeleteUserConfirm}
         onClose={() => setUserToDelete(null)}
       />

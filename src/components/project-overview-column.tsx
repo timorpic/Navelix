@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import type { SiteLink } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
@@ -21,6 +22,7 @@ export default function ProjectOverviewColumn({
   onSelectCategory: (id: string) => void;
   nowTs: number;
 }) {
+  const tx = useTranslations();
   const { projects, todos, hydrated } = useNavelixData();
   const projectsLoading = !hydrated;
   const { todayStr, toggleTodo: handleToggleTodo } = useWorkspaceTodos();
@@ -55,19 +57,19 @@ const activeProjectAnalysis = useMemo(() => {
   if (overdueList.length > 0) {
     risk = {
       dot: "🔴",
-      label: `${overdueList.length}项逾期`,
+      label: tx("message_65dd273aa49c", {v0: overdueList.length}),
       badge: "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60",
     };
   } else if (highPriorityNear.length > 0) {
     risk = {
       dot: "🟡",
-      label: "近期攻坚",
+      label: tx("upcoming_work_d0750695"),
       badge: "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60",
     };
   } else {
     risk = {
       dot: "🟢",
-      label: "风险可控",
+      label: tx("risk_under_control_22c2a778"),
       badge: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60",
     };
   }
@@ -81,15 +83,15 @@ const activeProjectAnalysis = useMemo(() => {
   const latestTs = Math.max(...timestamps);
 
   // 计算相对时间
-  let lastUpdatedStr = "刚刚";
+  let lastUpdatedStr = tx("just_now_de6785d9");
   if (latestTs > 0 && nowTs > 0) {
     const diffSec = Math.max(0, Math.floor((nowTs - latestTs) / 1000));
     if (diffSec >= 86400) {
-      lastUpdatedStr = `${Math.floor(diffSec / 86400)}d前`;
+      lastUpdatedStr = tx("message_5989a61dd86f", {v0: Math.floor(diffSec / 86400)});
     } else if (diffSec >= 3600) {
-      lastUpdatedStr = `${Math.floor(diffSec / 3600)}h前`;
+      lastUpdatedStr = tx("message_9579af8140d8", {v0: Math.floor(diffSec / 3600)});
     } else if (diffSec >= 60) {
-      lastUpdatedStr = `${Math.floor(diffSec / 60)}m前`;
+      lastUpdatedStr = tx("message_6b98d231c798", {v0: Math.floor(diffSec / 60)});
     }
   }
 
@@ -121,7 +123,7 @@ const activeProjectAnalysis = useMemo(() => {
     relatedLinks,
     activeTasks,
   };
-}, [currentActiveProject, todos, links, todayStr, nowTs]);
+}, [currentActiveProject, todos, links, todayStr, nowTs, tx]);
 
   return (
 <div className="flex flex-col justify-between bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-colors space-y-3.5">
@@ -130,11 +132,9 @@ const activeProjectAnalysis = useMemo(() => {
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-base">🗂️</span>
       <h3 className="text-sm font-black text-gray-900 dark:text-white">
-        项目概览
-      </h3>
+        {tx("project_overview_97ddf37b")}</h3>
       <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-[#00C776] text-[10px] font-bold">
-        {projects.length} 个项目
-      </span>
+        {projects.length} {tx("projects_5e7e8850")}</span>
     </div>
 
     <div className="flex items-center gap-2">
@@ -158,7 +158,7 @@ const activeProjectAnalysis = useMemo(() => {
         onClick={() => onSelectCategory("feature-projects")}
         className="text-xs font-bold text-[#00C776] hover:underline flex items-center gap-1 cursor-pointer"
       >
-        <span>全部项目</span>
+        <span>{tx("all_projects_e3040dfd")}</span>
         <span>→</span>
       </button>
     </div>
@@ -168,12 +168,10 @@ const activeProjectAnalysis = useMemo(() => {
   <div className="flex-1 flex flex-col justify-between space-y-3">
     {projectsLoading ? (
       <div className="py-12 text-center text-xs text-gray-400">
-        加载项目实时数据中...
-      </div>
+        {tx("loading_project_data_47e402cf")}</div>
     ) : projects.length === 0 ? (
       <div className="py-10 text-center text-xs text-gray-400">
-        暂无进行中的项目，可在项目管理中心新建或由 AI 拆解
-      </div>
+        {tx("no_active_projects_create_one_in_projects_or_use_7c74f9ba")}</div>
     ) : activeProjectAnalysis ? (
       <div className="space-y-3">
         {/* 1. 项目基本信息条 */}
@@ -202,9 +200,9 @@ const activeProjectAnalysis = useMemo(() => {
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs font-bold text-[#00C776] hover:underline flex items-center gap-1 truncate max-w-[120px]"
-              title="打开项目入口"
+              title={tx("open_project_link_0b8f2a34")}
             >
-              <span>入口</span>
+              <span>{tx("open_1a793027")}</span>
               <span>↗</span>
             </a>
           )}
@@ -215,8 +213,7 @@ const activeProjectAnalysis = useMemo(() => {
           {/* 进度 */}
           <div className="p-2 rounded-xl bg-gray-50/90 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-800 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] text-gray-400 font-bold mb-0.5">
-              进度
-            </span>
+              {tx("progress_f81ff55d")}</span>
             <span className="text-xs font-black text-[#00C776] flex items-center gap-1">
               <span>🟢</span>
               <span>{activeProjectAnalysis.progress}%</span>
@@ -226,8 +223,7 @@ const activeProjectAnalysis = useMemo(() => {
           {/* 任务 */}
           <div className="p-2 rounded-xl bg-gray-50/90 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-800 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] text-gray-400 font-bold mb-0.5">
-              任务
-            </span>
+              {tx("tasks_5253040d")}</span>
             <span className="text-xs font-black text-gray-800 dark:text-slate-100 flex items-center gap-1">
               <span>🟢</span>
               <span>
@@ -239,8 +235,7 @@ const activeProjectAnalysis = useMemo(() => {
           {/* 风险 */}
           <div className="p-2 rounded-xl bg-gray-50/90 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-800 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] text-gray-400 font-bold mb-0.5">
-              风险
-            </span>
+              {tx("risk_af75e78c")}</span>
             <span className="text-[11px] font-black flex items-center gap-0.5 truncate">
               <span>{activeProjectAnalysis.risk.dot}</span>
               <span className="truncate">{activeProjectAnalysis.risk.label}</span>
@@ -250,8 +245,7 @@ const activeProjectAnalysis = useMemo(() => {
           {/* 最近更新 (多用户实时) */}
           <div className="p-2 rounded-xl bg-gray-50/90 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-800 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] text-gray-400 font-bold mb-0.5">
-              最近更新
-            </span>
+              {tx("last_updated_b067526e")}</span>
             <span className="text-xs font-black text-gray-700 dark:text-slate-200">
               {activeProjectAnalysis.lastUpdatedStr}
             </span>
@@ -261,16 +255,14 @@ const activeProjectAnalysis = useMemo(() => {
         {/* 3. 相关任务阶段概览 (Related Tasks) */}
         <div className="space-y-1.5 pt-1">
           <div className="flex items-center justify-between text-[11px] font-bold text-gray-500 dark:text-slate-400">
-            <span>📌 关联阶段任务</span>
+            <span>{tx("related_stage_tasks_4861d720")}</span>
             <span className="text-[10px]">
-              共 {activeProjectAnalysis.total} 项
-            </span>
+              {tx("total_76e547a8")}{activeProjectAnalysis.total} {tx("items_49ccde43")}</span>
           </div>
 
           {activeProjectAnalysis.activeTasks.length === 0 ? (
             <p className="text-[11px] text-gray-400 py-1">
-              暂无关联任务，可前往项目中心点击「✨ AI 拆解」规划
-            </p>
+              {tx("no_related_tasks_use_ai_breakdown_in_projects_to_f64e51d2")}</p>
           ) : (
             <div className="space-y-1.5 max-h-28 overflow-y-auto pr-0.5">
               {activeProjectAnalysis.activeTasks.map((task) => (
@@ -318,13 +310,11 @@ const activeProjectAnalysis = useMemo(() => {
         <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-1.5 min-w-0">
             <span className="text-gray-400 font-bold text-[11px] shrink-0">
-              📝 相关资产/笔记:
-            </span>
+              {tx("related_assets_notes_c1193b4a")}</span>
             {activeProjectAnalysis.relatedLinks.length === 0 &&
             !activeProjectAnalysis.project.url ? (
               <span className="text-[11px] text-gray-400">
-                可在导航库中添加带有该项目名的笔记/链接
-              </span>
+                {tx("add_notes_or_links_containing_this_project_name__d3ecfaf6")}</span>
             ) : (
               <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
                 {activeProjectAnalysis.project.url && (
@@ -334,7 +324,7 @@ const activeProjectAnalysis = useMemo(() => {
                     rel="noopener noreferrer"
                     className="px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-[#00C776] text-[10px] font-bold hover:underline shrink-0 flex items-center gap-1"
                   >
-                    <span>🔗 官方入口</span>
+                    <span>{tx("official_link_f49b1b04")}</span>
                   </a>
                 )}
                 {activeProjectAnalysis.relatedLinks.slice(0, 2).map((l) => (
@@ -359,8 +349,7 @@ const activeProjectAnalysis = useMemo(() => {
             onClick={() => onSelectCategory("feature-projects")}
             className="text-[11px] font-bold text-[#00C776] hover:underline shrink-0 cursor-pointer"
           >
-            去管理 ↗
-          </button>
+            {tx("manage_70539f6d")}</button>
         </div>
       </div>
     ) : null}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { TodoItem } from "@/types";
 import { toLocalDateStr } from "@/lib/date-utils";
@@ -44,6 +45,7 @@ const SCALE_STORAGE_KEY = "navelix_projects_gantt_scale";
 const COLLAPSED_STORAGE_KEY = "navelix_projects_gantt_collapsed_ids";
 
 export function useGantt(): UseGanttResult {
+  const locale = useLocale();
   const [scale, setScale] = useState<GanttScale>("day");
   const [offset, setOffset] = useState(0);
   // 甘特图项目筛选（"all" 或项目 id）
@@ -91,8 +93,8 @@ export function useGantt(): UseGanttResult {
   const todayStr = useMemo(() => toLocalDateStr(new Date()), []);
 
   const { columns, timelineLabel, prevLabel, nextLabel, stepAmount } = useMemo(
-    () => buildGanttTimeline(scale, offset, todayStr),
-    [scale, offset, todayStr],
+    () => buildGanttTimeline(scale, offset, todayStr, locale),
+    [scale, offset, todayStr, locale],
   );
 
   const calculateGanttPosition = useCallback(

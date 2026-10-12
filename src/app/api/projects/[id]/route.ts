@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { localizedJson } from "@/lib/localized-json";
+import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { deleteProjectCascade, updateProject } from "@/lib/todos-projects";
 
@@ -7,7 +8,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const userId = user.id;
   const { id } = await params;
   const body = await req.json();
@@ -24,7 +25,7 @@ export async function PATCH(
     todos: Array.isArray(body.todos) ? body.todos : undefined,
   });
 
-  return NextResponse.json({ success: true });
+  return localizedJson({ success: true });
 }
 
 export async function DELETE(
@@ -32,10 +33,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "未登录" }, { status: 401 });
+  if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const userId = user.id;
   const { id } = await params;
   // 清理项目及其子待办（单事务），保证数据库整洁与数据流一致
   deleteProjectCascade(id, userId);
-  return NextResponse.json({ success: true });
+  return localizedJson({ success: true });
 }

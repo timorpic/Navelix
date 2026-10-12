@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import AddCategoryModal from "@/components/add-category-modal";
 import AddLinkModal from "@/components/add-link-modal";
 import ConfirmDialog from "@/components/confirm-dialog";
@@ -36,6 +37,7 @@ interface AdminLinksTabProps {
 }
 
 export default function AdminLinksTab({ activeTab }: AdminLinksTabProps) {
+  const tx = useTranslations();
   const {
     categories,
     links,
@@ -163,33 +165,31 @@ export default function AdminLinksTab({ activeTab }: AdminLinksTabProps) {
       {/* Confirm Delete All Links Modal */}
       <Modal
         open={showClearAllConfirm}
-        title="⚠️ 确认要清空所有网址链接吗？"
+        title={tx("clear_all_links_2e1ece4a")}
         onClose={closeClearAllConfirm}
       >
         <div className="space-y-4">
           <p className="text-xs text-gray-600 dark:text-slate-300 leading-relaxed">
-            此操作将彻底删除您账号下现有的 <strong className="text-rose-600 font-bold">{links.length} 个</strong> 网址书签与快捷访问关联，<strong className="text-rose-600 font-bold">操作不可撤销！</strong>
+            {tx("this_will_permanently_delete_all_d319e5dc")}<strong className="text-rose-600 font-bold">{links.length} {tx("items_3a116815")}</strong> {tx("bookmarks_and_their_quick_access_entries_from_yo_39698223")}<strong className="text-rose-600 font-bold">{tx("this_action_cannot_be_undone_025cc78e")}</strong>
           </p>
           <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-slate-800">
             <button
               onClick={closeClearAllConfirm}
               className="px-4 py-2 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-200 cursor-pointer transition-colors"
             >
-              取消
-            </button>
+              {tx("cancel_2cd0f3be")}</button>
             <button
               onClick={handleClearAllLinks}
               className="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-xs cursor-pointer transition-colors"
             >
-              确认彻底清空 ({links.length} 个)
-            </button>
+              {tx("clear_all_d530c285")}{links.length} {tx("items_6f39ceb1")}</button>
           </div>
         </div>
       </Modal>
 
       <ConfirmDialog
         open={!!linkToDelete}
-        title="删除链接"
+        title={tx("delete_link_e8feb91c")}
         message={buildLinkDeleteMessage(linkToDelete?.title)}
         onConfirm={handleDeleteLink}
         onClose={() => setLinkToDelete(null)}
@@ -197,7 +197,7 @@ export default function AdminLinksTab({ activeTab }: AdminLinksTabProps) {
 
       <ConfirmDialog
         open={!!categoryToDelete}
-        title="删除分组"
+        title={tx("delete_category_7605c1d8")}
         message={buildCategoryDeleteMessage(categoryToDelete?.name, linksInCategory)}
         onConfirm={handleDeleteCategory}
         onClose={() => setCategoryToDelete(null)}

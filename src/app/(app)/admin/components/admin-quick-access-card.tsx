@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import BrandIcon from "@/components/brand-icon";
 import { categoryName } from "@/lib/admin-links";
 import type { Category, SiteLink } from "@/types";
@@ -35,16 +36,15 @@ export default function AdminQuickAccessCard({
   /** 展示提示并写入通知中心（来自 useToast） */
   onNotify: (title: string, msg: string) => void;
 }) {
+  const tx = useTranslations();
   return (
     <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-6 border border-gray-100/90 dark:border-slate-700 shadow-2xs space-y-4 transition-colors">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-gray-100 dark:border-slate-700">
         <div>
           <h2 className="text-base font-bold text-gray-900 dark:text-white">
-            快捷访问管理
-          </h2>
+            {tx("quick_access_management_e7b544eb")}</h2>
           <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-            实时绑定「🔗 链接管理」中的全量书签（已置顶 {links.filter((l) => l.isQuickAccess).length} 个网址至前台主页）
-          </p>
+            {tx("choose_from_all_bookmarks_in_link_management_2d4dc21c")}{links.filter((l) => l.isQuickAccess).length} {tx("websites_pinned_to_your_home_page_497158f0")}</p>
         </div>
 
         {/* Filter Controls */}
@@ -54,18 +54,18 @@ export default function AdminQuickAccessCard({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="搜索网址或名称"
-            placeholder="搜索网址或名称..."
+            aria-label={tx("search_url_or_name_c678e381")}
+            placeholder={tx("search_url_or_name_e58d6574")}
             className="h-8 px-3 text-xs rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white placeholder-gray-400"
           />
           <select
             name="quick-access-filter"
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            aria-label="按分类筛选"
+            aria-label={tx("filter_by_category_b9680060")}
             className="h-8 px-2.5 text-xs rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white"
           >
-            <option value="all">全部分类</option>
+            <option value="all">{tx("all_categories_a1054434")}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.icon} {c.name}
@@ -79,10 +79,10 @@ export default function AdminQuickAccessCard({
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="border-b border-gray-100 dark:border-slate-700 text-gray-400 dark:text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
-              <th className="pb-3 pr-4">网站名称</th>
-              <th className="pb-3 pr-4">所属分类</th>
-              <th className="pb-3 pr-4">URL 网址</th>
-              <th className="pb-3 text-right">快捷访问状态</th>
+              <th className="pb-3 pr-4">{tx("website_name_5a632d88")}</th>
+              <th className="pb-3 pr-4">{tx("category_4ffb8312")}</th>
+              <th className="pb-3 pr-4">{tx("url_b97a90a0")}</th>
+              <th className="pb-3 text-right">{tx("quick_access_status_a45e5777")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
@@ -106,10 +106,10 @@ export default function AdminQuickAccessCard({
                     onClick={() => {
                       onToggleQuickAccess(l.id);
                       onNotify(
-                        "快捷访问",
+                        tx("quick_access_0a704163"),
                         l.isQuickAccess
-                          ? `已取消置顶 "${l.title}"`
-                          : `已成功将 "${l.title}" 置顶到快捷访问`,
+                          ? tx("message_e9bff23efd0f", {v0: l.title})
+                          : tx("message_b2da0320ca01", {v0: l.title}),
                       );
                     }}
                     className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
@@ -118,7 +118,7 @@ export default function AdminQuickAccessCard({
                         : "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-300 hover:bg-[#00C776] hover:text-white"
                     }`}
                   >
-                    {l.isQuickAccess ? "📌 已置顶 (点击取消)" : "+ 置顶到快捷访问"}
+                    {l.isQuickAccess ? tx("pinned_click_to_unpin_3830bf12") : tx("pin_to_quick_access_e46b522e")}
                   </button>
                 </td>
               </tr>
@@ -129,8 +129,7 @@ export default function AdminQuickAccessCard({
                   colSpan={4}
                   className="py-8 text-center text-xs text-gray-400 dark:text-slate-400"
                 >
-                  未匹配到符合条件的书签记录
-                </td>
+                  {tx("no_matching_bookmarks_0b69803f")}</td>
               </tr>
             )}
           </tbody>

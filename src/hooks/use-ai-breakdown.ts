@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { addDaysLocal } from "@/lib/date-utils";
 
@@ -50,6 +51,7 @@ export interface UseAiBreakdownResult {
 }
 
 export function useAiBreakdown(members: AssignableMember[]): UseAiBreakdownResult {
+  const tx = useTranslations();
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState("");
   const [warning, setWarning] = useState("");
@@ -60,7 +62,7 @@ export function useAiBreakdown(members: AssignableMember[]): UseAiBreakdownResul
     async (projectName: string, projectDescription: string) => {
       const trimmedName = projectName.trim();
       if (!trimmedName) {
-        setWarning("请先输入项目名称，再让 AI 帮您拆解！");
+        setWarning(tx("enter_a_project_name_before_requesting_an_ai_bre_5762e475"));
         return;
       }
 
@@ -81,19 +83,19 @@ export function useAiBreakdown(members: AssignableMember[]): UseAiBreakdownResul
           setTasks(data.tasks);
           setNotice(
             data.source === "ai_model"
-              ? "✨ AI 大模型已为您规划并指派里程碑与排期，您可随时在下方微调任务与责任人！"
-              : "⚡ 已使用敏捷工程规划引擎为您智能排期与指派责任人，您可随时在下方微调！",
+              ? tx("ai_has_planned_milestones_schedules_and_assignme_430e3700")
+              : tx("the_agile_planning_engine_has_scheduled_tasks_an_966c0000"),
           );
         } else {
-          setNotice(data.error || "拆解失败，请手动添加任务");
+          setNotice(data.message || data.error || tx("breakdown_failed_add_tasks_manually_e6de427e"));
         }
       } catch {
-        setNotice("⚠️ 请求拆解服务失败，请稍后重试。");
+        setNotice(tx("breakdown_service_request_failed_try_again_later_ef212f52"));
       } finally {
         setLoading(false);
       }
     },
-    [],
+    [tx],
   );
 
   const updateTitle = useCallback((index: number, title: string) => {
@@ -150,7 +152,7 @@ export function useAiBreakdown(members: AssignableMember[]): UseAiBreakdownResul
     setTasks((prev) => [
       ...prev,
       {
-        title: "新阶段行动任务",
+        title: tx("new_stage_task_90f660dd"),
         priority: "medium",
         dueDate: dateStr,
         assigneeId: defaultMember?.id || "",
@@ -159,7 +161,7 @@ export function useAiBreakdown(members: AssignableMember[]): UseAiBreakdownResul
           : "",
       },
     ]);
-  }, [members]);
+  }, [members, tx]);
 
   const clearWarning = useCallback(() => setWarning(""), []);
 

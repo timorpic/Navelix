@@ -1,5 +1,7 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import { useTranslations } from "next-intl";
 import { TIME_RANGE_PRESETS } from "@/lib/recent-activities";
 import type {
   ActivitySource,
@@ -63,6 +65,8 @@ export default function RecentActivitiesFilterBar({
   onBatchDelete: () => void;
   onClearSelection: () => void;
 }) {
+  const text = useText();
+  const tx = useTranslations();
   return (
     <>
       {/* 2. 检索控制台 (Advanced Multi-dimensional Filter Bar) */}
@@ -78,7 +82,7 @@ export default function RecentActivitiesFilterBar({
               onChange={(e) => {
                 onSearchQueryChange(e.target.value);
               }}
-              placeholder="🔍 搜索标题、详细日志、内容、来源..."
+              placeholder={tx("search_titles_logs_content_sources_79b4d4c7")}
               className="w-full h-9 pl-3 pr-8 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
             />
             {searchQuery && (
@@ -104,7 +108,7 @@ export default function RecentActivitiesFilterBar({
             >
               {sourceTabs.map((tab) => (
                 <option key={tab.id} value={tab.id}>
-                  {tab.icon} {tab.label} ({tab.count})
+                  {tab.icon} {text(tab.label)} ({tab.count})
                 </option>
               ))}
             </select>
@@ -126,7 +130,7 @@ export default function RecentActivitiesFilterBar({
                       : "text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800"
                   }`}
                 >
-                  {t.label}
+                  {text(t.label)}
                 </button>
               ))}
             </div>
@@ -138,8 +142,7 @@ export default function RecentActivitiesFilterBar({
           <div className="pt-2.5 border-t border-gray-200/60 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-gray-500 dark:text-slate-400 font-bold">
-                自定义时间段：
-              </span>
+                {tx("custom_date_range_2a3380dc")}</span>
               <input
                 type="date"
                 name="activityStartDate"
@@ -149,7 +152,7 @@ export default function RecentActivitiesFilterBar({
                 }}
                 className="h-8 px-2.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 text-xs"
               />
-              <span className="text-gray-400">至</span>
+              <span className="text-gray-400">{tx("to_65edbf9f")}</span>
               <input
                 type="date"
                 name="activityEndDate"
@@ -163,7 +166,7 @@ export default function RecentActivitiesFilterBar({
 
             {/* 单页容量选择 */}
             <div className="flex items-center gap-2">
-              <span className="text-gray-500 dark:text-slate-400">每页条数：</span>
+              <span className="text-gray-500 dark:text-slate-400">{tx("rows_per_page_c9bc3eee")}</span>
               <select
                 name="activityPageSize"
                 value={pageSize}
@@ -172,9 +175,9 @@ export default function RecentActivitiesFilterBar({
                 }}
                 className="h-8 px-2 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-gray-800 dark:text-slate-100"
               >
-                <option value={10}>10 条 / 页</option>
-                <option value={20}>20 条 / 页</option>
-                <option value={50}>50 条 / 页</option>
+                <option value={10}>{tx("10_per_page_881393b4")}</option>
+                <option value={20}>{tx("20_per_page_2757981f")}</option>
+                <option value={50}>{tx("50_per_page_6a4c41f4")}</option>
               </select>
             </div>
           </div>
@@ -196,7 +199,7 @@ export default function RecentActivitiesFilterBar({
               }`}
             >
               <span className="text-[11px]">{tab.icon}</span>
-              <span>{tab.label}</span>
+              <span>{text(tab.label)}</span>
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] ${
                   filterSource === tab.id
@@ -214,17 +217,15 @@ export default function RecentActivitiesFilterBar({
         {isFilterActive && (
           <div className="flex items-center justify-between pt-2 border-t border-gray-200/60 dark:border-slate-800 text-xs">
             <span className="text-gray-500 dark:text-slate-400">
-              已筛选出{" "}
+              {tx("filtered_79df4cd7")}{" "}
               <strong className="text-[#00C776]">{filteredCount}</strong>{" "}
-              条记录（共 {totalCount} 条）
-            </span>
+              {tx("records_out_of_17c8dbd4")}{totalCount} {tx("records_34265e57")}</span>
             <button
               type="button"
               onClick={onResetFilters}
               className="text-[#00C776] hover:underline font-bold cursor-pointer"
             >
-              ↺ 重置所有筛选
-            </button>
+              {tx("reset_all_filters_d29601c7")}</button>
           </div>
         )}
       </div>
@@ -234,8 +235,7 @@ export default function RecentActivitiesFilterBar({
         <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-xs mb-3.5 animate-fadeIn">
           <div className="flex items-center gap-2">
             <span className="text-[#00C776] font-bold">
-              ✓ 已选择 {selectedCount} 条记录
-            </span>
+              {tx("selected_d2f52775")}{selectedCount} {tx("records_6016bf63")}</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -245,15 +245,14 @@ export default function RecentActivitiesFilterBar({
               onClick={onBatchDelete}
               className="px-3 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold transition-colors cursor-pointer disabled:opacity-50"
             >
-              {batchDeleting ? "删除中…" : "🗑️ 批量删除"}
+              {batchDeleting ? tx("deleting_5e8e7af5") : tx("delete_selected_786960ad")}
             </button>
             <button
               type="button"
               onClick={onClearSelection}
               className="px-3 py-1 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 font-semibold cursor-pointer"
             >
-              取消选择
-            </button>
+              {tx("clear_selection_74966e20")}</button>
           </div>
         </div>
       )}

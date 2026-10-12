@@ -1,4 +1,6 @@
-import { NextResponse } from "next/server";
+import { getLocale } from "next-intl/server";
+import { translateText } from "@/lib/server-translations";
+import { localizedJson } from "@/lib/localized-json";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
@@ -159,9 +161,11 @@ ${linkLines}
 }
 
 export async function POST(req: Request) {
+  const locale = await getLocale();
+  const text = (value: string) => translateText(locale, value);
   const user = await getSessionUser();
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return localizedJson({ error: "未登录" }, { status: 401 });
   }
 
   try {
@@ -170,16 +174,16 @@ export async function POST(req: Request) {
     const history = Array.isArray(body?.history) ? body.history : [];
 
     if (!prompt) {
-      return NextResponse.json({ error: "Missing prompt" }, { status: 400 });
+      return localizedJson({ error: "Missing prompt" }, { status: 400 });
     }
 
     // 若用户回复是对上一条删除请求的二次确认，直接执行暂存的删除，不再调用模型
     const confirmedDelete = consumePendingDelete(user.id, prompt);
     if (confirmedDelete) {
-      return NextResponse.json({
+      return localizedJson({
         text: confirmedDelete.ok
-          ? `✅ ${confirmedDelete.message}`
-          : `❌ ${confirmedDelete.error}`,
+          ? `✅ ${text(confirmedDelete.message)}`
+          : `❌ ${text(confirmedDelete.error)}`,
       });
     }
 
@@ -187,18 +191,18 @@ export async function POST(req: Request) {
     // （统一解析见 lib/ai-provider.ts）
     const { apiKey, baseUrl, modelName, targetUrl } = resolveAIConfig();
     if (!apiKey) {
-      return NextResponse.json({
-        text: "💡 提示：您尚未在后台配置 AI API Key。\n请前往「后台管理控制台 -> 👤 个人账号与安全 -> AI Copilot 配置」填入您的 BaseURL、API Key 与模型名称，即可开启真实大语言模型对话功能！",
+      return localizedJson({
+        text: text("💡 提示：您尚未在后台配置 AI API Key。\n请前往「后台管理控制台 -> 👤 个人账号与安全 -> AI Copilot 配置」填入您的 BaseURL、API Key 与模型名称，即可开启真实大语言模型对话功能！"),
       });
     }
 
     const baseUrlError = validateAIBaseUrl(baseUrl);
     if (baseUrlError) {
-      return NextResponse.json({ text: baseUrlError });
+      return localizedJson({ text: text(baseUrlError) });
     }
 
     // 动态生成注入了当前用户真实项目/待办/书签的系统上下文
-    const systemPromptContent = buildWorkspaceContext(user.id);
+    const systemPromptContent = buildWorkspaceContext(user.id).replaceAll("中文回答", locale === "en" ? "英文回答（除非用户明确要求其他语言）" : "中文回答");
     const systemMessage = {
       role: "system",
       content: systemPromptContent,
@@ -232,7 +236,7 @@ export async function POST(req: Request) {
     } catch (err) {
       const isSsrf = err instanceof Error && err.message.includes("SSRF_BLOCKED");
       const timedOut = err instanceof Error && (err.name === "AbortError" || err.message.includes("TIMEOUT"));
-      return NextResponse.json({
+      return localizedJson({
         text: isSsrf
           ? "⚠️ 安全拦截：配置的 BaseURL 为内部/私有 IP 地址，禁止访问。"
           : timedOut
@@ -243,7 +247,7 @@ export async function POST(req: Request) {
 
     if (!response.ok) {
       const errText = await response.text().catch(() => "");
-      return NextResponse.json(
+      return localizedJson(
         {
           text: `⚠️ API 请求失败 (${response.status})：${
             errText || response.statusText
@@ -270,25 +274,25 @@ export async function POST(req: Request) {
         if (isDestructiveTool(call.tool)) {
           const result = stageDelete(user.id, call);
           if ("needsConfirmation" in result) {
-            lines.push(`⚠️ ${result.message}`);
+            lines.push(`⚠️ ${text(result.message)}`);
           } else if (result.ok) {
-            lines.push(`✅ ${result.message}`);
+            lines.push(`✅ ${text(result.message)}`);
           } else {
-            lines.push(`❌ ${result.error}`);
+            lines.push(`❌ ${text(result.error)}`);
           }
         } else {
           const result = executeAiTool(user.id, call);
-          lines.push(result.ok ? `✅ ${result.message}` : `❌ ${result.error}`);
+          lines.push(result.ok ? `✅ ${text(result.message)}` : `❌ ${text(result.error)}`);
         }
       }
       toolReport = `\n\n${lines.join("\n")}`;
     }
 
-    return NextResponse.json({
-      text: `${cleanText || (toolReport ? "已执行您的请求：" : "未获取到有效的模型回复。")}${toolReport}`,
+    return localizedJson({
+      text: `${cleanText || (toolReport ? text("已执行您的请求：") : text("未获取到有效的模型回复。"))}${toolReport}`,
     });
   } catch (err) {
-    return NextResponse.json(
+    return localizedJson(
       {
         text: `⚠️ 服务异常：${
           err instanceof Error ? err.message : "处理请求时发生内部错误"

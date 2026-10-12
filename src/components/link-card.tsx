@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import Image from "next/image";
 import type { LinkStatus, LinkProbeInfo } from "@/hooks/use-link-status";
@@ -21,6 +22,7 @@ const statusDotClass: Record<LinkStatus, string> = {
 };
 
 export default function LinkCard({ link, status }: LinkCardProps) {
+  const tx = useTranslations();
   const { config } = useNavelixConfig();
   const target = config.linkOpenTarget === "_self" ? "_self" : "_blank";
 
@@ -31,14 +33,14 @@ export default function LinkCard({ link, status }: LinkCardProps) {
 
   const statusTitle =
     currentStatus === "online"
-      ? `🟢 服务在线 · ${latency ? `${latency}ms` : "正常"}`
+      ? tx("message_814386d9ad16", {v0: latency ? `${latency}ms` : tx("active_296de0e3")})
       : currentStatus === "slow"
-      ? `🟡 响应缓慢 · ${latency ? `${latency}ms` : "延迟较高"}`
+      ? tx("message_af7851d46d6c", {v0: latency ? `${latency}ms` : tx("high_latency_dcf9747e")})
       : currentStatus === "offline"
-      ? `🔴 无法连接 (离线或异常)`
+      ? tx("unreachable_offline_or_error_c400dde6")
       : currentStatus === "checking"
-      ? "正在探测连通性与延迟…"
-      : "状态未知";
+      ? tx("checking_connectivity_and_latency_bc041a2b")
+      : tx("unknown_status_93e474c6");
 
   let domain = link.url;
   try {

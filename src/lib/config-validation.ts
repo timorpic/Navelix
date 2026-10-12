@@ -12,6 +12,7 @@ export function validateConfigPatch(input: unknown): asserts input is Record<str
     const type = col.kind === "bool" ? "boolean" : col.kind === "num" ? "number" : "string";
     if (typeof value !== type) throw new Error(`配置类型错误：${key}`);
     if (typeof value === "number" && (!Number.isFinite(value) || value <= 0)) throw new Error(`配置数值无效：${key}`);
+    if (key === "language" && value !== "zh-CN" && value !== "en") throw new Error("无效界面语言");
     if (key === "linkOpenTarget" && value !== "_blank" && value !== "_self") throw new Error("无效链接打开方式");
     if ((key === "aiBaseUrl" || key === "weatherApiBaseUrl") && typeof value === "string" && value) {
       let url: URL;

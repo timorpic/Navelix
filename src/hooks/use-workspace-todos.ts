@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 import type { TodoItem } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
@@ -30,6 +31,7 @@ export interface UseWorkspaceTodosResult {
 }
 
 export function useWorkspaceTodos(): UseWorkspaceTodosResult {
+  const tx = useTranslations();
   const { refreshData } = useNavelixData();
   const todayStr = toLocalDateStr();
 
@@ -62,7 +64,7 @@ export function useWorkspaceTodos(): UseWorkspaceTodosResult {
         window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
         refreshData();
         pushNotification(
-          "⏩ 日程已顺延1天",
+          tx("schedule_moved_forward_one_day_f019321c"),
           `${item.title} -> ${newDueDate}`,
           "calendar",
         );
@@ -70,7 +72,7 @@ export function useWorkspaceTodos(): UseWorkspaceTodosResult {
         // ignore
       }
     },
-    [refreshData, todayStr],
+    [refreshData, todayStr, tx],
   );
 
   const quickAddTodo = useCallback(
@@ -94,7 +96,7 @@ export function useWorkspaceTodos(): UseWorkspaceTodosResult {
         if (res.ok) {
           window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
           refreshData();
-          pushNotification("📅 新增日程事项", title, "calendar");
+          pushNotification(tx("schedule_added_5c1114a4"), title, "calendar");
           return true;
         }
       } catch {
@@ -102,7 +104,7 @@ export function useWorkspaceTodos(): UseWorkspaceTodosResult {
       }
       return false;
     },
-    [refreshData],
+    [refreshData, tx],
   );
 
   return { todayStr, toggleTodo, postponeOneDay, quickAddTodo };

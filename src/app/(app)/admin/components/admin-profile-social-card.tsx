@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useNavelixConfig } from "@/context/navelix-context";
 
 /**
@@ -10,6 +11,7 @@ import { useNavelixConfig } from "@/context/navelix-context";
  * 耦合最少的一块。
  */
 export default function AdminProfileSocialCard() {
+  const tx = useTranslations();
   const { config, updateConfig } = useNavelixConfig();
 
   return (
@@ -17,18 +19,16 @@ export default function AdminProfileSocialCard() {
       <div>
         <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
           <span>🌐</span>
-          <span>站点社交与外部主页链接</span>
+          <span>{tx("social_external_profile_links_67c5b2ab")}</span>
         </h3>
         <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-          配置您的 GitHub / X / LinkedIn 主页链接，实时呈现在前台底部
-        </p>
+          {tx("set_your_github_x_and_linkedin_profile_links_to__fc0974de")}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label htmlFor="admin-social-github-profile" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
-            GitHub 主页
-          </label>
+            {tx("github_profile_ed7b822a")}</label>
           <input
             id="admin-social-github-profile"
             type="text"
@@ -55,8 +55,7 @@ export default function AdminProfileSocialCard() {
 
         <div>
           <label htmlFor="admin-social-linkedin-profile" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
-            LinkedIn 领英
-          </label>
+            {tx("linkedin_e6f3e7d7")}</label>
           <input
             id="admin-social-linkedin-profile"
             type="text"
@@ -69,8 +68,7 @@ export default function AdminProfileSocialCard() {
 
         <div>
           <label htmlFor="admin-social-email-profile" className="block text-xs font-bold text-gray-700 dark:text-slate-200 mb-1">
-            公开联系邮箱
-          </label>
+            {tx("public_contact_email_cfc29cd9")}</label>
           <input
             id="admin-social-email-profile"
             type="text"

@@ -1,5 +1,8 @@
 "use client";
 
+import { useText } from "@/hooks/use-text";
+import LanguageSwitcher from "@/components/language-switcher";
+import { useTranslations } from "next-intl";
 import AdminProfileSearchBarCard from "./admin-profile-search-bar-card";
 import { useNavelixConfig } from "@/context/navelix-context";
 import {
@@ -12,14 +15,16 @@ import {
 } from "@/lib/admin-personalization";
 
 export default function AdminPersonalizationTab() {
+  const text = useText();
+  const tx = useTranslations();
   const { config, updateConfig } = useNavelixConfig();
 
   // 派生值统一由 lib/admin-personalization.ts 提供（纯函数，可单测）
   const getPreviewWidthPercent = () => previewWidthClass(config.maxWidth);
   const wallpaperMode = resolveWallpaperMode(config);
   const glassmorphism = isGlassmorphismEnabled(config);
-  const getWallpaperStatusText = () => wallpaperStatusText(wallpaperMode);
-  const getBlurStatusText = () => blurStatusText(glassmorphism);
+  const getWallpaperStatusText = () => text(wallpaperStatusText(wallpaperMode));
+  const getBlurStatusText = () => text(blurStatusText(glassmorphism));
   const widgetToggles = buildWidgetToggles(config);
 
   const sidebarState = (config.sidebarDefaultState as "expanded" | "collapsed") || "expanded";
@@ -35,15 +40,14 @@ export default function AdminPersonalizationTab() {
           <span className="text-xl">🔗</span>
           <div>
             <h2 className="text-base font-extrabold text-gray-900 dark:text-white tracking-tight">
-              界面与功能偏好
-            </h2>
+              {tx("appearance_preferences_f9f62e45")}</h2>
             <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-              自定义你的导航体验，让 Navelix 更符合你的使用习惯
-            </p>
+              {tx("customize_your_navigation_experience_to_fit_the__516eb4b2")}</p>
           </div>
         </div>
       </div>
 
+      <div className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"><LanguageSwitcher /></div>
       <AdminProfileSearchBarCard />
 
       {/* ═══════════════════════════════════════════════════════════════
@@ -54,11 +58,9 @@ export default function AdminPersonalizationTab() {
           <span className="text-base shrink-0">🔗</span>
           <div>
             <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
-              链接跳转与打开偏好
-            </h3>
+              {tx("link_navigation_preferences_8f701c21")}</h3>
             <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-              设置点击链接与书签时的浏览器窗口跳转行为
-            </p>
+              {tx("choose_how_links_and_bookmarks_open_in_your_brow_7b6da23e")}</p>
           </div>
         </div>
 
@@ -67,10 +69,9 @@ export default function AdminPersonalizationTab() {
             <span className="text-gray-400 dark:text-slate-500 text-sm mt-0.5">↳</span>
             <div>
               <h4 className="text-xs font-bold text-gray-800 dark:text-slate-200">
-                书签链接打开方式
-              </h4>
+                {tx("open_bookmark_links_ae19007b")}</h4>
               <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-0.5">
-                选择在新标签页（<code className="text-gray-600 dark:text-slate-300 font-mono">target=&quot;_blank&quot;</code>）打开，还是在当前窗口直接跳转（<code className="text-gray-600 dark:text-slate-300 font-mono">target=&quot;_self&quot;</code>）
+                {tx("open_in_a_new_tab_c64771c5")}<code className="text-gray-600 dark:text-slate-300 font-mono">target=&quot;_blank&quot;</code>{tx("or_navigate_in_the_current_tab_c2b56c10")}<code className="text-gray-600 dark:text-slate-300 font-mono">target=&quot;_self&quot;</code>）
               </p>
             </div>
           </div>
@@ -90,7 +91,7 @@ export default function AdminPersonalizationTab() {
                 <polyline points="15 3 21 3 21 9" />
                 <line x1="10" y1="14" x2="21" y2="3" />
               </svg>
-              <span>在新标签页打开</span>
+              <span>{tx("open_in_new_tab_79c5e0ba")}</span>
             </button>
 
             <button
@@ -106,7 +107,7 @@ export default function AdminPersonalizationTab() {
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
               </svg>
-              <span>在当前页打开</span>
+              <span>{tx("open_in_current_tab_475acb22")}</span>
             </button>
           </div>
         </div>
@@ -123,24 +124,21 @@ export default function AdminPersonalizationTab() {
               <span className="text-base shrink-0">🖼️</span>
               <div>
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
-                  背景壁纸与毛玻璃特效
-                </h3>
+                  {tx("wallpaper_frosted_glass_0e791adc")}</h3>
                 <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5 leading-relaxed">
-                  开启 Bing 每日高清壁纸，自定义壁纸链接以及半透明水滴冰水波玻璃毛玻璃浮现感
-                </p>
+                  {tx("use_bing_daily_wallpapers_or_a_custom_image_with_011fb895")}</p>
               </div>
             </div>
 
             {/* 背景壁纸模式 */}
             <div className="space-y-2.5 pt-1">
               <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
-                背景壁纸模式
-              </label>
+                {tx("wallpaper_mode_fa6e6da5")}</label>
               <div className="space-y-2">
                 {[
-                  { id: "bing", label: "无线统 (Bing 每日壁纸)" },
-                  { id: "custom", label: "自定义 URL" },
-                  { id: "none", label: "纯色背景" },
+                  { id: "bing", label: tx("bing_daily_wallpaper_e2f3ee79") },
+                  { id: "custom", label: tx("custom_url_a2c3e5c5") },
+                  { id: "none", label: tx("solid_background_773ab07d") },
                 ].map((item) => {
                   const isSelected = wallpaperMode === item.id;
                   return (
@@ -161,7 +159,7 @@ export default function AdminPersonalizationTab() {
                       }`}>
                         {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                       </span>
-                      <span>{item.label}</span>
+                      <span>{text(item.label)}</span>
                     </button>
                   );
                 })}
@@ -171,8 +169,7 @@ export default function AdminPersonalizationTab() {
             {/* 自定义壁纸输入框 */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
-                自定义壁纸 URL
-              </label>
+                {tx("custom_wallpaper_url_b392094c")}</label>
               <input
                 type="text"
                 defaultValue={config.customWallpaperUrl || ""}
@@ -181,19 +178,16 @@ export default function AdminPersonalizationTab() {
                 className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono placeholder:text-gray-400 focus:outline-hidden focus:border-[#00C776]"
               />
               <p className="text-[10px] text-gray-400 dark:text-slate-500">
-                支持 JPG / PNG 格式的图片链接
-              </p>
+                {tx("supports_jpg_and_png_image_urls_f33c2a4b")}</p>
             </div>
 
             {/* 水晶毛玻璃开关 */}
             <div className="space-y-2 pt-1">
               <div>
                 <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
-                  水晶毛玻璃质感 (Backdrop Blur)
-                </label>
+                  {tx("frosted_glass_backdrop_blur_fe6820a3")}</label>
                 <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-0.5">
-                  开启后卡片与侧边栏呈现半透明毛玻璃质感；搭配壁纸效果更佳
-                </p>
+                  {tx("give_cards_and_sidebars_a_translucent_look_works_ab31f74f")}</p>
               </div>
 
               <button
@@ -212,7 +206,7 @@ export default function AdminPersonalizationTab() {
                 }`}>
                   {glassmorphism && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                 </span>
-                <span>{glassmorphism ? "已开启" : "已关闭"}</span>
+                <span>{glassmorphism ? tx("on_8a4ef3e4") : tx("off_6744b4c6")}</span>
               </button>
             </div>
           </div>
@@ -220,14 +214,14 @@ export default function AdminPersonalizationTab() {
           {/* 状态徽章条 */}
           <div className="p-3 rounded-2xl bg-gray-50/90 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-800 flex items-center justify-between mt-4">
             <span className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-              当前状态：{getWallpaperStatusText()} + {getBlurStatusText()}
+              {tx("current_status_09bb6d0d")}{getWallpaperStatusText()} + {getBlurStatusText()}
             </span>
             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${
               glassmorphism
                 ? "bg-emerald-100 dark:bg-emerald-950/60 text-[#00C776] dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40"
                 : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700"
             }`}>
-              {glassmorphism ? "已启用" : "未启用"}
+              {glassmorphism ? tx("enabled_dfb80223") : tx("not_enabled_f95ea7f4")}
             </span>
           </div>
         </div>
@@ -239,23 +233,20 @@ export default function AdminPersonalizationTab() {
               <span className="text-base shrink-0">📌</span>
               <div>
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
-                  侧边栏形态与顶部小组件模式
-                </h3>
+                  {tx("sidebar_widget_layout_0f82f7e2")}</h3>
                 <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5 leading-relaxed">
-                  设置在侧面的显示形态以及顶部小组件展示模式，以适配你的使用习惯（数字时钟 / 天气 / 电量 / 快捷提示组件等）
-                </p>
+                  {tx("choose_your_sidebar_layout_and_widget_display_mo_97c147a9")}</p>
               </div>
             </div>
 
             {/* 侧边栏默认显示形态 */}
             <div className="space-y-2 pt-1">
               <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
-                侧边栏默认显示形态
-              </label>
+                {tx("default_sidebar_layout_cab10c04")}</label>
               <div className="space-y-2">
                 {[
-                  { id: "expanded", label: "默认展开", desc: "" },
-                  { id: "collapsed", label: "默认收起 / 折叠", desc: "" },
+                  { id: "expanded", label: tx("expanded_3fb24a9b"), desc: "" },
+                  { id: "collapsed", label: tx("collapsed_c17ae2f8"), desc: "" },
                 ].map((item) => {
                   const isSelected = sidebarState === item.id;
                   return (
@@ -276,26 +267,24 @@ export default function AdminPersonalizationTab() {
                       }`}>
                         {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                       </span>
-                      <span>{item.label}</span>
+                      <span>{text(item.label)}</span>
                     </button>
                   );
                 })}
               </div>
               <p className="text-[11px] text-gray-400 dark:text-slate-500 pt-0.5">
-                展开：完整显示所有导航项；收起：仅显示图标
-              </p>
+                {tx("expanded_show_all_navigation_items_collapsed_sho_42ff782e")}</p>
             </div>
 
             {/* 顶部小组件样式模式 */}
             <div className="space-y-2 pt-2">
               <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
-                顶部小组件样式模式
-              </label>
+                {tx("top_widget_display_mode_9da5baa6")}</label>
               <div className="space-y-2">
                 {[
-                  { id: "time", label: "数字时钟" },
-                  { id: "weather", label: "天气面板" },
-                  { id: "analog", label: "组合模式 (多组件)" },
+                  { id: "time", label: tx("digital_clock_c5322236") },
+                  { id: "weather", label: tx("weather_panel_3f85c072") },
+                  { id: "analog", label: tx("combined_widgets_959c476a") },
                 ].map((item) => {
                   const isSelected = clockWidgetMode === item.id;
                   return (
@@ -316,14 +305,13 @@ export default function AdminPersonalizationTab() {
                       }`}>
                         {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                       </span>
-                      <span>{item.label}</span>
+                      <span>{text(item.label)}</span>
                     </button>
                   );
                 })}
               </div>
               <p className="text-[11px] text-gray-400 dark:text-slate-500 pt-0.5">
-                组合模式下可在顶部同时展示多个小组件
-              </p>
+                {tx("show_multiple_widgets_together_at_the_top_a592b743")}</p>
             </div>
           </div>
         </div>
@@ -335,21 +323,19 @@ export default function AdminPersonalizationTab() {
               <span className="text-base shrink-0">🖥️</span>
               <div>
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
-                  中央内容区域宽度
-                </h3>
+                  {tx("main_content_width_e0a6cdae")}</h3>
                 <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5 leading-relaxed">
-                  调整主内容区域的最大宽度，改变布局留白与阅读密度
-                </p>
+                  {tx("set_the_maximum_content_width_to_adjust_whitespa_bcd2247f")}</p>
               </div>
             </div>
 
             {/* 宽度单选列表 */}
             <div className="space-y-2 pt-1">
               {[
-                { id: "1000px", label: "1000px 较窄", desc: "" },
-                { id: "1200px", label: "1200px 主流", desc: "" },
-                { id: "1400px", label: "1400px 大屏", desc: "" },
-                { id: "full", label: "全屏铺满", desc: "适合超大屏幕，内容无最大宽度限制" },
+                { id: "1000px", label: tx("1000px_narrow_c8ebb21a"), desc: "" },
+                { id: "1200px", label: tx("1200px_standard_90cb8d22"), desc: "" },
+                { id: "1400px", label: tx("1400px_wide_72c2b9fe"), desc: "" },
+                { id: "full", label: tx("full_width_c9db6cb4"), desc: tx("for_large_screens_with_no_maximum_content_width_19cebbba") },
               ].map((item) => {
                 const isSelected = maxWidth === item.id;
                 return (
@@ -371,11 +357,11 @@ export default function AdminPersonalizationTab() {
                       }`}>
                         {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                       </span>
-                      <span>{item.label}</span>
+                      <span>{text(item.label)}</span>
                     </div>
                     {item.desc && (
                       <p className="text-[10px] text-gray-400 dark:text-slate-500 pl-6">
-                        {item.desc}
+                        {text(item.desc)}
                       </p>
                     )}
                   </button>
@@ -387,8 +373,7 @@ export default function AdminPersonalizationTab() {
           {/* 效果预览可视化 Diagram */}
           <div className="space-y-2 pt-2">
             <label className="block text-xs font-bold text-gray-800 dark:text-slate-200">
-              效果预览
-            </label>
+              {tx("preview_e8bd157d")}</label>
             <div className="p-3 bg-gray-50 dark:bg-slate-950/70 rounded-2xl border border-gray-200/80 dark:border-slate-800 flex flex-col items-center justify-center min-h-[140px]">
               <div className="w-full flex items-center justify-center gap-2 h-24 px-2">
                 {maxWidth !== "full" && (
@@ -420,11 +405,9 @@ export default function AdminPersonalizationTab() {
           <span className="text-base shrink-0">📑</span>
           <div>
             <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
-              右侧侧边栏组件
-            </h3>
+              {tx("right_sidebar_widgets_c247073d")}</h3>
             <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-              控制右侧边栏各信息模块的显示与隐藏，按需展示你关注的信息
-            </p>
+              {tx("show_or_hide_the_information_modules_you_need_in_02a4e045")}</p>
           </div>
         </div>
 
@@ -439,11 +422,11 @@ export default function AdminPersonalizationTab() {
                 <div className="flex items-center gap-2">
                   <span className="text-base leading-none">{item.icon}</span>
                   <h4 className="text-xs font-bold text-gray-900 dark:text-white truncate">
-                    {item.title}
+                    {text(item.title)}
                   </h4>
                 </div>
                 <p className="text-[10px] text-gray-400 dark:text-slate-400 line-clamp-1">
-                  {item.desc}
+                  {text(item.desc)}
                 </p>
               </div>
 
@@ -465,7 +448,7 @@ export default function AdminPersonalizationTab() {
                       item.enabled ? "order-last" : "order-first"
                     }`}
                   />
-                  <span>{item.enabled ? "显示" : "隐藏"}</span>
+                  <span>{item.enabled ? tx("show_4e1449e7") : tx("hide_145219e7")}</span>
                 </button>
               </div>
             </div>
