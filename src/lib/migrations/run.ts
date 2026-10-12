@@ -9,7 +9,7 @@ import { VERSIONED_MIGRATIONS } from "./versions/index.ts";
 
 /**
  * 全量迁移编排器。
- * 执行顺序：Schema 补齐 → 版本迁移（v1~v12，结构与业务数据分离）→ 后置 Schema 补齐。
+ * 执行顺序：Schema 补齐 → 版本迁移（结构与业务数据分离）→ 后置 Schema 补齐。
  * 一次启动可连续应用多个版本升级；所有操作保持幂等与可重入。
  */
 export function runMigrations(db: DatabaseSync): void {

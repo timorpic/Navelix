@@ -2,10 +2,8 @@
 
 import BrandLogo from "@/components/brand-logo";
 import {
-  licenseBadgeKind,
   licensePlanLabel,
   licenseSummaryLine,
-  licenseTitle,
   type LicenseStatus,
 } from "@/lib/admin-pro";
 
@@ -26,8 +24,6 @@ export default function AdminProLicenseCard({
   onRemoveLicense: () => void;
   onOpenLicenseModal: () => void;
 }) {
-  const badgeKind = licenseBadgeKind(licenseStatus);
-
   return (
     <div className="bg-gradient-to-r from-emerald-50/80 via-white to-teal-50/60 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/90 rounded-3xl p-6 sm:p-7 border border-emerald-200/90 dark:border-emerald-500/30 shadow-sm dark:shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden transition-colors">
       <div className="flex items-start sm:items-center gap-4 z-10">
@@ -37,26 +33,19 @@ export default function AdminProLicenseCard({
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
             <h2 className="text-lg font-black text-gray-900 dark:text-white tracking-wide">
-              {licenseTitle(licenseStatus)}
+              Pro 商业授权
             </h2>
-            {badgeKind === "pro" ? (
+            {licenseStatus.isPro ? (
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 dark:bg-emerald-400/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-400/40 shadow-xs">
                 ✨ 已激活 · {licensePlanLabel(licenseStatus.payload)}
               </span>
-            ) : badgeKind === "docker" ? (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-400/30">
-                免费版 (可激活 Pro)
-              </span>
-            ) : badgeKind === "ee" ? (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-400/20 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-400/30">
-                开发版 (已挂载 EE 驱动)
-              </span>
             ) : (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-100 dark:bg-sky-400/20 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-400/30">
-                源码构建 (缺少驱动)
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300">
+                未激活 Pro
               </span>
             )}
           </div>
+          <p className="text-xs text-gray-500 dark:text-slate-400 mt-1.5">构建类型：{licenseStatus.isDockerBuild === undefined ? "读取中…" : licenseStatus.isDockerBuild ? "官方 Docker 镜像" : "源码构建"}</p>
           <p className="text-xs text-gray-600 dark:text-slate-300/85 mt-1.5 leading-relaxed max-w-2xl">
             {licenseStatus.isPro
               ? licenseSummaryLine(licenseStatus.payload)

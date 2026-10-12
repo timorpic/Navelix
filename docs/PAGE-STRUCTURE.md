@@ -35,8 +35,8 @@
 后台以 `AdminSidebar` 和功能内容区组织，支持 `/admin?tab=system` 一类深链。有效 tab 包括：
 
 - 内容：`links`、`categories`、`quickAccess`、`projects`、`schedules`。
-- 管理功能：`users`、`analytics`、`auditLogs`、`pro`，其中账号管理、审计及 Pro 配置仅管理员可访问。
-- 系统设置（仅管理员）：`site`（站点与品牌）、`ai`、`weather`、`access`、`code`、`probe`、`telemetry`、`system`（数据与维护）。
+- 管理功能：`users`、`auditLogs`、`pro`，其中账号管理、审计及 Pro 配置仅管理员可访问。
+- 系统设置（仅管理员）：`site`（站点设置）、`brand`（品牌定制，Pro）、`ai`、`weather`、`access`、`code`（Pro）、`probe`（Pro）、`system`（数据与维护）。
 - 用户设置：`profile`（个人资料）、`personalization`（界面与功能，含搜索栏和链接打开方式）、`notifications`、`account`、`personalData`。
 
 桌面采用可折叠二级菜单，系统设置与用户设置可独立展开或折叠；选中子页面不强制展开，折叠不切换当前页面。移动端使用同一导航定义。旧 `system` 深链继续进入数据与维护，`profile` 进入个人资料。站点社交主页属于系统设置；Telegram 渠道属于当前用户，管理员才可订阅全站事件。
@@ -50,3 +50,5 @@ Tab 容器位于后台页面及 `admin/components/`；按职责拆分的卡片�
 未来如建设组件目录，建议先定义名称、用途、预览、Props、依赖、安装方式、主题与无障碍说明，并在 [REGISTRY](REGISTRY.md) 中明确分发机制；这属于待评估规划，当前不提供安装入口。
 
 布局视觉见 [DESIGN](../DESIGN.md)，组件实现约定见 [COMPONENT-GUIDELINES](COMPONENT-GUIDELINES.md)。
+
+Pro 页的 `showProMenus` 为全站菜单显示开关，默认开启。系统设置通过同一导航过滤函数隐藏 Pro 子菜单，一级 Pro 入口保留；品牌定制、自定义代码、链接探针均显示 PRO 标记。隐藏只影响导航，直接地址仍受既有管理员与功能授权检查。

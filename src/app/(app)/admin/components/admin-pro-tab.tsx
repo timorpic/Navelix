@@ -6,6 +6,8 @@ import { useConfirm } from "@/hooks/use-confirm";
 import ConfirmDialog from "@/components/confirm-dialog";
 import { useAdminLicense } from "@/hooks/use-admin-license";
 import { useAdminCloudStorage } from "@/hooks/use-admin-cloud-storage";
+import AdminProMenuCard from "./admin-pro-menu-card";
+import AdminProEEDriverCard from "./admin-pro-ee-driver-card";
 import AdminProLicenseCard from "./admin-pro-license-card";
 import AdminProStorageCard from "./admin-pro-storage-card";
 import AdminProLicenseModal from "./admin-pro-license-modal";
@@ -36,12 +38,17 @@ export default function AdminProTab() {
       <ConfirmDialog {...confirmDialog.dialogProps} />
       <Toast message={notice} />
 
+      <AdminProMenuCard />
+
       {/* 卡片 1：💎 商业授权与 License 激活中心 */}
       <AdminProLicenseCard
         licenseStatus={license.licenseStatus}
         onRemoveLicense={license.removeLicense}
         onOpenLicenseModal={license.openLicenseModal}
       />
+
+      <AdminProEEDriverCard status={license.driverStatus} loading={license.driverStatusLoading}
+        error={license.driverStatusError} onRefresh={license.refreshStatus} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* 卡片 2：💾 S3 / WebDAV 异地云容灾备份与一键还原 (12 cols) */}
@@ -50,7 +57,6 @@ export default function AdminProTab() {
           licenseStatus={license.licenseStatus}
           openLicenseModal={license.openLicenseModal}
         />
-
 
       </div>
 

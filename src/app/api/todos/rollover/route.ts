@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { toZonedLocalDateStr } from "@/lib/date-utils";
 import { rolloverOverdueTodos } from "@/lib/todos-projects";
-import { track } from "@/lib/analytics";
 
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
@@ -27,11 +26,6 @@ export async function POST(req: NextRequest) {
         message: "当前没有需要顺延的过期待办事项",
       });
     }
-
-    track("todo.rollover", {
-      userId: user.id,
-      meta: { mode: action, count },
-    });
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
-import { track } from "@/lib/analytics";
 import { deleteProjectCascade, updateProject } from "@/lib/todos-projects";
 
 export async function PATCH(
@@ -23,13 +22,6 @@ export async function PATCH(
     url: body.url,
     sortOrder: body.sortOrder,
     todos: Array.isArray(body.todos) ? body.todos : undefined,
-  });
-
-  track("project.update", {
-    userId,
-    meta: {
-      milestoneCount: Array.isArray(body.todos) ? body.todos.length : undefined,
-    },
   });
 
   return NextResponse.json({ success: true });

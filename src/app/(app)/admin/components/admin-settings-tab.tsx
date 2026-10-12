@@ -45,10 +45,10 @@ function LicensedSettings({ tab }: { tab: string }) {
   return <div className="space-y-6">
     <Toast message={notice} /><ConfirmDialog {...confirm.dialogProps} />
     {tab === "site" && <>
-      <AdminProBrandCard licenseStatus={license.licenseStatus} flash={flash} />
       <label className="block text-sm">页脚<input aria-label="页脚" className="block w-full rounded-xl border p-3 dark:bg-slate-900" defaultValue={config.customFooter} onBlur={event => updateConfig({ customFooter: event.target.value })} /></label>
       <AdminProfileSocialCard />
     </>}
+    {tab === "brand" && <AdminProBrandCard licenseStatus={license.licenseStatus} flash={flash} />}
     {tab === "code" && <AdminProCodeInjectionCard licenseStatus={license.licenseStatus} />}
     {tab === "probe" && <AdminProLinkProbeCard licenseStatus={license.licenseStatus} onLockedClick={license.openLicenseModal} />}
     {license.licenseModalOpen && <AdminProLicenseModal license={license} />}
@@ -80,8 +80,7 @@ export default function AdminSettingsTab({ tab, isAdmin }: { tab: string; isAdmi
     case "ai": return <AISettings />;
     case "weather": return <WeatherSettings />;
     case "access": return <AdminSystemAccessCard isAdmin={isAdmin} />;
-    case "site": case "code": case "probe": return <LicensedSettings tab={tab} />;
-    case "telemetry": return <AdminSystemTab currentUser={{ role: "admin" }} section="telemetry" />;
-    default: return <AdminSystemTab currentUser={{ role: "admin" }} section="maintenance" />;
+    case "site": case "brand": case "code": case "probe": return <LicensedSettings tab={tab} />;
+    default: return <AdminSystemTab currentUser={{ role: "admin" }} />;
   }
 }

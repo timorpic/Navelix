@@ -21,6 +21,7 @@ export const defaultConfig: SystemConfig = {
   aiModel: "gpt-4o-mini",
   aiKeyConfigured: false,
   siteTitle: DEFAULT_SITE_TITLE,
+  showProMenus: true,
   linkStatusEnabled: false,
   linkStatusInterval: 60,
   socialGithub: "https://github.com",

@@ -15,7 +15,6 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { sendTelegramNotification } from "@/lib/telegram";
-import { track } from "@/lib/analytics";
 
 /** 登录失败达到该次数后向 Telegram 推送安全告警 */
 const LOGIN_ALERT_THRESHOLD = 3;
@@ -93,12 +92,6 @@ export async function POST(req: Request) {
   const user = toPublicUser(row);
   const res = NextResponse.json({ user });
   res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
-
-  // 可选遥测：登录成功
-  track("auth.login", {
-    userId: row.id,
-    meta: { outcome: "success", userRole: row.role },
-  });
 
   return res;
 }

@@ -13,9 +13,8 @@ import ScheduleAdminPanel from "@/components/schedule-admin-panel";
 import ProjectAdminPanel from "@/components/project-admin-panel";
 import AdminSidebar from "./components/admin-sidebar";
 import AdminLinksTab from "./components/admin-links-tab";
-import AdminAnalyticsTab from "./components/admin-analytics-tab";
 import AdminSettingsTab from "./components/admin-settings-tab";
-import { SYSTEM_SETTINGS_NAV, USER_SETTINGS_NAV, isSystemSettingsTab } from "@/lib/admin-settings-nav";
+import { SYSTEM_SETTINGS_NAV, getSystemSettingsNav, USER_SETTINGS_NAV, isSystemSettingsTab } from "@/lib/admin-settings-nav";
 import AdminProTab from "./components/admin-pro-tab";
 import AdminAuditLogsPanel from "./components/admin-audit-logs-panel";
 
@@ -40,7 +39,7 @@ export default function AdminPage() {
   useEffect(() => {
     const readTab = () => {
       const param = new URL(window.location.href).searchParams.get("tab");
-      const valid: string[] = ["links", "categories", "quickAccess", "projects", "schedules", "users", "analytics", "auditLogs", "pro", ...SYSTEM_SETTINGS_NAV.map(item => item.id), ...USER_SETTINGS_NAV.map(item => item.id)];
+      const valid: string[] = ["links", "categories", "quickAccess", "projects", "schedules", "users", "auditLogs", "pro", ...SYSTEM_SETTINGS_NAV.map(item => item.id), ...USER_SETTINGS_NAV.map(item => item.id)];
       setActiveTab(param && valid.includes(param) ? param as AdminTab : "links");
     };
     queueMicrotask(readTab);
@@ -143,12 +142,11 @@ export default function AdminPage() {
     ...(currentUser?.role === "admin"
       ? [{ id: "users" as AdminTab, icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>, label: "账号管理", badge: users.length || 1 }]
       : []),
-    { id: "analytics", icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="M18 9l-5 5l-2-2l-4 4" /></svg>, label: "访问统计" },
     ...(currentUser?.role === "admin"
       ? [{ id: "auditLogs" as AdminTab, icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /><path d="M9 14l2 2 4-4" /></svg>, label: "审计日志" }]
       : []),
     ...(currentUser?.role === "admin" ? [{ id: "pro" as AdminTab, icon: <span>💎</span>, label: "Pro 高级功能", badge: "PRO" }] : []),
-    ...(currentUser?.role === "admin" ? SYSTEM_SETTINGS_NAV.map(item => ({ ...item, icon: <span>⚙</span> })) : []),
+    ...(currentUser?.role === "admin" ? getSystemSettingsNav(config.showProMenus !== false).map(item => ({ ...item, badge: item.pro ? "PRO" : undefined, icon: <span>⚙</span> })) : []),
     ...USER_SETTINGS_NAV.map(item => ({ ...item, icon: <span>·</span> })),
   ];
 
@@ -310,8 +308,6 @@ export default function AdminPage() {
           {activeTab === "schedules" && <ScheduleAdminPanel />}
           {/* TAB 4: 👤 账号管理 */}
           {activeTab === "users" && currentUser?.role === "admin" && <AdminUsersPanel />}
-          {/* TAB 6: 📊 访问统计 → 使用统计 */}
-          {activeTab === "analytics" && <AdminAnalyticsTab />}
           {/* TAB 6.5: 🧾 审计日志（仅管理员） */}
           {activeTab === "auditLogs" && currentUser?.role === "admin" && <AdminAuditLogsPanel />}
           {/* TAB 7: ⚙️ 系统与数据管理 */}

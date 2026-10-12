@@ -11,7 +11,6 @@ import {
   consumePendingDelete,
   stripToolCalls,
 } from "@/lib/ai-tools";
-import { track } from "@/lib/analytics";
 
 interface ChatHistoryItem {
   sender?: string;
@@ -284,12 +283,6 @@ export async function POST(req: Request) {
       }
       toolReport = `\n\n${lines.join("\n")}`;
     }
-
-    // 可选遥测：AI 对话
-    track("ai.chat_sent", {
-      userId: user.id,
-      meta: { contextSize: systemPromptContent.length > 0 ? 1 : 0, hadError: false },
-    });
 
     return NextResponse.json({
       text: `${cleanText || (toolReport ? "已执行您的请求：" : "未获取到有效的模型回复。")}${toolReport}`,

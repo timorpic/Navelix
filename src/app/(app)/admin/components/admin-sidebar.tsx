@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { SYSTEM_SETTINGS_NAV, USER_SETTINGS_NAV, isSystemSettingsTab, type SettingsTab } from "@/lib/admin-settings-nav";
+import { USER_SETTINGS_NAV, isSystemSettingsTab, type SettingsTab } from "@/lib/admin-settings-nav";
 import LogoMark from "@/components/logo-mark";
 import BrandLogoText from "@/components/brand-logo-text";
 import { resolveAvatar } from "@/lib/avatars";
@@ -15,7 +15,6 @@ export type AdminTab =
   | "projects"
   | "schedules"
   | "users"
-  | "analytics"
   | "auditLogs"
   | "system"
   | "pro"
@@ -117,7 +116,7 @@ export default function AdminSidebar({
         <nav className="flex flex-col gap-1.5">
           {adminNavItems.filter(item => !isSystemSettingsTab(item.id) && !USER_SETTINGS_NAV.some(child => child.id === item.id)).map(renderNavButton)}
           {[
-            ...(currentUser?.role === "admin" ? [{ label: "系统设置", items: SYSTEM_SETTINGS_NAV, open: systemOpen, toggle: () => setSystemOpen(v => !v) }] : []),
+            ...(currentUser?.role === "admin" ? [{ label: "系统设置", items: adminNavItems.filter(item => isSystemSettingsTab(item.id)), open: systemOpen, toggle: () => setSystemOpen(v => !v) }] : []),
             { label: "用户设置", items: USER_SETTINGS_NAV, open: userOpen, toggle: () => setUserOpen(v => !v) },
           ].map(group => (
             <div key={group.label} className="flex flex-col gap-1 pt-2 border-t border-gray-100 dark:border-slate-800 mt-1">
@@ -125,7 +124,7 @@ export default function AdminSidebar({
                 <span>{group.label}</span><span aria-hidden="true">{group.open ? "⌃" : "⌄"}</span>
               </button>
               {group.open && <div className="pl-3 flex flex-col gap-1 border-l border-gray-200 dark:border-slate-700 ml-4">
-                {group.items.map(item => renderNavButton({ ...item, icon: <span aria-hidden="true">·</span> }))}
+                {group.items.map(item => renderNavButton({ ...item, badge: "badge" in item ? item.badge : undefined, icon: <span aria-hidden="true">·</span> }))}
               </div>}
             </div>
           ))}

@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { db, SESSION_COOKIE } from "@/lib/db";
 import { createSession, hashPassword, sessionCookieOptions, toPublicUser } from "@/lib/auth";
 import { canRegister } from "@/lib/registration";
-import { track } from "@/lib/analytics";
 
 // GET /api/auth/register - 公开读取注册开关（登录页/注册页为未登录页面，无法走需 session 的 /api/user/data）。
 // allowRegistration 是纯布尔策略，不含用户列表/用户名等敏感信息，且该状态本可经 POST 试探得出，故无需鉴权。
@@ -107,9 +106,6 @@ export async function POST(req: Request) {
 
   const res = NextResponse.json({ user }, { status: 201 });
   res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
-
-  // 可选遥测：新用户注册
-  track("auth.register", { userId: id, meta: { role } });
 
   return res;
 }

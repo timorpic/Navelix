@@ -1,17 +1,14 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
-  LINK_USAGE_STORAGE_KEY,
   buildCategoryDeleteMessage,
   buildClearLinksMessage,
   buildLinkDeleteMessage,
   buildShareUrl,
   categoryName,
-  computeLinkUsageStats,
   countLinksInCategory,
   filterLinks,
   paginateLinks,
-  parseLinkUsage,
   totalLinkPages,
 } from "../admin-links.ts";
 import type { Category, SiteLink } from "@/types";
@@ -164,83 +161,6 @@ describe("admin-links: countLinksInCategory", () => {
     ];
     assert.equal(countLinksInCategory(links, "ai"), 2);
     assert.equal(countLinksInCategory(links, "missing"), 0);
-  });
-});
-
-describe("admin-links: parseLinkUsage", () => {
-  it("正常对象原样返回", () => {
-    const map = { "1": { count: 3, lastUsed: 1700000000000 } };
-    assert.deepEqual(parseLinkUsage(JSON.stringify(map)), map);
-  });
-
-  it("空值、损坏 JSON 与非对象一律回退为空表", () => {
-    assert.deepEqual(parseLinkUsage(null), {});
-    assert.deepEqual(parseLinkUsage(""), {});
-    assert.deepEqual(parseLinkUsage("{ 坏掉的 json"), {});
-    assert.deepEqual(parseLinkUsage("null"), {});
-    assert.deepEqual(parseLinkUsage("[1,2]"), {});
-    assert.deepEqual(parseLinkUsage("\"str\""), {});
-  });
-
-  it("键名与 link-usage 模块共用同一份数据", () => {
-    assert.equal(LINK_USAGE_STORAGE_KEY, "navelix.link.usage");
-  });
-});
-
-describe("admin-links: computeLinkUsageStats", () => {
-  const links = [
-    makeLink({ id: "1", title: "GitHub", category: "dev" }),
-    makeLink({ id: "2", title: "DeepSeek", category: "ai" }),
-    makeLink({ id: "3", title: "Figma", category: "ai" }),
-  ];
-  // 固定「当前时间」，避免用例随运行时刻漂移（本地时区当天 0 点为分界）
-  const now = new Date("2026-10-10T15:00:00");
-  const todayAt = (h: number) => new Date("2026-10-10T00:00:00").setHours(h);
-
-  it("今日点击量只累加当天 0 点及之后的条目", () => {
-    const stats = computeLinkUsageStats(links, {
-      "1": { count: 2, lastUsed: todayAt(9) },
-      "2": { count: 5, lastUsed: todayAt(0) },
-      // 昨天 23 点：不计入
-      "3": { count: 100, lastUsed: todayAt(0) - 3600000 },
-    }, now);
-    assert.equal(stats.todayClicks, 7);
-  });
-
-  it("无任何记录时三项均为空", () => {
-    const stats = computeLinkUsageStats(links, {}, now);
-    assert.equal(stats.todayClicks, 0);
-    assert.equal(stats.topCategoryId, null);
-    assert.equal(stats.topLink, null);
-  });
-
-  it("最热分组按分组内已记录条目的点击总数排序", () => {
-    const stats = computeLinkUsageStats(links, {
-      "1": { count: 1, lastUsed: todayAt(9) },
-      "2": { count: 4, lastUsed: todayAt(9) },
-      "3": { count: 3, lastUsed: todayAt(9) },
-    }, now);
-    assert.equal(stats.topCategoryId, "ai");
-  });
-
-  it("没有记录的分组不参与最热分组评选", () => {
-    const stats = computeLinkUsageStats(links, {
-      "1": { count: 9, lastUsed: todayAt(9) },
-    }, now);
-    assert.equal(stats.topCategoryId, "dev");
-  });
-
-  it("最热链接按点击量降序取首位；全为 0 时视为无数据", () => {
-    const stats = computeLinkUsageStats(links, {
-      "1": { count: 1, lastUsed: todayAt(9) },
-      "2": { count: 7, lastUsed: todayAt(9) },
-    }, now);
-    assert.equal(stats.topLink?.id, "2");
-
-    const zero = computeLinkUsageStats(links, {
-      "1": { count: 0, lastUsed: todayAt(9) },
-    }, now);
-    assert.equal(zero.topLink, null);
   });
 });
 

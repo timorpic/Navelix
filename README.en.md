@@ -133,9 +133,6 @@ docker compose up -d
 | `NAVELIX_DATA_DIR` | `/app/data` | Data directory (SQLite DB, backups, logs and initial password file); `/app/data` inside the Docker image, `<cwd>/data` for source deploys |
 | `NAVELIX_LICENSE_KEY` | *(empty)* | Commercial license key; inject it at container start to activate, or activate later from the admin console |
 | `NAVELIX_GITHUB_REPO` | `timorpic/Navelix` | GitHub repo (`owner/repo`) used for version update checks; point it at your own repo after forking |
-| `NAVELIX_ANALYTICS` | `on` | Local usage-analytics switch; data is written only to the local SQLite database and never leaves your machine (can also be disabled in the admin console) |
-| `NAVELIX_ANALYTICS_REPORT` | `on` | Anonymous weekly telemetry switch; `off` disables it (also toggleable under "Personal Account & Security" in the admin console) |
-| `NAVELIX_ANALYTICS_ENDPOINT` | *(built-in endpoint)* | Self-hosted anonymous telemetry receiver; pairs with `NAVELIX_ANALYTICS_TOKEN` and `NAVELIX_ANALYTICS_TIMEOUT_MS`, normally not needed |
 | `TZ` | `UTC` | Container timezone; the image sets no default (UTC) and the example Compose sets `Asia/Shanghai` — pass `TZ` explicitly for your local timezone |
 
 ---
@@ -144,7 +141,6 @@ docker compose up -d
 
 All data is stored in local SQLite (`data/navelix.db`). AI / weather API keys live only in the local database and are proxied server-side; they are never leaked when exporting config. Built-in physical hot backup and fast restore are included.
 
-**Anonymous telemetry**: Navelix enables an anonymous weekly report by default (aggregate feature-usage counts only, with no personal information) to help the author improve the product. On first launch the console prints an explicit notice. To turn it off: use the "Anonymous Telemetry" card under "Personal Account & Security" in the admin console, or set the environment variable `NAVELIX_ANALYTICS_REPORT=off`.
 
 ---
 

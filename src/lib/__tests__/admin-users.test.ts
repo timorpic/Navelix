@@ -13,7 +13,6 @@ import {
  *
  * 回归背景：
  * - DELETE 此前是路由内 10 条裸 DELETE 且**无事务**，中途失败会留下半删状态；
- *   且 analytics_events 无外键约束、从未被清理。
  * - PATCH 此前是 5 条独立 UPDATE 逐条提交，中途失败会留下部分更新
  *   （如「角色已改、密码未改」）。
  */
@@ -27,7 +26,6 @@ const TABLES_WITH_USER_ID = [
   "user_todos",
   "notifications",
   "api_tokens",
-  "analytics_events",
 ] as const;
 
 function seedUser(userId: string, role = "user") {
@@ -64,9 +62,6 @@ function seedUser(userId: string, role = "user") {
     Date.now() + 86400000,
     Date.now(),
   );
-  db.prepare(
-    "INSERT INTO analytics_events (event, user_id, instance_id, meta, ts) VALUES ('test.event', ?, 'inst', '{}', ?)",
-  ).run(userId, Date.now());
 }
 
 function countRows(table: string, userId: string): number {
@@ -101,7 +96,7 @@ describe("admin-users: deleteUserCascade", () => {
     const userRow = db.prepare("SELECT id FROM users WHERE id = ?").get(userId);
     assert.equal(userRow, undefined, "用户行应已删除");
 
-    // 全部关联表无残留（含此前从未清理的 analytics_events）
+    // 全部关联表无残留
     for (const t of TABLES_WITH_USER_ID) {
       assert.equal(countRows(t, userId), 0, `${t} 不应有残留行`);
     }

@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import type { Project, WorkspaceMember } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
 import { pushNotification } from "@/lib/client/notifications";
-import { trackClientEvent } from "@/lib/client/analytics";
 import { useConfirm } from "@/hooks/use-confirm";
 import ConfirmDialog from "./confirm-dialog";
 import ProjectGanttView from "./project-gantt-view";
@@ -48,16 +47,6 @@ export default function ProjectsView() {
   // AI 拆解草稿：任务列表、微调操作与同步开关全部由 hook 持有
   const ai = useAiBreakdown(members);
   const [showAdd, setShowAdd] = useState(false);
-
-  // 可选遥测：查看甘特图视图
-  useEffect(() => {
-    if (viewTab === "gantt") {
-      trackClientEvent("project.gantt_view", {
-        projectCount: projects.length,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewTab]);
 
   // Form States
   const [name, setName] = useState("");

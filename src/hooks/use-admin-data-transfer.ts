@@ -2,7 +2,6 @@
 
 import { useCallback } from "react";
 import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
-import { trackClientEvent } from "@/lib/client/analytics";
 import { parseBookmarksHTML } from "@/lib/bookmarks";
 import { parseSunPanelJSON } from "@/lib/sun-panel";
 import {
@@ -152,12 +151,6 @@ export function useAdminDataTransfer({
           );
           mergeBookmarks(cats, lnks);
           notify("数据管理", bookmarkImportSummary({ categories: cats.length, links: lnks.length }));
-          // 可选遥测：书签导入
-          trackClientEvent("nav.bookmark_import", {
-            source: "html",
-            linkCount: lnks.length,
-            categoryCount: cats.length,
-          });
         } catch {
           flash("导入失败：无效的书签文件");
         }
@@ -179,12 +172,6 @@ export function useAdminDataTransfer({
           );
           mergeBookmarks(cats, lnks);
           notify("数据管理", sunPanelImportSummary({ categories: cats.length, links: lnks.length }));
-          // 可选遥测：书签导入
-          trackClientEvent("nav.bookmark_import", {
-            source: "sunpanel",
-            linkCount: lnks.length,
-            categoryCount: cats.length,
-          });
         } catch {
           flash("导入失败：无效的 Sun-Panel JSON 文件");
         }

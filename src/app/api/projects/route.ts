@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
-import { track } from "@/lib/analytics";
 import { createProject } from "@/lib/todos-projects";
 
 export async function GET() {
@@ -61,11 +60,6 @@ export async function POST(req: NextRequest) {
       statusColor: body.statusColor,
       url: body.url,
       todos: Array.isArray(body.todos) ? body.todos : undefined,
-    });
-
-    track("project.create", {
-      userId,
-      meta: { milestoneCount: Array.isArray(body.todos) ? body.todos.length : 0 },
     });
 
     return NextResponse.json({ success: true, project });

@@ -1,5 +1,6 @@
 "use client";
 
+import { parseEEDriverStatus, type EEDriverStatus } from "@/lib/ee-driver-status";
 import { useCallback, useEffect, useState } from "react";
 import {
   buildLicenseActivationPayload,
@@ -31,6 +32,10 @@ interface UseAdminLicenseOptions {
 }
 
 export interface UseAdminLicenseResult {
+  driverStatus: EEDriverStatus | null;
+  driverStatusLoading: boolean;
+  driverStatusError: boolean;
+  refreshStatus: () => Promise<void>;
   licenseStatus: LicenseStatus;
   machineFingerprint: string;
   licenseInput: string;
@@ -54,18 +59,26 @@ export function useAdminLicense({
   // ── License 授权状态 ──
   const [licenseStatus, setLicenseStatus] = useState<LicenseStatus>({
     isPro: false,
-    isEE: true,
+    isEE: false,
   });
+  const [driverStatus, setDriverStatus] = useState<EEDriverStatus | null>(null);
+  const [driverStatusLoading, setDriverStatusLoading] = useState(true);
+  const [driverStatusError, setDriverStatusError] = useState(false);
   const [machineFingerprint, setMachineFingerprint] = useState("");
   const [licenseInput, setLicenseInput] = useState("");
   const [isActivatingLicense, setIsActivatingLicense] = useState(false);
   const [licenseModalOpen, setLicenseModalOpen] = useState(false);
 
   const fetchLicense = useCallback(async () => {
+    setDriverStatusLoading(true);
+    setDriverStatusError(false);
     try {
       const res = await fetch("/api/admin/license");
       if (res.ok) {
         const data = await res.json();
+        const driver = parseEEDriverStatus(data.eeDriverStatus);
+        setDriverStatus(driver);
+        setDriverStatusError(!driver);
         const parsed = parseLicenseStatus(data);
         if (parsed) {
           setLicenseStatus(parsed.status);
@@ -73,8 +86,9 @@ export function useAdminLicense({
             setMachineFingerprint(parsed.machineFingerprint);
           }
         }
-      }
-    } catch {}
+      } else { setDriverStatusError(true); }
+    } catch { setDriverStatusError(true); }
+    finally { setDriverStatusLoading(false); }
   }, []);
 
   useEffect(() => {
@@ -125,15 +139,15 @@ export function useAdminLicense({
   const removeLicense = useCallback(async () => {
     const okToRemove = await confirm({
       title: "注销许可证",
-      message: "确定要注销当前商业许可证吗？系统将切回开源社区版。",
+      message: "确定要注销当前商业许可证吗？Pro 授权功能将停用，EE 驱动加载状态保持不变。",
       confirmLabel: "注销",
     });
     if (!okToRemove) return;
     try {
       const res = await fetch("/api/admin/license", { method: "DELETE" });
       if (res.ok) {
-        setLicenseStatus({ isPro: false });
-        flash("已切换为开源社区版");
+        setLicenseStatus(previous => ({ ...previous, isPro: false, payload: undefined, error: undefined }));
+        flash("许可证已注销");
       }
     } catch {
       flash("注销失败");
@@ -141,6 +155,7 @@ export function useAdminLicense({
   }, [confirm, flash]);
 
   return {
+    driverStatus, driverStatusLoading, driverStatusError, refreshStatus: fetchLicense,
     licenseStatus,
     machineFingerprint,
     licenseInput,

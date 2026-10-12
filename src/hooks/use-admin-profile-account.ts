@@ -12,17 +12,6 @@ import {
   type SessionRow,
 } from "@/lib/admin-profile";
 
-/**
- * 「个人账号与安全」Tab 的账号域状态：当前用户、资料表单、改密弹窗、
- * 活跃设备会话与个人 API Token。
- *
- * 从 `admin-profile-tab.tsx`（原 1219 行）抽出 —— 该文件把账号安全、
- * Telegram 通知、匿名遥测三块互不相关的设置连同 31 个 useState 塞在一起。
- * 本 hook 持有账号域的 state 与副作用；Telegram / 遥测分别见
- * `use-admin-telegram-settings` 与 `use-admin-report-settings`。
- * 提示与全局配置由调用方注入，以便三者共用同一个 Toast。
- */
-
 interface UseAdminProfileAccountOptions {
   /** 展示 UI 提示（来自 useToast） */
   flash: (msg: string) => void;

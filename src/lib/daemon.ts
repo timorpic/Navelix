@@ -1,7 +1,5 @@
 import { runPersonalTelegramNotifications } from "./personal-telegram.ts";
 import { sendTelegramNotification } from "./telegram.ts";
-import { maybeRunWeeklyReport } from "./analytics-report.ts";
-import { isAnalyticsReportEnabled } from "./analytics-report.ts";
 import { scheduleAutoBackup } from "./db-backup.ts";
 import { runDatabaseMaintenance } from "./daemon/maintenance.ts";
 import { checkDiskUsage, checkWalSize } from "./daemon/disk.ts";
@@ -57,14 +55,6 @@ export function startBackgroundDaemon(): void {
   globalThis.__navelix_daemon_timers__ = [];
 
   console.log("[Daemon] Navelix 后台守护任务体系已启动");
-
-  // 隐私透明（Trust & Transparency）：首次启动即在控制台显式告知匿名遥测状态。
-  // 防止「隐私优先」产品在用户无感知时默认开启上报，破坏信任。
-  if (isAnalyticsReportEnabled()) {
-    console.log(
-      "[Navelix] 匿名遥测默认开启（仅聚合计数，不含个人信息），关闭请设置环境变量 NAVELIX_ANALYTICS_REPORT=off 或在管理后台「系统设置 → 统计与遥测」中关闭",
-    );
-  }
 
   // 服务启动通知（系统异常场景：服务重启）
   sendTelegramNotification(
@@ -122,17 +112,6 @@ export function startBackgroundDaemon(): void {
     scheduleTask(() => checkWalSize(), 60 * 60 * 1000),
   );
 
-  // 8. 每周匿名聚合上报（M1 路线 A）：启动 60 秒后先尝试一次（覆盖跨周重启），随后每 24 小时检查一次去重键
-  globalThis.__navelix_daemon_timers__.push(
-    scheduleTask(
-      () => maybeRunWeeklyReport().catch(() => {}),
-      24 * 60 * 60 * 1000,
-    ),
-  );
-  const weeklyReportInit = setTimeout(() => {
-    maybeRunWeeklyReport().catch(() => {});
-  }, 60_000);
-  globalThis.__navelix_daemon_timers__.push(weeklyReportInit);
 }
 
 /**

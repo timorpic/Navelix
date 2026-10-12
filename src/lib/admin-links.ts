@@ -3,14 +3,11 @@ import type { Category, SiteLink } from "@/types";
 /**
  * 「链接管理」Tab（`admin-links-tab.tsx`，原 764 行）的纯逻辑。
  *
- * 从该文件下沉 —— 分组名回退、关键词过滤、分页切片、本机点击统计聚合、
+ * 从该文件下沉 —— 分组名回退、关键词过滤、分页切片、
  * 免登录分享链接拼接，以及三个确认弹窗的文案组装，原先都内联在组件里、
  * 无法被单测覆盖。本模块不含任何 React 依赖（localStorage 的读取留在组件侧，
  * 这里只接收已解析的数据），React 状态与副作用见 `admin-links-tab.tsx`。
  */
-
-/** 本机链接点击统计在 localStorage 中的键名（与 `@/lib/client/link-usage` 共用同一份数据）。 */
-export const LINK_USAGE_STORAGE_KEY = "navelix.link.usage";
 
 /**
  * 分组 id → 展示名。查不到时回退为 "AI Tools" —— 这是原内联实现的既有回退值
@@ -77,76 +74,6 @@ export function countLinksInCategory(
   categoryId: string,
 ): number {
   return links.filter((l) => l.category === categoryId).length;
-}
-
-export interface LinkUsageEntry {
-  count: number;
-  lastUsed: number;
-}
-
-export type LinkUsageMap = Record<string, LinkUsageEntry>;
-
-/** 解析 localStorage 中记录的点击统计；空白、损坏或非对象时回退为空表。 */
-export function parseLinkUsage(raw: string | null): LinkUsageMap {
-  if (!raw) return {};
-  try {
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return {};
-    }
-    return parsed as LinkUsageMap;
-  } catch {
-    return {};
-  }
-}
-
-export interface LinkUsageStats {
-  /** 今日（本地时区 0 点起）累计点击次数 */
-  todayClicks: number;
-  /** 点击量最高的分组 id，无数据时为 null */
-  topCategoryId: string | null;
-  /** 点击量最高的链接，无数据时为 null */
-  topLink: SiteLink | null;
-}
-
-/**
- * 聚合本机点击统计。`now` 由调用方传入而非内部取当前时间，便于测试。
- *
- * 三个口径均与原内联实现一致：
- * - 今日点击量按 `lastUsed >= 今日 0 点` 的条目累加 `count`；
- * - 最热分组按各分组下已记录条目的点击总数排序取首位；
- * - 最热链接按 `count` 降序取首位，且首位 count 为 0 时视为无数据。
- */
-export function computeLinkUsageStats(
-  links: SiteLink[],
-  usageMap: LinkUsageMap,
-  now: Date,
-): LinkUsageStats {
-  const todayStart = new Date(now);
-  todayStart.setHours(0, 0, 0, 0);
-  const todayClicks = Object.values(usageMap)
-    .filter((u) => u.lastUsed >= todayStart.getTime())
-    .reduce((sum, u) => sum + u.count, 0);
-
-  const categoryClicks = new Map<string, number>();
-  links.forEach((l) => {
-    const usage = usageMap[l.id];
-    if (usage) {
-      categoryClicks.set(
-        l.category,
-        (categoryClicks.get(l.category) || 0) + usage.count,
-      );
-    }
-  });
-  const topCategoryId =
-    [...categoryClicks.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-
-  const ranked = links
-    .map((l) => ({ link: l, usage: usageMap[l.id]?.count || 0 }))
-    .sort((a, b) => b.usage - a.usage);
-  const topLink = ranked[0]?.usage ? ranked[0].link : null;
-
-  return { todayClicks, topCategoryId, topLink };
 }
 
 /**

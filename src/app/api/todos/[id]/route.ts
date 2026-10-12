@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { emitUserEvent } from "@/lib/events";
-import { track } from "@/lib/analytics";
 import { updateTodoFields } from "@/lib/todos-projects";
 
 // PATCH /api/todos/[id] - toggle done / update fields
@@ -34,18 +33,6 @@ export async function PATCH(
   const changed = updateTodoFields(id, body);
   if (changed.length === 0) {
     return NextResponse.json({ error: "无更新字段" }, { status: 400 });
-  }
-
-  // 可选遥测：完成待办
-  if (body.done === true || body.done === 1) {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    track("todo.complete", {
-      userId,
-      meta: {
-        overdue: Boolean(todoRow.due_date && todoRow.due_date < todayStr),
-        projectId: todoRow.project_id || undefined,
-      },
-    });
   }
 
   // 触发实时通知，同时通知创建者与被委托人

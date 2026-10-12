@@ -66,10 +66,7 @@ pnpm start
 | `NAVELIX_LICENSE_KEY` | 可选商业许可，按授权机制激活 |
 | `APP_SECRET` | 可选主加密密钥来源（至少 16 个字符）；未设置时使用数据目录 `.app_secret`，恢复时须保留相同密钥 |
 | `NAVELIX_GITHUB_REPO` | 更新检测仓库，可供 fork 指定 |
-| `NAVELIX_ANALYTICS` | 本地统计总开关，`off` 关闭 |
-| `NAVELIX_ANALYTICS_REPORT` | 匿名周报总开关，`off` 关闭 |
 
-其他遥测覆盖配置见 [README](../README.md) 和 `.env.example`，不要混淆本地统计和外部匿名周报。
 
 ## 反向代理与验收
 

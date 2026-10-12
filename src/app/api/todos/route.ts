@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { emitUserEvent } from "@/lib/events";
-import { track } from "@/lib/analytics";
 import { createTodo } from "@/lib/todos-projects";
 import type { TodoItem } from "@/types";
 
@@ -97,16 +96,12 @@ export async function POST(req: NextRequest) {
       assigneeName: body.assigneeName,
     });
 
-    const priority =
-      body.priority === "high" || body.priority === "low" ? body.priority : "medium";
     const assigneeId = body.assigneeId ? String(body.assigneeId).trim() : "";
 
     emitUserEvent(userId, "todos:change");
     if (assigneeId && assigneeId !== userId) {
       emitUserEvent(assigneeId, "todos:change");
     }
-
-    track("todo.create", { userId, meta: { priority, assignee: Boolean(assigneeId) } });
 
     return NextResponse.json({ success: true, todo: { id } });
   } catch (err) {

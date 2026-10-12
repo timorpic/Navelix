@@ -4,7 +4,6 @@ import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
 import { toLocalDateStr } from "@/lib/date-utils";
 import { resolveAIConfig } from "@/lib/ai-provider";
-import { track } from "@/lib/analytics";
 
 const REQUEST_TIMEOUT_MS = 25_000;
 
@@ -148,11 +147,6 @@ export async function POST(req: Request) {
           dueDate: targetDate,
         }));
 
-        track("ai.daily_schedule", {
-          userId: user.id,
-          meta: { todoCount: pendingTodos.length, hadError: false, source: "ai_model" },
-        });
-
         return NextResponse.json({
           success: true,
           source: "ai_model",
@@ -163,10 +157,6 @@ export async function POST(req: Request) {
       throw new Error("Invalid format");
     } catch {
       const fallback = generateFallback();
-      track("ai.daily_schedule", {
-        userId: user.id,
-        meta: { todoCount: pendingTodos.length, hadError: false, source: "fallback" },
-      });
       return NextResponse.json({
         success: true,
         source: "smart_rules_fallback",

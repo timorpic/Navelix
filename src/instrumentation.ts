@@ -1,3 +1,5 @@
+import { setEELoadState } from "./lib/ee-bridge/load-state";
+
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     // 1. 动态载入 EE 商业驱动（统一以 ee/dist/bundle.jsc 二进制字节码为唯一实体）
@@ -15,9 +17,14 @@ export async function register() {
           const req = moduleMod.createRequire(path.resolve(process.cwd(), "package.json"));
           req("bytenode");
           req(eeJscRelative);
+          setEELoadState("loaded");
           console.log("[Navelix EE] 已挂载 EE 商业驱动字节码制品 (ee/dist/bundle.jsc)");
+        } else {
+          setEELoadState("failed", "loader-unavailable");
+          console.error("[Navelix EE] 当前运行环境无法使用字节码加载器");
         }
       } else {
+        setEELoadState("missing");
         console.log("[Navelix EE] 未检测到 EE 商业驱动，当前以开源社区版 (CE) 运行");
       }
     } catch (err) {
@@ -27,7 +34,9 @@ export async function register() {
       // 镜像里带了 EE 制品却静默退回 CE。此处直接点名原因，避免与
       // 「未检测到制品」的正常 CE 情形混淆。
       const detail = err instanceof Error ? err.message : String(err);
-      const hint = /cachedDataRejected|Invalid or incompatible cached data/i.test(detail)
+      const incompatible = /cachedDataRejected|Invalid or incompatible cached data/i.test(detail);
+      setEELoadState("failed", incompatible ? "incompatible-runtime" : "load-error");
+      const hint = incompatible
         ? "（字节码与当前 Node/V8 版本不匹配：请在目标 Node 版本下用 ee/compile.mjs 重新编译 ee/dist/bundle.jsc）"
         : "";
       console.error(

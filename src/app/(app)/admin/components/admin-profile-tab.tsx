@@ -10,18 +10,6 @@ import AdminProfileTokensCard from "./admin-profile-tokens-card";
 import AdminProfileAvatarModal from "./admin-profile-avatar-modal";
 import AdminProfilePasswordModal from "./admin-profile-password-modal";
 
-/**
- * 管理后台「个人账号与安全」Tab 的组装层。
- *
- * 原文件 1219 行、31 个 useState，把账号安全（资料 / 改密 / 设备会话 /
- * API Token）、Telegram 通知、AI Copilot 四块互不相关的设置
- * 挤在一个组件里。现按功能域拆分：
- *   - 状态与副作用 → `useAdminProfileAccount` / `useAdminTelegramSettings`
- *   - 纯逻辑（校验、响应解析、设备名映射）→ `@/lib/admin-profile`
- *   - 各设置卡片 → 同目录 `admin-profile-*-card.tsx`，两个弹窗 → `admin-profile-*-modal.tsx`
- * 本文件只保留标题区、两栏栅格与卡片编排。
- * 注：匿名遥测（系统全局）已移至「系统与数据管理」Tab；首页搜索栏（用户级）移入本页。
- */
 export default function AdminProfileTab({ section = "profile" }: { section?: "profile" | "account" }) {
   const { updateConfig } = useNavelixConfig();
 

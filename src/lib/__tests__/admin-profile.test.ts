@@ -4,8 +4,6 @@ import {
   buildTelegramPayload,
   parseProfileSaveResult,
   parseProfileUser,
-  parseReportConfig,
-  parseReportSaveResult,
   parseTelegramConfig,
   parseTelegramSaveResult,
   profileInputsFrom,
@@ -261,44 +259,5 @@ describe("admin-profile: buildTelegramPayload", () => {
 
   it("空 patch 对象不会被当作「无 patch」而回退", () => {
     assert.deepEqual(buildTelegramPayload(draft, {}), {});
-  });
-});
-
-describe("admin-profile: parseReportConfig", () => {
-  it("enabled 为布尔时取出开关与端点标记", () => {
-    assert.deepEqual(parseReportConfig({ enabled: false, endpointConfigured: true }), {
-      enabled: false,
-      endpointConfigured: true,
-    });
-  });
-
-  it("endpointConfigured 缺失时回退为 false", () => {
-    assert.deepEqual(parseReportConfig({ enabled: true }), {
-      enabled: true,
-      endpointConfigured: false,
-    });
-  });
-
-  it("enabled 非布尔或响应非对象时返回 null", () => {
-    assert.equal(parseReportConfig({ enabled: "yes" }), null);
-    assert.equal(parseReportConfig({}), null);
-    assert.equal(parseReportConfig(null), null);
-  });
-});
-
-describe("admin-profile: parseReportSaveResult", () => {
-  it("success 为真时返回服务端确认的 enabled", () => {
-    assert.equal(parseReportSaveResult({ success: true, enabled: false }), false);
-    assert.equal(parseReportSaveResult({ success: true, enabled: true }), true);
-  });
-
-  it("success 为真但 enabled 缺失时回退为 false", () => {
-    assert.equal(parseReportSaveResult({ success: true }), false);
-  });
-
-  it("success 非真或响应非对象时返回 null", () => {
-    assert.equal(parseReportSaveResult({ success: false, enabled: true }), null);
-    assert.equal(parseReportSaveResult({ enabled: true }), null);
-    assert.equal(parseReportSaveResult(null), null);
   });
 });

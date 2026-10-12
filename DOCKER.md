@@ -78,8 +78,6 @@ docker run -d \
 | `NAVELIX_DATA_DIR` | `/app/data` | 数据目录（SQLite 库、备份、`.app_secret`）覆盖项；常规部署无需修改 |
 | `NAVELIX_GITHUB_REPO` | `timorpic/Navelix` | 版本更新检测使用的 **GitHub 仓库**（`owner/repo`，走 Releases API）；fork 后可指向自己的仓库 |
 | `NAVELIX_LICENSE_KEY` | *(留空)* | 商业版 License Key，容器启动时注入激活；也可稍后在后台网页激活 |
-| `NAVELIX_ANALYTICS` | `on` | 本地使用统计开关：数据**仅写入本机 SQLite，永不外发**；`off` 全局关闭，也可在后台「访问统计」页停用 |
-| `NAVELIX_ANALYTICS_REPORT` | `on` | 匿名周报开关（每周一次匿名聚合计数）；可在后台「个人账号与安全」页关闭 |
 | `TZ` | `UTC` | 容器运行时时区。**镜像本身未设默认值**（即 UTC）；示例 Compose 中设为 `Asia/Shanghai`，需要本地时区请显式传入 |
 
 ---

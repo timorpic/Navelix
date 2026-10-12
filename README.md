@@ -160,9 +160,6 @@ docker compose up -d
 | `NAVELIX_DATA_DIR` | `/app/data` | 数据存储目录（SQLite 库、备份、日志与初始密码文件）；Docker 镜像内为 `/app/data`，源码部署默认为 `<cwd>/data` |
 | `NAVELIX_LICENSE_KEY` | *(留空)* | 商业版 License Key；容器启动时注入激活，也可在管理后台网页激活 |
 | `NAVELIX_GITHUB_REPO` | `timorpic/Navelix` | 版本更新检测使用的 GitHub 仓库（`owner/repo`）；fork 后可指向自己的仓库 |
-| `NAVELIX_ANALYTICS` | `on` | 本地使用统计开关；数据仅写入本机 SQLite、永不外发（也可在管理后台「访问统计」页关闭） |
-| `NAVELIX_ANALYTICS_REPORT` | `on` | 匿名遥测周报总开关；`off` 关闭（也可在管理后台「个人账号与安全」页一键开关） |
-| `NAVELIX_ANALYTICS_ENDPOINT` | *(内置端点)* | 自建匿名遥测接收端；配套 `NAVELIX_ANALYTICS_TOKEN`、`NAVELIX_ANALYTICS_TIMEOUT_MS`，一般无需设置 |
 | `TZ` | `UTC` | 容器运行时时区；镜像未设默认值（UTC），示例 Compose 中设为 `Asia/Shanghai`，需要本地时区请显式传入 |
 
 ---
@@ -171,7 +168,6 @@ docker compose up -d
 
 所有数据存储在本地 SQLite（`data/navelix.db`）。AI API Key / 天气 Key 仅保存在本地数据库且由服务端安全代理，导出配置时不会泄露。系统具备内置物理热备份与快速数据恢复。
 
-**匿名遥测说明**：Navelix 默认开启匿名周报（仅功能使用聚合计数，不含任何个人信息），帮助作者改进产品。首次启动时控制台会显式打印告知。关闭方式：管理后台「个人账号与安全」→「匿名遥测」卡片一键关闭，或设置环境变量 `NAVELIX_ANALYTICS_REPORT=off`。
 
 ---
 

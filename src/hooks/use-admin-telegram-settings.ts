@@ -9,14 +9,6 @@ import {
   type TelegramSavePatch,
 } from "@/lib/admin-profile";
 
-/**
- * 「个人账号与安全」Tab 的 Telegram 通知配置状态（含测试消息发送）。
- *
- * 从 `admin-profile-tab.tsx`（原 1219 行）抽出 —— 该卡片与账号安全、
- * 匿名遥测互不相关，却共享同一份 31 个 useState。本 hook 只持有
- * Telegram 的 8 个 state 与读写接口调用；提示由调用方注入。
- */
-
 interface UseAdminTelegramSettingsOptions {
   /** 仅展示 UI 提示（来自 useToast） */
   flash: (msg: string) => void;

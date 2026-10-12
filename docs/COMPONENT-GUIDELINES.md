@@ -30,7 +30,7 @@
 | 危险操作确认 | `confirm-dialog.tsx`、`use-confirm.ts` |
 | 一次性消息 | `toast.tsx`、`use-toast.ts` |
 | 日期与甘特计算 | `date-utils.ts`、`gantt.ts` |
-| 客户端通知与埋点 | `lib/client/` |
+| 客户端通知与本地存储 | `lib/client/` |
 
 这些文件是复用入口，不代表它们已覆盖全部边界条件。`Overlay` 仅收敛遮罩样式，不能替代完整对话框。
 

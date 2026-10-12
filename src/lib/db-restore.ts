@@ -7,7 +7,7 @@ import { mapUserConfigRow, USER_CONFIG_MAPPED_COLUMNS, isGlobalScoped } from "./
 const RESTORE_TABLES = [
   "users", "user_configs", "user_notification_settings", "user_categories", "user_links",
   "user_category_subscriptions", "projects", "user_todos", "api_tokens", "notifications",
-  "system_settings", "audit_logs", "analytics_events", "telegram_deliveries",
+  "system_settings", "audit_logs", "telegram_deliveries",
 ] as const;
 
 /** Upgrade the temporary snapshot first; restore all scoped settings atomically. */

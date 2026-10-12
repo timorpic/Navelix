@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkCSRF, hashPassword, requireAdmin } from "@/lib/auth";
 import { adminCount, deleteUserCascade, updateUser, UserUpdateError } from "@/lib/admin-users";
-import { track } from "@/lib/analytics";
 
 // GET: Fetch list of all registered users
 export async function GET() {
@@ -81,9 +80,6 @@ export async function POST(req: Request) {
     avatar,
     Date.now()
   );
-
-  // 可选遥测：添加团队成员
-  track("team.member_add", { userId: adminUser.id, meta: { role } });
 
   return NextResponse.json({ message: "User created successfully", userId: id }, { status: 201 });
 }

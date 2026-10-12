@@ -1,3 +1,4 @@
+import { getEEDriverStatus } from "@/lib/ee-bridge";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import {
@@ -22,6 +23,7 @@ export async function GET() {
     ...status,
     machineFingerprint,
     isDockerBuild: buildInfo.isDockerBuild,
+    eeDriverStatus: getEEDriverStatus(),
   });
 }
 
@@ -61,6 +63,7 @@ export async function POST(req: NextRequest) {
     ...status,
     machineFingerprint: getMachineFingerprint(),
     isDockerBuild: buildInfo.isDockerBuild,
+    eeDriverStatus: getEEDriverStatus(),
   });
 }
 
@@ -76,6 +79,6 @@ export async function DELETE() {
     success: true,
     isPro: false,
     machineFingerprint: getMachineFingerprint(),
-    message: "许可证已注销，系统已切换为开源社区版",
+    message: "许可证已注销",
   });
 }

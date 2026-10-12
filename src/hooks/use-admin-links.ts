@@ -4,15 +4,11 @@ import { useCallback, useMemo, useState } from "react";
 import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
 import { useLinkStatus } from "@/hooks/use-link-status";
 import { useToast } from "@/hooks/use-toast";
-import { trackClientEvent } from "@/lib/client/analytics";
 import {
-  LINK_USAGE_STORAGE_KEY,
   buildClearLinksMessage,
-  computeLinkUsageStats,
   countLinksInCategory,
   filterLinks,
   paginateLinks,
-  parseLinkUsage,
   totalLinkPages,
 } from "@/lib/admin-links";
 import type { Category, SiteLink } from "@/types";
@@ -21,10 +17,10 @@ import type { Category, SiteLink } from "@/types";
  * 「链接管理」Tab 的状态与副作用。
  *
  * 从 `admin-links-tab.tsx`（原 764 行）抽出 —— 该文件把「链接列表」「分组管理」
- * 「快捷访问管理」「访问统计」四个互不相关的子视图、14 个 useState 与 3 个确认
+ * 「快捷访问管理」三个互不相关的子视图、14 个 useState 与 3 个确认
  * 弹窗挤在一个组件里。本 hook 承载链接域的全部 state、过滤/分页/统计派生值与
  * 增删改处理器；纯计算（过滤、分页、统计聚合、文案组装）下沉到
- * `@/lib/admin-links`，四个子视图组件只负责渲染。
+ * `@/lib/admin-links`，三个子视图组件只负责渲染。
  */
 
 /** `AddLinkModal` 提交的链接数据（与原内联 handler 的入参一致）。 */
@@ -56,8 +52,6 @@ export interface UseAdminLinksResult {
   // ── 连通性探测 ──
   statuses: ReturnType<typeof useLinkStatus>["statuses"];
   refreshStatuses: () => void;
-  // ── 访问统计 ──
-  usageStats: ReturnType<typeof computeLinkUsageStats>;
   // ── 弹窗开关 ──
   showAddLink: boolean;
   editingLink: SiteLink | null;
@@ -144,35 +138,15 @@ export function useAdminLinks(): UseAdminLinksResult {
     ? countLinksInCategory(links, categoryToDelete.id)
     : 0;
 
-  // Real usage statistics derived from localStorage link-click tracking.
-  const usageStats = useMemo(() => {
-    let raw: string | null = null;
-    if (typeof window !== "undefined") {
-      try {
-        raw = localStorage.getItem(LINK_USAGE_STORAGE_KEY);
-      } catch {
-        // ignore
-      }
-    }
-    return computeLinkUsageStats(links, parseLinkUsage(raw), new Date());
-  }, [links]);
-
   // Handlers
   const handleLinkSave = useCallback(
     (data: LinkSaveData) => {
       if (editingLink) {
         updateLink(editingLink.id, data);
         notify("链接管理", "链接修改成功");
-        // 可选遥测：编辑链接
-        trackClientEvent("nav.link_edit", {
-          linkId: editingLink.id,
-          categoryId: data.category,
-        });
       } else {
         addLink(data);
         notify("链接管理", "链接添加成功");
-        // 可选遥测：新增链接
-        trackClientEvent("nav.link_add", { categoryId: data.category });
       }
       setEditingLink(null);
     },
@@ -197,8 +171,6 @@ export function useAdminLinks(): UseAdminLinksResult {
     if (linkToDelete) {
       deleteLink(linkToDelete.id);
       notify("链接管理", "链接已删除");
-      // 可选遥测：删除链接
-      trackClientEvent("nav.link_delete", { linkId: linkToDelete.id });
     }
   }, [linkToDelete, deleteLink, notify]);
 
@@ -265,7 +237,6 @@ export function useAdminLinks(): UseAdminLinksResult {
     totalPages,
     statuses,
     refreshStatuses,
-    usageStats,
     showAddLink,
     editingLink,
     openAddLink,

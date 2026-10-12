@@ -33,9 +33,6 @@ const CASCADE_TABLES = [
   "user_todos",
   "notifications",
   "api_tokens",
-  // analytics_events 无外键约束，必须显式删除，否则留下孤儿遥测行。
-  // 隐私取向：遥测事件随用户一并清除。
-  "analytics_events",
 ] as const;
 
 /**

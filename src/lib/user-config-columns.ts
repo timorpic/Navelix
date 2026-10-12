@@ -284,6 +284,15 @@ export const USER_CONFIG_COLUMNS: UserConfigColumnDef[] = [
     configDefault: "",
   },
 
+  // ── 全站后台菜单显示 ──
+  {
+    column: "show_pro_menus",
+    def: "show_pro_menus INTEGER NOT NULL DEFAULT 1",
+    configKey: "showProMenus",
+    kind: "bool",
+    configDefault: true,
+  },
+
   // ── 右侧边栏小组件开关 ──
   {
     column: "ai_copilot_enabled",
@@ -352,6 +361,7 @@ export const GLOBAL_SCOPE_CONFIG_KEYS: ReadonlySet<string> = new Set([
   "logoImage",
   "siteTitle",
   "customFooter",
+  "showProMenus",
   // AI
   "aiBaseUrl",
   "aiApiKey",

@@ -7,7 +7,6 @@ import { requireAdmin, verifyPassword } from "@/lib/auth";
 import { performDatabaseBackup } from "@/lib/db-backup";
 import { runMigrations } from "@/lib/migrations";
 import { recordAuditLog } from "@/lib/audit";
-import { track } from "@/lib/analytics";
 import { resolveDataDir } from "@/lib/data-dir";
 
 // GET: 下载当前 SQLite 数据库的物理快照备份文件 (.db)
@@ -25,12 +24,6 @@ export async function GET(req: NextRequest) {
   const fileBuffer = fs.readFileSync(backupFilePath);
   const nowStr = new Date().toISOString().slice(0, 10);
   const fileName = `navelix-backup-${nowStr}.db`;
-
-  // 可选遥测：手动热备份
-  track("backup.create", {
-    userId: adminUser.id,
-    meta: { sizeBytes: fileBuffer.length, destination: "local" },
-  });
 
   return new NextResponse(fileBuffer, {
     status: 200,
@@ -112,9 +105,6 @@ export async function POST(req: NextRequest) {
       target: "navelix.db",
       details: "管理员执行了数据库物理还原覆盖操作",
     });
-
-    // 可选遥测：数据库还原
-    track("backup.restore", { userId: adminUser.id, meta: { source: "upload" } });
 
     return NextResponse.json({
       success: true,

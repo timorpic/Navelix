@@ -5,7 +5,6 @@ import Image from "next/image";
 import type { LinkStatus, LinkProbeInfo } from "@/hooks/use-link-status";
 import type { SiteLink } from "@/types";
 import { recordLinkUsage } from "@/lib/client/link-usage";
-import { trackClientEvent } from "@/lib/client/analytics";
 import { useNavelixConfig } from "@/context/navelix-context";
 
 interface LinkCardProps {
@@ -72,12 +71,6 @@ export default function LinkCard({ link, status }: LinkCardProps) {
       rel="noopener noreferrer"
       onClick={() => {
         recordLinkUsage(link.id);
-        // 可选遥测：点击导航链接
-        trackClientEvent("nav.link_click", {
-          linkId: link.id,
-          categoryId: link.category,
-          latencyMs: typeof latency === "number" ? latency : undefined,
-        });
       }}
       className={`group flex items-center gap-3 rounded-xl border p-3 transition-all duration-200 cursor-pointer ${cardStyle}`}
     >

@@ -13,25 +13,23 @@ import {
 import AdminLinksTableCard from "./admin-links-table-card";
 import AdminCategoriesTableCard from "./admin-categories-table-card";
 import AdminQuickAccessCard from "./admin-quick-access-card";
-import AdminLinksAnalyticsCard from "./admin-links-analytics-card";
 
 /**
  * 「链接管理」Tab 的组装层。
  *
  * 原文件 764 行、14 个 useState，把「链接列表」「分组管理」「快捷访问管理」
- * 「访问统计」四个互不相关的子视图与 3 个确认弹窗挤在一个组件里。现按视图拆分：
+ * 三个互不相关的子视图与 3 个确认弹窗挤在一个组件里。现按视图拆分：
  *   - 状态与副作用（过滤 / 分页 / 统计 / 增删改）→ `@/hooks/use-admin-links`
  *   - 纯逻辑（分组名回退、过滤、分页、点击统计、弹窗文案）→ `@/lib/admin-links`
- *   - 四个子视图 → 同目录 `admin-links-table-card` / `admin-categories-table-card`
- *     / `admin-quick-access-card` / `admin-links-analytics-card`
+ *   - 三个子视图 → 同目录 `admin-links-table-card` / `admin-categories-table-card`
+ *     / `admin-quick-access-card`
  * 本文件只保留 Tab 分支编排、三个弹窗与 Toast。
  */
 
 type AdminTab =
   | "links"
   | "categories"
-  | "quickAccess"
-  | "analytics";
+  | "quickAccess";
 
 interface AdminLinksTabProps {
   activeTab: AdminTab;
@@ -54,7 +52,6 @@ export default function AdminLinksTab({ activeTab }: AdminLinksTabProps) {
     totalPages,
     statuses,
     refreshStatuses,
-    usageStats,
     showAddLink,
     editingLink,
     openAddLink,
@@ -138,11 +135,6 @@ export default function AdminLinksTab({ activeTab }: AdminLinksTabProps) {
           onToggleQuickAccess={toggleQuickAccess}
           onNotify={notify}
         />
-      )}
-
-      {/* TAB 6: 📊 访问统计 */}
-      {activeTab === "analytics" && (
-        <AdminLinksAnalyticsCard usageStats={usageStats} categories={categories} />
       )}
 
       {/* Modals */}

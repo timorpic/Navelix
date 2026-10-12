@@ -199,24 +199,3 @@ export function buildTelegramPayload(
     ...(draft.notifyDataTransfer !== undefined ? { notifyDataTransfer: draft.notifyDataTransfer } : {}),
   };
 }
-
-export interface ReportConfigState {
-  enabled: boolean;
-  endpointConfigured: boolean;
-}
-
-/** 解析 GET /api/admin/analytics/report 的响应；enabled 非布尔时视为无效响应。 */
-export function parseReportConfig(data: unknown): ReportConfigState | null {
-  if (!data || typeof data !== "object") return null;
-  const d = data as { enabled?: unknown; endpointConfigured?: unknown };
-  if (typeof d.enabled !== "boolean") return null;
-  return { enabled: d.enabled, endpointConfigured: Boolean(d.endpointConfigured) };
-}
-
-/** 解析 POST /api/admin/analytics/report 的响应，返回服务端确认后的开关值。 */
-export function parseReportSaveResult(data: unknown): boolean | null {
-  if (!data || typeof data !== "object") return null;
-  const d = data as { success?: unknown; enabled?: unknown };
-  if (!d.success) return null;
-  return Boolean(d.enabled);
-}

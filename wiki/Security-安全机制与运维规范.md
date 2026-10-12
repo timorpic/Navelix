@@ -111,7 +111,6 @@ graph LR
 | **只读分享令牌** | `/api/share/token` 生成的分享链接采用 HKDF 派生 + HMAC-SHA256 签名，带有效期，只读 |
 | **Telegram 安全告警** | 登录连续失败、磁盘占用、WAL 膨胀、服务启动等事件可推送 |
 | **Pro 模块（EE）** | 商业能力以 bytenode 字节码加载，许可证使用 Ed25519 验签；公开源码不含 EE 实现 |
-| **匿名遥测** | 本地埋点与每周匿名聚合上报**均默认开启**（埋点仅写本机 SQLite，周报为匿名聚合计数）。可用 `NAVELIX_ANALYTICS=off` / `NAVELIX_ANALYTICS_REPORT=off`，或在后台对应页面关闭 |
 | **密码哈希** | 使用 **scrypt**（`node:crypto`）+ 定时安全比较；SHA-256 仅用于会话 / Token 摘要与分享令牌派生 |
 
 ---

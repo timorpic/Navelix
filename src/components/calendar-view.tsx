@@ -5,7 +5,6 @@ import type { TodoItem, WorkspaceMember } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
 import { pushNotification } from "@/lib/client/notifications";
 import { toLocalDateStr } from "@/lib/date-utils";
-import { trackClientEvent } from "@/lib/client/analytics";
 import IcalExportModal from "./ical-export-modal";
 import AiScheduleModal from "./ai-schedule-modal";
 import ScheduleEditModal from "./schedule-edit-modal";
@@ -17,12 +16,6 @@ export default function CalendarView() {
   const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
-
-  // 可选遥测：打开日历视图
-  useEffect(() => {
-    trackClientEvent("calendar.view", { mode: viewMode });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
       try {

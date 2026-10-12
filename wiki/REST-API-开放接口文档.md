@@ -535,9 +535,8 @@ Content-Type: application/json
 | `GET` | `/api/healthz` | **完全公开、无需鉴权**：返回迁移版本、守护进程状态与 SQLite 数据库 / WAL 文件大小 |
 | `GET` | `/api/update-check` | 版本更新检测 |
 | `GET` | `/api/weather` | 天气数据 |
-| `GET` | `/api/favicon` | 站点图标抓取 |
+| `GET` | `/api/favicon` | 登录后传入 `?url=` 抓取网站或图片图标，返回 `{ dataUrl, iconUrl }`；优先解析站点声明，再尝试根图标和公开图标服务，忽略非图片响应，全部失败返回 502 |
 | `GET` | `/api/realtime` | SSE 实时事件流 |
-| `POST` | `/api/analytics/track` | 埋点上报 `{ event, meta }` |
 | `GET` | `/api/link-status` | 站点连通性与网络延迟探测（**Pro 专享**，需官方 EE 驱动；单次最多 25 个 URL） |
 
 ### 10.5 账号与会话
@@ -551,7 +550,7 @@ Content-Type: application/json
 | `POST` | `/api/auth/login` · `/api/auth/register` | 公开端点；登录带**防爆破限流** |
 
 ### 10.6 管理端
-- `POST`/`GET`/`PATCH` `/api/admin/*` —— 系统设置、用户管理、备份、存储、许可证、遥测配置等，要求 `role === "admin"`（旧 `/api/admin/telegram` 为个人通知接口的兼容别名，仅操作当前登录账号）。
+- `POST`/`GET`/`PATCH` `/api/admin/*` —— 系统设置、用户管理、备份、存储、许可证等，要求 `role === "admin"`（旧 `/api/admin/telegram` 为个人通知接口的兼容别名，仅操作当前登录账号）。
 
 ---
 
@@ -573,3 +572,7 @@ Content-Type: application/json
 ### 账号启停（Schema v18）
 
 `GET /api/admin/users` 的账号项包含布尔字段 `disabled`。管理员通过 `PATCH /api/admin/users` 提交 `{ "id": "目标账号ID", "disabled": true }` 停用，`false` 启用；仍需登录管理员和 CSRF 校验，非布尔值返回 400。停用与会话、API Token 撤销在同一事务完成；账号及业务数据保留。禁止停用当前管理员或使最后一个可用管理员失效，启用不会恢复旧会话或密钥。登录已停用账号且密码正确时返回 403，错误密码仍返回统一 401；已有失效会话和密钥访问受保护接口按未登录处理。
+
+### EE 驱动状态
+
+管理员 `GET /api/admin/license` 在原有 `isEE`、`isPro`、`isDockerBuild` 外返回 `eeDriverStatus`：`state` 为 `loaded`／`partial`／`missing`／`failed`／`unknown`，`storageRegistered` 和 `probeRegistered` 为布尔值，`failure` 为 `null` 或固定分类 `incompatible-runtime`／`loader-unavailable`／`load-error`。`isEE` 仍表示存储和探针都已注册，与许可证无关；具体错误详情看服务启动日志。未登录或非管理员访问返回 403。

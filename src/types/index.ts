@@ -99,6 +99,7 @@ export interface SystemConfig {
   // 服务端回传的"是否已配置"标记（不下发明文）
   aiKeyConfigured?: boolean;
   siteTitle?: string;
+  showProMenus?: boolean; // 全站后台 Pro 子菜单显示，一级 Pro 入口始终保留
   linkStatusEnabled?: boolean;
   enableLinkProbe?: boolean;
   showLinkLatency?: boolean;

@@ -5,23 +5,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useAdminUpdateCheck } from "@/hooks/use-admin-update-check";
 import { useAdminDbBackup } from "@/hooks/use-admin-db-backup";
 import { useAdminCachePurge } from "@/hooks/use-admin-cache-purge";
-import { useAdminReportSettings } from "@/hooks/use-admin-report-settings";
-import AdminAnalyticsSettingsCard from "./admin-analytics-settings-card";
-import AdminSystemTelemetryCard from "./admin-system-telemetry-card";
 import AdminSystemUpdateCard from "./admin-system-update-card";
 import AdminSystemDbBackupCard from "./admin-system-db-backup-card";
 import AdminSystemCachePurgeCard from "./admin-system-cache-purge-card";
 
-function TelemetrySettings() {
-  const { notice, flash } = useToast();
-  const report = useAdminReportSettings({ flash });
-  return <div className="space-y-6">
-    <Toast message={notice} />
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-      <AdminSystemTelemetryCard report={report} /><AdminAnalyticsSettingsCard />
-    </div>
-  </div>;
-}
 function MaintenanceSettings() {
   const { notice, notify } = useToast();
   const update = useAdminUpdateCheck();
@@ -36,10 +23,9 @@ function MaintenanceSettings() {
   </div>;
 }
 /** Render only the selected domain, so unrelated settings do not trigger requests. */
-export default function AdminSystemTab({ currentUser, section = "maintenance" }: {
+export default function AdminSystemTab({ currentUser }: {
   currentUser?: { role?: "admin" | "user"; username?: string } | null;
-  section?: "telemetry" | "maintenance";
 }) {
   if (currentUser?.role !== "admin") return null;
-  return section === "telemetry" ? <TelemetrySettings /> : <MaintenanceSettings />;
+  return <MaintenanceSettings />;
 }

@@ -74,9 +74,8 @@ graph TD
 8. **`notifications`**：消息通知表（ID、User ID、标题、内容、来源声明、创建时间、已读标记）；
 9. **`api_tokens`**：个人 API Access Token 表（ID、User ID、名称、SHA-256 Token 哈希、前缀、创建时间、最后使用时间）；
 10. **`user_category_subscriptions`**：团队分类订阅关系表；
-11. **`system_settings`**：实例级系统设置（品牌、AI、天气、社交主页、访问策略、探针、统计、许可证等）；
+11. **`system_settings`**：实例级系统设置（品牌、AI、天气、社交主页、访问策略、探针、许可证等）；
 12. **`audit_logs`**：安全审计日志（备份 / 还原 / AI Key 变更等敏感操作）；
-13. **`analytics_events`**：本地使用统计事件表（仅写本机 SQLite，不上报明细）。
 
 ---
 
@@ -100,14 +99,6 @@ Navelix 内置了基于 `PRAGMA user_version` 的**自动数据库迁移引擎**
 
 ---
 
-## 📊 使用统计与遥测
-
-- 本地埋点表 `analytics_events` **默认开启**：事件仅写入**本机 SQLite**（事件名 / 用户 ID / 实例 ID / 聚合 meta / 时间戳），明细**永不外发**；
-- 每周可选的**匿名聚合周报**同样默认开启，内容为功能使用分布、版本、实例计数等聚合数据，不含个人信息；
-- 关闭方式：`NAVELIX_ANALYTICS=off`（本地统计）/ `NAVELIX_ANALYTICS_REPORT=off`（周报），或在后台对应页面关闭。
-
----
-
 ## 📁 源码分层约定 (Source Layout)
 
 ```
@@ -115,7 +106,7 @@ src/
 ├── app/           路由层：页面与 API handler，只做鉴权 + 参数校验 + 组装响应
 │   └── api/       handler 内不写多步业务逻辑，下沉到 lib/
 ├── lib/           领域逻辑（服务端）
-│   └── client/    带 "use client" 的浏览器侧模块（埋点、localStorage 访问、通知推送）
+│   └── client/    带 "use client" 的浏览器侧模块（localStorage 访问、通知推送）
 ├── hooks/         React 状态与副作用；纯算法再下沉到 lib/
 └── components/    展示组件：接收 props，不自行取数
 ```

@@ -20,11 +20,10 @@ export default function ScheduleOverviewColumn({
 }) {
   const { projects, todos, hydrated } = useNavelixData();
   const todosLoading = !hydrated;
-  const { todayStr, members, toggleTodo: handleToggleTodo, postponeOneDay: handlePostponeOneDay, quickAddTodo } = useWorkspaceTodos();
+  const { todayStr, toggleTodo: handleToggleTodo, postponeOneDay: handlePostponeOneDay, quickAddTodo } = useWorkspaceTodos();
 
   const [quickTodoTitle, setQuickTodoTitle] = useState("");
   const [quickTodoPriority, setQuickTodoPriority] = useState<"high" | "medium" | "low">("medium");
-  const [quickTodoAssigneeId, setQuickTodoAssigneeId] = useState("");
   const [agendaTab, setAgendaTab] = useState<AgendaTab>("today");
   const [selectedDayFilter, setSelectedDayFilter] = useState<string | null>(null);
 
@@ -34,11 +33,9 @@ export default function ScheduleOverviewColumn({
       title: quickTodoTitle,
       priority: quickTodoPriority,
       dueDate: selectedDayFilter || todayStr,
-      assigneeId: quickTodoAssigneeId,
     });
     if (ok) {
       setQuickTodoTitle("");
-      setQuickTodoAssigneeId("");
     }
   };
 
@@ -347,22 +344,6 @@ const getProjectName = (pid?: string) => {
       }
       className="flex-1 px-3 py-1.5 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 text-gray-800 dark:text-slate-100"
     />
-    {members.length > 1 && (
-      <select
-        name="quickTodoAssignee"
-        value={quickTodoAssigneeId}
-        onChange={(e) => setQuickTodoAssigneeId(e.target.value)}
-        className="px-2 py-1 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl font-medium cursor-pointer max-w-[85px] truncate"
-        title="指派给团队成员"
-      >
-        <option value="">👤 自己</option>
-        {members.map((m) => (
-          <option key={m.id} value={m.id}>
-            @{m.displayName || m.username}
-          </option>
-        ))}
-      </select>
-    )}
     <select
       name="quickTodoPriority"
       value={quickTodoPriority}
