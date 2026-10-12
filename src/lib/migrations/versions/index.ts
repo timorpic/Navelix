@@ -11,6 +11,7 @@ import { migrateV10 } from "./v10.ts";
 import { migrateV11 } from "./v11.ts";
 import { migrateV13 } from "./v13.ts";
 import { migrateV14 } from "./v14.ts";
+import { migrateV18 } from "./v18.ts";
 import { migrateV17 } from "./v17.ts";
 import { migrateV16 } from "./v16.ts";
 import { migrateV15 } from "./v15.ts";
@@ -39,4 +40,5 @@ export const VERSIONED_MIGRATIONS: Array<{
   { version: 15, name: "v15: drop model_accounts table and monitor column", migrate: migrateV15 },
   { version: 16, name: "v16: independent system settings and user notifications", migrate: migrateV16 },
   { version: 17, name: "v17: personal Telegram subscriptions and deliveries", migrate: migrateV17 },
+  { version: 18, name: "v18: account disable status", migrate: migrateV18 },
 ];

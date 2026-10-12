@@ -14,13 +14,13 @@ export async function GET() {
 
   const users = db
     .prepare(
-      `SELECT id, username, display_name AS displayName, role, avatar, created_at AS createdAt
+      `SELECT id, username, display_name AS displayName, role, disabled, avatar, created_at AS createdAt
        FROM users
        ORDER BY created_at DESC`
     )
     .all();
 
-  return NextResponse.json({ users });
+  return NextResponse.json({ users: users.map(user => ({ ...user, disabled: user.disabled === 1 })) });
 }
 
 // POST: Create a new user from Admin Console
@@ -100,6 +100,7 @@ export async function PATCH(req: Request) {
   }
 
   const body = (await req.json().catch(() => null)) as {
+    disabled?: boolean;
     id?: string;
     role?: string;
     username?: string;
@@ -107,7 +108,7 @@ export async function PATCH(req: Request) {
     password?: string;
     avatar?: string;
   } | null;
-  const { id, role, username, displayName, password, avatar } = body || {};
+  const { id, role, username, displayName, password, avatar, disabled } = body || {};
 
   if (!id) {
     return NextResponse.json({ error: "User ID required" }, { status: 400 });
@@ -134,6 +135,7 @@ export async function PATCH(req: Request) {
     updateUser(
       id,
       {
+        disabled,
         role,
         username,
         displayName,
@@ -182,12 +184,12 @@ export async function DELETE(req: Request) {
   }
 
   const targetUser = db
-    .prepare("SELECT id, role FROM users WHERE id = ?")
-    .get(id) as { id: string; role: string } | undefined;
+    .prepare("SELECT id, role, disabled FROM users WHERE id = ?")
+    .get(id) as { id: string; role: string; disabled: number } | undefined;
   if (!targetUser) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
-  if (targetUser.role === "admin" && adminCount() <= 1) {
+  if (targetUser.role === "admin" && !targetUser.disabled && adminCount() <= 1) {
     return NextResponse.json(
       { error: "Cannot delete the last remaining admin account" },
       { status: 400 }
@@ -195,7 +197,11 @@ export async function DELETE(req: Request) {
   }
 
   // 单事务级联删除（见 lib/admin-users.ts）；audit_logs 刻意保留为合规证据
-  deleteUserCascade(id);
+  try { deleteUserCascade(id); }
+  catch (error) {
+    if (error instanceof UserUpdateError) return NextResponse.json({ error: error.message }, { status: 400 });
+    throw error;
+  }
 
   return NextResponse.json({ message: "User deleted successfully" });
 }

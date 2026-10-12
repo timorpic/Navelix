@@ -11,7 +11,7 @@ export function getTelegramSettings(userId: string): TelegramRow {
 }
 export function getTelegramConfigStatus(userId: string) {
   const row = getTelegramSettings(userId);
-  const admin = Boolean(db.prepare("SELECT 1 FROM users WHERE id = ? AND role = 'admin'").get(userId));
+  const admin = Boolean(db.prepare("SELECT 1 FROM users WHERE id = ? AND role = 'admin' AND disabled = 0").get(userId));
   return {
     notifyTodo: row.notify_todo === 1, notifyAssignment: row.notify_assignment === 1, notifyDataTransfer: row.notify_data_transfer === 1,
     configured: Boolean(row.bot_token && decryptSecret(row.bot_token)),
@@ -29,7 +29,7 @@ export function saveTelegramSettings(userId: string, input: unknown): void {
   const nested = db.isTransaction;
   db.exec(nested ? "SAVEPOINT telegram_settings" : "BEGIN IMMEDIATE");
   try {
-    const admin = db.prepare("SELECT 1 FROM users WHERE id = ? AND role = 'admin'").get(userId);
+    const admin = db.prepare("SELECT 1 FROM users WHERE id = ? AND role = 'admin' AND disabled = 0").get(userId);
     if (!admin && (patch.notifyBackup === true || patch.notifySystem === true)) throw new Error("仅管理员可订阅全站备份与系统异常");
     const row = getTelegramSettings(userId);
     const token = patch.clearBotToken ? "" : typeof patch.botToken === "string" && patch.botToken.trim() ? encryptSecret(patch.botToken) : row.bot_token;
@@ -55,7 +55,7 @@ export function saveTelegramSettings(userId: string, input: unknown): void {
 /** Recheck role for every system delivery, including users demoted after subscribing. */
 export function getSystemTelegramRecipients(kind: "backup" | "system"): string[] {
   return (db.prepare(`SELECT n.user_id FROM user_notification_settings n JOIN users u ON u.id = n.user_id
-    WHERE n.channel = 'telegram' AND n.enabled = 1 AND n.${kind === "backup" ? "notify_backup" : "notify_system"} = 1 AND u.role = 'admin'`)
+    WHERE n.channel = 'telegram' AND n.enabled = 1 AND n.${kind === "backup" ? "notify_backup" : "notify_system"} = 1 AND u.role = 'admin' AND u.disabled = 0`)
     .all() as { user_id: string }[]).map(row => row.user_id);
 }
 
@@ -63,5 +63,5 @@ export type PersonalTelegramKind = "todo" | "assignment" | "dataTransfer";
 export function isPersonalTelegramEnabled(userId: string, kind: PersonalTelegramKind): boolean {
   const row = getTelegramSettings(userId);
   const flag = { todo: row.notify_todo, assignment: row.notify_assignment, dataTransfer: row.notify_data_transfer }[kind];
-  return row.enabled === 1 && flag === 1 && Boolean(row.bot_token && row.chat_id);
+  return Boolean(db.prepare("SELECT 1 FROM users WHERE id = ? AND disabled = 0").get(userId)) && row.enabled === 1 && flag === 1 && Boolean(row.bot_token && row.chat_id);
 }

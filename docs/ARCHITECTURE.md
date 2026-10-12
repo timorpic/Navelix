@@ -77,3 +77,7 @@ API 处理器保持 HTTP 职责，复杂行为使用 `admin-*`、`todos-projects
 `user_notification_settings` 按账号保存加密渠道和显式订阅。`telegram.ts` 的 `sendUserTelegramNotification` 用于个人事件；`sendTelegramNotification` 用于系统事件，并在发送时复核管理员身份。本地与云端备份统一使用 `backup`，服务启动、磁盘／WAL、登录异常使用 `system`。
 
 个人任务事件由 `personal-telegram.ts` 调度：任务指派随待办／项目事务写入 `telegram_deliveries`；到期提醒复用日历与待办的日期，在服务器本地时区当天 09:00 后入队。守护任务每分钟处理，使用持久化去重键、原子租约和最多三次重试，投递前重新读取任务与订阅。记录保存 30 天，随账号级联删除并包含于数据库快照还原。个人 JSON 导入在服务端提交后推送，浏览器导出完成通过仅允许固定操作的当前用户接口通知；正常自动保存不触发数据导入消息。
+
+### 账号状态与鉴权
+
+Schema v18 在 `users` 增加 `disabled`（0 启用、1 停用），已有账号默认启用。`admin-users.ts` 在用户修改事务中检查最后一个可用管理员，停用时原子撤销会话与个人 API Token 并记录审计。`auth/session.ts` 在浏览器会话、Bearer Token、续期及会话创建路径检查实时状态；密钥签发也通过条件写入防止停用后的并发签发。Telegram 个人和系统事件发送前排除停用账号。数据库快照随 users 行保存并还原状态，个人 JSON 不包含账号启停状态。

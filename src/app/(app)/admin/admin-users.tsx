@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Modal from "@/components/modal";
 import ConfirmDialog from "@/components/confirm-dialog";
 import Toast from "@/components/toast";
+import { useNavelixData } from "@/context/navelix-context";
+import { useAdminUserStatus } from "@/hooks/use-admin-user-status";
 import { useToast } from "@/hooks/use-toast";
 
 interface ManagedUser {
@@ -13,6 +15,7 @@ interface ManagedUser {
   role: "admin" | "user";
   avatar?: string;
   createdAt: number;
+  disabled: boolean;
 }
 
 export default function AdminUsersPanel() {
@@ -28,6 +31,7 @@ export default function AdminUsersPanel() {
   const [newRole, setNewRole] = useState<"admin" | "user">("user");
 
   const { notice, flash, notify } = useToast();
+  const { user: currentUser } = useNavelixData();
 
   const fetchUsers = async () => {
     try {
@@ -40,6 +44,8 @@ export default function AdminUsersPanel() {
       // ignore
     }
   };
+
+  const status = useAdminUserStatus({ onUpdated: fetchUsers, flash });
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -123,7 +129,7 @@ export default function AdminUsersPanel() {
               账号管理功能 ({users.length})
             </h2>
             <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-              添加、修改 (密码/角色/显示名) 及删除系统用户账号
+              添加、修改、停用、启用及删除系统用户账号
             </p>
           </div>
           <button
@@ -151,6 +157,7 @@ export default function AdminUsersPanel() {
                 <th className="pb-3 pr-4">账号</th>
                 <th className="pb-3 pr-4">显示名称</th>
                 <th className="pb-3 pr-4">权限角色</th>
+                <th className="pb-3 pr-4">账号状态</th>
                 <th className="pb-3 pr-4">注册时间</th>
                 <th className="pb-3 text-right">操作</th>
               </tr>
@@ -163,6 +170,11 @@ export default function AdminUsersPanel() {
                   <td className="py-3.5 pr-4">
                     <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold ${u.role === "admin" ? "bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 border border-teal-100 dark:border-teal-900" : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300"}`}>
                       {u.role === "admin" ? "👑 管理员 (Admin)" : "👤 普通用户"}
+                    </span>
+                  </td>
+                  <td className="py-3.5 pr-4">
+                    <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold ${u.disabled ? "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"}`}>
+                      {u.disabled ? "已停用" : "正常"}
                     </span>
                   </td>
                   <td className="py-3.5 pr-4 text-gray-400 dark:text-slate-400">
@@ -184,6 +196,12 @@ export default function AdminUsersPanel() {
                         className="text-gray-500 dark:text-slate-400 hover:text-[#00C776] font-medium transition-colors cursor-pointer"
                       >
                         ✏️ 修改
+                      </button>
+                      <button type="button" disabled={status.saving || u.id === currentUser?.id}
+                        title={u.id === currentUser?.id ? "不能停用当前登录账号" : undefined}
+                        onClick={() => status.setTarget(u)}
+                        className="text-amber-600 dark:text-amber-400 font-medium cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                        {u.disabled ? "启用" : "停用"}
                       </button>
                       <button
                         onClick={() => setUserToDelete(u)}
@@ -278,6 +296,17 @@ export default function AdminUsersPanel() {
           </button>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!status.target}
+        title={status.target?.disabled ? "启用账号确认" : "停用账号确认"}
+        message={status.target?.disabled
+          ? `确定启用账号 @${status.target.username} 吗？启用后需重新登录，已撤销的 API Token 需重新创建。`
+          : `确定停用账号 @${status.target?.username} 吗？用户数据将保留，现有登录会话和 API Token 将被撤销。`}
+        confirmLabel={status.target?.disabled ? "确认启用" : "确认停用"}
+        onConfirm={status.confirm}
+        onClose={() => status.setTarget(null)}
+      />
 
       {/* Delete User Confirm */}
       <ConfirmDialog

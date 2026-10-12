@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
   const row = db
     .prepare(
-      "SELECT id, username, password_hash, display_name, role, avatar, created_at FROM users WHERE username = ?",
+      "SELECT id, username, password_hash, display_name, role, disabled, avatar, created_at FROM users WHERE username = ?",
     )
     .get(username) as
     | {
@@ -51,6 +51,7 @@ export async function POST(req: Request) {
         password_hash: string;
         display_name: string;
         role: string;
+        disabled: number;
         avatar: string;
         created_at: number;
       }
@@ -73,6 +74,8 @@ export async function POST(req: Request) {
     );
   }
 
+  if (row.disabled) return NextResponse.json({ error: "账号已停用，请联系管理员" }, { status: 403 });
+
   resetLoginRateLimit(limitKey);
   // 管理员首次登录成功后自动删除初始密码提示文件
   if (row.role === "admin") {
@@ -84,7 +87,9 @@ export async function POST(req: Request) {
     }
   }
 
-  const token = await createSession(row.id, req);
+  let token: string;
+  try { token = await createSession(row.id, req); }
+  catch { return NextResponse.json({ error: "账号不可用，请重新登录或联系管理员" }, { status: 403 }); }
   const user = toPublicUser(row);
   const res = NextResponse.json({ user });
   res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());

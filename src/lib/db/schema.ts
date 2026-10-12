@@ -23,6 +23,7 @@ export function initSchema(db: DatabaseSync): void {
       email TEXT NOT NULL DEFAULT '',
       bio TEXT NOT NULL DEFAULT '',
       role TEXT NOT NULL DEFAULT 'user',
+      disabled INTEGER NOT NULL DEFAULT 0 CHECK (disabled IN (0, 1)),
       avatar TEXT NOT NULL DEFAULT '',
       created_at INTEGER NOT NULL
     );

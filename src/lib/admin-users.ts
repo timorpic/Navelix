@@ -1,3 +1,4 @@
+import { recordAuditLog } from "./audit.ts";
 import { db } from "./db.ts";
 
 /**
@@ -10,7 +11,7 @@ import { db } from "./db.ts";
 /** 统计管理员数量（用于「最后一个 admin」保护）。 */
 export function adminCount(): number {
   return (
-    db.prepare("SELECT COUNT(*) AS c FROM users WHERE role = 'admin'").get() as {
+    db.prepare("SELECT COUNT(*) AS c FROM users WHERE role = 'admin' AND disabled = 0").get() as {
       c: number;
     }
   ).c;
@@ -46,6 +47,10 @@ const CASCADE_TABLES = [
 export function deleteUserCascade(userId: string): void {
   db.exec("BEGIN IMMEDIATE;");
   try {
+    const target = db.prepare("SELECT role, disabled FROM users WHERE id = ?").get(userId);
+    if (target?.role === "admin" && target.disabled === 0 && adminCount() <= 1) {
+      throw new UserUpdateError("不能删除最后一个可用管理员");
+    }
     // users 行本身最后删：先清子表，避免外键约束在删除瞬间拒绝
     for (const table of CASCADE_TABLES) {
       db.prepare(`DELETE FROM ${table} WHERE user_id = ?`).run(userId);
@@ -64,6 +69,7 @@ export function deleteUserCascade(userId: string): void {
 
 /** 管理员可修改的用户字段 */
 export interface UserUpdateInput {
+  disabled?: boolean;
   role?: string;
   username?: string;
   displayName?: string;
@@ -100,6 +106,15 @@ export function updateUser(
 
   db.exec("BEGIN IMMEDIATE;");
   try {
+    const target = db.prepare("SELECT role, disabled FROM users WHERE id = ?").get(userId) as { role: string; disabled: number } | undefined;
+    if (!target) throw new UserUpdateError("User not found");
+    if (input.disabled !== undefined && typeof input.disabled !== "boolean") throw new UserUpdateError("账号停用状态必须为布尔值");
+    if (input.disabled === true && userId === options.actorId) throw new UserUpdateError("不能停用当前登录账号");
+    const nextRole = input.role === "admin" || input.role === "user" ? input.role : target.role;
+    const nextDisabled = input.disabled === undefined ? Boolean(target.disabled) : input.disabled;
+    if (target.role === "admin" && !target.disabled && (nextRole !== "admin" || nextDisabled) && adminCount() <= 1) {
+      throw new UserUpdateError("不能停用或降级最后一个可用管理员");
+    }
     if (typeof input.username === "string") {
       const newUsername = input.username.trim().toLowerCase();
       if (!/^[a-z0-9_]{3,20}$/.test(newUsername)) {
@@ -121,10 +136,6 @@ export function updateUser(
       // 禁止把自己降级
       if (userId === options.actorId && input.role === "user") {
         throw new UserUpdateError("You cannot demote your own admin account");
-      }
-      // 禁止把最后一个 admin 降级
-      if (options.targetRole === "admin" && input.role === "user" && adminCount() <= 1) {
-        throw new UserUpdateError("Cannot demote the last remaining admin account");
       }
       db.prepare("UPDATE users SET role = ? WHERE id = ?").run(input.role, userId);
       changed.push("role");
@@ -157,6 +168,15 @@ export function updateUser(
       changed.push("password");
     }
 
+    if (input.disabled !== undefined && Number(input.disabled) !== target.disabled) {
+      db.prepare("UPDATE users SET disabled = ? WHERE id = ?").run(Number(input.disabled), userId);
+      if (input.disabled) {
+        db.prepare("DELETE FROM sessions WHERE user_id = ?").run(userId);
+        db.prepare("DELETE FROM api_tokens WHERE user_id = ?").run(userId);
+      }
+      recordAuditLog({ userId: options.actorId, action: input.disabled ? "user.disabled" : "user.enabled", target: userId });
+      changed.push("disabled");
+    }
     db.exec("COMMIT;");
     return changed;
   } catch (err) {

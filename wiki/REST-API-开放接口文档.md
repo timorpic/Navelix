@@ -569,3 +569,7 @@ Content-Type: application/json
 - `POST /api/user/data` 可附带 `dataTransferAction: "import"`，只在数据事务成功提交后按当前用户的个人数据订阅推送；常规自动保存不附带此字段。个人任务提醒由服务端后台每分钟检查，待办／日历共用 `notifyTodo`，不提供任意消息广播接口。
 
 写请求保留 CSRF / Origin 校验；用户 ID 从登录会话取得，不接受指定其他账号。个人 JSON 格式为 `3.0-personal`，仅包含个人数据和偏好，旧 JSON 导入也不会修改系统设置。
+
+### 账号启停（Schema v18）
+
+`GET /api/admin/users` 的账号项包含布尔字段 `disabled`。管理员通过 `PATCH /api/admin/users` 提交 `{ "id": "目标账号ID", "disabled": true }` 停用，`false` 启用；仍需登录管理员和 CSRF 校验，非布尔值返回 400。停用与会话、API Token 撤销在同一事务完成；账号及业务数据保留。禁止停用当前管理员或使最后一个可用管理员失效，启用不会恢复旧会话或密钥。登录已停用账号且密码正确时返回 403，错误密码仍返回统一 401；已有失效会话和密钥访问受保护接口按未登录处理。

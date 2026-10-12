@@ -54,9 +54,6 @@ export default function AdminSidebar({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const isSystemChildActive = isSystemSettingsTab(activeTab);
-  const isUserChildActive = USER_SETTINGS_NAV.some(item => item.id === activeTab);
-
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -120,14 +117,14 @@ export default function AdminSidebar({
         <nav className="flex flex-col gap-1.5">
           {adminNavItems.filter(item => !isSystemSettingsTab(item.id) && !USER_SETTINGS_NAV.some(child => child.id === item.id)).map(renderNavButton)}
           {[
-            ...(currentUser?.role === "admin" ? [{ label: "系统设置", items: SYSTEM_SETTINGS_NAV, open: systemOpen, active: isSystemChildActive, toggle: () => setSystemOpen(v => !v) }] : []),
-            { label: "用户设置", items: USER_SETTINGS_NAV, open: userOpen, active: isUserChildActive, toggle: () => setUserOpen(v => !v) },
+            ...(currentUser?.role === "admin" ? [{ label: "系统设置", items: SYSTEM_SETTINGS_NAV, open: systemOpen, toggle: () => setSystemOpen(v => !v) }] : []),
+            { label: "用户设置", items: USER_SETTINGS_NAV, open: userOpen, toggle: () => setUserOpen(v => !v) },
           ].map(group => (
             <div key={group.label} className="flex flex-col gap-1 pt-2 border-t border-gray-100 dark:border-slate-800 mt-1">
-              <button type="button" aria-expanded={group.open || group.active} onClick={group.toggle} className="flex justify-between px-3.5 py-2.5 text-xs font-semibold text-gray-700 dark:text-slate-200 cursor-pointer">
-                <span>{group.label}</span><span aria-hidden="true">{group.open || group.active ? "⌃" : "⌄"}</span>
+              <button type="button" aria-expanded={group.open} onClick={group.toggle} className="flex justify-between px-3.5 py-2.5 text-xs font-semibold text-gray-700 dark:text-slate-200 cursor-pointer">
+                <span>{group.label}</span><span aria-hidden="true">{group.open ? "⌃" : "⌄"}</span>
               </button>
-              {(group.open || group.active) && <div className="pl-3 flex flex-col gap-1 border-l border-gray-200 dark:border-slate-700 ml-4">
+              {group.open && <div className="pl-3 flex flex-col gap-1 border-l border-gray-200 dark:border-slate-700 ml-4">
                 {group.items.map(item => renderNavButton({ ...item, icon: <span aria-hidden="true">·</span> }))}
               </div>}
             </div>

@@ -35,9 +35,10 @@ export async function createSession(userId: string, req?: Request): Promise<stri
     ipAddress = getClientId(req);
   }
 
-  db.prepare(
-    "INSERT INTO sessions (token_hash, user_id, user_agent, ip_address, last_active_at, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-  ).run(hashToken(token), userId, userAgent, ipAddress, now, now + SESSION_IDLE_TTL_MS, now);
+  const result = db.prepare(
+    "INSERT INTO sessions (token_hash, user_id, user_agent, ip_address, last_active_at, expires_at, created_at) SELECT ?, id, ?, ?, ?, ?, ? FROM users WHERE id = ? AND disabled = 0",
+  ).run(hashToken(token), userAgent, ipAddress, now, now + SESSION_IDLE_TTL_MS, now, userId);
+  if (!result.changes) throw new Error("账号已停用或不存在");
   return token;
 }
 
@@ -54,8 +55,8 @@ export function renewSession(token: string): { expiresAt: number; renewed: boole
   const tokenHash = hashToken(token);
   const session = db
     .prepare(
-      `SELECT created_at, expires_at FROM sessions
-       WHERE token_hash = ? AND expires_at > ? AND created_at + ? > ?`,
+      `SELECT s.created_at, s.expires_at FROM sessions s JOIN users u ON u.id = s.user_id
+       WHERE s.token_hash = ? AND s.expires_at > ? AND s.created_at + ? > ? AND u.disabled = 0`,
     )
     .get(tokenHash, now, SESSION_MAX_TTL_MS, now) as
     | { created_at: number; expires_at: number }
@@ -95,7 +96,7 @@ export async function getSessionUser(req?: Request): Promise<PublicUser | null> 
           `SELECT u.id, u.username, u.password_hash, u.display_name, u.email, u.bio, u.role, u.avatar, u.created_at, t.id as token_id
            FROM api_tokens t
            JOIN users u ON u.id = t.user_id
-           WHERE t.token_hash = ?`,
+           WHERE t.token_hash = ? AND u.disabled = 0`,
         )
         .get(tokenHash) as (UserRow & { token_id: string }) | undefined;
 
@@ -126,7 +127,7 @@ export async function getSessionUser(req?: Request): Promise<PublicUser | null> 
       `SELECT u.id, u.username, u.password_hash, u.display_name, u.email, u.bio, u.role, u.avatar, u.created_at
        FROM sessions s
        JOIN users u ON u.id = s.user_id
-       WHERE s.token_hash = ? AND s.expires_at > ? AND s.created_at + ? > ?`,
+       WHERE s.token_hash = ? AND s.expires_at > ? AND s.created_at + ? > ? AND u.disabled = 0`,
     )
     .get(tokenHash, now, SESSION_MAX_TTL_MS, now) as UserRow | undefined;
 

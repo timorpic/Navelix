@@ -18,6 +18,8 @@ const PAGE_SIZE = 50;
 
 /** 动作 → 中文标签（未命名的动作原样显示） */
 const ACTION_LABELS: Record<string, string> = {
+  "user.disabled": "停用账号",
+  "user.enabled": "启用账号",
   "config.updated": "系统配置更新",
   "database.backup.created": "数据库备份创建",
   "database.restore.gate_failed": "还原门禁拦截",

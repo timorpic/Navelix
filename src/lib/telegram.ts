@@ -12,6 +12,7 @@ import { getTelegramSettings, getSystemTelegramRecipients, isPersonalTelegramEna
  */
 export async function sendTelegramMessage(userId: string, text: string): Promise<boolean> {
   try {
+    if (!db.prepare("SELECT 1 FROM users WHERE id = ? AND disabled = 0").get(userId)) return false;
     const settings = getTelegramSettings(userId);
     if (!settings.enabled) return false;
     const token = decryptSecret(settings.bot_token);
@@ -51,7 +52,7 @@ export async function sendTelegramMessage(userId: string, text: string): Promise
 export async function sendTelegramNotification(text: string, kind: "backup" | "system"): Promise<boolean> {
   let sent = false;
   for (const userId of getSystemTelegramRecipients(kind)) {
-    if (!db.prepare("SELECT 1 FROM users WHERE id = ? AND role = 'admin'").get(userId)) continue;
+    if (!db.prepare("SELECT 1 FROM users WHERE id = ? AND role = 'admin' AND disabled = 0").get(userId)) continue;
     sent = await sendTelegramMessage(userId, text) || sent;
   }
   return sent;

@@ -76,10 +76,11 @@ export function issueApiToken(userId: string, rawName: unknown): IssuedApiToken 
   const tokenPrefix = `${API_TOKEN_PREFIX}${secretPart.slice(0, 4)}...${secretPart.slice(-4)}`;
   const tokenId = `tok_${randomBytes(8).toString("hex")}`;
 
-  db.prepare(
+  const result = db.prepare(
     `INSERT INTO api_tokens (id, user_id, name, token_hash, token_prefix, created_at, last_used_at)
-     VALUES (?, ?, ?, ?, ?, ?, NULL)`,
-  ).run(tokenId, userId, name, hashToken(token), tokenPrefix, Date.now());
+     SELECT ?, id, ?, ?, ?, ?, NULL FROM users WHERE id = ? AND disabled = 0`,
+  ).run(tokenId, name, hashToken(token), tokenPrefix, Date.now(), userId);
+  if (!result.changes) throw new Error("账号已停用或不存在");
 
   return { token, tokenId, name, tokenPrefix };
 }

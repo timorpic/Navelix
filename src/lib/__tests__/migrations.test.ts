@@ -53,6 +53,6 @@ describe("Schema integrity after migrations", () => {
 
   it("should be at the latest schema version", () => {
     const ver = (db.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
-    assert.equal(ver, 17);
+    assert.equal(ver, 18);
   });
 });

@@ -34,3 +34,22 @@ describe("database restore scoped settings", () => {
     } finally { if (source.isOpen) source.close(); target.close(); rmSync(dir, { recursive: true, force: true }); }
   });
 });
+
+it("database restore preserves disabled account status", () => {
+  const dir = mkdtempSync(join(tmpdir(), "navelix-restore-status-"));
+  const file = join(dir, "snapshot.db");
+  const source = new DatabaseSync(file);
+  const target = new DatabaseSync(":memory:");
+  try {
+    initSchema(source); runMigrations(source);
+    source.prepare("UPDATE users SET disabled = 1 WHERE username = 'admin'").run();
+    source.close();
+    initSchema(target); runMigrations(target);
+    restoreDatabaseSnapshot(target, file);
+    assert.equal(target.prepare("SELECT disabled FROM users WHERE username = 'admin'").get()?.disabled, 1);
+  } finally {
+    if (source.isOpen) source.close();
+    target.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
