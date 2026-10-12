@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAdminTelegramSettings } from "@/hooks/use-admin-telegram-settings";
 import { useAdminDataTransfer } from "@/hooks/use-admin-data-transfer";
 import { useAdminLicense } from "@/hooks/use-admin-license";
+import { useAdminCloudStorage } from "@/hooks/use-admin-cloud-storage";
 import { useConfirm } from "@/hooks/use-confirm";
 import ConfirmDialog from "@/components/confirm-dialog";
 import AdminPersonalizationTab from "./admin-personalization-tab";
@@ -23,6 +24,8 @@ import AdminProBrandCard from "./admin-pro-brand-card";
 import AdminProLinkProbeCard from "./admin-pro-link-probe-card";
 import AdminProCodeInjectionCard from "./admin-pro-code-injection-card";
 import AdminProLicenseModal from "./admin-pro-license-modal";
+import AdminProStorageCard from "./admin-pro-storage-card";
+import AdminProBackupListModal from "./admin-pro-backup-list-modal";
 
 function NotificationSettings({ isAdmin }: { isAdmin: boolean }) {
   const { notice, flash } = useToast();
@@ -38,22 +41,39 @@ function AISettings() {
   const { notice, notify } = useToast();
   return <><Toast message={notice} /><AdminProfileAiCard notify={notify} /></>;
 }
-function LicensedSettings({ tab }: { tab: string }) {
+function ProSystemSettings() {
   const tx = useTranslations();
-  const { notice, flash } = useToast();
+  const { notice, flash } = useToast(3200);
   const confirm = useConfirm();
   const license = useAdminLicense({ flash, confirm: confirm.confirm });
+  const storage = useAdminCloudStorage({ flash, confirm: confirm.confirm });
+  return <div className="space-y-6">
+    <Toast message={notice} />
+    <ConfirmDialog {...confirm.dialogProps} />
+    <div>
+      <h2 className="text-lg font-bold text-gray-900 dark:text-white">{tx("pro_system_features_b5b9bc21")}</h2>
+      <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{tx("system_level_pro_features_in_one_place_91348d71")}</p>
+    </div>
+    <AdminProBrandCard licenseStatus={license.licenseStatus} flash={flash} />
+    <AdminProStorageCard storage={storage} licenseStatus={license.licenseStatus} openLicenseModal={license.openLicenseModal} />
+    <AdminProCodeInjectionCard licenseStatus={license.licenseStatus} />
+    <AdminProLinkProbeCard licenseStatus={license.licenseStatus} onLockedClick={license.openLicenseModal} />
+    {license.licenseModalOpen && <AdminProLicenseModal license={license} />}
+    {storage.showBackupListModal && <AdminProBackupListModal
+      loading={storage.loadingBackups}
+      backups={storage.remoteBackups}
+      restoringFileName={storage.restoringFileName}
+      onRestore={storage.restoreFromCloud}
+      onClose={storage.closeBackupListModal}
+    />}
+  </div>;
+}
+function SiteSettings() {
+  const tx = useTranslations();
   const { config, updateConfig } = useNavelixConfig();
   return <div className="space-y-6">
-    <Toast message={notice} /><ConfirmDialog {...confirm.dialogProps} />
-    {tab === "site" && <>
-      <label className="block text-sm">{tx("footer_db7eeb8d")}<input aria-label={tx("footer_db7eeb8d")} className="block w-full rounded-xl border p-3 dark:bg-slate-900" defaultValue={config.customFooter} onBlur={event => updateConfig({ customFooter: event.target.value })} /></label>
-      <AdminProfileSocialCard />
-    </>}
-    {tab === "brand" && <AdminProBrandCard licenseStatus={license.licenseStatus} flash={flash} />}
-    {tab === "code" && <AdminProCodeInjectionCard licenseStatus={license.licenseStatus} />}
-    {tab === "probe" && <AdminProLinkProbeCard licenseStatus={license.licenseStatus} onLockedClick={license.openLicenseModal} />}
-    {license.licenseModalOpen && <AdminProLicenseModal license={license} />}
+    <label className="block text-sm">{tx("footer_db7eeb8d")}<input aria-label={tx("footer_db7eeb8d")} className="block w-full rounded-xl border p-3 dark:bg-slate-900" defaultValue={config.customFooter} onBlur={event => updateConfig({ customFooter: event.target.value })} /></label>
+    <AdminProfileSocialCard />
   </div>;
 }
 function WeatherSettings() {
@@ -83,7 +103,8 @@ export default function AdminSettingsTab({ tab, isAdmin }: { tab: string; isAdmi
     case "ai": return <AISettings />;
     case "weather": return <WeatherSettings />;
     case "access": return <AdminSystemAccessCard isAdmin={isAdmin} />;
-    case "site": case "brand": case "code": case "probe": return <LicensedSettings tab={tab} />;
+    case "proSystem": return <ProSystemSettings />;
+    case "site": return <SiteSettings />;
     default: return <AdminSystemTab currentUser={{ role: "admin" }} />;
   }
 }

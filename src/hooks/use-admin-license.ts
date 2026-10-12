@@ -15,7 +15,7 @@ import {
  * 管理后台「Pro 商业授权」Tab 的 License 状态：授权查询、激活与注销。
  *
  * 从 `admin-pro-tab.tsx`（原 1018 行）抽出 —— 该文件把商业授权、
- * S3 / WebDAV 云容灾备份、书签探针开关、品牌 LOGO 与代码注入五块
+ * 云容灾备份等 Pro 设置与授权中心共用此授权状态 Hook。
  * 互不相关的设置连同 13 个 useState 塞在一起。本 hook 只持有授权域的
  * 4 个 state 与两个接口调用；云存储见 `use-admin-cloud-storage`。
  * 提示与确认弹窗由调用方注入，以便两域共用同一个 Toast 与 ConfirmDialog。

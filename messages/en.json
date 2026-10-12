@@ -1,4 +1,6 @@
 {
+  "pro_system_features_b5b9bc21": "Pro system features",
+  "system_level_pro_features_in_one_place_91348d71": "Manage site branding, cloud disaster recovery, custom code and link probes in one place.",
   "username_is_required_390ccdec": "Username is required",
   "a_password_is_required_for_a_new_account_30e9a5e3": "A password is required for a new account",
   "password_must_contain_at_least_6_characters_cdbb896e": "Password must contain at least 6 characters",
@@ -233,7 +235,7 @@
   "timeout_offline_3f48c941": "🔴 Timeout / Offline",
   "pro_menu_visibility_7d40fa97": "Pro menu visibility",
   "show_pro_feature_menus_c278235f": "Show Pro feature menus",
-  "applies_site_wide_when_off_hides_branding_custom_99934915": "Applies site-wide. When off, hides Branding, Custom code and Link probes in System settings. The main Pro entry remains visible.",
+  "applies_site_wide_when_off_hides_branding_custom_99934915": "Applies site-wide. When off, hides Pro system features in System settings. The main Pro entry remains visible.",
   "s3_webdav_cloud_disaster_recovery_restore_91be10fc": "S3 / WebDAV cloud disaster recovery & restore",
   "supports_aws_s3_cloudflare_r2_alibaba_cloud_oss__7c54853a": "Supports AWS S3, Cloudflare R2, Alibaba Cloud OSS, Tencent Cloud COS, MinIO and WebDAV",
   "pro_features_unlocked_7f4d075c": "✨ PRO features unlocked",

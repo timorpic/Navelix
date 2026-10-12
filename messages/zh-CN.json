@@ -1,4 +1,6 @@
 {
+  "pro_system_features_b5b9bc21": "Pro 系统功能",
+  "system_level_pro_features_in_one_place_91348d71": "统一管理全站品牌、云容灾备份、自定义代码和链接探针。",
   "username_is_required_390ccdec": "用户名不能为空",
   "a_password_is_required_for_a_new_account_30e9a5e3": "创建新账号时密码不能为空",
   "password_must_contain_at_least_6_characters_cdbb896e": "密码长度至少为 6 位",
@@ -233,7 +235,7 @@
   "timeout_offline_3f48c941": "🔴 超时/离线",
   "pro_menu_visibility_7d40fa97": "Pro 菜单显示",
   "show_pro_feature_menus_c278235f": "显示 Pro 功能菜单",
-  "applies_site_wide_when_off_hides_branding_custom_99934915": "全站生效。关闭后隐藏系统设置中的品牌定制、自定义代码和链接探针菜单，一级「Pro 高级功能」入口始终保留。",
+  "applies_site_wide_when_off_hides_branding_custom_99934915": "全站生效。关闭后隐藏系统设置中的「Pro 系统功能」菜单，一级「Pro 高级功能」入口始终保留。",
   "s3_webdav_cloud_disaster_recovery_restore_91be10fc": "S3 / WebDAV 异地云容灾备份与一键还原",
   "supports_aws_s3_cloudflare_r2_alibaba_cloud_oss__7c54853a": "支持 AWS S3、Cloudflare R2、阿里云 OSS、腾讯云 COS、MinIO 及坚果云/群晖 WebDAV",
   "pro_features_unlocked_7f4d075c": "✨ PRO 功能已解锁",

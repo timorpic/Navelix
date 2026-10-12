@@ -1,12 +1,10 @@
 /** Settings navigation shared by desktop, mobile and URL selection. */
 export const SYSTEM_SETTINGS_NAV = [
   { id: "site", label: "站点设置", pro: false },
-  { id: "brand", label: "品牌定制", pro: true },
   { id: "ai", label: "AI 服务", pro: false },
   { id: "weather", label: "天气服务", pro: false },
   { id: "access", label: "访问与安全", pro: false },
-  { id: "code", label: "自定义代码", pro: true },
-  { id: "probe", label: "链接探针", pro: true },
+  { id: "proSystem", label: "Pro 系统功能", pro: true },
   { id: "system", label: "数据与维护", pro: false },
 ] as const;
 export const USER_SETTINGS_NAV = [

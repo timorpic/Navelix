@@ -20,12 +20,8 @@ export function migrateV14(db: DatabaseSync): void {
   if (!owner) return; // 空库：等首个 admin 出现后由 resolveGlobalConfigOwnerId 惰性锚定
 
   // 确保最早 admin 有一行配置（承载全站字段，其余列走元数据默认值）
-  const has = db
-    .prepare("SELECT 1 FROM user_configs WHERE user_id = ?")
-    .get(owner.id);
-  if (!has) {
-    db.prepare("INSERT INTO user_configs (user_id) VALUES (?)").run(owner.id);
-  }
+  // 构建与启动可能由多个进程同时执行迁移，不能使用“先查再插”的竞态写法。
+  db.prepare("INSERT OR IGNORE INTO user_configs (user_id) VALUES (?)").run(owner.id);
 
   // 写入锚点（幂等 upsert）
   db.prepare(`

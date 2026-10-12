@@ -7,7 +7,7 @@ import { validateConfigPatch } from "../config-validation.ts";
 
 describe("Pro menu visibility", () => {
   it("hides only Pro menus and preserves ordinary site settings", () => {
-    assert.deepEqual(getSystemSettingsNav().filter(item => item.pro).map(item => item.id), ["brand", "code", "probe"]);
+    assert.deepEqual(getSystemSettingsNav().filter(item => item.pro).map(item => item.id), ["proSystem"]);
     const hidden = getSystemSettingsNav(false);
     assert.ok(hidden.some(item => item.id === "site"));
     assert.ok(hidden.some(item => item.id === "system"));

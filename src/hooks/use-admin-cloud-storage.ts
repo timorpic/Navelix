@@ -16,7 +16,7 @@ import {
 import type { CloudStorageConfig, RemoteBackupItem } from "@/lib/storage-provider";
 
 /**
- * 管理后台「Pro 商业授权」Tab 的 S3 / WebDAV 异地云容灾备份状态。
+ * 管理后台「系统设置 → 云容灾备份」的 S3 / WebDAV 异地备份状态。
  *
  * 从 `admin-pro-tab.tsx`（原 1018 行）抽出 —— 该文件把商业授权、
  * 云存储备份、书签探针、品牌 LOGO 与代码注入五块互不相关的设置
