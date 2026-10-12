@@ -36,10 +36,10 @@
 
 - 内容：`links`、`categories`、`quickAccess`、`projects`、`schedules`。
 - 管理功能：`users`、`auditLogs`、`pro`，其中账号管理、审计及 Pro 配置仅管理员可访问。
-- 系统设置（仅管理员）：`site`（站点设置）、`brand`（品牌定制，Pro）、`ai`、`weather`、`access`、`code`（Pro）、`probe`（Pro）、`system`（数据与维护）。
-- 用户设置：`profile`（个人资料）、`personalization`（界面与功能，含界面语言、搜索栏和链接打开方式）、`notifications`、`account`、`personalData`。
+- 系统设置（仅管理员）：`site`（站点与服务，含页脚、社交主页、AI 与天气）、`access`（访问与安全）、`proSystem`（Pro 系统功能，含品牌定制、云备份、自定义代码与链接探针）、`system`（数据与维护）。
+- 用户设置：`profile`（个人与偏好，含资料、头像、语言、界面与功能、Telegram 通知）、`account`（账号与数据，含密码、会话、API Token 和个人导入导出）、`proUser`（Pro 用户功能预留页面）。
 
-桌面采用可折叠二级菜单，系统设置与用户设置可独立展开或折叠；选中子页面不强制展开，折叠不切换当前页面。移动端使用同一导航定义。旧 `system` 深链继续进入数据与维护，`profile` 进入个人资料。站点社交主页属于系统设置；Telegram 渠道属于当前用户，管理员才可订阅全站事件。
+桌面采用可折叠二级菜单，系统设置与用户设置可独立展开或折叠；选中子页面不强制展开，折叠不切换当前页面。移动端使用同一导航定义。旧 `system` 深链继续进入数据与维护，`profile` 进入个人与偏好。旧 `ai` / `weather` 链接映射到 `site`，`personalization` / `notifications` 映射到 `profile`，`personalData` 映射到 `account`，URL 自动更新，刷新和浏览器历史保持一致。Pro 二级菜单统一带 PRO 标记并受全站显示开关控制，一级 Pro 高级功能入口始终保留。站点社交主页属于系统设置；Telegram 渠道属于当前用户，管理员才可订阅全站事件。
 
 Tab 容器位于后台页面及 `admin/components/`；按职责拆分的卡片负责独立设置区域，状态与请求尽量归入 `use-admin-*` Hook。不得把 tab 的显示或隐藏作为唯一授权检查。
 
@@ -51,4 +51,4 @@ Tab 容器位于后台页面及 `admin/components/`；按职责拆分的卡片�
 
 布局视觉见 [DESIGN](../DESIGN.md)，组件实现约定见 [COMPONENT-GUIDELINES](COMPONENT-GUIDELINES.md)。
 
-Pro 页的 `showProMenus` 为全站菜单显示开关，默认开启。系统设置通过同一导航过滤函数隐藏 Pro 子菜单，一级 Pro 入口保留；品牌定制、自定义代码、链接探针均显示 PRO 标记。隐藏只影响导航，直接地址仍受既有管理员与功能授权检查。
+Pro 页的 `showProMenus` 为全站菜单显示开关，默认开启。系统设置与用户设置通过共享导航定义过滤各自的 Pro 子菜单，一级 Pro 入口保留；「Pro 系统功能」与「Pro 用户功能」均显示 PRO 标记。隐藏只影响导航，直接地址仍受既有管理员与功能授权检查。

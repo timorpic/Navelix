@@ -9,30 +9,36 @@ test("Pro 菜单开关持久化，桌面和移动端统一隐藏与标记且保�
   await page.goto("/admin?tab=pro");
   const toggle = page.getByRole("switch", { name: "显示 Pro 功能菜单" });
   await expect(toggle).toBeChecked();
-  for (const name of ["Pro 系统功能", "Pro 高级功能"]) {
+  for (const name of ["Pro 系统功能", "Pro 用户功能", "Pro 高级功能"]) {
     await expect(page.getByRole("button", { name: new RegExp(`${name} PRO$`) }).first()).toBeVisible();
   }
   const saved = page.waitForResponse(response => response.url().endsWith("/api/user/data") && response.request().method() === "POST");
   await toggle.click();
   expect((await saved).ok()).toBe(true);
   await expect(toggle).not.toBeChecked();
-  for (const name of ["Pro 系统功能"]) {
+  for (const name of ["Pro 系统功能", "Pro 用户功能"]) {
     await expect(page.getByRole("button", { name: new RegExp(`${name} PRO$`) })).toHaveCount(0);
   }
   await expect(page.getByRole("button", { name: /Pro 高级功能 PRO$/ }).first()).toBeVisible();
-  await expect(page.getByRole("button", { name: "站点设置", exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "站点与服务", exact: true }).first()).toBeVisible();
   await page.reload();
   await expect(toggle).not.toBeChecked();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("button", { name: /Pro 高级功能 PRO$/ }).last()).toBeVisible();
-  for (const name of ["Pro 系统功能"]) {
+  for (const name of ["Pro 系统功能", "Pro 用户功能"]) {
     await expect(page.getByRole("button", { name: new RegExp(`${name} PRO$`) })).toHaveCount(0);
   }
   const enabled = page.waitForResponse(response => response.url().endsWith("/api/user/data") && response.request().method() === "POST");
   await toggle.click(); expect((await enabled).ok()).toBe(true);
-  for (const name of ["Pro 系统功能"]) {
+  for (const name of ["Pro 系统功能", "Pro 用户功能"]) {
     await expect(page.getByRole("button", { name: new RegExp(`${name} PRO$`) }).last()).toBeVisible();
   }
+  await page.getByRole("button", { name: /Pro 用户功能 PRO$/ }).last().click();
+  await expect(page).toHaveURL(/tab=proUser/);
+  await expect(page.getByRole("heading", { name: "Pro 用户功能", exact: true })).toBeVisible();
+  await expect(page.getByText("暂无用户级 Pro 功能。后续个人高级功能将在此集中展示。", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Pro 用户功能", exact: true })).toBeVisible();
   await page.goto("/admin?tab=site");
   await expect(page.getByText("站点社交与外部主页链接", { exact: true })).toBeVisible();
   await expect(page.getByLabel("页脚", { exact: true })).toBeVisible();

@@ -13,15 +13,20 @@ async function write(page: Page, path: string, method: string, body: unknown) {
 test("设置作用域：管理员系统菜单、个人偏好、Telegram 用户隔离", async ({ page, browser }) => {
   await login(page);
   await page.goto("/admin?tab=weather");
+  await expect(page).toHaveURL(/tab=site/);
+  await expect(page.getByRole("heading", { name: "站点与服务", exact: true })).toBeVisible();
+  await expect(page.getByLabel("页脚", { exact: true })).toBeVisible();
+  await expect(page.getByText("站点社交与外部主页链接", { exact: true })).toBeVisible();
+  await expect(page.locator("#admin-ai-base-url")).toBeVisible();
   await expect(page.getByRole("heading", { name: "天气服务" })).toBeVisible();
   const systemGroup = page.getByRole("button", { name: "系统设置", exact: true });
   await expect(systemGroup).toHaveAttribute("aria-expanded", "true");
   await systemGroup.click();
   await expect(systemGroup).toHaveAttribute("aria-expanded", "false");
-  await expect(page.getByRole("button", { name: "天气服务", exact: true })).toBeHidden();
+  await expect(page.getByRole("button", { name: "站点与服务", exact: true })).toBeHidden();
   await expect(page.getByRole("heading", { name: "天气服务" })).toBeVisible();
   await systemGroup.click();
-  await expect(page.getByRole("button", { name: "天气服务", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "站点与服务", exact: true })).toBeVisible();
   expect((await write(page, "/api/admin/settings", "PATCH", { weatherLocation: "scope-city" })).status).toBe(200);
   expect((await write(page, "/api/user/telegram", "PUT", { botToken: "admin-fixture-token", chatId: "123" })).status).toBe(200);
   const username = `scope_${Date.now().toString().slice(-9)}`;
@@ -31,6 +36,11 @@ test("设置作用域：管理员系统菜单、个人偏好、Telegram 用户�
   try {
     await login(member, username, "scope-test-password");
     await member.goto("/admin?tab=notifications");
+    await expect(member).toHaveURL(/tab=profile/);
+    await expect(member.getByRole("heading", { name: "个人与偏好", exact: true })).toBeVisible();
+    await expect(member.getByRole("heading", { name: "个人资料", exact: true })).toBeVisible();
+    await expect(member.getByLabel("Language / 界面语言")).toBeVisible();
+    await expect(member.getByRole("button", { name: /Pro 用户功能 PRO$/ }).first()).toBeVisible();
     await expect(member.getByText("Telegram Bot 通知", { exact: true })).toBeVisible();
     await expect(member.getByRole("button", { name: "系统设置", exact: true })).toHaveCount(0);
     await expect(member.getByText("系统通知（仅管理员）", { exact: true })).toHaveCount(0);
@@ -39,10 +49,10 @@ test("设置作用域：管理员系统菜单、个人偏好、Telegram 用户�
     await expect(userGroup).toHaveAttribute("aria-expanded", "true");
     await userGroup.click();
     await expect(userGroup).toHaveAttribute("aria-expanded", "false");
-    await expect(member.getByRole("button", { name: "通知设置", exact: true })).toBeHidden();
+    await expect(member.getByRole("button", { name: "个人与偏好", exact: true })).toBeHidden();
     await expect(member.getByText("Telegram Bot 通知", { exact: true })).toBeVisible();
     await userGroup.click();
-    await expect(member.getByRole("button", { name: "通知设置", exact: true })).toBeVisible();
+    await expect(member.getByRole("button", { name: "个人与偏好", exact: true })).toBeVisible();
     await expect(member.getByRole("button", { name: "待办 / 日历到期", exact: true })).toHaveAttribute("aria-pressed", "false");
     await member.getByRole("button", { name: "待办 / 日历到期", exact: true }).click();
     await expect(member.getByRole("button", { name: "待办 / 日历到期", exact: true })).toHaveAttribute("aria-pressed", "true");
@@ -65,6 +75,14 @@ test("设置作用域：管理员系统菜单、个人偏好、Telegram 用户�
     expect(stored.config.linkOpenTarget).toBe("_self");
     const adminTelegram = await page.evaluate(async () => (await fetch("/api/user/telegram")).json());
     expect(adminTelegram.chatId).toBe("123");
+    await member.goto("/admin?tab=personalData");
+    await expect(member).toHaveURL(/tab=account/);
+    await expect(member.getByRole("heading", { name: "账号与数据", exact: true })).toBeVisible();
+    await expect(member.getByRole("button", { name: "修改密码", exact: true })).toBeVisible();
+    await expect(member.getByRole("button", { name: "踢出其他设备", exact: true })).toBeVisible();
+    await expect(member.getByRole("button", { name: "生成新密钥", exact: true })).toBeVisible();
+    await expect(member.getByRole("button", { name: "导出 Navelix JSON", exact: true })).toBeVisible();
+    await expect(member.locator('input[type="file"]')).toHaveCount(3);
     await member.setViewportSize({ width: 390, height: 844 });
     await member.goto("/admin?tab=notifications");
     await expect(member.getByText("Telegram Bot 通知", { exact: true })).toBeVisible();

@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { db } from "../db.ts";
 import { getGlobalConfigRow, saveGlobalConfig, splitConfigByScope } from "../global-config.ts";
-import { getSystemSettingsNav } from "../admin-settings-nav.ts";
+import { getSystemSettingsNav, getUserSettingsNav } from "../admin-settings-nav.ts";
 import { validateConfigPatch } from "../config-validation.ts";
 
 describe("Pro menu visibility", () => {
@@ -12,6 +12,13 @@ describe("Pro menu visibility", () => {
     assert.ok(hidden.some(item => item.id === "site"));
     assert.ok(hidden.some(item => item.id === "system"));
     assert.ok(hidden.every(item => !item.pro));
+  });
+  it("shows the user Pro entry by default and preserves personal settings when hidden", () => {
+    assert.ok(getUserSettingsNav().some(item => item.id === "proUser"));
+    assert.ok(!getUserSettingsNav(false).some(item => item.id === "proUser"));
+    for (const id of ["profile", "account"]) {
+      assert.ok(getUserSettingsNav(false).some(item => item.id === id));
+    }
   });
   it("defaults to visible and persists as a system setting independently of personal preferences", () => {
     const original = db.prepare("SELECT value, updated_at FROM system_settings WHERE key = 'show_pro_menus'").get();

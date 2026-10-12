@@ -120,7 +120,7 @@ export default function AdminSidebar({
           {adminNavItems.filter(item => !isSystemSettingsTab(item.id) && !USER_SETTINGS_NAV.some(child => child.id === item.id)).map(renderNavButton)}
           {[
             ...(currentUser?.role === "admin" ? [{ label: tx("system_settings_68ea5dd4"), items: adminNavItems.filter(item => isSystemSettingsTab(item.id)), open: systemOpen, toggle: () => setSystemOpen(v => !v) }] : []),
-            { label: tx("user_settings_7ce710f6"), items: USER_SETTINGS_NAV, open: userOpen, toggle: () => setUserOpen(v => !v) },
+            { label: tx("user_settings_7ce710f6"), items: adminNavItems.filter(item => USER_SETTINGS_NAV.some(child => child.id === item.id)), open: userOpen, toggle: () => setUserOpen(v => !v) },
           ].map(group => (
             <div key={text(group.label)} className="flex flex-col gap-1 pt-2 border-t border-gray-100 dark:border-slate-800 mt-1">
               <button type="button" aria-expanded={group.open} onClick={group.toggle} className="flex justify-between px-3.5 py-2.5 text-xs font-semibold text-gray-700 dark:text-slate-200 cursor-pointer">

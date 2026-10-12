@@ -68,6 +68,13 @@ function ProSystemSettings() {
     />}
   </div>;
 }
+function ProUserSettings() {
+  const tx = useTranslations();
+  return <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+    <h2 className="text-lg font-bold text-gray-900 dark:text-white">{tx("pro_user_features")}</h2>
+    <p className="mt-4 text-sm text-gray-500 dark:text-slate-400">{tx("no_user_pro_features")}</p>
+  </section>;
+}
 function SiteSettings() {
   const tx = useTranslations();
   const { config, updateConfig } = useNavelixConfig();
@@ -94,17 +101,31 @@ function WeatherSettings() {
   </div>;
 }
 export default function AdminSettingsTab({ tab, isAdmin }: { tab: string; isAdmin: boolean }) {
+  const tx = useTranslations();
   switch (tab) {
-    case "profile": return <AdminProfileTab section="profile" />;
-    case "account": return <AdminProfileTab section="account" />;
-    case "personalization": return <AdminPersonalizationTab />;
-    case "notifications": return <NotificationSettings isAdmin={isAdmin} />;
-    case "personalData": return <PersonalDataSettings />;
-    case "ai": return <AISettings />;
-    case "weather": return <WeatherSettings />;
+    case "profile": return <div className="space-y-8">
+      <h2 className="text-lg font-bold text-gray-900 dark:text-white">{tx("personal_and_preferences")}</h2>
+      <AdminProfileTab section="profile" />
+      <AdminPersonalizationTab />
+      <NotificationSettings isAdmin={isAdmin} />
+    </div>;
+    case "account": return <div className="space-y-8">
+      <h2 className="text-lg font-bold text-gray-900 dark:text-white">{tx("account_and_data")}</h2>
+      <AdminProfileTab section="account" />
+      <PersonalDataSettings />
+    </div>;
     case "access": return <AdminSystemAccessCard isAdmin={isAdmin} />;
     case "proSystem": return <ProSystemSettings />;
-    case "site": return <SiteSettings />;
+    case "proUser": return <ProUserSettings />;
+    case "site": return <div className="space-y-8">
+      <h2 className="text-lg font-bold text-gray-900 dark:text-white">{tx("site_and_services")}</h2>
+      <section className="space-y-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <h3 className="font-bold text-gray-900 dark:text-white">{tx("site_information")}</h3>
+        <SiteSettings />
+      </section>
+      <AISettings />
+      <WeatherSettings />
+    </div>;
     default: return <AdminSystemTab currentUser={{ role: "admin" }} />;
   }
 }

@@ -17,7 +17,7 @@ import ProjectAdminPanel from "@/components/project-admin-panel";
 import AdminSidebar from "./components/admin-sidebar";
 import AdminLinksTab from "./components/admin-links-tab";
 import AdminSettingsTab from "./components/admin-settings-tab";
-import { SYSTEM_SETTINGS_NAV, getSystemSettingsNav, USER_SETTINGS_NAV, isSystemSettingsTab } from "@/lib/admin-settings-nav";
+import { SYSTEM_SETTINGS_NAV, getSystemSettingsNav, getUserSettingsNav, USER_SETTINGS_NAV, isSystemSettingsTab, resolveSettingsTab } from "@/lib/admin-settings-nav";
 import AdminProTab from "./components/admin-pro-tab";
 import AdminAuditLogsPanel from "./components/admin-audit-logs-panel";
 
@@ -44,9 +44,15 @@ export default function AdminPage() {
   // URL selection, reload and browser history use the same tab identifiers.
   useEffect(() => {
     const readTab = () => {
-      const param = new URL(window.location.href).searchParams.get("tab");
+      const url = new URL(window.location.href);
+      const param = url.searchParams.get("tab");
+      const resolved = param ? resolveSettingsTab(param) ?? param : null;
+      if (resolved && resolved !== param) {
+        url.searchParams.set("tab", resolved);
+        window.history.replaceState(null, "", url);
+      }
       const valid: string[] = ["links", "categories", "quickAccess", "projects", "schedules", "users", "auditLogs", "pro", ...SYSTEM_SETTINGS_NAV.map(item => item.id), ...USER_SETTINGS_NAV.map(item => item.id)];
-      setActiveTab(param && valid.includes(param) ? param as AdminTab : "links");
+      setActiveTab(resolved && valid.includes(resolved) ? resolved as AdminTab : "links");
     };
     queueMicrotask(readTab);
     window.addEventListener("popstate", readTab);
@@ -152,7 +158,7 @@ export default function AdminPage() {
       : []),
     ...(currentUser?.role === "admin" ? [{ id: "pro" as AdminTab, icon: <span>💎</span>, label: tx("pro_features_f1c252c0"), badge: "PRO" }] : []),
     ...(currentUser?.role === "admin" ? getSystemSettingsNav(config.showProMenus !== false).map(item => ({ ...item, badge: item.pro ? "PRO" : undefined, icon: <span>⚙</span> })) : []),
-    ...USER_SETTINGS_NAV.map(item => ({ ...item, icon: <span>·</span> })),
+    ...getUserSettingsNav(config.showProMenus !== false).map(item => ({ ...item, badge: "pro" in item && item.pro ? "PRO" : undefined, icon: <span>·</span> })),
   ];
 
   return (
