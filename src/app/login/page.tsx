@@ -70,7 +70,7 @@ function LoginForm() {
         />
       </div>
 
-      <div className="absolute top-4 right-4 z-20 rounded-xl bg-white/95 p-2 shadow-sm"><LanguageSwitcher /></div>
+      <div className="absolute top-4 right-4 z-20 rounded-xl bg-white/95 p-2 shadow-sm"><LanguageSwitcher appearance="light" /></div>
       <div className="relative z-10 grid w-full max-w-5xl items-center gap-12 lg:grid-cols-2">
         {/* 左侧品牌区 */}
         <div className="hidden flex-col gap-8 text-white lg:flex animate-slide-up">

@@ -58,7 +58,7 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F6F8FA] px-4">
-      <div className="absolute top-4 right-4 rounded-xl bg-white p-2"><LanguageSwitcher /></div>
+      <div className="absolute top-4 right-4 rounded-xl bg-white p-2"><LanguageSwitcher appearance="light" /></div>
       <div className="w-full max-w-sm rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
         <div className="mb-6 flex flex-col items-center">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#00C776] to-[#009a5a] text-lg font-bold text-white shadow-sm">

@@ -34,6 +34,21 @@ test("访客语言：浏览器识别、手动切换、Cookie 持久化与非法�
   } finally { await context.close(); }
 });
 
+// 登录/注册页是固定浅色设计，但根布局会按系统主题给 <html> 加 .dark。
+// 固定浅色后，下拉框不应随系统深色变黑。
+test("登录与注册页的语言下拉框在深色系统偏好下保持浅色", async ({ browser }) => {
+  const context = await browser.newContext({ locale: "zh-CN", colorScheme: "dark" });
+  const page = await context.newPage();
+  const white = "rgb(255, 255, 255)";
+  try {
+    await page.goto("/login");
+    await expect(page.locator("html")).toHaveClass(/dark/);
+    await expect(page.getByLabel("Language / 界面语言")).toHaveCSS("background-color", white);
+    await page.goto("/register");
+    await expect(page.getByLabel("Language / 界面语言")).toHaveCSS("background-color", white);
+  } finally { await context.close(); }
+});
+
 test("账号语言：跨设备、用户隔离、英文新增任务和移动端后台", async ({ page, browser }) => {
   await login(page);
   const username = `locale_${Date.now()}`;
