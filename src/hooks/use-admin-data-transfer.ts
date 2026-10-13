@@ -2,9 +2,10 @@
 
 import { useText } from "@/hooks/use-text";
 import { useTranslations } from "next-intl";
-import { useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
 import { parseBookmarksHTML } from "@/lib/bookmarks";
+import type { BookmarkMergeSummary } from "@/lib/bookmark-merge";
 import { parseSunPanelJSON } from "@/lib/sun-panel";
 import {
   personalBackupConfig,
@@ -35,6 +36,9 @@ export interface UseAdminDataTransferOptions {
 }
 
 export interface UseAdminDataTransferResult {
+  importing: boolean;
+  sunPanelResult: BookmarkMergeSummary | null;
+  closeSunPanelResult: () => void;
   /** 导出个人 Navelix JSON（成功后写入通知中心） */
   exportAllData: () => Promise<void>;
   /** 导入个人 Navelix JSON；成功后 1.2s 自动刷新页面 */
@@ -50,6 +54,9 @@ export function useAdminDataTransfer({
   flash,
   notify,
 }: UseAdminDataTransferOptions): UseAdminDataTransferResult {
+  const [importing, setImporting] = useState(false);
+  const [sunPanelResult, setSunPanelResult] = useState<BookmarkMergeSummary | null>(null);
+  const importLock = useRef(false);
   const tx = useTranslations();
   const text = useText();
   const { config } = useNavelixConfig();
@@ -145,47 +152,28 @@ export function useAdminDataTransfer({
     [refreshData, notify, flash, resetFileInput, tx, text],
   );
 
-  // ── 导入 Chrome / HTML 书签 ──
-  const importBookmarks = useCallback(
-    (file: File, input: HTMLInputElement | null) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const { categories: cats, links: lnks } = parseBookmarksHTML(
-            String(reader.result),
-          );
-          mergeBookmarks(cats, lnks);
-          notify(tx("data_management_9bb882c6"), text(bookmarkImportSummary({ categories: cats.length, links: lnks.length })));
-        } catch {
-          flash(tx("import_failed_invalid_bookmark_file_4961896c"));
-        }
-        resetFileInput(input);
-      };
-      reader.readAsText(file);
-    },
-    [mergeBookmarks, notify, flash, resetFileInput, tx, text],
-  );
+  const importNavigation = useCallback(async (file: File, input: HTMLInputElement | null, sunPanel: boolean) => {
+    if (importLock.current) { resetFileInput(input); return; }
+    importLock.current = true;
+    setImporting(true);
+    setSunPanelResult(null);
+    try {
+      const content = await file.text();
+      const parsed = sunPanel ? parseSunPanelJSON(content) : parseBookmarksHTML(content);
+      const summary = await mergeBookmarks(parsed.categories, parsed.links);
+      notify(tx("data_management_9bb882c6"), text(sunPanel ? sunPanelImportSummary(summary) : bookmarkImportSummary(summary)));
+      if (sunPanel) setSunPanelResult(summary);
+    } catch {
+      flash(tx("navigation_import_failed"));
+    } finally {
+      resetFileInput(input);
+      importLock.current = false;
+      setImporting(false);
+    }
+  }, [mergeBookmarks, notify, flash, resetFileInput, tx, text]);
 
-  // ── 导入 Sun-Panel JSON ──
-  const importSunPanel = useCallback(
-    (file: File, input: HTMLInputElement | null) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const { categories: cats, links: lnks } = parseSunPanelJSON(
-            String(reader.result),
-          );
-          mergeBookmarks(cats, lnks);
-          notify(tx("data_management_9bb882c6"), text(sunPanelImportSummary({ categories: cats.length, links: lnks.length })));
-        } catch {
-          flash(tx("import_failed_invalid_sun_panel_json_c81afe41"));
-        }
-        resetFileInput(input);
-      };
-      reader.readAsText(file);
-    },
-    [mergeBookmarks, notify, flash, resetFileInput, tx, text],
-  );
+  const importBookmarks = (file: File, input: HTMLInputElement | null) => { void importNavigation(file, input, false); };
+  const importSunPanel = (file: File, input: HTMLInputElement | null) => { void importNavigation(file, input, true); };
 
-  return { exportAllData, importAllData, importBookmarks, importSunPanel };
+  return { exportAllData, importAllData, importBookmarks, importSunPanel, importing, sunPanelResult, closeSunPanelResult: () => setSunPanelResult(null) };
 }

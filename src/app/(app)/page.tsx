@@ -4,6 +4,7 @@ import { useText } from "@/hooks/use-text";
 import { useTranslations } from "next-intl";
 import { useMemo, useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import MigrationOnboarding from "@/components/migration-onboarding";
 import Sidebar from "@/components/sidebar";
 import HeroBanner from "@/components/hero-banner";
 import QuickAccess from "@/components/quick-access";
@@ -287,6 +288,8 @@ function HomeContent() {
               ) : (
                 /* Standard Dashboard View */
                 <>
+                  <MigrationOnboarding />
+
                   {/* 顶部五卡片：今日专注、待办任务、知识笔记、项目进度、快速操作 */}
                   <TopStatsBar
                     categories={categories}

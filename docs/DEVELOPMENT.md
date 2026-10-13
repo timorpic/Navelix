@@ -68,6 +68,8 @@ NAVELIX_LOGO_TOOLS=/tmp/navelix-logo-tools node scripts/render-readme-logo.mjs
 
 脚本将 Inter 字形转为轮廓后渲染，不依赖系统安装字体；输出覆盖上述两张 GIF。GIF 仅支持单级透明度，边缘按 GitHub 浅色白底与深色 `#0D1117` 做抗锯齿处理；修改源 Logo 后需重建并检查两种主题和文字裁切。字体来自 `@fontsource/inter`（SIL OFL 1.1）。静态 SVG 仍用于网站与减少动态效果的场景。
 
+迁移渠道文案与下次 Release 顶部引导见 [Sun-Panel 渠道材料](SUN-PANEL-CAMPAIGN.md)。
+
 ## 应用发布
 
 版本真源为 `package.json`，更新日志真源为根目录 `CHANGELOG.md`。本地维护步骤：

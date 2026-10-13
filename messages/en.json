@@ -1558,5 +1558,16 @@
   "workspace_conflict_error": "This workspace was updated elsewhere. Refresh and try again.",
   "todo_identity_error": "The task is unavailable, ambiguous, or you do not have permission.",
   "ai_delete_cancelled": "Deletion cancelled.",
-  "ai_conversation_required": "Conversation ID is missing. Refresh the page and try again."
+  "ai_conversation_required": "Conversation ID is missing. Refresh the page and try again.",
+  "sun_panel_onboarding_title": "Already using Sun-Panel?",
+  "sun_panel_onboarding_description": "Upload your Sun-Panel JSON export to bring over categories and links without entering your bookmarks again.",
+  "sun_panel_merge_trust": "Imports merge with your existing categories and links, skip duplicate URLs, and leave your Sun-Panel instance untouched.",
+  "migration_browser_bookmarks": "Import browser bookmarks",
+  "navigation_import_saving": "Parsing and saving, please wait…",
+  "navigation_import_failed": "Import did not complete. Check the file format and connection; if a conflict is reported, refresh and retry.",
+  "sun_panel_import_complete": "Sun-Panel import complete",
+  "sun_panel_import_counts": "Added {v0} categories and {v1} links; skipped {v2} duplicate URLs.",
+  "sun_panel_next_project": "Create your first project",
+  "sun_panel_next_calendar": "Explore calendar & todos",
+  "sun_panel_next_ai": "Next: try AI task breakdown in a project (requires AI service configuration)."
 }

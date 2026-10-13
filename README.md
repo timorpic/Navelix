@@ -61,13 +61,25 @@
 
 | 模块 | 亮点 |
 | :--- | :--- |
-| 🔖 **网址导航** | 链接/分类管理、快捷访问、系统内全类型搜索、`⌘K` 快速聚焦、书签多格式导入导出、Markdown 笔记与 AI 摘要、链接存活与延迟探针（Pro） |
+| 🔖 **网址导航** | 链接/分类管理、快捷访问、系统内全类型搜索、`⌘K` 快速聚焦、书签多格式导入导出、Markdown 笔记与 AI 摘要、链接存活与延迟探针（Pro）、支持从 Sun-Panel / 浏览器书签迁移 |
 | 📊 **项目与甘特图** | 四维指标看板（进度/任务/风险/更新）、多尺度交互式甘特图（21 天敏捷 / 12 月年度 / 3 年跨年路线图） |
 | 📅 **日历与效率** | 月/周/今日视图、本地时区严格计算、过期待办一键/按周平摊（Rollover）、ICS 日历导出（可订阅）、专注时长统计 |
 | 🤖 **AI 智能中枢** | 标准 OpenAI 兼容 API、项目拆解为行动清单、每日日程规划 |
 | 📱 **多端生态** | [⬇️ 下载扩展 zip](https://github.com/timorpic/Navelix/releases/download/extension-v1.1.0/navelix-extension-v1.1.0.zip) · Chrome 扩展快速采集、PWA / iOS 快捷指令、离线 Service Worker、跨设备漫游 |
 | 🔌 **开放 API** | Personal Access Token（`nvx_live_...`）Bearer 鉴权，完整 [REST API 文档](wiki/REST-API-开放接口文档.md) |
 | 🔒 **安全体系** | 公开/私有访问、SSRF 回环隔离、CSRF 头防御、防爆破限流、敏感字段 AES 加密落库 |
+
+### 从 Sun-Panel 迁移，3 分钟上手
+
+你的 Sun-Panel 配置不用丢：导出 JSON，上传，分类和网址自动搬进来；搬完你还多了 AI、甘特图和日历。
+
+Navelix 兼容 Sun-Panel 导出的 JSON 配置（含 v1.8.x `icons` 及多种导出结构），自动解析分类、网址、描述与图标字段，无需脚本，无需重录：
+
+1. 在 Sun-Panel 后台导出配置 JSON。
+2. 登录 Navelix，在空工作区首页点击「选择 Sun-Panel JSON」；也可前往 **用户设置 → 账号与数据 → 导入 Sun-Panel 配置文件**。
+3. 选择文件，等待保存结果。合并导入，不会清空已有数据，重复网址自动跳过，也不会修改 Sun-Panel 原实例。
+
+实际耗时取决于文件大小与实例性能。相对路径引用的图标文件不会随 JSON 搬迁；AI 功能需先配置服务。详见[从 Sun-Panel 迁移指南](wiki/Sun-Panel-Migration-从-Sun-Panel-迁移.md)，含兼容范围、图标说明与备份建议。
 
 ## 浏览器扩展（Chrome / Edge）
 

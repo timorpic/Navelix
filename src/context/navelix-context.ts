@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from "react";
 import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
+import type { BookmarkMergeSummary } from "@/lib/bookmark-merge";
 import { DEFAULT_SITE_TITLE, DEFAULT_CUSTOM_FOOTER } from "@/lib/constants";
 
 export const defaultConfig: SystemConfig = {
@@ -75,7 +76,7 @@ export interface NavelixDataApi {
   toggleQuickAccess: (id: string) => void;
   importData: (cats: Category[], lnks: SiteLink[]) => void;
   resetData: () => void;
-  mergeBookmarks: (cats: Category[], lnks: SiteLink[]) => void;
+  mergeBookmarks: (cats: Category[], lnks: SiteLink[]) => Promise<BookmarkMergeSummary>;
 }
 
 export interface NavelixConfigApi {

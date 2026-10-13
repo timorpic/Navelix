@@ -16,6 +16,7 @@ import {
 } from "@/data/links";
 import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
 import type { UserDataResult } from "@/lib/user-data";
+import { mergeBookmarkData } from "@/lib/bookmark-merge";
 import { configForBrowser } from "@/lib/config-persistence";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 
@@ -348,8 +349,8 @@ export function NavelixProvider({
     const epoch = saveEpoch.current;
     pendingSaves.current++;
     generation.current++;
-    saveQueue.current = saveQueue.current.then(async () => {
-      if (!mounted.current || epoch !== saveEpoch.current) return;
+    const operation = saveQueue.current.then(async () => {
+      if (!mounted.current || epoch !== saveEpoch.current) return false;
       const response = await fetch("/api/user/data", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...snapshot, expectedRevision: revisionRef.current }),
@@ -357,23 +358,27 @@ export function NavelixProvider({
       if (!response.ok) throw new Error(response.status === 409 ? "conflict" : "failed");
       const data = await response.json();
       revisionRef.current = data.revision;
-      if (!mounted.current) return;
+      if (!mounted.current) return false;
       setSaveError("");
       try {
         if (snapshot.categories) localStorage.setItem("navelix.user.categories", JSON.stringify(snapshot.categories));
         if (snapshot.links) localStorage.setItem("navelix.user.links", JSON.stringify(snapshot.links));
       } catch { /* cache is optional */ }
+      return true;
     }).catch((error: unknown) => {
       saveEpoch.current++;
       if (mounted.current) setSaveError(error instanceof Error && error.message === "conflict" ? tx("workspace_save_conflict") : tx("workspace_save_failed"));
+      return false;
     }).finally(() => {
       pendingSaves.current--;
       if (!pendingSaves.current) loadData();
     });
+    saveQueue.current = operation.then(() => {});
+    return operation;
   }, [loadData, tx]);
 
   const saveToServer = useCallback((nextCats: Category[], nextLinks: SiteLink[]) => {
-    saveSnapshot({ categories: nextCats, links: nextLinks });
+    return saveSnapshot({ categories: nextCats, links: nextLinks });
   }, [saveSnapshot]);
 
   const commitData = useCallback(
@@ -382,7 +387,7 @@ export function NavelixProvider({
       linksRef.current = nextLinks;
       setCategories(nextCats);
       setLinks(nextLinks);
-      saveToServer(nextCats, nextLinks);
+      return saveToServer(nextCats, nextLinks);
     },
     [saveToServer],
   );
@@ -495,34 +500,11 @@ export function NavelixProvider({
   }, [commitData]);
 
   const mergeBookmarks = useCallback(
-    (cats: Category[], lnks: SiteLink[]) => {
-      const catIdMap = new Map<string, string>();
-      const nextCats = [...categoriesRef.current];
-
-      cats.forEach((importedCat) => {
-        const existing = nextCats.find(
-          (c) =>
-            c.name.trim().toLowerCase() === importedCat.name.trim().toLowerCase(),
-        );
-        if (existing) {
-          catIdMap.set(importedCat.id, existing.id);
-        } else {
-          nextCats.push(importedCat);
-          catIdMap.set(importedCat.id, importedCat.id);
-        }
-      });
-
-      const existingUrls = new Set(
-        linksRef.current.map((l) => l.url.toLowerCase()),
-      );
-      const remappedLinks = lnks
-        .filter((l) => !existingUrls.has(l.url.toLowerCase()))
-        .map((l) => ({
-          ...l,
-          category: catIdMap.get(l.category) || l.category,
-        }));
-
-      commitData(nextCats, [...linksRef.current, ...remappedLinks]);
+    async (cats: Category[], lnks: SiteLink[]) => {
+      const merged = mergeBookmarkData(categoriesRef.current, linksRef.current, cats, lnks);
+      const saved = await commitData(merged.categories, merged.links);
+      if (!saved) throw new Error("Bookmark import was not saved");
+      return merged.summary;
     },
     [commitData],
   );

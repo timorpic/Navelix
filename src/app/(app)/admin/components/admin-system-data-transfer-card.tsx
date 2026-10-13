@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import React, { useRef } from "react";
+import SunPanelImportResult from "@/components/sun-panel-import-result";
 import type { UseAdminDataTransferResult } from "@/hooks/use-admin-data-transfer";
 
 /**
@@ -33,6 +34,8 @@ export default function AdminSystemDataTransferCard({
           {tx("export_personal_navelix_settings_or_import_sun_p_a2ae5a01")}</p>
       </div>
 
+      <SunPanelImportResult transfer={transfer} />
+      {transfer.importing && <p role="status" className="text-sm">{tx("navigation_import_saving")}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         {/* Card 1: Sun-Panel JSON 兼容导入 */}
         <div className="bg-gray-50/50 dark:bg-slate-900/40 rounded-2xl p-4 border border-teal-100 dark:border-teal-900/60 space-y-2.5">
@@ -42,7 +45,7 @@ export default function AdminSystemDataTransferCard({
               {tx("import_sun_panel_configuration_9db1351b")}</h4>
           </div>
           <p className="text-[11px] text-gray-400 dark:text-slate-400 leading-relaxed">
-            {tx("import_a_sun_panel_json_export_categories_and_ur_b44e3934")}</p>
+            {tx("import_a_sun_panel_json_export_categories_and_ur_b44e3934")} {tx("sun_panel_merge_trust")}</p>
           <input
             ref={sunPanelFileRef}
             type="file"
@@ -57,6 +60,7 @@ export default function AdminSystemDataTransferCard({
             }}
           />
           <button
+            disabled={transfer.importing}
             onClick={() => sunPanelFileRef.current?.click()}
             className="w-full py-1.5 bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
           >
@@ -88,6 +92,7 @@ export default function AdminSystemDataTransferCard({
             }}
           />
           <button
+            disabled={transfer.importing}
             onClick={() => bookmarkFileRef.current?.click()}
             className="w-full py-1.5 bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-sky-600 dark:text-sky-400 text-xs font-semibold rounded-xl border border-sky-200 dark:border-sky-900 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
           >

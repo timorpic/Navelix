@@ -61,13 +61,25 @@ Zero external database dependencies, single lightweight container, and 100% of y
 
 | Module | Highlights |
 | :--- | :--- |
-| 🔖 **Bookmark hub** | Link/category management, quick access, in-app universal search, `⌘K` quick focus, multi-format bookmark import/export, Markdown notes with AI summaries, link liveness & latency probe (Pro) |
+| 🔖 **Bookmark hub** | Link/category management, quick access, in-app universal search, `⌘K` quick focus, multi-format bookmark import/export, Markdown notes with AI summaries, link liveness & latency probe (Pro), supports migration from Sun-Panel and browser bookmarks |
 | 📊 **Projects & Gantt** | 4-dimension dashboard (progress/tasks/risk/updates), multi-scale interactive Gantt (21-day agile / 12-month yearly / 3-year roadmap) |
 | 📅 **Calendar & productivity** | Month/week/today views, strict local-timezone handling, overdue rollover (to today or spread across the week), ICS calendar export (subscribe-ready), focus-time tracking |
 | 🤖 **AI hub** | Standard OpenAI-compatible API, project breakdown into action lists, daily schedule planning |
 | 📱 **Multi-device ecosystem** | Chrome extension capture, PWA / iOS Shortcuts, offline Service Worker, cross-device roaming |
 | 🔌 **Open API** | Personal Access Token (`nvx_live_...`) Bearer auth, full [REST API docs](wiki/REST-API-开放接口文档.md) |
 | 🔒 **Security** | Public/private access, SSRF loopback isolation, CSRF header defense, brute-force rate limiting, AES-256-GCM secret encryption |
+
+### Migrating from Sun-Panel in 3 minutes
+
+Keep your Sun-Panel bookmarks: export JSON, upload it, and bring your categories and links into Navelix. Then explore AI, Gantt charts, and calendar & todos.
+
+Navelix supports Sun-Panel JSON exports, including the v1.8.x `icons` structure and several other export layouts. Categories, links, descriptions, and icon fields are parsed automatically:
+
+1. Export your configuration as JSON from Sun-Panel.
+2. Sign in to Navelix and choose **Choose Sun-Panel JSON** on an empty home workspace, or go to **User settings → Account & data → Import Sun-Panel configuration**.
+3. Select the file and wait for the saved result. Imports merge with existing data and skip duplicate URLs; your Sun-Panel instance stays untouched.
+
+Migration time depends on file size and your instance. Image files referenced by relative paths are not copied. AI features require a configured AI service. See the [migration guide](wiki/Sun-Panel-Migration-从-Sun-Panel-迁移.md) for supported formats, icons, and backup instructions.
 
 ## Documentation
 

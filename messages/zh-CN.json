@@ -1558,5 +1558,16 @@
   "workspace_conflict_error": "工作区已在其他页面更新，请刷新后重试",
   "todo_identity_error": "待办不存在、身份不明确或无权操作",
   "ai_delete_cancelled": "已取消删除操作。",
-  "ai_conversation_required": "缺少对话标识，请刷新页面后重试"
+  "ai_conversation_required": "缺少对话标识，请刷新页面后重试",
+  "sun_panel_onboarding_title": "已经在用 Sun-Panel？",
+  "sun_panel_onboarding_description": "上传 Sun-Panel 导出的 JSON，分类和网址自动导入，原有收藏不用重录。",
+  "sun_panel_merge_trust": "合并导入，不会删除已有分类和链接；重复网址自动跳过，也不会修改 Sun-Panel 原实例。",
+  "migration_browser_bookmarks": "从浏览器书签导入",
+  "navigation_import_saving": "正在解析并保存，请稍候…",
+  "navigation_import_failed": "导入未完成：请检查文件格式和网络连接；若提示数据冲突，请刷新后重试。",
+  "sun_panel_import_complete": "Sun-Panel 导入完成",
+  "sun_panel_import_counts": "已新增 {v0} 个分组、{v1} 个链接，跳过 {v2} 个重复网址。",
+  "sun_panel_next_project": "创建第一个项目",
+  "sun_panel_next_calendar": "查看日历待办",
+  "sun_panel_next_ai": "下一步：在项目中试试 AI 拆解（需先配置 AI 服务）。"
 }

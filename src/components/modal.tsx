@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useId, useRef } from "react";
+
 interface ModalProps {
   open: boolean;
   title: string;
@@ -13,9 +15,19 @@ interface ModalProps {
    * `ConfirmDialog` 即以 `elevated` 使用本组件。
    */
   elevated?: boolean;
+  /** Enable keyboard focus management for dialogs whose callers support it. */
+  manageFocus?: boolean;
 }
 
-export default function Modal({ open, title, onClose, children, elevated = false }: ModalProps) {
+export default function Modal({ open, title, onClose, children, elevated = false, manageFocus = false }: ModalProps) {
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open || !manageFocus) return;
+    const previous = document.activeElement;
+    panelRef.current?.focus();
+    return () => { if (previous instanceof HTMLElement && previous.isConnected) previous.focus(); };
+  }, [open, manageFocus]);
   if (!open) return null;
 
   return (
@@ -24,11 +36,26 @@ export default function Modal({ open, title, onClose, children, elevated = false
       onClick={onClose}
     >
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onKeyDown={event => {
+          if (!manageFocus) return;
+          if (event.key === "Escape") { event.stopPropagation(); onClose(); }
+          if (event.key !== "Tab") return;
+          const items = panelRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]');
+          if (!items?.length) { event.preventDefault(); return; }
+          const first = items[0]; const last = items[items.length - 1];
+          if (event.shiftKey && (document.activeElement === first || document.activeElement === panelRef.current)) { event.preventDefault(); last.focus(); }
+          else if (!event.shiftKey && (document.activeElement === last || document.activeElement === panelRef.current)) { event.preventDefault(); first.focus(); }
+        }}
         className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-2xl border border-gray-100 dark:border-slate-700 text-gray-900 dark:text-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-5 flex items-center justify-between pb-2 border-b border-gray-100 dark:border-slate-700">
-          <h2 className="text-base font-bold text-gray-900 dark:text-white">{title}</h2>
+          <h2 id={titleId} className="text-base font-bold text-gray-900 dark:text-white">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Close"

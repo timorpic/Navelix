@@ -2,6 +2,7 @@
 
 - [[🏠 官方 Wiki 首页|Home]]
 - [[🚀 快速入门与部署|Quick-Start-快速入门]]
+- [[☀️ 从 Sun-Panel 迁移|Sun-Panel-Migration-从-Sun-Panel-迁移]]
 - [[📖 功能使用全手册|User-Guide-功能使用指南]]
 - [[🏗️ 系统架构与选型|Architecture-系统架构与技术选型]]
 - [[🎨 设计系统与配色方案|DESIGN_SYSTEM]]
