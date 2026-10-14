@@ -13,8 +13,8 @@ importers:
   .:
     dependencies:
       bytenode:
-        specifier: ^1.6.0
-        version: 1.6.0
+        specifier: ^1.7.0
+        version: 1.7.0
       next:
         specifier: 16.3.8
         version: 16.3.8(@babel/core@7.29.7(supports-color@7.2.0))(@playwright/test@1.62.1)(@types/node@24.13.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -1311,8 +1311,8 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
 
-  bytenode@1.6.0:
-    resolution: {integrity: sha512-4FAoCc0ixe18UCqlQr1hJKb3o6tNN6J35e+NCu62W87sVqGkW+6lL0FEwv0hYojqDM/6SunCllc9mZOYnDhjhA==}
+  bytenode@1.7.0:
+    resolution: {integrity: sha512-XaWLzhk+Ai8oBjbrccOPiaZTJZgqsZKy+Q0Rtp/I1+XEY6AvJxkkfr1Xpa49oXe7+iRh18NQiFizkf7FMyB++g==}
     hasBin: true
 
   call-bind-apply-helpers@1.0.2:
@@ -3675,7 +3675,7 @@ snapshots:
       node-releases: 2.0.53
       update-browserslist-db: 1.3.0(browserslist@4.28.8)
 
-  bytenode@1.6.0: {}
+  bytenode@1.7.0: {}
 
   call-bind-apply-helpers@1.0.2:
     dependencies:
