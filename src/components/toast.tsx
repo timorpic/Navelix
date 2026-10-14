@@ -26,15 +26,15 @@ export default function Toast({
 
   if (variant === "toast") {
     return (
-      <div className="fixed top-4 right-4 z-50 bg-gray-900 dark:bg-slate-700 text-white text-xs px-4 py-2 rounded-xl shadow-lg">
+      <div role="status" aria-live="polite" aria-atomic="true" className="fixed top-4 right-4 z-50 bg-gray-900 dark:bg-slate-700 text-white text-xs px-4 py-2 rounded-xl shadow-lg">
         {message}
       </div>
     );
   }
 
   return (
-    <div
-      className={`rounded-xl border border-[#00C776]/30 bg-[#00C776]/10 px-4 py-2.5 text-xs font-semibold text-[#009a5a] shadow-2xs animate-fadeIn ${className}`}
+    <div role="status" aria-live="polite" aria-atomic="true"
+      className={`rounded-xl border border-brand/30 bg-brand/10 px-4 py-2.5 text-xs font-semibold text-brand-strong shadow-2xs animate-fadeIn ${className}`}
     >
       {message}
     </div>

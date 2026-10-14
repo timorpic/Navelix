@@ -105,7 +105,7 @@ export default function AdminPersonalizationTab() {
               onClick={() => updateConfig({ linkOpenTarget: "_blank" })}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                 linkOpenTarget === "_blank"
-                  ? "bg-[#00C776] text-white shadow-xs shadow-[#00C776]/25"
+                  ? "bg-brand text-white shadow-xs shadow-brand/25"
                   : "bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border border-gray-200/90 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/60"
               }`}
             >
@@ -122,7 +122,7 @@ export default function AdminPersonalizationTab() {
               onClick={() => updateConfig({ linkOpenTarget: "_self" })}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                 linkOpenTarget === "_self"
-                  ? "bg-[#00C776] text-white shadow-xs shadow-[#00C776]/25"
+                  ? "bg-brand text-white shadow-xs shadow-brand/25"
                   : "bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 border border-gray-200/90 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/60"
               }`}
             >
@@ -177,7 +177,7 @@ export default function AdminPersonalizationTab() {
                     >
                       <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border ${
                         isSelected
-                          ? "border-[#00C776] bg-[#00C776]"
+                          ? "border-brand bg-brand"
                           : "border-gray-300 dark:border-slate-600 bg-transparent"
                       }`}>
                         {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
@@ -198,7 +198,7 @@ export default function AdminPersonalizationTab() {
                 defaultValue={config.customWallpaperUrl || ""}
                 onBlur={(e) => updateConfig({ customWallpaperUrl: e.target.value.trim() })}
                 placeholder="https://example.com/wallpaper.jpg"
-                className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono placeholder:text-gray-400 focus:outline-hidden focus:border-[#00C776]"
+                className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white font-mono placeholder:text-gray-400 focus:outline-hidden focus:border-brand"
               />
               <p className="text-[10px] text-gray-400 dark:text-slate-500">
                 {tx("supports_jpg_and_png_image_urls_f33c2a4b")}</p>
@@ -224,7 +224,7 @@ export default function AdminPersonalizationTab() {
               >
                 <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border ${
                   glassmorphism
-                    ? "border-[#00C776] bg-[#00C776]"
+                    ? "border-brand bg-brand"
                     : "border-gray-300 dark:border-slate-600 bg-transparent"
                 }`}>
                   {glassmorphism && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
@@ -241,7 +241,7 @@ export default function AdminPersonalizationTab() {
             </span>
             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${
               glassmorphism
-                ? "bg-emerald-100 dark:bg-emerald-950/60 text-[#00C776] dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40"
+                ? "bg-emerald-100 dark:bg-emerald-950/60 text-brand dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40"
                 : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700"
             }`}>
               {glassmorphism ? tx("enabled_dfb80223") : tx("not_enabled_f95ea7f4")}
@@ -285,7 +285,7 @@ export default function AdminPersonalizationTab() {
                     >
                       <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border ${
                         isSelected
-                          ? "border-[#00C776] bg-[#00C776]"
+                          ? "border-brand bg-brand"
                           : "border-gray-300 dark:border-slate-600 bg-transparent"
                       }`}>
                         {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
@@ -323,7 +323,7 @@ export default function AdminPersonalizationTab() {
                     >
                       <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border ${
                         isSelected
-                          ? "border-[#00C776] bg-[#00C776]"
+                          ? "border-brand bg-brand"
                           : "border-gray-300 dark:border-slate-600 bg-transparent"
                       }`}>
                         {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
@@ -375,7 +375,7 @@ export default function AdminPersonalizationTab() {
                     <div className="flex items-center gap-2.5">
                       <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border ${
                         isSelected
-                          ? "border-[#00C776] bg-[#00C776]"
+                          ? "border-brand bg-brand"
                           : "border-gray-300 dark:border-slate-600 bg-transparent"
                       }`}>
                         {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
@@ -405,7 +405,7 @@ export default function AdminPersonalizationTab() {
                 <div
                   className={`h-20 ${getPreviewWidthPercent()} bg-emerald-100/90 dark:bg-emerald-950/70 border border-emerald-400/80 dark:border-emerald-600/80 rounded-lg flex flex-col items-center justify-center transition-all duration-300 shadow-2xs`}
                 >
-                  <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-[#00C776]">
+                  <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-brand">
                     <span>|◀</span>
                     <span>{maxWidth}</span>
                     <span>▶|</span>
@@ -462,7 +462,7 @@ export default function AdminPersonalizationTab() {
                   }
                   className={`h-6 px-2 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 transition-all cursor-pointer ${
                     item.enabled
-                      ? "bg-[#00C776] text-white shadow-2xs"
+                      ? "bg-brand text-white shadow-2xs"
                       : "bg-gray-200 dark:bg-slate-800 text-gray-600 dark:text-slate-400"
                   }`}
                 >

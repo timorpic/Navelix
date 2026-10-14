@@ -119,7 +119,7 @@ export default function BrandIcon({ name, className = "w-5 h-5" }: BrandIconProp
       );
     case "qingicon":
       return (
-        <div className={`flex items-center justify-center rounded-lg bg-[#00C776] text-white p-1 ${className}`}>
+        <div className={`flex items-center justify-center rounded-lg bg-brand text-white p-1 ${className}`}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
             <polygon points="12 2 2 7 12 12 22 7 12 2" />
             <polyline points="2 17 12 22 22 17" />
@@ -158,7 +158,7 @@ export default function BrandIcon({ name, className = "w-5 h-5" }: BrandIconProp
       );
     case "midjourney":
       return (
-        <div className={`flex items-center justify-center rounded-lg bg-[#000000] text-[#00C776] p-1 ${className}`}>
+        <div className={`flex items-center justify-center rounded-lg bg-[#000000] text-brand p-1 ${className}`}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
             <path d="M3 17l6-6 4 4 8-8" />
           </svg>
@@ -221,7 +221,7 @@ export default function BrandIcon({ name, className = "w-5 h-5" }: BrandIconProp
       );
     default:
       return (
-        <div className={`flex items-center justify-center rounded-lg bg-gradient-to-br from-[#00C776] to-[#009a5a] text-white font-bold text-xs p-1 ${className}`}>
+        <div className={`flex items-center justify-center rounded-lg bg-gradient-to-br from-brand to-brand-strong text-white font-bold text-xs p-1 ${className}`}>
           {name.slice(0, 1).toUpperCase()}
         </div>
       );

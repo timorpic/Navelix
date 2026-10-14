@@ -304,7 +304,7 @@ export default function AddLinkModal({
 
   const isEdit = !!link;
   const inputClass =
-    "h-10 w-full rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 bg-white dark:bg-slate-900/60 transition-colors focus:border-[#00C776] focus:outline-none focus:ring-2 focus:ring-[#00C776]/20";
+    "h-10 w-full rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 bg-white dark:bg-slate-900/60 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20";
 
   const iconPreviewText = icon
     ? icon.startsWith("data:")
@@ -357,7 +357,7 @@ export default function AddLinkModal({
             type="button"
             onClick={handleSummarize}
             disabled={summarizing}
-            className="mt-2 w-full py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-[#00C776]/10 to-indigo-500/10 hover:from-[#00C776]/20 hover:to-indigo-500/20 text-[#00C776] border border-[#00C776]/25 transition-colors cursor-pointer disabled:opacity-50"
+            className="mt-2 w-full py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-brand/10 to-indigo-500/10 hover:from-brand/20 hover:to-indigo-500/20 text-brand border border-brand/25 transition-colors cursor-pointer disabled:opacity-50"
           >
             {summarizing ? tx("fetching_page_and_generating_summary_eead3b28") : tx("generate_markdown_summary_with_ai_04496d16")}
           </button>
@@ -452,7 +452,7 @@ export default function AddLinkModal({
                 accept="image/*"
                 aria-label={tx("upload_icon_c2e19f9f")}
                 onChange={handleFileChange}
-                className="w-full text-xs text-gray-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[#00C776]/10 file:text-[#009a5a] file:text-xs file:font-semibold file:cursor-pointer cursor-pointer"
+                className="w-full text-xs text-gray-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-brand/10 file:text-brand-strong file:text-xs file:font-semibold file:cursor-pointer cursor-pointer"
               />
               <p className="mt-1 text-[10px] text-gray-400 dark:text-slate-400">
                 {tx("supports_png_jpg_svg_gif_resized_to_96_96_before_5e07d9c4")}</p>
@@ -470,7 +470,7 @@ export default function AddLinkModal({
                 }}
                 aria-label={tx("search_iconify_icons_9e80653f")}
                 placeholder={tx("search_icons_e_g_github_home_server_425aff16")}
-                className="h-9 w-full rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 bg-white dark:bg-slate-900/60 focus:border-[#00C776] focus:outline-none focus:ring-2 focus:ring-[#00C776]/20"
+                className="h-9 w-full rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 bg-white dark:bg-slate-900/60 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
               />
               <div className="mt-2 grid max-h-40 grid-cols-6 gap-1.5 overflow-y-auto">
                 {iconifyIcons.map((name) => (
@@ -481,7 +481,7 @@ export default function AddLinkModal({
                     title={name}
                     className={`flex h-9 items-center justify-center rounded-lg border transition-colors cursor-pointer ${
                       icon === iconifyUrl(name)
-                        ? "border-[#00C776] bg-[#00C776]/10"
+                        ? "border-brand bg-brand/10"
                         : "border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600"
                     }`}
                   >
@@ -529,13 +529,13 @@ export default function AddLinkModal({
                   onChange={(e) => setCustomSiteUrl(e.target.value)}
                   placeholder={tx("website_or_icon_url_leave_blank_to_use_the_url_a_3d97821a")}
                   aria-label={tx("enter_a_website_url_to_fetch_its_icon_88c038fe")}
-                  className="h-9 flex-1 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 bg-white dark:bg-slate-900/60 focus:border-[#00C776] focus:outline-none focus:ring-2 focus:ring-[#00C776]/20"
+                  className="h-9 flex-1 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 bg-white dark:bg-slate-900/60 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
                 />
                 <button
                   type="button"
                   onClick={handleFetchSiteIcon}
                   disabled={siteLoading}
-                  className="h-9 shrink-0 rounded-lg bg-[#00C776] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#009a5a] disabled:opacity-60 cursor-pointer"
+                  className="h-9 shrink-0 rounded-lg bg-brand px-3 text-xs font-semibold text-white transition-colors hover:bg-brand-strong disabled:opacity-60 cursor-pointer"
                 >
                   {siteLoading ? tx("fetching_146da2e2") : tx("fetch_icon_cefa78df")}
                 </button>
@@ -592,7 +592,7 @@ export default function AddLinkModal({
           </button>
           <button
             type="submit"
-            className="h-9 rounded-lg bg-[#00C776] px-5 text-sm font-medium text-white transition-colors hover:bg-[#009a5a]"
+            className="h-9 rounded-lg bg-brand px-5 text-sm font-medium text-white transition-colors hover:bg-brand-strong"
           >
             {isEdit ? "Save" : "Add Link"}
           </button>

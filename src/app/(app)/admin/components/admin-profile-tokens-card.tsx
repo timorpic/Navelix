@@ -28,6 +28,7 @@ export default function AdminProfileTokensCard({
           {tx("for_authenticating_third_party_shortcuts_automat_2cddc38f")}</p>
       </div>
 
+      <p className="text-xs text-gray-500">{tx("token_lifetime")}</p>
       {/* 生成新 Token 表单 */}
       <form onSubmit={account.handleCreateToken} className="flex items-center gap-2">
         <input
@@ -40,7 +41,7 @@ export default function AdminProfileTokensCard({
         />
         <button
           type="submit"
-          className="h-9 px-4 bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shrink-0"
+          className="h-9 px-4 bg-brand hover:bg-brand-strong text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shrink-0"
         >
           {tx("generate_token_613835d6")}</button>
       </form>
@@ -81,6 +82,7 @@ export default function AdminProfileTokensCard({
                 <p className="text-[10px] text-gray-400 dark:text-slate-400 font-mono truncate">
                   {t.tokenPrefix} {tx("created_69d096e2")}{new Date(t.createdAt).toLocaleDateString(locale)}
                 </p>
+                <p className="text-[10px] text-gray-500">{tx("token_expires", { date: new Date(t.expiresAt).toLocaleDateString(locale) })}</p>
               </div>
               <button
                 type="button"

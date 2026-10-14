@@ -24,7 +24,8 @@ export const API_TOKENS_TABLE_SQL = `CREATE TABLE IF NOT EXISTS api_tokens (
       token_hash TEXT NOT NULL,
       token_prefix TEXT NOT NULL,
       created_at INTEGER NOT NULL,
-      last_used_at INTEGER
+      last_used_at INTEGER,
+      expires_at INTEGER NOT NULL DEFAULT 0
     );`;
 
 export const CATEGORY_SUBSCRIPTIONS_TABLE_SQL = `CREATE TABLE IF NOT EXISTS user_category_subscriptions (

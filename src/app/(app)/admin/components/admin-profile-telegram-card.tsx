@@ -95,7 +95,7 @@ export default function AdminProfileTelegramCard({
             onClick={tg.toggleTgEnabled}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
               tg.tgEnabled
-                ? "bg-[#00C776] text-white"
+                ? "bg-brand text-white"
                 : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
             }`}
           >
@@ -117,7 +117,7 @@ export default function AdminProfileTelegramCard({
               </div>
               <button type="button" aria-label={label} aria-pressed={tg.personalSubscriptions[key]}
                 onClick={() => tg.togglePersonalSubscription(key)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${tg.personalSubscriptions[key] ? "bg-[#00C776] text-white" : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"}`}>
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${tg.personalSubscriptions[key] ? "bg-brand text-white" : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"}`}>
                 {tg.personalSubscriptions[key] ? tx("on_8a4ef3e4") : tx("off_6744b4c6")}
               </button>
             </div>
@@ -139,7 +139,7 @@ export default function AdminProfileTelegramCard({
               onClick={tg.toggleTgNotifyBackup}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                 tg.tgNotifyBackup
-                  ? "bg-[#00C776] text-white"
+                  ? "bg-brand text-white"
                   : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
               }`}
             >
@@ -156,7 +156,7 @@ export default function AdminProfileTelegramCard({
               onClick={tg.toggleTgNotifySystem}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                 tg.tgNotifySystem
-                  ? "bg-[#00C776] text-white"
+                  ? "bg-brand text-white"
                   : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
               }`}
             >

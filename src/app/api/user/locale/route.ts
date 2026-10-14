@@ -1,3 +1,4 @@
+import { checkCSRF } from "@/lib/csrf";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
@@ -6,6 +7,8 @@ import { isLocale, LOCALE_COOKIE } from "@/lib/i18n";
 
 /** Also supports anonymous viewers; the API proxy enforces CSRF for both. */
 export async function POST(request: NextRequest) {
+  const csrf = checkCSRF(request);
+  if (!csrf.success) return localizedJson({ error: csrf.error }, { status: csrf.status || 403 });
   let body: unknown;
   try { body = await request.json(); } catch { return localizedJson({ error: "Invalid JSON", code: "INVALID_JSON" }, { status: 400 }); }
   const language = body && typeof body === "object" && "language" in body ? body.language : undefined;

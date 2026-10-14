@@ -83,18 +83,18 @@ describe("updateTodoFields", () => {
   it("assigneeId 同时写入 assignee_id 与历史列 assigned_to", () => {
     const uid = seedUser();
     const tid = seedTodo(uid);
-    updateTodoFields(tid, uid, { assigneeId: "u-9" });
+    updateTodoFields(tid, uid, { assigneeId: uid });
     const row = db
       .prepare("SELECT assignee_id, assigned_to FROM user_todos WHERE id = ?")
       .get(tid) as { assignee_id: string; assigned_to: string };
-    assert.equal(row.assignee_id, "u-9");
-    assert.equal(row.assigned_to, "u-9");
+    assert.equal(row.assignee_id, uid);
+    assert.equal(row.assigned_to, uid);
   });
 
   it("清空 assigneeId 时两列一起清空", () => {
     const uid = seedUser();
     const tid = seedTodo(uid);
-    updateTodoFields(tid, uid, { assigneeId: "u-9" });
+    updateTodoFields(tid, uid, { assigneeId: uid });
     updateTodoFields(tid, uid, { assigneeId: "" });
     const row = db
       .prepare("SELECT assignee_id, assigned_to FROM user_todos WHERE id = ?")
@@ -407,13 +407,13 @@ describe("createTodo", () => {
 
   it("assigneeId 同时写入 assignee_id 与历史列 assigned_to", () => {
     const uid = seedUser();
-    const id = createTodo(uid, { title: "T", assigneeId: "u-7", assigneeName: "某人" });
+    const id = createTodo(uid, { title: "T", assigneeId: uid, assigneeName: "某人" });
     const row = db
       .prepare("SELECT assignee_id, assigned_to, assignee_name FROM user_todos WHERE id = ?")
       .get(id) as { assignee_id: string; assigned_to: string; assignee_name: string };
-    assert.equal(row.assignee_id, "u-7");
-    assert.equal(row.assigned_to, "u-7");
-    assert.equal(row.assignee_name, "某人");
+    assert.equal(row.assignee_id, uid);
+    assert.equal(row.assigned_to, uid);
+    assert.equal(row.assignee_name, "TP User");
   });
 
   it("关联项目时刷新该项目时间戳", () => {
@@ -451,7 +451,7 @@ describe("createProject", () => {
   it("缺省值：状态「进行中」、颜色 #00C776、url 空", () => {
     const uid = seedUser();
     const p = createProject(uid, { name: "P" });
-    assert.equal(p.status, "进行中");
+    assert.equal(p.status, "in-progress");
     assert.equal(p.color, "#00C776");
     assert.equal(p.url, "");
   });
@@ -512,7 +512,7 @@ describe("updateProject", () => {
       .prepare("SELECT name, status, updated_at FROM projects WHERE id = ?")
       .get(pid) as { name: string; status: string; updated_at: number };
     assert.equal(row.name, "改名后");
-    assert.equal(row.status, "维护中");
+    assert.equal(row.status, "maintenance");
     assert.ok(row.updated_at > 0);
   });
 

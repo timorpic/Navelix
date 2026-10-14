@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useId } from "react";
+import { useDialogFocus } from "@/hooks/use-dialog-focus";
 
 interface ModalProps {
   open: boolean;
@@ -19,15 +20,9 @@ interface ModalProps {
   manageFocus?: boolean;
 }
 
-export default function Modal({ open, title, onClose, children, elevated = false, manageFocus = false }: ModalProps) {
+export default function Modal({ open, title, onClose, children, elevated = false, manageFocus = true }: ModalProps) {
   const titleId = useId();
-  const panelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open || !manageFocus) return;
-    const previous = document.activeElement;
-    panelRef.current?.focus();
-    return () => { if (previous instanceof HTMLElement && previous.isConnected) previous.focus(); };
-  }, [open, manageFocus]);
+  const panelRef = useDialogFocus(open && manageFocus, onClose, elevated ? 60 : 50);
   if (!open) return null;
 
   return (
@@ -41,16 +36,6 @@ export default function Modal({ open, title, onClose, children, elevated = false
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        onKeyDown={event => {
-          if (!manageFocus) return;
-          if (event.key === "Escape") { event.stopPropagation(); onClose(); }
-          if (event.key !== "Tab") return;
-          const items = panelRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]');
-          if (!items?.length) { event.preventDefault(); return; }
-          const first = items[0]; const last = items[items.length - 1];
-          if (event.shiftKey && (document.activeElement === first || document.activeElement === panelRef.current)) { event.preventDefault(); last.focus(); }
-          else if (!event.shiftKey && (document.activeElement === last || document.activeElement === panelRef.current)) { event.preventDefault(); first.focus(); }
-        }}
         className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-800 p-6 shadow-2xl border border-gray-100 dark:border-slate-700 text-gray-900 dark:text-slate-100"
         onClick={(e) => e.stopPropagation()}
       >

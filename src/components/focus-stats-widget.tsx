@@ -72,7 +72,7 @@ export default function FocusStatsWidget() {
               {[2, 4, 3, 6, 5, 7, 4].map((v, i) => (
                 <div
                   key={i}
-                  className="flex-1 bg-[#00C776]/40 rounded-t-sm"
+                  className="flex-1 bg-brand/40 rounded-t-sm"
                   style={{ height: `${(v / 7) * 100}%` }}
                 />
               ))}
@@ -90,8 +90,8 @@ export default function FocusStatsWidget() {
                   <div
                     className={`w-full rounded-t-md transition-all duration-500 ease-out ${
                       isToday
-                        ? "bg-[#00C776] shadow-[0_0_8px_rgba(0,199,118,0.5)]"
-                        : "bg-[#00C776]/30 dark:bg-[#00C776]/25 group-hover:bg-[#00C776]/60"
+                        ? "bg-brand shadow-[0_0_8px_rgba(0,199,118,0.5)]"
+                        : "bg-brand/30 dark:bg-brand/25 group-hover:bg-brand/60"
                     }`}
                     style={{ height: `${heightPercent}%` }}
                   />
@@ -106,7 +106,7 @@ export default function FocusStatsWidget() {
         )}
         <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-slate-500 font-semibold px-0.5 mt-1">
           {dayNames.map((d, i) => (
-            <span key={i} className={i === currentDayIdx ? "text-[#00C776] font-bold" : ""}>
+            <span key={i} className={i === currentDayIdx ? "text-brand font-bold" : ""}>
               {d}
             </span>
           ))}
@@ -117,8 +117,8 @@ export default function FocusStatsWidget() {
       <div className="mt-2 pt-2 border-t border-gray-100 dark:border-slate-700/60 flex items-center justify-between text-[11px]">
         <span className="text-gray-400 dark:text-slate-400">
           {tx("daily_average_focus_98575f09")}{dailyAverage} {tx("hours_3b6fefc5")}</span>
-        <span className="font-semibold text-[#00C776] flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#00C776] animate-pulse" />
+        <span className="font-semibold text-brand flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
           <span>{tx("in_progress_dc9591e5")}</span>
         </span>
       </div>

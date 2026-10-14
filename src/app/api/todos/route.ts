@@ -1,3 +1,4 @@
+import { AssignmentError } from "@/lib/workspace-members";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { getUserTodos } from "@/lib/todo-store";
@@ -40,6 +41,7 @@ export async function POST(req: NextRequest) {
 
     return localizedJson({ success: true, todo: { id } });
   } catch (err) {
+    if (err instanceof AssignmentError) return localizedJson({ error: err.message }, { status: 403 });
     return localizedJson(
       { error: err instanceof Error ? err.message : "创建失败" },
       { status: 500 },

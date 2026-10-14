@@ -97,7 +97,7 @@ export default function AdminProBrandCard({
               accept="image/*"
               disabled={!licenseStatus.isPro}
               onChange={handleLogoUpload}
-              className="min-w-0 flex-1 text-xs text-gray-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:bg-[#00C776]/10 file:text-[#009a5a] file:text-xs file:font-semibold file:cursor-pointer cursor-pointer"
+              className="min-w-0 flex-1 text-xs text-gray-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:bg-brand/10 file:text-brand-strong file:text-xs file:font-semibold file:cursor-pointer cursor-pointer"
             />
             {config.logoImage && (
               <button

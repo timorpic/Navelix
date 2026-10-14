@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   defaultConfig,
   type NavelixConfigApi,
@@ -518,7 +518,7 @@ export function NavelixProvider({
     saveSnapshot({ projects: nextProjects });
   }, [saveSnapshot]);
 
-  const dataApi: NavelixDataApi = {
+  const dataApi = useMemo<NavelixDataApi>(() => ({
     user,
     categories,
     links,
@@ -538,19 +538,19 @@ export function NavelixProvider({
     importData,
     resetData,
     mergeBookmarks,
-  };
+  }), [user, categories, links, projects, todos, hydrated, refreshData, saveProjects, addCategory, deleteCategory, addLink, deleteLink, deleteAllLinks, updateLink, updateCategory, toggleQuickAccess, importData, resetData, mergeBookmarks]);
 
   const isDark =
     config.theme === "dark" || (config.theme === "system" && resolvedDark);
 
-  const configApi: NavelixConfigApi = {
+  const configApi = useMemo<NavelixConfigApi>(() => ({
     config,
     hydrated,
     isDark,
     updateConfig,
     resetConfig,
     changeLanguage,
-  };
+  }), [config, hydrated, isDark, updateConfig, resetConfig, changeLanguage]);
 
   return (
     <NavelixDataContext.Provider value={dataApi}>

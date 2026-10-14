@@ -1,3 +1,4 @@
+import { cleanup } from "./render.ts";
 /**
  * 组件测试的 JSX 装载器。
  *
@@ -75,6 +76,8 @@ export async function setupDom(): Promise<void> {
 
 /** 清理全局 DOM 环境。 */
 export function teardownDom(): void {
+  cleanup();
+  window.close();
   for (const key of [
     "window",
     "document",
@@ -130,6 +133,7 @@ const tsxPlugin = {
     }));
     build.onLoad({ filter: /.*/, namespace: "alias-src" }, (args) => ({
       contents: fs.readFileSync(args.path, "utf8"),
+      resolveDir: path.dirname(args.path),
       loader: args.path.endsWith(".tsx") ? "tsx" : "ts",
     }));
   },

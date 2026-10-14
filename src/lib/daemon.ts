@@ -1,3 +1,4 @@
+import { BACKUP_INTERVAL_MS } from "./db-backup-core.ts";
 import { runPersonalTelegramNotifications } from "./personal-telegram.ts";
 import { sendTelegramNotification } from "./telegram.ts";
 import { scheduleAutoBackup } from "./db-backup.ts";
@@ -82,7 +83,7 @@ export function startBackgroundDaemon(): void {
     scheduleTask(() => runCloudBackupSchedule(), 24 * 60 * 60 * 1000),
   );
 
-  // 4. 本地自动备份（每 24 小时检查一次；目录内已有 24 小时内的快照则跳过，
+  // 4. 本地自动备份（按配置间隔检查；目录内已有间隔内的新鲜快照则跳过，
   //    因此与上面的云备份共享同一份快照，不会在同一天重复 VACUUM INTO）
   //
   //    启动后 90 秒补检查一次：scheduleTask 的首次执行也在 delayMs 之后，
@@ -91,7 +92,9 @@ export function startBackgroundDaemon(): void {
   //    最近的快照早已过期。scheduleAutoBackup 本身按快照 mtime 判断，过期
   //    才备份、否则直接返回，因此补跑是幂等的、不会产生重复快照。
   globalThis.__navelix_daemon_timers__.push(
-    scheduleTask(() => scheduleAutoBackup(), 24 * 60 * 60 * 1000),
+    // Long policies can exceed Node's 32-bit timer limit. Poll at most daily;
+    // scheduleAutoBackup still enforces the full interval using persisted mtime.
+    scheduleTask(() => scheduleAutoBackup(), Math.min(BACKUP_INTERVAL_MS, 24 * 60 * 60 * 1000)),
   );
   const autoBackupInit = setTimeout(() => {
     try {

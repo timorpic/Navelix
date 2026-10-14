@@ -1,5 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import dnsPromises from "node:dns/promises";
 import {
   isPrivateIPv4,
   isPrivateIPv6,
@@ -111,5 +112,35 @@ describe("bounded pinned HTTP requests", () => {
     assert.equal(isPrivateIPv6("0:0:0:0:0:ffff:7f00:1"), true);
     assert.equal(isLoopbackOrLinkLocalIP("fe81::1"), true);
     assert.equal(isLoopbackOrLinkLocalIP("0:0:0:0:0:ffff:a9fe:a9fe"), true);
+  });
+
+  // 内网设备普遍以主机名配置（nas.local、router.internal），早期实现按域名后缀
+  // 一律拒绝，导致 allowPrivateIPs 对真实内网地址形同虚设。准入判定改为依据
+  // 解析出的 IP，因此这里按解析结果断言，而不是按域名后缀。
+  describe("内网模式下的域名准入按解析结果判定", () => {
+    it("放行解析到 RFC1918 的内网域名，仍拒绝解析到回环/链路本地的同名域名", async () => {
+      const original = dnsPromises.lookup;
+      const stub = (addresses: { address: string; family: number }[]) => {
+        (dnsPromises as { lookup: unknown }).lookup = async () => addresses;
+      };
+      try {
+        stub([{ address: "192.168.1.5", family: 4 }]);
+        for (const host of ["nas.local", "router.internal", "nas.localhost"]) {
+          assert.deepEqual(await validateHostIPs(host, { allowPrivateIPs: true }), ["192.168.1.5"]);
+        }
+
+        // 解析结果落在回环/链路本地时，域名后缀不再是拦截依据，IP 复查才是
+        stub([{ address: "127.0.0.1", family: 4 }]);
+        await assert.rejects(() => validateHostIPs("nas.local", { allowPrivateIPs: true }), /SSRF_BLOCKED/);
+        stub([{ address: "169.254.169.254", family: 4 }]);
+        await assert.rejects(() => validateHostIPs("nas.local", { allowPrivateIPs: true }), /SSRF_BLOCKED/);
+
+        // 严格模式（默认）不受影响：内网域名仍按 IP 判为私有而拒绝
+        stub([{ address: "192.168.1.5", family: 4 }]);
+        await assert.rejects(() => validateHostIPs("nas.local"), /SSRF_BLOCKED/);
+      } finally {
+        (dnsPromises as { lookup: unknown }).lookup = original;
+      }
+    });
   });
 });

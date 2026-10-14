@@ -47,8 +47,16 @@ jobs:
       - name: Run Test Suite (with Coverage Gate)
         run: pnpm test:coverage
 
+      - name: Upload coverage scope report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
       - name: Run Production Build
-        run: pnpm build
+        run: NAVELIX_DATA_DIR="$(mktemp -d)" pnpm build
 
   e2e:
     name: Playwright E2E (Core UI Flow)
@@ -83,3 +91,29 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  container-smoke:
+    name: CE container smoke test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Build CE image without publishing
+        run: docker build -t navelix-ci .
+      - name: Start isolated container
+        run: docker run -d --name navelix-ci -p 127.0.0.1:3721:3721 -e NAVELIX_ADMIN_PASSWORD=ci-test-password navelix-ci
+      - name: Verify runtime and API behavior
+        run: |
+          node scripts/smoke-container.mjs
+          test "$(docker exec navelix-ci whoami)" != root
+          docker exec navelix-ci test -w /app/data
+          test "$(docker exec navelix-ci find /app -name '*.ts' | wc -l)" -eq 0
+      - name: Container logs and cleanup
+        if: always()
+        run: |
+          docker logs navelix-ci || true
+          docker rm -f navelix-ci || true

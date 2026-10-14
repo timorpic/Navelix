@@ -31,7 +31,7 @@ export default function RecentActivitiesHeader({
         <div>
           <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <span>{tx("notifications_activity_0aefceb5")}</span>
-            <span className="px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/60 text-[#00C776] text-[10px] font-bold">
+            <span className="px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/60 text-brand text-[10px] font-bold">
               {tx("total_76e547a8")}{totalCount} {tx("results_f004f1d8")}</span>
           </h3>
         </div>
@@ -44,14 +44,14 @@ export default function RecentActivitiesHeader({
           onClick={onToggleAdvancedFilter}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
             showAdvancedFilter || isFilterActive
-              ? "border-[#00C776] bg-emerald-50/60 text-[#00C776] dark:bg-emerald-950/40"
+              ? "border-brand bg-emerald-50/60 text-brand dark:bg-emerald-950/40"
               : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700"
           }`}
         >
           <span>⚙️</span>
           <span>{showAdvancedFilter ? tx("hide_filters_619325e1") : tx("advanced_filters_3ab46e7c")}</span>
           {isFilterActive && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00C776]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-brand" />
           )}
         </button>
 

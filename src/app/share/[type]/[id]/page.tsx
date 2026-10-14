@@ -1,3 +1,6 @@
+import { projectStatusLabel } from "@/lib/project-status";
+import { getLocale } from "next-intl/server";
+import { translateText } from "@/lib/server-translations";
 import LanguageSwitcher from "@/components/language-switcher";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
@@ -66,7 +69,7 @@ export default async function SharePage({ params, searchParams }: SharePageProps
             {tx("this_share_is_protected_open_the_complete_link_i_24eccaf3")}</p>
           <Link
             href="/login"
-            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-[#00C776] hover:bg-[#00b368] transition-colors"
+            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-brand hover:bg-[#00b368] transition-colors"
           >
             {tx("go_to_sign_in_99232cdd")}</Link>
         </div>
@@ -140,7 +143,7 @@ export default async function SharePage({ params, searchParams }: SharePageProps
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative flex items-start gap-3 p-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl hover:border-[#00C776] dark:hover:border-[#00C776] shadow-sm hover:shadow transition-all"
+                  className="group relative flex items-start gap-3 p-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl hover:border-brand dark:hover:border-brand shadow-sm hover:shadow transition-all"
                 >
                   <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden text-sm">
                     {link.icon && link.icon.startsWith("http") ? (
@@ -151,7 +154,7 @@ export default async function SharePage({ params, searchParams }: SharePageProps
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-[#00C776] transition-colors">
+                    <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-brand transition-colors">
                       {link.title}
                     </h2>
                     {link.description && (
@@ -199,7 +202,7 @@ export default async function SharePage({ params, searchParams }: SharePageProps
                 color: data.project.statusColor || "#00C776",
               }}
             >
-              {data.project.status}
+              {translateText(await getLocale(), projectStatusLabel(data.project.status))}
             </span>
           </div>
         </header>
@@ -214,7 +217,7 @@ export default async function SharePage({ params, searchParams }: SharePageProps
               </div>
               <div className="flex justify-between py-2 border-b border-gray-100 dark:border-slate-800">
                 <span className="text-gray-500 dark:text-slate-400">{tx("current_stage_30b7a5d7")}</span>
-                <span className="font-medium">{data.project.status}</span>
+                <span className="font-medium">{translateText(await getLocale(), projectStatusLabel(data.project.status))}</span>
               </div>
               {data.project.url && (
                 <div className="flex justify-between py-2 border-b border-gray-100 dark:border-slate-800">
@@ -223,7 +226,7 @@ export default async function SharePage({ params, searchParams }: SharePageProps
                     href={data.project.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#00C776] hover:underline"
+                    className="text-brand hover:underline"
                   >
                     {data.project.url}
                   </a>

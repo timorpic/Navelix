@@ -48,7 +48,7 @@ export default function HeroBanner({
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white/90 dark:bg-slate-900/80 backdrop-blur-md p-5 sm:p-7 border border-gray-200/80 dark:border-slate-800 shadow-2xs transition-colors">
       {/* Background Accent Gradients */}
-      <div className="absolute -right-20 -top-20 w-80 h-80 bg-[#00C776]/10 dark:bg-[#00C776]/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -right-20 -top-20 w-80 h-80 bg-brand/10 dark:bg-brand/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -left-20 -bottom-20 w-60 h-60 bg-teal-500/10 dark:bg-teal-500/15 rounded-full blur-2xl pointer-events-none" />
 
       <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -88,19 +88,19 @@ export default function HeroBanner({
         {/* ── Right Artwork: 3D Translucent Glass Cube ── */}
         <div className="relative w-36 h-36 shrink-0 hidden md:flex items-center justify-center">
           {/* Glowing platform base */}
-          <div className="absolute bottom-2 w-28 h-8 bg-[#00C776]/20 rounded-full blur-xl animate-pulse" />
+          <div className="absolute bottom-2 w-28 h-8 bg-brand/20 rounded-full blur-xl animate-pulse" />
           <div className="absolute bottom-3 w-24 h-5 bg-[#33d68a]/30 rounded-full blur-md" />
 
           {/* Pure CSS/SVG 3D Translucent Glass Cube */}
           <div className="relative w-24 h-24 transform rotate-12 -rotate-x-12 transition-transform hover:scale-105 duration-300">
             {/* Front Glass Face */}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/70 via-[#33d68a]/40 to-[#00C776]/60 backdrop-blur-md border border-white/80 shadow-lg flex items-center justify-center">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/70 via-[#33d68a]/40 to-brand/60 backdrop-blur-md border border-white/80 shadow-lg flex items-center justify-center">
               <LogoMark size="lg" />
             </div>
             {/* Top Glass Face Layer */}
             <div className="absolute -top-2.5 left-2.5 right-2.5 h-5 rounded-t-xl bg-white/50 backdrop-blur-sm border-t border-x border-white/90 transform skew-x-12" />
             {/* Side Glow Effect */}
-            <div className="absolute -right-2.5 top-2.5 bottom-2.5 w-5 rounded-r-xl bg-[#00C776]/30 backdrop-blur-sm border-r border-y border-white/60 transform skew-y-12" />
+            <div className="absolute -right-2.5 top-2.5 bottom-2.5 w-5 rounded-r-xl bg-brand/30 backdrop-blur-sm border-r border-y border-white/60 transform skew-y-12" />
           </div>
         </div>
       </div>

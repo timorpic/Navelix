@@ -1,3 +1,4 @@
+import { projectStatusLabel } from "@/lib/project-status";
 import { getLocale } from "next-intl/server";
 import { translateText } from "@/lib/server-translations";
 import { localizedJson } from "@/lib/localized-json";
@@ -98,7 +99,7 @@ function buildWorkspaceContext(userId: string): string {
 
     const projectLines = projects.length > 0
       ? projects.map((p) => {
-          return `- [${p.status || "状态未填"}] (id: ${p.id}) 项目名称：${p.name}${p.url ? ` (链接: ${p.url})` : ""}`;
+          return `- [${p.status ? projectStatusLabel(p.status) : "状态未填"}] (id: ${p.id}) 项目名称：${p.name}${p.url ? ` (链接: ${p.url})` : ""}`;
         }).join("\n")
       : "（当前暂无项目数据）";
 

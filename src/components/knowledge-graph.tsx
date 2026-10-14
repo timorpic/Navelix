@@ -11,7 +11,7 @@ const ORB_COLORS = [
   { dot: "bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]", line: "rgba(52,211,153,0.4)" },
   { dot: "bg-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.9)]", line: "rgba(56,189,248,0.4)" },
   { dot: "bg-purple-400 shadow-[0_0_12px_rgba(192,132,252,0.9)]", line: "rgba(192,132,252,0.4)" },
-  { dot: "bg-[#00C776] shadow-[0_0_12px_rgba(0,199,118,0.9)]", line: "rgba(0,199,118,0.4)" },
+  { dot: "bg-brand shadow-[0_0_12px_rgba(0,199,118,0.9)]", line: "rgba(0,199,118,0.4)" },
   { dot: "bg-teal-300 shadow-[0_0_12px_rgba(45,212,191,0.9)]", line: "rgba(45,212,191,0.4)" },
 ];
 
@@ -68,7 +68,7 @@ export default function KnowledgeGraph({
           onClick={() => setActiveCategory(null)}
           className={`px-2.5 py-0.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
             activeCategory === null
-              ? "bg-[#00C776] text-white shadow-xs"
+              ? "bg-brand text-white shadow-xs"
               : "bg-gray-100 dark:bg-slate-900 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700"
           }`}
         >
@@ -82,7 +82,7 @@ export default function KnowledgeGraph({
               onClick={() => setActiveCategory(isSelected ? null : c.id)}
               className={`px-2.5 py-0.5 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
                 isSelected
-                  ? "bg-[#00C776] text-white shadow-xs"
+                  ? "bg-brand text-white shadow-xs"
                   : "bg-gray-100 dark:bg-slate-900 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700"
               }`}
             >
@@ -175,8 +175,8 @@ export default function KnowledgeGraph({
                 <div
                   className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold whitespace-nowrap transition-all duration-200 backdrop-blur-md border ${
                     isHovered
-                      ? "bg-[#00C776] text-white border-[#00C776] shadow-[0_0_15px_rgba(0,199,118,0.5)]"
-                      : "bg-white/95 text-gray-800 border-gray-200/90 shadow-2xs dark:bg-slate-900/90 dark:text-slate-200 dark:border-slate-700/80 group-hover:border-[#00C776]"
+                      ? "bg-brand text-white border-brand shadow-[0_0_15px_rgba(0,199,118,0.5)]"
+                      : "bg-white/95 text-gray-800 border-gray-200/90 shadow-2xs dark:bg-slate-900/90 dark:text-slate-200 dark:border-slate-700/80 group-hover:border-brand"
                   }`}
                 >
                   {pos.link.title}

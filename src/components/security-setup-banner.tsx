@@ -26,11 +26,11 @@ export default function SecuritySetupBanner() {
               {tx("public_access_and_self_registration_are_disabled_c6e3fe16")}</p>
             <ul className="mt-2 flex flex-col gap-1 text-xs text-amber-800 dark:text-amber-200/90">
               <li className="flex items-center gap-1.5">
-                <span className="text-[#009a5a]">✓</span>
+                <span className="text-brand-strong">✓</span>
                 <span>{tx("change_the_initial_password_in_account_security_83f3d3ec")}</span>
               </li>
               <li className="flex items-center gap-1.5">
-                <span className="text-[#009a5a]">✓</span>
+                <span className="text-brand-strong">✓</span>
                 <span>{tx("enable_public_access_or_registration_in_system_s_0041ae1d")}</span>
               </li>
             </ul>
@@ -44,7 +44,7 @@ export default function SecuritySetupBanner() {
             {tx("change_initial_password_bbd31e1f")}</Link>
           <Link
             href="/admin?tab=system"
-            className="rounded-xl bg-[#00C776] px-4 py-2 text-xs font-bold text-white shadow-2xs transition-colors hover:bg-[#009a5a] cursor-pointer"
+            className="rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white shadow-2xs transition-colors hover:bg-brand-strong cursor-pointer"
           >
             {tx("configure_access_policies_f4073329")}</Link>
           <button

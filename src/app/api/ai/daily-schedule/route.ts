@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
     const activeProjects = db
       .prepare(
-        "SELECT name, status FROM projects WHERE user_id = ? AND status != '已完成' LIMIT 5",
+        "SELECT name, status FROM projects WHERE user_id = ? AND status NOT IN ('completed', '已完成') LIMIT 5",
       )
       .all(user.id) as Array<{ name: string; status: string }>;
 

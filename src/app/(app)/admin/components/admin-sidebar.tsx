@@ -75,7 +75,7 @@ export default function AdminSidebar({
         onClick={() => setActiveTab(item.id)}
         className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap ${
           isActive
-            ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
+            ? "bg-brand text-white shadow-sm shadow-brand/20"
             : "text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white"
         }`}
       >
@@ -89,7 +89,7 @@ export default function AdminSidebar({
               isActive
                 ? "bg-white/20 text-white"
                 : item.id === "links" || item.id === "quickAccess"
-                  ? "bg-teal-50 dark:bg-teal-950/60 text-[#00C776]"
+                  ? "bg-teal-50 dark:bg-teal-950/60 text-brand"
                   : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
             }`}
           >
@@ -167,7 +167,7 @@ export default function AdminSidebar({
           className="flex items-center justify-between p-2.5 bg-gray-50/80 dark:bg-slate-800/80 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 transition-colors cursor-pointer group select-none"
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00C776] to-[#009a5a] flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-strong flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden shadow-2xs">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={resolveAvatar(currentUser?.avatar, currentUser?.username)}

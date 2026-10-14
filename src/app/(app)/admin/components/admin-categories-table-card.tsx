@@ -42,7 +42,7 @@ export default function AdminCategoriesTableCard({
         </div>
         <button
           onClick={onAddCategory}
-          className="h-9 px-4 bg-[#00C776] hover:bg-[#009a5a] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+          className="h-9 px-4 bg-brand hover:bg-brand-strong text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
         >
           <span className="text-sm">+</span>
           <span>{tx("add_category_542ac58a")}</span>
@@ -93,12 +93,12 @@ export default function AdminCategoriesTableCard({
                           }
                         }}
                         title={tx("copy_a_read_only_share_link_that_requires_no_log_70d94a21")}
-                        className="text-gray-500 dark:text-slate-400 hover:text-[#00C776] font-medium transition-colors cursor-pointer"
+                        className="text-gray-500 dark:text-slate-400 hover:text-brand font-medium transition-colors cursor-pointer"
                       >
                         {tx("share_2dab5ef7")}</button>
                       <button
                         onClick={() => onEditCategory(c)}
-                        className="text-gray-500 dark:text-slate-400 hover:text-[#00C776] font-medium transition-colors cursor-pointer"
+                        className="text-gray-500 dark:text-slate-400 hover:text-brand font-medium transition-colors cursor-pointer"
                       >
                         {tx("edit_a2e86c4b")}</button>
                       <button

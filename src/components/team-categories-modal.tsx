@@ -1,4 +1,5 @@
 "use client";
+import Overlay from "./overlay";
 
 import { useTranslations } from "next-intl";
 import { useState, useEffect, useCallback } from "react";
@@ -92,7 +93,7 @@ export default function TeamCategoriesModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
+    <Overlay title={tx("team_category_directory_00469b97")} onClose={onClose}>
       <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl border border-gray-100 dark:border-slate-700 overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-slate-700">
@@ -161,7 +162,7 @@ export default function TeamCategoriesModal({
                         className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                           cat.isSubscribed
                             ? "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/50 dark:hover:text-rose-400"
-                            : "bg-[#00C776] text-white hover:bg-[#009a5a] shadow-xs"
+                            : "bg-brand text-white hover:bg-brand-strong shadow-xs"
                         }`}
                       >
                         {isProcessing
@@ -187,6 +188,6 @@ export default function TeamCategoriesModal({
             {tx("done_c0b3fbff")}</button>
         </div>
       </div>
-    </div>
+    </Overlay>
   );
 }

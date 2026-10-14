@@ -121,7 +121,7 @@ export default function AdminProStorageCard({
               onClick={() => storage.selectStorageType(item.id)}
               className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                 storageConfig.type === item.id
-                  ? "border-[#00C776] bg-emerald-50/50 dark:bg-emerald-950/20 text-gray-900 dark:text-white ring-2 ring-[#00C776]/20"
+                  ? "border-brand bg-emerald-50/50 dark:bg-emerald-950/20 text-gray-900 dark:text-white ring-2 ring-brand/20"
                   : "border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/50 text-gray-600 dark:text-slate-400 hover:border-gray-300"
               }`}
             >
@@ -222,7 +222,7 @@ export default function AdminProStorageCard({
                 id="autoBackupDaily"
                 checked={storageConfig.autoBackupDaily ?? true}
                 onChange={(e) => patchField({ autoBackupDaily: e.target.checked })}
-                className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
+                className="w-4 h-4 rounded text-brand focus:ring-brand cursor-pointer"
               />
               <label htmlFor="autoBackupDaily" className="text-xs font-bold text-gray-800 dark:text-slate-200 cursor-pointer">
                 {tx("automatically_create_a_snapshot_and_sync_to_clou_d6c0a435")}</label>

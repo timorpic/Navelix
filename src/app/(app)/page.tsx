@@ -254,7 +254,7 @@ function HomeContent() {
                       <h2 className="text-base font-bold text-gray-900 dark:text-white">
                         {categories.find((c) => c.id === activeCategory)?.name || tx("category_bookmarks_9dcc3bfc")}
                       </h2>
-                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-[#00C776]/10 text-[#00C776] font-medium">
+                      <span className="text-xs px-2.5 py-0.5 rounded-md bg-brand/10 text-brand font-medium">
                         {filteredLinks.length} {tx("bookmarks_d85aebef")}</span>
                     </div>
                     <div className="flex items-center gap-2.5">
@@ -267,7 +267,7 @@ function HomeContent() {
                           );
                           flashAction(text(r.message));
                         }}
-                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:border-[#00C776] hover:text-[#00C776] dark:hover:border-[#00C776] transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:border-brand hover:text-brand dark:hover:border-brand transition-colors cursor-pointer"
                         title={tx("copy_a_public_share_link_for_this_category_29ef87e6")}
                       >
                         <span>🔗</span>

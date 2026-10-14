@@ -1,6 +1,6 @@
 {
   "name": "navelix",
-  "version": "2.10.12",
+  "version": "2.10.13",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
@@ -10,8 +10,8 @@
     "start": "next start -p 3721",
     "lint": "eslint",
     "typecheck": "tsc --noEmit --noUnusedLocals --noUnusedParameters",
-    "test": "node --experimental-strip-types --test-concurrency=1 --test \"src/**/*.test.ts\"",
-    "test:coverage": "node --experimental-strip-types --test-concurrency=1 --experimental-test-coverage --test-coverage-lines=60 --test-coverage-functions=55 --test \"src/**/*.test.ts\"",
+    "test": "node scripts/run-tests.mjs",
+    "test:coverage": "node scripts/run-tests.mjs --coverage",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install --with-deps chromium",
     "precommit": "pnpm typecheck && pnpm lint",

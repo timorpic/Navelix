@@ -1,6 +1,7 @@
 "use client";
 
-import { todoUrl } from "@/lib/todo-url";
+import { useWorkspaceTodos } from "@/hooks/use-workspace-todos";
+
 
 import { useTranslations } from "next-intl";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
@@ -196,19 +197,7 @@ export default function CalendarView() {
     }
   };
 
-  const handleToggleTodo = async (id: string, done: boolean, ownerId?: string) => {
-    try {
-      const response = await fetch(todoUrl(id, ownerId), {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: !done }),
-      });
-        if (!response.ok) return;
-      refreshData();
-    } catch {
-      // ignore
-    }
-  };
+  const { toggleTodo: handleToggleTodo } = useWorkspaceTodos();
 
   const handleOpenEditModal = (item: TodoItem) => {
     setEditingSchedule(item);
@@ -251,7 +240,7 @@ export default function CalendarView() {
           <h2 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
             <span>📅</span>
             <span>{tx("calendar_focus_planning_c282d614")}</span>
-            <span className="px-2 py-0.5 rounded-full bg-[#00C776]/10 text-[#00C776] text-[10px] font-bold border border-[#00C776]/20">
+            <span className="px-2 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-bold border border-brand/20">
               {tx("smart_scheduling_39139b8e")}</span>
           </h2>
           <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
@@ -267,7 +256,7 @@ export default function CalendarView() {
               onClick={() => handleViewModeChange("month")}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 viewMode === "month"
-                  ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
+                  ? "bg-white dark:bg-slate-900 text-brand shadow-2xs"
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
@@ -277,7 +266,7 @@ export default function CalendarView() {
               onClick={() => handleViewModeChange("week")}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 viewMode === "week"
-                  ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
+                  ? "bg-white dark:bg-slate-900 text-brand shadow-2xs"
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
@@ -290,7 +279,7 @@ export default function CalendarView() {
               }}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 viewMode === "today"
-                  ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
+                  ? "bg-white dark:bg-slate-900 text-brand shadow-2xs"
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
@@ -300,7 +289,7 @@ export default function CalendarView() {
           <button
             type="button"
             onClick={() => ai.generate(selectedDateStr)}
-            className="px-3 py-1.5 bg-gradient-to-r from-[#00C776] to-teal-500 text-white rounded-xl text-xs font-bold hover:from-[#00B068] hover:to-teal-600 shadow-2xs flex items-center gap-1.5 cursor-pointer"
+            className="px-3 py-1.5 bg-gradient-to-r from-brand to-teal-500 text-white rounded-xl text-xs font-bold hover:from-brand-hover hover:to-teal-600 shadow-2xs flex items-center gap-1.5 cursor-pointer"
           >
             <span>✨</span>
             <span>{tx("ai_scheduling_b7410df7")}</span>
@@ -428,7 +417,7 @@ export default function CalendarView() {
                     onClick={() => setSelectedDate(d)}
                     className={`h-16 p-1.5 rounded-xl flex flex-col justify-between items-start transition-all cursor-pointer border ${
                       isSelected
-                        ? "bg-[#00C776]/10 border-[#00C776] ring-1 ring-[#00C776]"
+                        ? "bg-brand/10 border-brand ring-1 ring-brand"
                         : isToday
                         ? "bg-emerald-50/50 dark:bg-slate-800 border-emerald-300 dark:border-emerald-700"
                         : "bg-gray-50/70 dark:bg-slate-800/40 border-gray-100 dark:border-slate-800/80 hover:border-gray-300"
@@ -438,9 +427,9 @@ export default function CalendarView() {
                       <span
                         className={`text-xs font-black ${
                           isToday
-                            ? "text-[#00C776]"
+                            ? "text-brand"
                             : isSelected
-                            ? "text-[#00C776]"
+                            ? "text-brand"
                             : "text-gray-700 dark:text-slate-200"
                         }`}
                       >
@@ -525,9 +514,10 @@ export default function CalendarView() {
                         <div className="flex items-center gap-2 min-w-0">
                           <input
                             type="checkbox"
+                            aria-label={tx("todo_toggle", { title: t.title })}
                             checked={t.done}
                             onChange={() => handleToggleTodo(t.id, t.done, t.ownerId)}
-                            className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
+                            className="w-3.5 h-3.5 rounded text-brand focus:ring-brand cursor-pointer"
                           />
                           <span
                             className={`truncate font-bold ${
@@ -541,7 +531,7 @@ export default function CalendarView() {
                         </div>
                         <button
                           onClick={() => handleOpenEditModal(t)}
-                          className="text-[11px] text-gray-400 hover:text-[#00C776]"
+                          className="text-[11px] text-gray-400 hover:text-brand"
                         >
                           ✏️
                         </button>
@@ -567,9 +557,10 @@ export default function CalendarView() {
                         <div className="flex items-center gap-2 min-w-0">
                           <input
                             type="checkbox"
+                            aria-label={tx("todo_toggle", { title: t.title })}
                             checked={t.done}
                             onChange={() => handleToggleTodo(t.id, t.done, t.ownerId)}
-                            className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
+                            className="w-3.5 h-3.5 rounded text-brand focus:ring-brand cursor-pointer"
                           />
                           <span
                             className={`truncate font-medium ${
@@ -583,7 +574,7 @@ export default function CalendarView() {
                         </div>
                         <button
                           onClick={() => handleOpenEditModal(t)}
-                          className="text-[11px] text-gray-400 hover:text-[#00C776]"
+                          className="text-[11px] text-gray-400 hover:text-brand"
                         >
                           ✏️
                         </button>
@@ -609,9 +600,10 @@ export default function CalendarView() {
                         <div className="flex items-center gap-2 min-w-0">
                           <input
                             type="checkbox"
+                            aria-label={tx("todo_toggle", { title: t.title })}
                             checked={t.done}
                             onChange={() => handleToggleTodo(t.id, t.done, t.ownerId)}
-                            className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
+                            className="w-3.5 h-3.5 rounded text-brand focus:ring-brand cursor-pointer"
                           />
                           <span
                             className={`truncate font-medium ${
@@ -625,7 +617,7 @@ export default function CalendarView() {
                         </div>
                         <button
                           onClick={() => handleOpenEditModal(t)}
-                          className="text-[11px] text-gray-400 hover:text-[#00C776]"
+                          className="text-[11px] text-gray-400 hover:text-brand"
                         >
                           ✏️
                         </button>
@@ -645,13 +637,15 @@ export default function CalendarView() {
                 <input
                   type="text"
                   name="newTodoTitle"
+                  aria-label={tx("todo_title")}
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder={tx("message_bfa3e9bcee4f", {v0: selectedDate.getMonth() + 1, v1: selectedDate.getDate()})}
-                  className="flex-1 px-3 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
+                  className="flex-1 px-3 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand"
                 />
                 <select
                   name="newTodoPriority"
+                  aria-label={tx("todo_priority")}
                   value={newPriority}
                   onChange={(e) =>
                     setNewPriority(e.target.value as "high" | "medium" | "low")
@@ -664,7 +658,7 @@ export default function CalendarView() {
                 </select>
                 <button
                   type="submit"
-                  className="px-3 py-1.5 bg-[#00C776] text-white text-xs font-bold rounded-xl hover:bg-[#00B068] cursor-pointer shrink-0"
+                  className="px-3 py-1.5 bg-brand text-white text-xs font-bold rounded-xl hover:bg-brand-hover cursor-pointer shrink-0"
                 >
                   {tx("add_7a8a11ea")}</button>
               </div>
@@ -712,7 +706,7 @@ export default function CalendarView() {
                   key={dateStr}
                   className={`flex flex-col justify-between p-3 rounded-2xl border min-h-[300px] ${
                     isToday
-                      ? "bg-[#00C776]/5 border-[#00C776]/40 shadow-xs"
+                      ? "bg-brand/5 border-brand/40 shadow-xs"
                       : "bg-gray-50/60 dark:bg-slate-800/40 border-gray-100 dark:border-slate-800"
                   }`}
                 >
@@ -722,7 +716,7 @@ export default function CalendarView() {
                       <div>
                         <span
                           className={`text-xs font-black ${
-                            isToday ? "text-[#00C776]" : "text-gray-800 dark:text-slate-200"
+                            isToday ? "text-brand" : "text-gray-800 dark:text-slate-200"
                           }`}
                         >
                           {label}
@@ -751,9 +745,10 @@ export default function CalendarView() {
                             <div className="flex items-start gap-1.5">
                               <input
                                 type="checkbox"
+                            aria-label={tx("todo_toggle", { title: t.title })}
                                 checked={t.done}
                                 onChange={() => handleToggleTodo(t.id, t.done, t.ownerId)}
-                                className="mt-0.5 w-3 h-3 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
+                                className="mt-0.5 w-3 h-3 rounded text-brand focus:ring-brand cursor-pointer"
                               />
                               <span
                                 className={`text-[11px] font-medium leading-snug line-clamp-2 ${
@@ -790,7 +785,7 @@ export default function CalendarView() {
                               </div>
                               <button
                                 onClick={() => handleOpenEditModal(t)}
-                                className="hover:text-[#00C776]"
+                                className="hover:text-brand"
                               >
                                 ✏️
                               </button>
@@ -819,7 +814,7 @@ export default function CalendarView() {
                         }).then(() => refreshData());
                       }
                     }}
-                    className="w-full py-1 mt-2 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-gray-200/50 dark:border-slate-700/60 text-[10px] font-bold text-gray-500 hover:text-[#00C776] transition-all cursor-pointer"
+                    className="w-full py-1 mt-2 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-gray-200/50 dark:border-slate-700/60 text-[10px] font-bold text-gray-500 hover:text-brand transition-all cursor-pointer"
                   >
                     {tx("add_42bb5c11")}</button>
                 </div>
@@ -839,7 +834,7 @@ export default function CalendarView() {
               <p className="text-xs text-gray-400 mt-0.5">
                 {todayStr} {tx("focus_completion_577a9232")}</p>
             </div>
-            <span className="text-xs font-bold text-[#00C776]">
+            <span className="text-xs font-bold text-brand">
               {tx("completed_f28461bb")}{" "}
               {todos.filter((t) => t.dueDate === todayStr && t.done).length} /{" "}
               {todos.filter((t) => t.dueDate === todayStr).length} {tx("items_49ccde43")}</span>
@@ -857,7 +852,7 @@ export default function CalendarView() {
                     key={`${item.ownerId ?? ""}:${item.id}`}
                     className="flex items-start gap-4 p-3.5 rounded-xl bg-gray-50/80 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-800"
                   >
-                    <span className="w-6 h-6 rounded-full bg-[#00C776]/15 text-[#00C776] font-black text-xs flex items-center justify-center shrink-0">
+                    <span className="w-6 h-6 rounded-full bg-brand/15 text-brand font-black text-xs flex items-center justify-center shrink-0">
                       {idx + 1}
                     </span>
                     <div className="flex-1 min-w-0">
@@ -898,9 +893,10 @@ export default function CalendarView() {
 
                     <input
                       type="checkbox"
+                    aria-label={tx("todo_toggle", { title: item.title })}
                       checked={item.done}
                       onChange={() => handleToggleTodo(item.id, item.done, item.ownerId)}
-                      className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
+                      className="w-4 h-4 rounded text-brand focus:ring-brand cursor-pointer"
                     />
                   </div>
                 ))

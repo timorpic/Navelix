@@ -53,7 +53,7 @@ function ErrorFallback() {
             </p>
             <button
               onClick={() => location.reload()}
-              className="px-4 py-2 bg-[#00C776] text-white text-xs font-bold rounded-lg hover:bg-[#00B068] transition-colors cursor-pointer"
+              className="px-4 py-2 bg-brand text-white text-xs font-bold rounded-lg hover:bg-brand-hover transition-colors cursor-pointer"
             >
               {tx("refresh_page_9366e178")}
             </button>

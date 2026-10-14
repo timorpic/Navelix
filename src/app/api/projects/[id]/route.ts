@@ -1,3 +1,4 @@
+import { AssignmentError } from "@/lib/workspace-members";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
@@ -14,7 +15,7 @@ export async function PATCH(
   const body = await req.json();
 
   // 项目字段与里程碑在同一次「保存」里，共用一个事务（见 lib 中的说明）
-  updateProject(id, userId, {
+  try { updateProject(id, userId, {
     name: body.name,
     description: body.description,
     status: body.status,
@@ -23,7 +24,10 @@ export async function PATCH(
     url: body.url,
     sortOrder: body.sortOrder,
     todos: Array.isArray(body.todos) ? body.todos : undefined,
-  });
+  }); } catch (error) {
+    if (error instanceof AssignmentError) return localizedJson({ error: error.message }, { status: 403 });
+    throw error;
+  }
 
   return localizedJson({ success: true });
 }

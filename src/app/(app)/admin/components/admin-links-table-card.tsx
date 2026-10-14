@@ -93,7 +93,7 @@ export default function AdminLinksTableCard({
               }}
               aria-label={tx("search_link_title_or_url_34c4e0ae")}
               placeholder={tx("search_link_title_or_url_9998d382")}
-              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#00C776]/30 focus:border-[#00C776]"
+              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 text-xs text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
             />
           </div>
 
@@ -106,7 +106,7 @@ export default function AdminLinksTableCard({
               setCurrentPage(1);
             }}
             aria-label={tx("filter_by_category_fbd61854")}
-            className="h-9 px-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-xs text-gray-700 dark:text-slate-200 font-medium focus:outline-none focus:border-[#00C776]"
+            className="h-9 px-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-xs text-gray-700 dark:text-slate-200 font-medium focus:outline-none focus:border-brand"
           >
             <option value="all">{tx("all_categories_f68e866a")}</option>
             {categories.map((c) => (
@@ -140,7 +140,7 @@ export default function AdminLinksTableCard({
           {/* Add New Link Action Button */}
           <button
             onClick={onAddLink}
-            className="h-9 px-4 bg-[#00C776] hover:bg-[#009a5a] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            className="h-9 px-4 bg-brand hover:bg-brand-strong text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
           >
             <span className="text-sm">+</span>
             <span>{tx("add_link_00f2a7fe")}</span>
@@ -187,7 +187,7 @@ export default function AdminLinksTableCard({
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-gray-500 dark:text-slate-400 hover:text-[#00C776] dark:hover:text-[#00C776] truncate block transition-colors font-mono"
+                      className="text-gray-500 dark:text-slate-400 hover:text-brand dark:hover:text-brand truncate block transition-colors font-mono"
                     >
                       {link.url}
                     </a>
@@ -219,7 +219,7 @@ export default function AdminLinksTableCard({
                     <div className="flex items-center justify-end gap-3">
                       <button
                         onClick={() => onEditLink(link)}
-                        className="text-gray-500 dark:text-slate-400 hover:text-[#00C776] dark:hover:text-[#00C776] font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                        className="text-gray-500 dark:text-slate-400 hover:text-brand dark:hover:text-brand font-medium flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         <span>✏️</span> {tx("edit_37090f45")}</button>
                       <button
@@ -263,7 +263,7 @@ export default function AdminLinksTableCard({
                 onClick={() => setCurrentPage(p)}
                 className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-semibold cursor-pointer ${
                   currentPage === p
-                    ? "bg-teal-50 dark:bg-teal-950/60 border border-[#00C776] text-[#00C776]"
+                    ? "bg-teal-50 dark:bg-teal-950/60 border border-brand text-brand"
                     : "border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-300"
                 }`}
               >

@@ -8,7 +8,7 @@ import { getWorkspaceRevision, requireWorkspaceRevision, WorkspaceConflictError 
 import { stageDelete, consumePendingDelete } from "../ai-tools.ts";
 
 const a = "safety-a", b = "safety-b";
-for (const id of [a, b]) db.prepare("INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, 'hash', ?)").run(id, id, Date.now());
+for (const id of [a, b]) db.prepare("INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, 'hash', ?, ?)").run(id, id, id === a ? "admin" : "user", Date.now());
 after(() => { for (const id of [a, b]) db.prepare("DELETE FROM users WHERE id = ?").run(id); });
 
 describe("workspace isolation regressions", () => {

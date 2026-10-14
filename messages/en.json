@@ -1569,5 +1569,12 @@
   "sun_panel_import_counts": "Added {v0} categories and {v1} links; skipped {v2} duplicate URLs.",
   "sun_panel_next_project": "Create your first project",
   "sun_panel_next_calendar": "Explore calendar & todos",
-  "sun_panel_next_ai": "Next: try AI task breakdown in a project (requires AI service configuration)."
+  "sun_panel_next_ai": "Next: try AI task breakdown in a project (requires AI service configuration).",
+  "todo_toggle": "Toggle completion: {title}",
+  "todo_title": "Task title",
+  "todo_priority": "Priority",
+  "token_expires": "Expires: {date}",
+  "token_lifetime": "API tokens expire after 90 days. Rotate before expiry.",
+  "owner_managed_project": "Project managed by the owner",
+  "existing_assignee": "Existing assignee"
 }

@@ -42,7 +42,7 @@ function renderDetails(details: string): React.ReactNode {
             <li key={i} className="break-all">
               <span className="font-semibold text-gray-700 dark:text-slate-200">{c.field}</span>
               <span className="text-gray-400 dark:text-slate-500">：{String(c.from ?? "")}</span>
-              <span className="mx-1 text-[#00C776]">→</span>
+              <span className="mx-1 text-brand">→</span>
               <span className="text-gray-700 dark:text-slate-200">{String(c.to ?? "")}</span>
             </li>
           ))}
@@ -123,7 +123,7 @@ export default function AdminAuditLogsPanel() {
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") applyFilter(); }}
             placeholder={tx("search_username_action_target_bfe8e3d2")}
-            className="h-9 w-48 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:outline-none focus:border-[#00C776]"
+            className="h-9 w-48 rounded-lg border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:outline-none focus:border-brand"
           />
           <select
             value={action}
@@ -137,7 +137,7 @@ export default function AdminAuditLogsPanel() {
           </select>
           <button
             onClick={applyFilter}
-            className="h-9 px-4 bg-[#00C776] hover:bg-[#009a5a] text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+            className="h-9 px-4 bg-brand hover:bg-brand-strong text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
           >
             {tx("filter_b5f15473")}</button>
         </div>

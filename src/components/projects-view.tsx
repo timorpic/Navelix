@@ -1,6 +1,9 @@
 "use client";
 
-import { todoUrl } from "@/lib/todo-url";
+import { normalizeProjectStatus, projectStatusLabel } from "@/lib/project-status";
+
+import { useWorkspaceTodos } from "@/hooks/use-workspace-todos";
+
 
 import { useText } from "@/hooks/use-text";
 import { useTranslations } from "next-intl";
@@ -16,25 +19,25 @@ import { useAiBreakdown, type GeneratedTask } from "@/hooks/use-ai-breakdown";
 import AiBreakdownCard from "./ai-breakdown-card";
 const STATUS_PRESETS = [
   {
-    label: "进行中",
+    label: "进行中", value: "in-progress",
     color: "#00C776",
     badge:
       "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900",
   },
   {
-    label: "研究中",
+    label: "研究中", value: "research",
     color: "#0284C7",
     badge:
       "bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 border-sky-200 dark:border-sky-900",
   },
   {
-    label: "维护中",
+    label: "维护中", value: "maintenance",
     color: "#D97706",
     badge:
       "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-900",
   },
   {
-    label: "已完成",
+    label: "已完成", value: "completed",
     color: "#9333EA",
     badge:
       "bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400 border-purple-200 dark:border-purple-900",
@@ -57,7 +60,7 @@ export default function ProjectsView() {
   // Form States
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState("进行中");
+  const [status, setStatus] = useState("in-progress");
   const [color, setColor] = useState("#00C776");
   const [url, setUrl] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -125,7 +128,7 @@ export default function ProjectsView() {
   const resetForm = () => {
     setName("");
     setDescription("");
-    setStatus("进行中");
+    setStatus("in-progress");
     setColor("#00C776");
     setUrl("");
     setEditingId(null);
@@ -213,7 +216,7 @@ export default function ProjectsView() {
   const handleEdit = (p: Project, triggerAi = false) => {
     setEditingId(p.id);
     setName(p.name);
-    setStatus(p.status || "进行中");
+    setStatus(normalizeProjectStatus(p.status));
     setColor(p.color || p.statusColor || "#00C776");
     setUrl(p.url || "");
 
@@ -266,19 +269,7 @@ export default function ProjectsView() {
   };
 
   // Toggle todo done right inside project view
-  const handleToggleTodo = async (id: string, done: boolean, ownerId?: string) => {
-    try {
-      const response = await fetch(todoUrl(id, ownerId), {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: !done }),
-      });
-        if (!response.ok) return;
-      refreshData();
-    } catch {
-      // ignore
-    }
-  };
+  const { toggleTodo: handleToggleTodo } = useWorkspaceTodos();
 
   const getProjectTodos = useCallback(
     (pid: string) => todos.filter((t) => !t.isDelegated && t.projectId === pid),
@@ -300,7 +291,7 @@ export default function ProjectsView() {
           <h2 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
             <span>🗂️</span>
             <span>{tx("projects_team_milestones_f4a026d0")}</span>
-            <span className="px-2 py-0.5 rounded-full bg-[#00C776]/10 text-[#00C776] text-[10px] font-bold border border-[#00C776]/20">
+            <span className="px-2 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-bold border border-brand/20">
               {viewTab === "gantt" ? tx("gantt_view_9d71057a") : tx("cards_a7b7324c")}
             </span>
           </h2>
@@ -316,7 +307,7 @@ export default function ProjectsView() {
               onClick={() => handleViewTabChange("cards")}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 viewTab === "cards"
-                  ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
+                  ? "bg-white dark:bg-slate-900 text-brand shadow-2xs"
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
@@ -326,7 +317,7 @@ export default function ProjectsView() {
               onClick={() => handleViewTabChange("gantt")}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 viewTab === "gantt"
-                  ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
+                  ? "bg-white dark:bg-slate-900 text-brand shadow-2xs"
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
@@ -338,7 +329,7 @@ export default function ProjectsView() {
               if (showAdd) resetForm();
               else setShowAdd(true);
             }}
-            className="px-4 py-2 bg-[#00C776] hover:bg-[#00B068] text-white text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 bg-brand hover:bg-brand-hover text-white text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
           >
             <span>{showAdd ? "✕" : "+"}</span>
             <span>{showAdd ? tx("collapse_panel_90bb34c2") : tx("new_project_0e1a7040")}</span>
@@ -382,13 +373,13 @@ export default function ProjectsView() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={tx("e_g_navelix_2_0_upgrade_private_nas_setup_5a2358c5")}
-                  className="flex-1 px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
+                  className="flex-1 px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand/40"
                 />
                 <button
                   type="button"
                   onClick={() => ai.generate(name, description)}
                   disabled={ai.loading}
-                  className="px-3 py-2 bg-gradient-to-r from-[#00C776] to-teal-500 hover:from-[#00B068] hover:to-teal-600 text-white text-xs font-black rounded-xl transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                  className="px-3 py-2 bg-gradient-to-r from-brand to-teal-500 hover:from-brand-hover hover:to-teal-600 text-white text-xs font-black rounded-xl transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                   title={tx("let_ai_plan_stages_owners_and_deadlines_12e10c9d")}
                 >
                   <span>{ai.loading ? "⏳" : "✨"}</span>
@@ -410,7 +401,7 @@ export default function ProjectsView() {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://github.com/..."
-                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
+                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand/40"
               />
             </div>
 
@@ -427,14 +418,14 @@ export default function ProjectsView() {
                 onChange={(e) => {
                   setStatus(e.target.value);
                   const p = STATUS_PRESETS.find(
-                    (item) => item.label === e.target.value,
+                    (item) => item.value === e.target.value,
                   );
                   if (p) setColor(p.color);
                 }}
-                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer font-bold"
+                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand/40 cursor-pointer font-bold"
               >
                 {STATUS_PRESETS.map((p) => (
-                  <option key={text(p.label)} value={text(p.label)}>
+                  <option key={p.value} value={p.value}>
                     {text(p.label)}
                   </option>
                 ))}
@@ -455,7 +446,7 @@ export default function ProjectsView() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={tx("e_g_refactor_the_frontend_improve_responsive_lay_ec1be730")}
-              className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
+              className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand/40"
             />
           </div>
 
@@ -490,7 +481,7 @@ export default function ProjectsView() {
                 {tx("cancel_2cd0f3be")}</button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-[#00C776] hover:bg-[#00B068] text-white text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer"
+                className="px-4 py-2 bg-brand hover:bg-brand-hover text-white text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer"
               >
                 {ai.tasks.length > 0 && ai.syncToCalendar
                   ? editingId
@@ -514,7 +505,7 @@ export default function ProjectsView() {
         /* ════════════ 视图 1：项目卡片看板 (Grid Cards) ════════════ */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {projects.map((p) => {
-            const matched = STATUS_PRESETS.find((s) => s.label === p.status);
+            const matched = STATUS_PRESETS.find((s) => s.value === normalizeProjectStatus(p.status));
             const badgeStyle = matched
               ? matched.badge
               : "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400";
@@ -540,20 +531,20 @@ export default function ProjectsView() {
                       <span
                         className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold ${badgeStyle}`}
                       >
-                        {text(p.status || "进行中")}
+                        {text(projectStatusLabel(p.status))}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleEdit(p, true)}
-                        className="px-2 py-0.5 rounded-md bg-[#00C776]/10 text-[#00C776] hover:bg-[#00C776]/20 text-[10px] font-bold transition-colors cursor-pointer"
+                        className="px-2 py-0.5 rounded-md bg-brand/10 text-brand hover:bg-brand/20 text-[10px] font-bold transition-colors cursor-pointer"
                         title={tx("use_ai_to_break_down_and_assign_tasks_3b8c9eec")}
                       >
                         {tx("ai_breakdown_f0e9e3be")}</button>
                       <button
                         onClick={() => handleEdit(p)}
-                        className="p-1 text-gray-400 hover:text-[#00C776] text-xs cursor-pointer"
+                        className="p-1 text-gray-400 hover:text-brand text-xs cursor-pointer"
                         title={tx("edit_05183656")}
                       >
                         ✏️
@@ -596,7 +587,7 @@ export default function ProjectsView() {
                     <button
                       type="button"
                       onClick={() => toggleExpandProject(p.id)}
-                      className="flex items-center gap-1.5 text-[11px] font-bold text-gray-600 dark:text-slate-300 hover:text-[#00C776] cursor-pointer"
+                      className="flex items-center gap-1.5 text-[11px] font-bold text-gray-600 dark:text-slate-300 hover:text-brand cursor-pointer"
                     >
                       <span>{isExpanded ? "▼" : "▶"}</span>
                       <span>{tx("related_schedules_df61e292")}{done}/{total})</span>
@@ -607,7 +598,7 @@ export default function ProjectsView() {
                         href={p.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[11px] font-bold text-[#00C776] hover:underline flex items-center gap-0.5 truncate max-w-[130px]"
+                        className="text-[11px] font-bold text-brand hover:underline flex items-center gap-0.5 truncate max-w-[130px]"
                         title={p.url}
                       >
                         <span className="truncate">
@@ -638,7 +629,7 @@ export default function ProjectsView() {
                                 type="checkbox"
                                 checked={t.done}
                                 onChange={() => handleToggleTodo(t.id, t.done, t.ownerId)}
-                                className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] border-gray-300 cursor-pointer"
+                                className="w-3.5 h-3.5 rounded text-brand focus:ring-brand border-gray-300 cursor-pointer"
                               />
                               <span
                                 className={`truncate font-medium ${

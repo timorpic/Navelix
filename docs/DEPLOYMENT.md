@@ -60,7 +60,7 @@ pnpm start
 | `NAVELIX_DATA_DIR` | 服务端数据根目录，默认 `<cwd>/data`；镜像默认运行于 `/app`，挂载 `/app/data` |
 | `NAVELIX_ADMIN_PASSWORD` | 首次初始化的管理员密码；不是已初始化账号的通用重置开关 |
 | `NAVELIX_COOKIE_SECURE` | HTTPS 部署设为 `true`；HTTP 使用 `false` |
-| `TRUST_PROXY` | 仅在可信代理负责覆盖转发头的环境中启用 |
+| `TRUST_PROXY` | 仅在可信代理负责覆盖转发头的环境中启用。同时影响客户端 IP 解析（`X-Forwarded-For` / `X-Real-IP`）与写请求 CSRF 来源校验（`X-Forwarded-Host` / `X-Forwarded-Proto`）；TLS 在代理终结时必须启用，否则写请求 403 |
 | `PORT` / `HOSTNAME` | standalone 容器监听端口和地址，默认镜像使用 3721 / 0.0.0.0 |
 | `TZ` | 运行时时区，示例为 Asia/Shanghai；镜像未指定时通常为 UTC |
 | `NAVELIX_LICENSE_KEY` | 可选商业许可，按授权机制激活 |
@@ -84,3 +84,9 @@ pnpm start
 运行中的 SQLite 使用 WAL；不要仅复制 `navelix.db` 作为完整热备份。优先使用应用的 SQLite 快照流程；文件级归档应停服后进行并保留相关配置与密钥材料。不要直接覆盖运行中的数据库；恢复前另存当前数据，完成后校验完整性及权限。
 
 更多使用说明见 [DOCKER](../DOCKER.md)、[快速入门](../wiki/Quick-Start-快速入门.md) 与 [安全运维](../wiki/Security-安全机制与运维规范.md)。发布流水线见 [REGISTRY](REGISTRY.md)。
+
+## 本地备份策略
+
+`NAVELIX_BACKUP_INTERVAL_HOURS` 设置物理备份间隔（整数 1–8760 小时，默认 24）；`NAVELIX_MAX_BACKUPS` 设置保留数量（整数 1–1000，默认 7）。无效值回退默认。修改环境变量后重启生效。自动备份依据磁盘最新快照的 mtime 节流，重启不会额外备份；失败不推进节流时间。它由守护进程启动补检查及定时调度触发，不是每次请求都创建快照。定时检查间隔最多为 24 小时，避免长策略超过 Node 定时器上限；实际备份仍遵守完整的配置间隔，到期后的首次检查创建快照。
+
+升级 Schema v20 后，已有 API Token 获得一次性的 90 天换新窗口；新 Token 自签发起有效 90 天。到期前在个人账号页生成新 Token 并更新外部脚本和日历订阅。

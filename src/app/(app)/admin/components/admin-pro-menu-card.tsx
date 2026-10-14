@@ -18,7 +18,7 @@ export default function AdminProMenuCard() {
         </div>
         <button type="button" role="switch" aria-label={tx("show_pro_feature_menus_c278235f")} aria-checked={enabled}
           onClick={() => updateConfig({ showProMenus: !enabled })}
-          className={`relative h-6 w-11 shrink-0 rounded-full cursor-pointer transition-colors ${enabled ? "bg-[#00C776]" : "bg-gray-300 dark:bg-slate-600"}`}>
+          className={`relative h-6 w-11 shrink-0 rounded-full cursor-pointer transition-colors ${enabled ? "bg-brand" : "bg-gray-300 dark:bg-slate-600"}`}>
           <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${enabled ? "translate-x-5" : "translate-x-0"}`} />
         </button>
       </div>

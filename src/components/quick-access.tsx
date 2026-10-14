@@ -47,13 +47,13 @@ export default function QuickAccess({ links }: QuickAccessProps) {
             onClick={() => {
               recordLinkUsage(item.id);
             }}
-            className={`group flex flex-col items-center justify-center p-3.5 rounded-xl border hover:border-[#00C776]/30 transition-all duration-200 cursor-pointer ${cardStyle}`}
+            className={`group flex flex-col items-center justify-center p-3.5 rounded-xl border hover:border-brand/30 transition-all duration-200 cursor-pointer ${cardStyle}`}
           >
             <div className="relative mb-2 flex h-8 w-8 items-center justify-center group-hover:scale-110 transition-transform">
               <BrandIcon name={item.icon || item.title} className="w-7 h-7" />
             </div>
             <div className="flex items-center gap-1 max-w-full">
-              <span className="truncate text-xs font-semibold text-gray-800 dark:text-slate-100 group-hover:text-[#00C776] transition-colors">
+              <span className="truncate text-xs font-semibold text-gray-800 dark:text-slate-100 group-hover:text-brand transition-colors">
                 {item.title}
               </span>
             </div>

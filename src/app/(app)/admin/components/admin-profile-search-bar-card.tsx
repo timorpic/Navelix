@@ -38,7 +38,7 @@ export default function AdminProfileSearchBarCard() {
             type="button"
             onClick={() => updateConfig({ showSearchBar: !config.showSearchBar })}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-              config.showSearchBar ? "bg-[#00C776] text-white" : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
+              config.showSearchBar ? "bg-brand text-white" : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
             }`}
           >
             {config.showSearchBar ? tx("hide_145219e7") : tx("show_4e1449e7")}

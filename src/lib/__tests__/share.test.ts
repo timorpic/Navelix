@@ -37,5 +37,8 @@ describe("Public Share Token HMAC Verification", () => {
   it("should reject malformed tokens", () => {
     assert.equal(verifyShareToken("invalid").valid, false);
     assert.equal(verifyShareToken("").valid, false);
+    const token = createShareToken("category", "id", "owner");
+    assert.equal(verifyShareToken(token + ".extra").valid, false);
+    assert.equal(verifyShareToken(token.split(".")[0] + ".ab").valid, false);
   });
 });

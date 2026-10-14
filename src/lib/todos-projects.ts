@@ -1,3 +1,5 @@
+import { normalizeProjectStatus } from "./project-status.ts";
+import { resolveTodoAssignee, validateAssignee } from "./workspace-members.ts";
 import { captureTaskAssignments, enqueueChangedAssignments } from "./personal-telegram.ts";
 import { db } from "./db.ts";
 import { addDaysLocal } from "./date-utils.ts";
@@ -73,26 +75,28 @@ export function updateTodoFields(id: string, userId: string, input: TodoPatchInp
     vals.push(input.projectId ? String(input.projectId).trim() : "");
     changed.push("projectId");
   }
-  if (input.assigneeId !== undefined) {
-    // assigned_to 是旧列（迁移 v9 前的字段），与 assignee_id 同步写入以兼容历史查询
-    fields.push("assignee_id = ?");
-    fields.push("assigned_to = ?");
-    const aid = input.assigneeId ? String(input.assigneeId).trim() : "";
-    vals.push(aid, aid);
-    changed.push("assigneeId");
-  }
-  if (input.assigneeName !== undefined) {
-    fields.push("assignee_name = ?");
-    vals.push(input.assigneeName ? String(input.assigneeName).trim() : "");
-    changed.push("assigneeName");
-  }
-
-  if (fields.length === 0) return [];
-
-  vals.push(id, userId);
+  const updatesAssignee = input.assigneeName !== undefined || input.assigneeId !== undefined;
+  if (fields.length === 0 && !updatesAssignee) return [];
 
   db.exec("BEGIN IMMEDIATE;");
   try {
+    // Resolve existing assignments under the write lock, so a concurrent unassignment
+    // cannot be undone through the historical-assignment exception.
+    if (updatesAssignee) {
+      const row = input.assigneeId === undefined
+        ? db.prepare("SELECT COALESCE(NULLIF(assignee_id, ''), assigned_to) AS assignee_id FROM user_todos WHERE id = ? AND user_id = ?").get(id, userId)
+        : undefined;
+      const assignee = resolveTodoAssignee(userId, id, input.assigneeId !== undefined ? input.assigneeId : row?.assignee_id);
+      if (input.assigneeId !== undefined) {
+        fields.push("assignee_id = ?", "assigned_to = ?");
+        vals.push(assignee.id, assignee.id);
+        changed.push("assigneeId");
+      }
+      fields.push("assignee_name = ?");
+      vals.push(assignee.name);
+      changed.push("assigneeName");
+    }
+    vals.push(id, userId);
     const assignmentsBefore = captureTaskAssignments({ ownerId: userId, todoId: id });
     // 必须在 UPDATE 之前读取：更新后这一列已是新值，就拿不到「源项目」了
     const before = db
@@ -216,8 +220,11 @@ function syncProjectMilestonesInTransaction(
       const tPriority =
         t.priority === "high" || t.priority === "low" ? t.priority : "medium";
       const tDueDate = t.dueDate ? String(t.dueDate).slice(0, 10) : "";
-      const tAssigneeId = t.assigneeId ? String(t.assigneeId).trim() : "";
-      const tAssigneeName = t.assigneeName ? String(t.assigneeName).trim() : "";
+      const assignee = t.id && existingIds.has(t.id)
+        ? resolveTodoAssignee(userId, t.id, t.assigneeId)
+        : validateAssignee(userId, t.assigneeId);
+      const tAssigneeId = assignee.id;
+      const tAssigneeName = assignee.name;
 
       if (t.id && existingIds.has(t.id)) {
         incomingIds.add(t.id);
@@ -355,8 +362,9 @@ export function createTodo(userId: string, input: CreateTodoInput): string {
     input.priority === "high" || input.priority === "low" ? input.priority : "medium";
   const dueDate = input.dueDate ? String(input.dueDate).slice(0, 10) : "";
   const projectId = input.projectId ? String(input.projectId).trim() : "";
-  const assigneeId = input.assigneeId ? String(input.assigneeId).trim() : "";
-  const assigneeName = input.assigneeName ? String(input.assigneeName).trim() : "";
+  const assignee = validateAssignee(userId, input.assigneeId);
+  const assigneeId = assignee.id;
+  const assigneeName = assignee.name;
 
   db.exec("BEGIN IMMEDIATE;");
   try {
@@ -432,7 +440,7 @@ export function createProject(userId: string, input: CreateProjectInput): Create
   const id = `proj-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   const name = String(input.name || "").trim();
   const description = input.description ? String(input.description).trim() : "";
-  const status = String(input.status || "进行中").trim();
+  const status = normalizeProjectStatus(input.status);
   const color = String(input.color || input.statusColor || "#00C776").trim();
   const url = input.url ? String(input.url).trim() : "";
   const now = Date.now();
@@ -462,6 +470,7 @@ export function createProject(userId: string, input: CreateProjectInput): Create
         const tId = `todo-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`;
         const tPriority =
           t.priority === "high" || t.priority === "low" ? t.priority : "medium";
+        const assignee = validateAssignee(userId, t.assigneeId);
         insertTodo.run(
           tId,
           userId,
@@ -469,9 +478,9 @@ export function createProject(userId: string, input: CreateProjectInput): Create
           tPriority,
           t.dueDate ? String(t.dueDate).slice(0, 10) : "",
           id,
-          t.assigneeId ? String(t.assigneeId).trim() : "",
-          t.assigneeId ? String(t.assigneeId).trim() : "",
-          t.assigneeName ? String(t.assigneeName).trim() : "",
+          assignee.id,
+          assignee.id,
+          assignee.name,
           Date.now() + idx,
           idx,
         );
@@ -531,7 +540,7 @@ export function updateProject(projectId: string, userId: string, input: ProjectP
   }
   if (input.status !== undefined) {
     fields.push("status = ?");
-    vals.push(String(input.status).trim());
+    vals.push(normalizeProjectStatus(input.status));
   }
   if (input.color !== undefined || input.statusColor !== undefined) {
     fields.push("status_color = ?");

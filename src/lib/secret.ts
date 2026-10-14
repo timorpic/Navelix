@@ -75,7 +75,7 @@ export function decryptSecret(cipherText: string): string {
 
   try {
     const parts = trimmed.slice(PREFIX.length).split(":");
-    if (parts.length !== 3) return trimmed;
+    if (parts.length !== 3) return "";
     const [ivHex, authTagHex, encryptedHex] = parts;
     const key = getSecretKey();
     const iv = Buffer.from(ivHex, "hex");

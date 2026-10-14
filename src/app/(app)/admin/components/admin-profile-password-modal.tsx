@@ -36,7 +36,7 @@ export default function AdminProfilePasswordModal({
             onChange={(e) => account.setModalOldPassword(e.target.value)}
             placeholder={tx("enter_your_current_password_af9bfad9")}
             required
-            className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#00C776]/40 focus:outline-none"
+            className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand/40 focus:outline-none"
           />
         </div>
 
@@ -52,7 +52,7 @@ export default function AdminProfilePasswordModal({
             onChange={(e) => account.setModalNewPassword(e.target.value)}
             placeholder={tx("enter_a_new_password_at_least_6_characters_99c74898")}
             required
-            className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#00C776]/40 focus:outline-none"
+            className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand/40 focus:outline-none"
           />
         </div>
 
@@ -68,7 +68,7 @@ export default function AdminProfilePasswordModal({
             onChange={(e) => account.setModalConfirmPassword(e.target.value)}
             placeholder={tx("enter_the_new_password_again_322ded8b")}
             required
-            className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#00C776]/40 focus:outline-none"
+            className="w-full h-9 rounded-xl border border-gray-200 dark:border-slate-700 px-3 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-brand/40 focus:outline-none"
           />
         </div>
 
@@ -87,7 +87,7 @@ export default function AdminProfilePasswordModal({
             {tx("cancel_2cd0f3be")}</button>
           <button
             type="submit"
-            className="h-9 rounded-lg bg-[#00C776] hover:bg-[#009a5a] px-5 text-xs font-bold text-white transition-colors cursor-pointer shadow-xs"
+            className="h-9 rounded-lg bg-brand hover:bg-brand-strong px-5 text-xs font-bold text-white transition-colors cursor-pointer shadow-xs"
           >
             {tx("confirm_password_change_e9713ad6")}</button>
         </div>

@@ -26,12 +26,12 @@ export default function BrandLogoText({
         <span className="relative inline-block">
           ı
           <span
-            className="absolute top-[0.14em] left-1/2 -translate-x-1/2 w-[0.22em] h-[0.22em] rounded-full bg-[#00C776] shadow-[0_0_5px_rgba(0,199,118,0.6)]"
+            className="absolute top-[0.14em] left-1/2 -translate-x-1/2 w-[0.22em] h-[0.22em] rounded-full bg-brand shadow-[0_0_5px_rgba(0,199,118,0.6)]"
             aria-hidden="true"
           />
         </span>
         {/* 字母 x：使用主题色高亮 */}
-        <span className="text-[#00C776] font-bold">x</span>
+        <span className="text-brand font-bold">x</span>
       </span>
     );
   }
@@ -47,11 +47,11 @@ export default function BrandLogoText({
           <span className="relative inline-block">
             ı
             <span
-              className="absolute top-[0.14em] left-1/2 -translate-x-1/2 w-[0.22em] h-[0.22em] rounded-full bg-[#00C776] shadow-[0_0_5px_rgba(0,199,118,0.6)]"
+              className="absolute top-[0.14em] left-1/2 -translate-x-1/2 w-[0.22em] h-[0.22em] rounded-full bg-brand shadow-[0_0_5px_rgba(0,199,118,0.6)]"
               aria-hidden="true"
             />
           </span>
-          <span className="text-[#00C776] font-bold">{xChar}</span>
+          <span className="text-brand font-bold">{xChar}</span>
         </span>
       );
     }

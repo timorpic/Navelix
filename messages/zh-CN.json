@@ -1569,5 +1569,12 @@
   "sun_panel_import_counts": "已新增 {v0} 个分组、{v1} 个链接，跳过 {v2} 个重复网址。",
   "sun_panel_next_project": "创建第一个项目",
   "sun_panel_next_calendar": "查看日历待办",
-  "sun_panel_next_ai": "下一步：在项目中试试 AI 拆解（需先配置 AI 服务）。"
+  "sun_panel_next_ai": "下一步：在项目中试试 AI 拆解（需先配置 AI 服务）。",
+  "todo_toggle": "切换任务完成状态：{title}",
+  "todo_title": "任务标题",
+  "todo_priority": "优先级",
+  "token_expires": "到期：{date}",
+  "token_lifetime": "API Token 有效期为 90 天，到期前请换新。",
+  "owner_managed_project": "由创建者管理的项目",
+  "existing_assignee": "原责任人"
 }

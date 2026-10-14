@@ -154,7 +154,7 @@ export default function TodoAdminPanel() {
         <div className="flex items-center gap-2">
           <button
             onClick={submit}
-            className="h-9 px-4 bg-[#00C776] hover:bg-[#009a5a] text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+            className="h-9 px-4 bg-brand hover:bg-brand-strong text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
           >
             {editing ? tx("save_changes_991bb7cf") : tx("add_7a8a11ea")}
           </button>
@@ -196,12 +196,12 @@ export default function TodoAdminPanel() {
                         onClick={() => toggle(todo)}
                         className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer ${
                           todo.done
-                            ? "border-[#00C776] bg-[#00C776]/10"
-                            : "border-gray-300 dark:border-slate-500 hover:border-[#00C776]"
+                            ? "border-brand bg-brand/10"
+                            : "border-gray-300 dark:border-slate-500 hover:border-brand"
                         }`}
                       >
                         {todo.done && (
-                          <svg className="w-3 h-3 text-[#00C776]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-3 h-3 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
                           </svg>
                         )}
@@ -226,7 +226,7 @@ export default function TodoAdminPanel() {
                       <div className="flex items-center justify-end gap-3">
                         <button
                           onClick={() => startEdit(todo)}
-                          className="text-gray-500 dark:text-slate-400 hover:text-[#00C776] font-medium transition-colors cursor-pointer"
+                          className="text-gray-500 dark:text-slate-400 hover:text-brand font-medium transition-colors cursor-pointer"
                         >
                           {tx("edit_a2e86c4b")}</button>
                         <button

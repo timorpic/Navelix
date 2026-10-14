@@ -22,8 +22,8 @@ pnpm dev
 | `pnpm dev` | 开发服务，端口 3721 |
 | `pnpm typecheck` | 严格类型检查，含未使用变量和参数 |
 | `pnpm lint` | ESLint |
-| `pnpm test` | Node 原生测试，串行运行 |
-| `pnpm test:coverage` | 测试及行 60%、函数 55% 覆盖率门禁 |
+| `pnpm test` | 自动创建并清理隔离数据目录，Node 原生测试串行运行 |
+| `pnpm test:coverage` | 已加载模块行 60%、函数 55%；全源码保守行覆盖 23% 门禁与报告 |
 | `pnpm test:e2e:install` | 安装 Playwright Chromium 及系统依赖 |
 | `pnpm test:e2e` | Playwright 端到端流程 |
 | `pnpm build` | Next.js 生产构建 |
@@ -32,11 +32,19 @@ pnpm dev
 
 pre-commit Hook 由 `simple-git-hooks` 生成，指向 `scripts/pre-commit.sh`。该脚本优先使用本机 `pnpm precommit`；本机没有 Node/pnpm 而存在 Docker 时，回退到 `node:24-alpine` 容器执行同一组检查（复用仓库内已安装的 `node_modules`，约半分钟）。两者都不可用时钩子以非零码失败，而不是静默放过——门禁默认为开，需要临时绕过时用 `SKIP_SIMPLE_GIT_HOOKS=1 git commit`。
 
-Node 测试的 `src/**/*.test.ts` glob 已在脚本中加引号，由 Node 展开；不要去掉引号造成部分测试漏跑。测试使用串行配置以避免共享 SQLite 竞争。运行本地测试可先用系统临时目录隔离数据：
+Node 测试由 `scripts/run-tests.mjs` 启动，自动创建全新的系统临时数据目录并在结束后清理；即使调用者设置了 `NAVELIX_DATA_DIR`，也不会沿用它。测试仍串行运行，glob 由 Node 展开。直接使用 Node 测试入口时，数据库连接拒绝默认 `data/` 路径。运行单个文件：
 
 ```bash
-NAVELIX_DATA_DIR="$(mktemp -d /tmp/navelix-test.XXXXXX)" pnpm test
+pnpm test src/lib/__tests__/csrf.test.ts
 ```
+
+覆盖率有两种口径，不能把已加载模块的数字称为全项目覆盖率：
+
+- Node 已加载模块的门禁仍为行 60%、函数 55%，包括真实 `proxy` 与鉴权守卫测试。
+- `coverage/all-source-summary.json` 将所有非测试 TS/TSX 纳入分母，未测文件计 0；全源码保守行覆盖门禁为 23%，依据本次约 23.8% 的测量设置。按目录显示已测文件数与覆盖行。组件测试经 esbuild 打包，Node 当前不能映射回 TSX 源文件，故这些源文件保守计 0；这不是浏览器代码实际覆盖率。
+- `coverage/node.lcov` 保存 Node 原始报告；CI 上传两种报告。HTTP 路由和浏览器行为另由 E2E 验证，不能用业务模块覆盖率替代。
+
+构建也须设置独立 `NAVELIX_DATA_DIR`。本机生产构建与 Playwright 开发服务共享 `.next`，应串行运行，避免互相覆盖产物。
 
 Playwright 配置自行创建临时数据目录，使用端口 3722 和专用初始管理员密码，禁止复用已运行服务。可用 `E2E_DATA_DIR` 指定专用测试目录，不要指向真实业务库。
 
@@ -49,7 +57,7 @@ Playwright 配置自行创建临时数据目录，使用端口 3722 和专用初
 5. 按变更运行相关检查。提交代码前完成类型和 lint；合并前满足 CI 的覆盖率、构建及 E2E 检查。纯文档变更检查链接、路径和命令即可。
 6. 更新相关文档、TODO 与 `[未发布]`，说明验证结果和已知限制，不改写历史发布事实。
 
-CI 配置见 `.github/workflows/ci.yml`，镜像发布与冒烟测试见 `.github/workflows/docker.yml`。两条工作流中的 JavaScript action 均使用 Node.js 24 运行时，应用构建与测试由 `actions/setup-node` 配置为 Node.js 24；action 运行时版本与应用 Node.js 版本独立。本地 Hook 仅执行类型与 lint，不代表完整 CI 已通过。
+普通 push/PR CI 还构建 CE 容器（不推送镜像），使用全新容器文件系统验证登录、读写、密钥隐藏、CSRF、非 root 用户与零 TS 源文件。CI 配置见 `.github/workflows/ci.yml`，镜像发布与冒烟测试见 `.github/workflows/docker.yml`。两条工作流中的 JavaScript action 均使用 Node.js 24 运行时，应用构建与测试由 `actions/setup-node` 配置为 Node.js 24；action 运行时版本与应用 Node.js 版本独立。本地 Hook 仅执行类型与 lint，不代表完整 CI 已通过。
 
 ## 组件交付
 

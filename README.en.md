@@ -145,7 +145,7 @@ docker compose up -d
 | `HOSTNAME` | `0.0.0.0` | Network bind address |
 | `NAVELIX_ADMIN_PASSWORD` | *(empty)* | Initial admin password; if empty a strong one is auto-generated |
 | `NAVELIX_COOKIE_SECURE` | `false` | Cookie Secure attribute; keep `false` on HTTP, set `true` behind HTTPS |
-| `TRUST_PROXY` | `false` | Whether to trust the `X-Forwarded-For` header from a reverse proxy |
+| `TRUST_PROXY` | `false` | Whether to trust forwarded headers set by a reverse proxy. Affects both client IP resolution (`X-Forwarded-For` / `X-Real-IP`) and the `X-Forwarded-Host` / `X-Forwarded-Proto` headers used for CSRF origin checks on write requests. Set to `true` whenever TLS terminates at the proxy (browser uses HTTPS, the app sees HTTP), otherwise writes fail with 403 |
 | `NAVELIX_DATA_DIR` | `/app/data` | Data directory (SQLite DB, backups, logs and initial password file); `/app/data` inside the Docker image, `<cwd>/data` for source deploys |
 | `NAVELIX_LICENSE_KEY` | *(empty)* | Commercial license key; inject it at container start to activate, or activate later from the admin console |
 | `NAVELIX_GITHUB_REPO` | `timorpic/Navelix` | GitHub repo (`owner/repo`) used for version update checks; point it at your own repo after forking |

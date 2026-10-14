@@ -1,3 +1,5 @@
+import { normalizeProjectStatus } from "./project-status.ts";
+import { resolveTodoAssignee } from "./workspace-members.ts";
 import { db, type PublicUser, type UserRow } from "./db.ts";
 import { getWorkspaceRevision } from "./workspace-revision.ts";
 import { getUserTodos } from "./todo-store.ts";
@@ -171,7 +173,7 @@ export function getUserData(userId: string): UserDataResult {
     id: p.id,
     name: p.name,
     description: p.description || "",
-    status: (p.status as Project["status"]) || "in-progress",
+    status: normalizeProjectStatus(p.status),
     color: p.status_color || "#00C776",
     statusColor: p.status_color || "#00C776",
     url: p.url || "",
@@ -359,7 +361,7 @@ export function saveUserProjects(userId: string, items: ProjectInput[]): void {
       userId,
       String(p.name || "未命名项目"),
       String(p.description || ""),
-      String(p.status || "in-progress"),
+      normalizeProjectStatus(p.status),
       String(p.statusColor || p.color || "#00C776"),
       String(p.url || ""),
       typeof p.sortOrder === "number" ? p.sortOrder : index,
@@ -400,8 +402,9 @@ export function saveUserTodos(userId: string, items: TodoInput[]): void {
     if (!t || typeof t !== "object") return;
     const todoId = String(t.id || `todo-${Date.now()}-${index}`);
     incomingIds.push(todoId);
-    const assignedTo = String(t.assignedTo || t.assigneeId || "");
-    const assigneeName = String(t.assigneeName || "");
+    const assignee = resolveTodoAssignee(userId, todoId, t.assigneeId !== undefined ? t.assigneeId : t.assignedTo);
+    const assignedTo = assignee.id;
+    const assigneeName = assignee.name;
     upsert.run(
       todoId,
       userId,

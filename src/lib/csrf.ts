@@ -25,10 +25,6 @@ export function checkCSRF(req: Request): CSRFCheckResult {
   const trustProxy =
     process.env.TRUST_PROXY === "true" || process.env.TRUST_PROXY === "1";
   const rawHost = (trustProxy ? req.headers.get("x-forwarded-host") : null) || req.headers.get("host") || "";
-  const host = rawHost.includes("[")
-    ? rawHost.match(/^\[([^\]]+)\]/)?.[1] || rawHost
-    : rawHost.split(":")[0];
-
   const targetUrlStr = origin || referer;
   if (!targetUrlStr) {
     // 缺失 Origin 和 Referer 头的写请求拒绝
@@ -41,20 +37,11 @@ export function checkCSRF(req: Request): CSRFCheckResult {
 
   try {
     const targetUrl = new URL(targetUrlStr);
-    const targetHost = targetUrl.hostname;
-
-    const isLocalHost = (h: string) =>
-      h === "localhost" || h === "::1" || h.startsWith("127.");
-
-    if (targetHost && host) {
-      if (isLocalHost(targetHost) && isLocalHost(host)) {
-        return { success: true };
-      }
-
-      if (targetHost.toLowerCase() === host.toLowerCase()) {
-        return { success: true };
-      }
-    }
+    const requestUrl = new URL(req.url);
+    const protocol = trustProxy ? (req.headers.get("x-forwarded-proto") || requestUrl.protocol.slice(0, -1)) + ":" : requestUrl.protocol;
+    if (!["http:", "https:"].includes(protocol) || !rawHost || /[\s,/@?#]/.test(rawHost)) throw new Error("Invalid host");
+    const expected = new URL(`${protocol}//${rawHost}`);
+    if (targetUrl.origin === expected.origin) return { success: true };
   } catch {
     // 无效 URL
   }

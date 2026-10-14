@@ -34,6 +34,7 @@ export async function POST(req: Request) {
     tokenId: issued.tokenId,
     name: issued.name,
     tokenPrefix: issued.tokenPrefix,
+    expiresAt: issued.expiresAt,
     message: "API 密钥生成成功！请务必妥善保管，该密钥仅显示一次。",
   });
 }

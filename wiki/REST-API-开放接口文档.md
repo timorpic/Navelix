@@ -56,6 +56,8 @@ nvx_live_a1b2c3d4e5f678901234567890abcdef0123456789abcdef
 
 > 校验 Token 时请勿按固定长度截断或写死正则；请以 `nvx_live_` 前缀 + 后续 hex 字符判断。
 
+API Token 有效期为签发后 **90 天**，创建和列表响应提供 `expiresAt`（毫秒时间戳）。迁移 v20 为旧 Token 设置一次性的升级后 90 天换新窗口；重启不会延长。到期或账号停用后，Bearer 与日历 URL Token 都失效。请在到期前更新集成和订阅链接，避免把 URL Token 留在日志或公开内容中。
+
 ### 🛡️ 请求头结构
 在所有 HTTP 请求中，附加以下 Request Header：
 ```http
@@ -64,6 +66,8 @@ Content-Type: application/json
 ```
 
 ### ⚠️ CSRF / Origin 校验（外部调用的常见 403 原因）
+浏览器来源按协议、主机和端口完整比较（默认端口归一化），不放宽 localhost/回环别名。使用可信反向代理时启用 `TRUST_PROXY`，由代理覆盖 `X-Forwarded-Host` 与 `X-Forwarded-Proto`，不能透传客户端伪造值。普通写请求拒绝 `text/plain`、表单和 multipart 内容类型，应发送 JSON。物理还原 `POST /api/admin/backup` 专门接受 multipart 的 `file` 和 `confirmPassword`（当前管理员密码），仍执行 CSRF 与管理员鉴权。显式无效 Bearer 不会回退到 Cookie 鉴权。
+
 除 `GET` / `HEAD` / `OPTIONS` 外，所有 `/api/**` 写操作都会经过 **CSRF 与 Origin/Referer 校验**：请求若既没有可校验的 `Origin`/`Referer`，也没有 `Authorization: Bearer` 头，将被直接拒绝（403）。
 
 > 结论：**用脚本 / curl / 快捷指令调用写接口时，必须携带 `Authorization: Bearer nvx_live_...`**——带 Bearer 的请求会被自动豁免 CSRF 校验。反之，仅靠 Cookie 会话的裸 curl 调用会被拦截。
@@ -374,15 +378,14 @@ Content-Type: application/json
       "id": "usr_admin",
       "username": "timorpic",
       "displayName": "Timor",
-      "avatar": "",
-      "role": "admin"
+      "avatar": ""
     }
   ]
 }
 ```
 
 > **说明**：
-> - 返回的是**实例内全部用户**（按创建时间升序），没有工作区/租户过滤。
+> - 管理员可查看启用账号；普通用户仅查看自己及存在有效共享分类订阅关系的成员（双向），不返回角色字段。停用账号不进入可指派列表。所有待办、项目里程碑及全量保存入口都校验新增或变更责任人的范围，不允许仅凭未知用户 ID 指派；指派名称以服务端资料为准。保存既有任务时可保留原责任人，即使账号停用或共享关系结束；不能将此例外用于新任务或他人的任务。被指派人可修改标题、日期、优先级和完成状态，但不能代所有者更换责任人或所属项目，请省略 `assigneeId`、`assigneeName` 和 `projectId` 字段。
 > - `displayName` 未设置时会是**空字符串**（不会自动回退为 `username`），集成时请自行兜底：`displayName || username`。
 
 ---
@@ -604,3 +607,9 @@ Content-Type: application/json
 只接受 `zh-CN`、`en`，成功返回 `{ "language": "en" }` 并设置语言 Cookie。登录时同步保存当前账号的个人配置；未登录时仅保存当前浏览器的语言。写请求仍需通过 Origin / CSRF 校验，不接受指定其他用户 ID。非法语言返回 HTTP 400，`code` 为 `INVALID_LOCALE`。
 
 登录用户请求按账号语言返回展示文案，访客依次使用语言 Cookie、Accept-Language 和中文默认值。业务错误响应保留原有 `error`，新增 `message`（本地化展示文案）与 `code`（错误标识）；前端可优先展示 `message`，兼容仍仅提供 `error` 的代理／协议错误响应。不要依赖翻译后的文案判断业务分支。用户创建的任务、项目、笔记与名称保持原文。
+
+## 项目状态与全量保存
+
+内置项目状态存储为 `in-progress`、`research`、`maintenance`、`completed`，页面按语言显示标签。写入旧版精确中文标签或英文标签（`In progress`、`Research`、`Maintenance`、`Completed`）会归一化；v20 自动迁移这些内置标签，自定义状态原文保留且不参与内置状态指标。不要把翻译后的显示文本当作枚举提交。
+
+`POST /api/user/data` 保存 categories/links/projects/todos 全量快照时必须携带最新 GET 响应的 `revision`，字段名为 `expectedRevision`；缺少或过期返回 409，不删除数据。空数组仍代表有意清空自己的数据。favicon 获取同时允许**公网与内网（RFC1918）** HTTP(S) 地址：既便于抓取自建 NAS / 路由器图标（支持 `nas.local` 这类内网域名，按解析出的 IP 判定准入），也照常支持公网书签；解析到回环、链路本地或云元数据地址的目标返回 400，页面、图标及重定向各跳均受 SSRF 校验。

@@ -1,4 +1,5 @@
 "use client";
+import { isActiveProjectStatus } from "@/lib/project-status";
 
 import { useTranslations } from "next-intl";
 import { useState, useEffect, useMemo } from "react";
@@ -37,13 +38,7 @@ export default function RightSidebar({
     else if (hour >= 14 && hour < 19) greet = tx("good_afternoon_552594ef");
     else greet = tx("good_evening_d8e9a7fa");
 
-    const inProgressProjects = projects.filter(
-      (p) =>
-        (p.status || "").includes("进行") ||
-        (p.status || "").includes("开发") ||
-        (p.status || "").includes("研究") ||
-        (p.status || "").toLowerCase().includes("progress"),
-    );
+    const inProgressProjects = projects.filter(p => isActiveProjectStatus(p.status));
 
     const pendingTodos = todos.filter((t) => !t.done);
     const highPrioTodos = pendingTodos.filter((t) => t.priority === "high");
@@ -231,7 +226,7 @@ export default function RightSidebar({
           {/* 展开时顶部的收起按钮 + 品牌标语 */}
           <div className="flex items-center justify-between px-3 pt-2 lg:pt-3">
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00C776] animate-pulse shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse shrink-0" />
               <span className="text-[10px] text-gray-400 dark:text-slate-500 font-black tracking-wider truncate">
                 Powered By ibin_timorpic
               </span>
@@ -261,13 +256,13 @@ export default function RightSidebar({
               <div>
                 <h3 className="text-xs font-black text-gray-900 dark:text-white tracking-wide flex items-center gap-1.5">
                   <span>AI Copilot</span>
-                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#00C776]/15 text-[#00C776] border border-[#00C776]/30">
+                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-brand/15 text-brand border border-brand/30">
                     {tx("copilot_75efcbe2")}</span>
                 </h3>
               </div>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[#00C776] animate-pulse" />
+              <span className="h-2 w-2 rounded-full bg-brand animate-pulse" />
               <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400">
                 {tx("online_6fcf7d38")}</span>
             </div>
@@ -286,7 +281,7 @@ export default function RightSidebar({
 
               {/* 发现列表 */}
               <div className="space-y-1 bg-gray-50/70 dark:bg-slate-800/50 p-2 rounded-lg text-[11px] text-gray-700 dark:text-slate-300">
-                <span className="font-bold text-[#00C776]">{tx("i_noticed_45306ac8")}</span>
+                <span className="font-bold text-brand">{tx("i_noticed_45306ac8")}</span>
                 {copilotInsight.observations.map((obs, idx) => (
                   <p key={idx} className="leading-relaxed truncate">
                     {obs}
@@ -311,7 +306,7 @@ export default function RightSidebar({
                 onClick={() =>
                   handleSendChat(tx("using_my_current_projects_active_tasks_and_unfin_6e6f7c93"))
                 }
-                className="w-full py-1.5 px-3 bg-[#00C776] hover:bg-[#00B068] text-white rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-1.5 px-3 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <span>{tx("plan_my_day_cc492c96")}</span>
                 <span>→</span>
@@ -332,7 +327,7 @@ export default function RightSidebar({
                   <div
                     className={`max-w-[90%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
                       msg.sender === "user"
-                        ? "bg-[#00C776] text-white rounded-br-none"
+                        ? "bg-brand text-white rounded-br-none"
                         : "bg-white/90 dark:bg-slate-800 text-gray-800 dark:text-slate-100 shadow-2xs border border-gray-100 dark:border-slate-700 rounded-bl-none"
                     }`}
                   >
@@ -366,12 +361,12 @@ export default function RightSidebar({
               }}
               aria-label={tx("ask_ai_copilot_a_question_or_give_an_instruction_37a91290")}
               placeholder={tx("ask_copilot_to_plan_break_down_or_search_28015430")}
-              className="w-full pl-3 pr-9 py-2 bg-white/90 dark:bg-slate-900 rounded-xl border border-gray-200/80 dark:border-slate-700 text-xs text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 focus:border-[#00C776]"
+              className="w-full pl-3 pr-9 py-2 bg-white/90 dark:bg-slate-900 rounded-xl border border-gray-200/80 dark:border-slate-700 text-xs text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand"
             />
             <button
               onClick={() => handleSendChat()}
               disabled={isTyping}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#00C776] hover:text-[#009a5a] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-brand hover:text-brand-strong transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               title={tx("send_0e2ebb3f")}
             >
               <svg className="w-4 h-4 transform rotate-90" fill="currentColor" viewBox="0 0 24 24">
@@ -408,7 +403,7 @@ export default function RightSidebar({
                     href={targetHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 hover:text-[#00C776] dark:text-slate-400 dark:hover:text-[#00C776] border border-gray-200/60 dark:border-slate-700 transition-colors"
+                    className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 hover:text-brand dark:text-slate-400 dark:hover:text-brand border border-gray-200/60 dark:border-slate-700 transition-colors"
                     title={s.label}
                   >
                     {s.icon}

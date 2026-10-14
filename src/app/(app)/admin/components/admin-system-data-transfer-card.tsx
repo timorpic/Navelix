@@ -62,7 +62,7 @@ export default function AdminSystemDataTransferCard({
           <button
             disabled={transfer.importing}
             onClick={() => sunPanelFileRef.current?.click()}
-            className="w-full py-1.5 bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            className="w-full py-1.5 bg-brand hover:bg-brand-strong text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
           >
             <span>☀️</span>
             <span>{tx("choose_json_file_405a583f")}</span>

@@ -33,7 +33,7 @@ beforeEach(() => cleanup());
 
 describe("Overlay", () => {
   it("渲染为固定定位的居中遮罩，并包含子元素", () => {
-    const r = render(Overlay, { children: "面板内容" });
+    const r = render(Overlay, { children: "面板内容", title: "面板标题", onClose: () => {} });
     const root = query("div.fixed.inset-0");
     assert.ok(root, "应渲染 fixed inset-0 遮罩");
     assert.ok(root!.className.includes("items-center"));
@@ -44,7 +44,7 @@ describe("Overlay", () => {
   });
 
   it("不包裹额外层（子元素直接落在遮罩上）", () => {
-    const r = render(Overlay, { children: "X" });
+    const r = render(Overlay, { children: "X", title: "t", onClose: () => {} });
     const root = query("div.fixed.inset-0")!;
     // Overlay 刻意不引入包装 div（否则 flex 居中的对象会变成包装层而非面板本身）。
     // 传字符串 children 时 React 渲染为直接文本节点，因此 children 应为 0
@@ -57,12 +57,32 @@ describe("Overlay", () => {
   it("传入元素时该元素成为遮罩的直接子节点", () => {
     const { createElement } = require("react") as typeof import("react");
     const panel = createElement("section", { className: "panel" }, "面板");
-    const r = render(Overlay, { children: panel });
+    const r = render(Overlay, { children: panel, title: "t", onClose: () => {} });
     const root = query("div.fixed.inset-0")!;
     assert.equal(root.children.length, 1);
     assert.equal(root.children[0].tagName, "SECTION");
     assert.ok((root.children[0] as HTMLElement).className.includes("panel"));
     r.unmount();
+  });
+
+  // 自定义布局的弹窗（日程管理面板等）依赖 Overlay 提供对话框语义与键盘行为。
+  // 这些属性此前由各调用点自行手写，漏写不会被类型检查发现。
+  it("提供对话框语义、Escape 关闭与关闭后焦点恢复", () => {
+    const opener = document.createElement("button");
+    document.body.appendChild(opener);
+    opener.focus();
+    let closed = 0;
+    const r = render(Overlay, { children: "内容", title: "日程标题", onClose: () => { closed++; } });
+    const panel = query('[role="dialog"]')!;
+    assert.equal(panel.getAttribute("aria-modal"), "true");
+    assert.equal(panel.getAttribute("aria-label"), "日程标题");
+    assert.equal(panel.getAttribute("tabindex"), "-1");
+    assert.ok(document.activeElement === panel, "打开时焦点进入对话框");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    assert.equal(closed, 1, "Escape 触发 onClose");
+    r.unmount();
+    assert.ok(document.activeElement === opener, "关闭后焦点回到触发元素");
+    opener.remove();
   });
 });
 
@@ -77,7 +97,9 @@ describe("Toast", () => {
     const r = render(Toast, { message: "已保存" });
     const el = getByText("已保存")!;
     assert.ok(el.className.includes("rounded-xl"));
-    assert.ok(el.className.includes("border-[#00C776]/30"));
+    assert.ok(el.className.includes("border-brand/30"));
+    assert.equal(el.getAttribute("role"), "status");
+    assert.equal(el.getAttribute("aria-live"), "polite");
     assert.equal(query("div.fixed.top-4"), null, "banner 不应固定定位");
     r.unmount();
   });

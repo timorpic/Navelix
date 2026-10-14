@@ -134,3 +134,32 @@ describe("ConfirmDialog 层级", () => {
     );
   });
 });
+
+describe("dialog keyboard behavior", () => {
+  it("manages focus by default, traps Tab, closes on Escape and restores the opener", () => {
+    const opener = document.createElement("button");
+    document.body.appendChild(opener); opener.focus();
+    let closed = 0;
+    const r = render(Modal, { open: true, title: "keyboard", onClose: () => { closed++; }, children: null });
+    const panel = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    assert.ok(document.activeElement === panel, "dialog receives focus");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+    assert.ok(document.activeElement === panel.querySelector("button"), "Tab stays inside the dialog");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+    assert.ok(document.activeElement === panel.querySelector("button"), "Tab stays inside the dialog");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    assert.equal(closed, 1);
+    r.unmount(); assert.ok(document.activeElement === opener, "focus returns to opener");
+    opener.remove();
+  });
+  it("only the highest layer handles Escape and restores focus to the lower dialog", () => {
+    let lowerClosed = 0, upperClosed = 0;
+    const lower = render(Modal, { open: true, title: "lower", onClose: () => { lowerClosed++; } });
+    const lowerPanel = document.querySelector('[role="dialog"]');
+    const upper = render(ConfirmDialog, { open: true, title: "upper", message: "confirm", onConfirm: () => {}, onClose: () => { upperClosed++; } });
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    assert.equal(upperClosed, 1); assert.equal(lowerClosed, 0);
+    upper.unmount(); assert.ok(document.activeElement === lowerPanel, "focus returns to lower dialog");
+    lower.unmount();
+  });
+});

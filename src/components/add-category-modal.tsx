@@ -81,7 +81,7 @@ export default function AddCategoryModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Finance"
-            className="h-10 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-[#00C776] focus:outline-none focus:ring-2 focus:ring-[#00C776]/20"
+            className="h-10 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
             autoFocus
           />
         </div>
@@ -97,7 +97,7 @@ export default function AddCategoryModal({
                 onClick={() => setIcon(emoji)}
                 className={`flex h-9 w-9 items-center justify-center rounded-lg border text-lg transition-all ${
                   icon === emoji
-                    ? "border-[#00C776] bg-[#00C776]/10"
+                    ? "border-brand bg-brand/10"
                     : "border-gray-200 hover:border-gray-300"
                 }`}
               >
@@ -114,7 +114,7 @@ export default function AddCategoryModal({
               type="checkbox"
               checked={isTeamShared}
               onChange={(e) => setIsTeamShared(e.target.checked)}
-              className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776]/30 cursor-pointer"
+              className="w-4 h-4 rounded text-brand focus:ring-brand/30 cursor-pointer"
             />
             <span className="font-semibold">{tx("share_this_category_with_the_team_other_members__366fc3d9")}</span>
           </label>
@@ -130,7 +130,7 @@ export default function AddCategoryModal({
                 const r = await copyShareLink("category", category.id, category.name);
                 flash(text(r.message));
               }}
-              className="inline-flex items-center gap-1 text-xs text-[#00C776] hover:text-[#009a5a] font-medium py-1 px-2 rounded hover:bg-[#00C776]/10 transition-colors"
+              className="inline-flex items-center gap-1 text-xs text-brand hover:text-brand-strong font-medium py-1 px-2 rounded hover:bg-brand/10 transition-colors"
             >
               {tx("copy_share_link_c2503385")}</button>
           ) : <div />}
@@ -144,7 +144,7 @@ export default function AddCategoryModal({
             </button>
             <button
               type="submit"
-              className="h-9 rounded-lg bg-[#00C776] px-5 text-sm font-medium text-white transition-colors hover:bg-[#009a5a]"
+              className="h-9 rounded-lg bg-brand px-5 text-sm font-medium text-white transition-colors hover:bg-brand-strong"
             >
               {isEdit ? "Save" : "Add Category"}
             </button>

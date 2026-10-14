@@ -1,6 +1,7 @@
 "use client";
 
-import { todoUrl } from "@/lib/todo-url";
+import { useWorkspaceTodos } from "@/hooks/use-workspace-todos";
+
 
 import { useTranslations } from "next-intl";
 import { useState, useEffect, useMemo } from "react";
@@ -78,19 +79,7 @@ export default function DashboardView({
   const projectMetrics = useMemo(() => computeProjectMetrics(projects), [projects]);
 
   // 切换待办完成状态
-  const handleToggleTodo = async (id: string, done: boolean, ownerId?: string) => {
-    try {
-      const response = await fetch(todoUrl(id, ownerId), {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: !done }),
-      });
-        if (!response.ok) return;
-      refreshData();
-    } catch {
-      // ignore
-    }
-  };
+  const { toggleTodo: handleToggleTodo } = useWorkspaceTodos();
 
   return (
     <div className="flex flex-col gap-6 animate-fadeIn pb-12">
@@ -100,7 +89,7 @@ export default function DashboardView({
           <h2 className="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2">
             <span>📈</span>
             <span>{tx("your_workspace_dashboard_3f5e2093")}</span>
-            <span className="px-2 py-0.5 rounded-full bg-[#00C776]/10 text-[#00C776] text-[10px] font-bold border border-[#00C776]/20">
+            <span className="px-2 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-bold border border-brand/20">
               {tx("live_overview_dc554371")}</span>
           </h2>
           <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
@@ -205,7 +194,7 @@ export default function DashboardView({
             </span>
           </div>
           <div className="mt-2.5 flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-[#00C776]">
+            <span className="text-2xl font-black text-brand">
               {serviceHealth.uptimeRate}%
             </span>
             <span className="text-xs font-bold text-gray-400 dark:text-slate-500">
@@ -238,15 +227,15 @@ export default function DashboardView({
 
               return (
                 <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
-                  <span className="text-[10px] font-bold text-gray-400 group-hover:text-[#00C776] transition-colors">
+                  <span className="text-[10px] font-bold text-gray-400 group-hover:text-brand transition-colors">
                     {hours > 0 ? `${hours}h` : "0"}
                   </span>
                   <div className="w-full max-w-[28px] bg-gray-100 dark:bg-slate-800 rounded-t-lg overflow-hidden h-full flex items-end">
                     <div
                       className={`w-full rounded-t-lg transition-all duration-500 ${
                         isToday
-                          ? "bg-gradient-to-t from-[#00C776] to-teal-400 shadow-xs"
-                          : "bg-emerald-200 dark:bg-emerald-900/60 group-hover:bg-[#00C776]"
+                          ? "bg-gradient-to-t from-brand to-teal-400 shadow-xs"
+                          : "bg-emerald-200 dark:bg-emerald-900/60 group-hover:bg-brand"
                       }`}
                       style={{ height: `${Math.max(heightPercent, 6)}%` }}
                     />
@@ -254,7 +243,7 @@ export default function DashboardView({
                   <span
                     className={`text-[11px] font-bold ${
                       isToday
-                        ? "text-[#00C776]"
+                        ? "text-brand"
                         : "text-gray-500 dark:text-slate-400"
                     }`}
                   >
@@ -337,7 +326,7 @@ export default function DashboardView({
                         href={l.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-400 hover:text-[#00C776] text-xs transition-colors"
+                        className="text-gray-400 hover:text-brand text-xs transition-colors"
                       >
                         ↗
                       </a>
@@ -383,7 +372,7 @@ export default function DashboardView({
                       type="checkbox"
                       checked={item.done}
                       onChange={() => handleToggleTodo(item.id, item.done, item.ownerId)}
-                      className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776] border-gray-300 dark:border-slate-600 cursor-pointer"
+                      className="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 dark:border-slate-600 cursor-pointer"
                     />
                     <div className="min-w-0">
                       <span className="block text-xs font-bold text-gray-800 dark:text-slate-200 truncate">
@@ -550,7 +539,7 @@ export default function DashboardView({
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-[#00C776]">
+                  <span className="text-xs font-bold text-brand">
                     {item.clicks} {tx("clicks_de6122e0")}</span>
                 </div>
               </div>

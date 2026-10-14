@@ -1,3 +1,5 @@
+import { AssignmentError } from "@/lib/workspace-members";
+import { normalizeProjectStatus } from "@/lib/project-status";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
@@ -31,7 +33,7 @@ export async function GET() {
       id: r.id,
       name: r.name,
       description: r.description || "",
-      status: r.status || "进行中",
+      status: normalizeProjectStatus(r.status),
       color: r.status_color || "#00C776",
       statusColor: r.status_color || "#00C776",
       url: r.url || "",
@@ -65,6 +67,7 @@ export async function POST(req: NextRequest) {
 
     return localizedJson({ success: true, project });
   } catch (err) {
+    if (err instanceof AssignmentError) return localizedJson({ error: err.message }, { status: 403 });
     return localizedJson(
       { error: err instanceof Error ? err.message : "创建失败" },
       { status: 500 },

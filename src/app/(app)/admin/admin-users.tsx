@@ -146,7 +146,7 @@ export default function AdminUsersPanel() {
               setUserFormError("");
               setShowAddUser(true);
             }}
-            className="h-9 px-4 bg-[#00C776] hover:bg-[#009a5a] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="h-9 px-4 bg-brand hover:bg-brand-strong text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <span className="text-sm">+</span>
             <span>{tx("add_account_7d76fa80")}</span>
@@ -196,7 +196,7 @@ export default function AdminUsersPanel() {
                           setUserFormError("");
                           setShowAddUser(true);
                         }}
-                        className="text-gray-500 dark:text-slate-400 hover:text-[#00C776] font-medium transition-colors cursor-pointer"
+                        className="text-gray-500 dark:text-slate-400 hover:text-brand font-medium transition-colors cursor-pointer"
                       >
                         {tx("edit_a2e86c4b")}</button>
                       <button type="button" disabled={status.saving || u.id === currentUser?.id}
@@ -287,7 +287,7 @@ export default function AdminUsersPanel() {
           )}
           <button
             onClick={handleAddUser}
-            className="h-9 rounded-lg bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-semibold transition-colors cursor-pointer"
+            className="h-9 rounded-lg bg-brand hover:bg-brand-strong text-white text-xs font-semibold transition-colors cursor-pointer"
           >
             {editingUser ? tx("save_changes_991bb7cf") : tx("create_account_f48d12cf")}
           </button>

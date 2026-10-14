@@ -103,10 +103,10 @@ describe("computeTodoMetrics", () => {
 describe("computeProjectMetrics", () => {
   const project = (status: string) => ({ id: "p", name: "P", status }) as never;
 
-  it("按状态自由文本归类（包含匹配）", () => {
+  it("按稳定枚举与精确旧标签归类", () => {
     const r = computeProjectMetrics([
       project("进行中"),
-      project("开发中"),
+      project("in-progress"),
       project("已完成"),
       project("研究中"),
       project("维护中"),
@@ -118,8 +118,8 @@ describe("computeProjectMetrics", () => {
     assert.equal(r.inProgress, 2, "「进行中」与「开发中」都算推进中");
   });
 
-  it("英文 progress 也计入推进中", () => {
-    assert.equal(computeProjectMetrics([project("In Progress")]).inProgress, 1);
+  it("自定义英文标签不猜测归类", () => {
+    assert.equal(computeProjectMetrics([project("In Progress")]).inProgress, 0);
   });
 
   it("交付率四舍五入，无项目时为 0", () => {

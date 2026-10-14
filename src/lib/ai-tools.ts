@@ -1,5 +1,6 @@
+import { normalizeProjectStatus, projectStatusLabel } from "./project-status.ts";
 import { randomBytes } from "node:crypto";
-import { deleteProjectCascade } from "./todos-projects.ts";
+import { createTodo, createProject, deleteProjectCascade } from "./todos-projects.ts";
 import { db } from "./db.ts";
 import { emitUserEvent } from "./events.ts";
 
@@ -24,14 +25,6 @@ export type AiToolExecResult =
   | { ok: true; message: string }
   | { ok: false; error: string };
 
-function todoId(): string {
-  return `todo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function projectId(): string {
-  return `proj-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-}
-
 function normalizePriority(v: unknown): string {
   return v === "high" || v === "low" ? (v as string) : "medium";
 }
@@ -48,22 +41,11 @@ function runCreateTodo(userId: string, args: Record<string, unknown>): AiToolExe
   const title = str(args.title);
   if (!title) return { ok: false, error: "待办标题不能为空" };
 
-  const id = todoId();
   const priority = normalizePriority(args.priority);
   const dueDate = str(args.dueDate).slice(0, 10);
   const projectIdVal = str(args.projectId);
 
-  const maxSort = db
-    .prepare(
-      "SELECT COALESCE(MAX(sort_order), -1) AS m FROM user_todos WHERE user_id = ? AND done = 0",
-    )
-    .get(userId) as { m: number };
-
-  db.prepare(
-    `INSERT INTO user_todos (
-      id, user_id, title, priority, done, due_date, project_id, created_at, sort_order
-    ) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?)`,
-  ).run(id, userId, title, priority, dueDate, projectIdVal, Date.now(), maxSort.m + 1);
+  createTodo(userId, { title, priority, dueDate, projectId: projectIdVal });
 
   emitUserEvent(userId, "todos:change");
   return {
@@ -138,24 +120,11 @@ function runCreateProject(userId: string, args: Record<string, unknown>): AiTool
   const name = str(args.name);
   if (!name) return { ok: false, error: "项目名称不能为空" };
 
-  const id = projectId();
-  const status = str(args.status, "进行中");
-  const color = str(args.color, "#00C776");
-  const url = str(args.url);
-  const description = str(args.description);
-  const now = Date.now();
-
-  const maxSort = db
-    .prepare("SELECT COALESCE(MAX(sort_order), -1) AS m FROM projects WHERE user_id = ?")
-    .get(userId) as { m: number };
-
-  db.prepare(
-    `INSERT INTO projects (id, user_id, name, description, status, status_color, url, sort_order, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(id, userId, name, description, status, color, url, maxSort.m + 1, now, now);
+  const status = normalizeProjectStatus(args.status);
+  createProject(userId, { name, status, color: str(args.color, "#00C776"), url: str(args.url), description: str(args.description) });
 
   emitUserEvent(userId, "projects:change");
-  return { ok: true, message: `已创建项目「${name}」（状态：${status}）。` };
+  return { ok: true, message: `已创建项目「${name}」（状态：${projectStatusLabel(status)}）。` };
 }
 
 function runUpdateProject(userId: string, args: Record<string, unknown>): AiToolExecResult {
@@ -177,7 +146,7 @@ function runUpdateProject(userId: string, args: Record<string, unknown>): AiTool
   }
   if (args.status !== undefined) {
     fields.push("status = ?");
-    vals.push(str(args.status));
+    vals.push(normalizeProjectStatus(args.status));
   }
   if (args.color !== undefined) {
     fields.push("status_color = ?");

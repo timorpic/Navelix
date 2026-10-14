@@ -87,7 +87,7 @@ export async function getSessionUser(req?: Request): Promise<PublicUser | null> 
     }
   }
 
-  if (authHeader && authHeader.startsWith("Bearer ")) {
+  if (authHeader && /^Bearer /i.test(authHeader)) {
     const rawToken = authHeader.slice(7).trim();
     if (rawToken.startsWith(API_TOKEN_PREFIX)) {
       const tokenHash = hashToken(rawToken);
@@ -96,9 +96,9 @@ export async function getSessionUser(req?: Request): Promise<PublicUser | null> 
           `SELECT u.id, u.username, u.password_hash, u.display_name, u.email, u.bio, u.role, u.avatar, u.created_at, t.id as token_id
            FROM api_tokens t
            JOIN users u ON u.id = t.user_id
-           WHERE t.token_hash = ? AND u.disabled = 0`,
+           WHERE t.token_hash = ? AND t.expires_at > ? AND u.disabled = 0`,
         )
-        .get(tokenHash) as (UserRow & { token_id: string }) | undefined;
+        .get(tokenHash, now) as (UserRow & { token_id: string }) | undefined;
 
       if (tokenRow) {
         db.prepare("UPDATE api_tokens SET last_used_at = ? WHERE id = ?").run(
@@ -109,6 +109,9 @@ export async function getSessionUser(req?: Request): Promise<PublicUser | null> 
       }
     }
   }
+
+  // An explicit invalid credential must never fall back to browser cookies (CSRF exemption).
+  if (authHeader) return null;
 
   // 2. 尝试从 Cookie 中鉴权 (用于 Web 浏览器内部登录会话)
   let token: string | undefined;

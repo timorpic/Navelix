@@ -171,7 +171,7 @@ export default function AvatarPicker({
                 onClick={() => setActiveCategory(cat.id)}
                 className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
                   activeCategory === cat.id
-                    ? "bg-[#00C776] text-white"
+                    ? "bg-brand text-white"
                     : "bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-100"
                 }`}
               >
@@ -192,7 +192,7 @@ export default function AvatarPicker({
                   title={p.name}
                   className={`group relative aspect-square overflow-hidden rounded-full border-2 transition-all cursor-pointer p-0.5 ${
                     selected
-                      ? "border-[#00C776] ring-2 ring-[#00C776]/30 scale-105"
+                      ? "border-brand ring-2 ring-brand/30 scale-105"
                       : "border-gray-100 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-slate-500"
                   }`}
                 >
@@ -233,7 +233,7 @@ export default function AvatarPicker({
             <button
               type="button"
               onClick={() => setRandomSalt((prev) => prev + 1)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-[#00C776] hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-xs font-bold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-brand hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-xs font-bold transition-colors cursor-pointer"
             >
               <span>🎲</span>
               <span>{tx("generate_another_batch_fca2fe10")}</span>
@@ -251,7 +251,7 @@ export default function AvatarPicker({
                   title={tx("message_b2d2d8348d02", {v0: i + 1})}
                   className={`group relative aspect-square overflow-hidden rounded-full border-2 transition-all cursor-pointer p-0.5 ${
                     isCurrent
-                      ? "border-[#00C776] ring-2 ring-[#00C776]/30 scale-105"
+                      ? "border-brand ring-2 ring-brand/30 scale-105"
                       : "border-gray-200 dark:border-slate-700 hover:border-emerald-400"
                   }`}
                 >
@@ -291,7 +291,7 @@ export default function AvatarPicker({
               />
               <button
                 type="submit"
-                className="px-3.5 py-1.5 bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shrink-0"
+                className="px-3.5 py-1.5 bg-brand hover:bg-brand-strong text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shrink-0"
               >
                 {tx("apply_url_213f5505")}</button>
             </div>
@@ -312,7 +312,7 @@ export default function AvatarPicker({
               accept="image/*"
               aria-label={tx("upload_avatar_e2ab9635")}
               onChange={handleFile}
-              className="w-full text-xs text-gray-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[#00C776]/10 file:text-[#009a5a] file:text-xs file:font-semibold file:cursor-pointer cursor-pointer"
+              className="w-full text-xs text-gray-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-brand/10 file:text-brand-strong file:text-xs file:font-semibold file:cursor-pointer cursor-pointer"
             />
             <p className="mt-1 text-[10px] text-gray-400 dark:text-slate-400">
               {tx("supports_png_jpg_svg_webp_resized_to_128_128_bef_3ad5249e")}</p>

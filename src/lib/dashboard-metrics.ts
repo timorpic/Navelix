@@ -1,3 +1,4 @@
+import { normalizeProjectStatus } from "./project-status.ts";
 import type { Project, SiteLink, TodoItem } from "@/types";
 import { toLocalDateStr } from "./date-utils.ts";
 
@@ -107,27 +108,16 @@ export interface ProjectMetrics {
 /**
  * 项目生命周期分布。
  *
- * 状态是自由文本（用户可自定义），因此每类都用「包含」而非相等匹配；
- * 已完成额外接受精确的「已完成」。注意这几个判定存在重叠可能
- * （如「已完成开发」会同时命中 inProgress 与 completed），此处保留原行为。
+ * Built-in stable values and exact legacy labels share the same classification.
+ * Custom labels remain unclassified; substring matches must not overlap.
  */
 export function computeProjectMetrics(projects: Project[]): ProjectMetrics {
   const total = projects.length || 1;
-  const inProgress = projects.filter(
-    (p) =>
-      (p.status || "").includes("进行") ||
-      (p.status || "").includes("开发") ||
-      (p.status || "").toLowerCase().includes("progress"),
-  ).length;
-  const completed = projects.filter(
-    (p) => p.status === "已完成" || (p.status || "").includes("完成"),
-  ).length;
-  const research = projects.filter(
-    (p) => p.status === "研究中" || (p.status || "").includes("研究"),
-  ).length;
-  const maintenance = projects.filter(
-    (p) => p.status === "维护中" || (p.status || "").includes("维护"),
-  ).length;
+  const count = (status: string) => projects.filter(p => normalizeProjectStatus(p.status) === status).length;
+  const inProgress = count("in-progress");
+  const completed = count("completed");
+  const research = count("research");
+  const maintenance = count("maintenance");
 
   return {
     total: projects.length,

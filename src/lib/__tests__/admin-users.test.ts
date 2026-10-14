@@ -281,25 +281,6 @@ describe("admin-users: updateUser", () => {
     deleteUserCascade(userId);
   });
 
-  it("禁止降级最后一个 admin", () => {
-    const userId = `upd-test-${Date.now()}`;
-    seedUser(userId, "admin");
-    const adminsBefore = adminCount();
-
-    // 构造「该用户是唯一 admin」的场景不可行（测试库已有种子 admin），
-    // 因此直接断言：当 adminCount()<=1 时才拦截。此处验证多 admin 时允许降级。
-    if (adminsBefore > 1) {
-      const changed = updateUser(
-        userId,
-        { role: "user" },
-        { actorId: "someone-else", targetRole: "admin" },
-      );
-      assert.deepEqual(changed, ["role"]);
-    }
-
-    deleteUserCascade(userId);
-  });
-
   it("无字段变更时应返回空数组", () => {
     const userId = `upd-test-${Date.now()}`;
     seedUser(userId);

@@ -52,7 +52,7 @@ function LoginForm() {
   };
 
   const fieldClass =
-    "h-11 w-full rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-[#00C776]/10 focus:border-[#00C776]";
+    "h-11 w-full rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand";
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#0a2e1c] via-[#006b3a] to-[#0d4a2a] px-4 py-10">
@@ -61,11 +61,11 @@ function LoginForm() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:44px_44px]" />
         <div className="absolute -left-24 -top-32 h-96 w-96 rounded-full bg-[#33d68a]/30 blur-3xl animate-float" />
         <div
-          className="absolute -right-24 top-1/3 h-80 w-80 rounded-full bg-[#009a5a]/40 blur-3xl animate-float"
+          className="absolute -right-24 top-1/3 h-80 w-80 rounded-full bg-brand-strong/40 blur-3xl animate-float"
           style={{ animationDelay: "1.5s" }}
         />
         <div
-          className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-[#00C776]/25 blur-3xl animate-float"
+          className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-brand/25 blur-3xl animate-float"
           style={{ animationDelay: "3s" }}
         />
       </div>
@@ -281,15 +281,15 @@ function LoginForm() {
                   _
                 </button>
                 <details className="text-right">
-                  <summary className="cursor-pointer text-xs font-medium text-gray-400 transition-colors hover:text-[#009a5a] list-none">
+                  <summary className="cursor-pointer text-xs font-medium text-gray-400 transition-colors hover:text-brand-strong list-none">
                     {tx("forgot_password_1d02d7f1")}</summary>
                   <div className="mt-2 w-64 rounded-xl border border-gray-100 bg-white p-3 text-left text-[11px] leading-relaxed text-gray-500 shadow-sm">
                     <p>
                       {tx("user_accounts_ask_an_administrator_to_reset_your_9eaa2a0b")}</p>
                     <p className="mt-1">
-                      {tx("administrator_accounts_there_is_no_self_service__35fb4393")}<code className="font-mono text-[10px] text-[#009a5a]">NAVELIX_ADMIN_PASSWORD</code> {tx("only_applies_during_first_initialization_when_th_b2926ac2")}<code className="font-mono text-[10px] text-[#009a5a]">admin123</code> {tx("it_is_not_a_general_password_reset_switch_ea6ffb5e")}</p>
+                      {tx("administrator_accounts_there_is_no_self_service__35fb4393")}<code className="font-mono text-[10px] text-brand-strong">NAVELIX_ADMIN_PASSWORD</code> {tx("only_applies_during_first_initialization_when_th_b2926ac2")}<code className="font-mono text-[10px] text-brand-strong">admin123</code> {tx("it_is_not_a_general_password_reset_switch_ea6ffb5e")}</p>
                     <p className="mt-1">
-                      {tx("recovery_options_check_6bbee042")}<code className="font-mono text-[10px] text-[#009a5a]">navelix-admin-password.txt</code>{tx("in_the_data_directory_invalid_after_a_password_c_5dae17f9")}<code className="font-mono text-[10px] text-[#009a5a]">.db</code> {tx("backup_from_a_time_when_you_knew_the_password_9bbb693b")}</p>
+                      {tx("recovery_options_check_6bbee042")}<code className="font-mono text-[10px] text-brand-strong">navelix-admin-password.txt</code>{tx("in_the_data_directory_invalid_after_a_password_c_5dae17f9")}<code className="font-mono text-[10px] text-brand-strong">.db</code> {tx("backup_from_a_time_when_you_knew_the_password_9bbb693b")}</p>
                   </div>
                 </details>
               </div>
@@ -297,7 +297,7 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="h-11 w-full rounded-xl bg-gradient-to-r from-[#009a5a] to-[#00C776] text-sm font-semibold text-white shadow-lg shadow-[#00C776]/25 transition-all hover:shadow-xl hover:shadow-[#00C776]/30 hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+                className="h-11 w-full rounded-xl bg-gradient-to-r from-brand-strong to-brand text-sm font-semibold text-white shadow-lg shadow-brand/25 transition-all hover:shadow-xl hover:shadow-brand/30 hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -338,7 +338,7 @@ function LoginForm() {
                   {tx("don_t_have_an_account_23e52653")}{" "}
                   <Link
                     href="/register"
-                    className="font-semibold text-[#009a5a] transition-colors hover:text-[#00C776]"
+                    className="font-semibold text-brand-strong transition-colors hover:text-brand"
                   >
                     {tx("register_5bddf41d")}</Link>
                 </>

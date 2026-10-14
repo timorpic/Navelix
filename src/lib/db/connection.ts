@@ -10,6 +10,9 @@ import { resolveDataDir } from "../data-dir.ts";
 // Server-only module: never import from client components.
 
 const DATA_DIR = resolveDataDir();
+if (process.env.NODE_TEST_CONTEXT && (!process.env.NAVELIX_DATA_DIR || DATA_DIR === path.resolve(process.cwd(), "data"))) {
+  throw new Error("Tests require an isolated NAVELIX_DATA_DIR; run pnpm test.");
+}
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
 } else {

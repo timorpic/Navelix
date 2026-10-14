@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand: #00C776;
+  --color-brand-hover: #00B068;
+  --color-brand-strong: #009a5a;
+}
+
 @variant dark (&:where(.dark, .dark *));
 
 /* ── 彻底消除主题切换/首屏载入时的过渡闪烁 (Zero-Flash Theme Switching) ── */

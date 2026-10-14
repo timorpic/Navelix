@@ -114,6 +114,7 @@ describe("listApiTokens", () => {
     const [item] = listApiTokens(uid);
     assert.deepEqual(Object.keys(item).sort(), [
       "createdAt",
+      "expiresAt",
       "id",
       "lastUsedAt",
       "name",

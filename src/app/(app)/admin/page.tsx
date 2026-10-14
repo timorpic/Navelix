@@ -191,7 +191,7 @@ export default function AdminPage() {
               title={config.theme === "system" ? tx("system_theme_217cfe7d") : config.theme === "dark" ? tx("switch_to_light_mode_fe05df6e") : tx("switch_to_dark_mode_65ec2b0d")}
             >
               {config.theme === "system" ? (
-                <svg className="w-4 h-4 text-[#00C776]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" /></svg>
+                <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" /></svg>
               ) : config.theme === "dark" ? (
                 <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
               ) : (
@@ -202,7 +202,7 @@ export default function AdminPage() {
             <button
               onClick={handleOpenAdminNotifications}
               className={`relative p-2 rounded-xl transition-colors cursor-pointer ${
-                showAdminNotifications ? "bg-[#00C776]/10 text-[#00C776]" : "text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800"
+                showAdminNotifications ? "bg-brand/10 text-brand" : "text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800"
               }`} title={tx("notifications_4cfc2a36")}
             >
               🔔
@@ -219,7 +219,7 @@ export default function AdminPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {adminUnread && (
-                      <button onClick={() => { fetch("/api/notifications/read", { method: "POST" }).catch(() => {}); setAdminNotifications((prev) => prev.map((n) => ({ ...n, read: true }))); setShowAdminNotifications(false); }} className="text-[10px] text-[#00C776] hover:underline cursor-pointer">{tx("mark_all_as_read_231cbc43")}</button>
+                      <button onClick={() => { fetch("/api/notifications/read", { method: "POST" }).catch(() => {}); setAdminNotifications((prev) => prev.map((n) => ({ ...n, read: true }))); setShowAdminNotifications(false); }} className="text-[10px] text-brand hover:underline cursor-pointer">{tx("mark_all_as_read_231cbc43")}</button>
                     )}
                     <button onClick={() => setShowAdminNotifications(false)} className="w-5 h-5 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors cursor-pointer text-xs" title={tx("close_notifications_ed9af108")}>✕</button>
                   </div>
@@ -243,7 +243,7 @@ export default function AdminPage() {
             )}
 
             <div onClick={() => { setShowAdminUserMenu(!showAdminUserMenu); setShowAdminNotifications(false); }} className="flex items-center gap-2 px-2.5 py-1 bg-gray-50 hover:bg-gray-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-gray-100 dark:border-slate-700 rounded-xl cursor-pointer select-none transition-colors">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#3B82F6] to-[#00C776] text-white text-[10px] font-bold flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#3B82F6] to-brand text-white text-[10px] font-bold flex items-center justify-center overflow-hidden shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element -- 头像可能是任意图片地址或 data URL */}
                 <img src={resolveAvatar(currentUser?.avatar, currentUser?.username)} alt={currentUser?.displayName || "User"} className="w-full h-full object-cover" />
               </div>
@@ -263,7 +263,7 @@ export default function AdminPage() {
 
         <div className="lg:hidden sticky top-16 z-10 flex gap-1.5 overflow-x-auto border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2">
           {adminNavItems.map((item) => (
-            <button key={item.id} onClick={() => selectTab(item.id)} className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${activeTab === item.id ? "bg-[#00C776] text-white" : "bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-300"}`}>
+            <button key={item.id} onClick={() => selectTab(item.id)} className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${activeTab === item.id ? "bg-brand text-white" : "bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-300"}`}>
               <span>{item.icon}</span><span>{text(item.label)}</span>
               {typeof item.badge !== "undefined" && <span className="text-[10px] opacity-70">{item.badge}</span>}
             </button>
@@ -280,7 +280,7 @@ export default function AdminPage() {
                 <div className="flex items-baseline gap-1"><span className="text-2xl font-extrabold text-gray-900 dark:text-white">{links.length}</span></div>
                 <span className="text-[11px] text-gray-400 dark:text-slate-400 mt-2">{tx("live_statistics_5f8faa43")}</span>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-950/60 flex items-center justify-center text-[#00C776] text-lg font-bold">🔗</div>
+              <div className="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-950/60 flex items-center justify-center text-brand text-lg font-bold">🔗</div>
             </div>
             <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100/90 dark:border-slate-700 shadow-2xs flex items-start justify-between transition-colors">
               <div className="flex flex-col">

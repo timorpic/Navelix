@@ -33,11 +33,16 @@ graph LR
 ---
 
 ## 2. 🛡️ 跨站请求伪造 (CSRF Protection)
-- **Origin 与 Host 一致性校验**：
+- **完整来源一致性校验**：
   - 对所有 `/api/**` 的状态变更请求（POST / PUT / PATCH / DELETE）进行 Origin / Referer 校验，既无可校验来源又无 Bearer 头时直接返回 **403**；
+  - 比对**完整来源**（协议 + 主机 + 端口，默认端口归一化），例如 `https://example.com` 与 `https://example.com:8443`、`http://example.com` 互不匹配，不再放宽 `localhost` / 回环别名；
+  - 普通写请求拒绝 `text/plain`、`application/x-www-form-urlencoded` 与 `multipart/form-data`，需发送 JSON（返回 **415**）。物理还原 `POST /api/admin/backup` 接受 multipart 文件与当前管理员密码，仍执行完整来源校验和管理员鉴权，跨来源上传被拒绝；
+- **反向代理部署（重要）**：
+  - TLS 在 Nginx / Caddy 等代理终结时（浏览器访问 HTTPS、应用内部为 HTTP），**必须设置 `TRUST_PROXY=true`**，由代理覆盖 `X-Forwarded-Host` 与 `X-Forwarded-Proto`；否则写请求会因来源不匹配全部返回 **403**；
+  - 未开启 `TRUST_PROXY` 时不采信任何客户端可伪造的转发头。切勿让代理透传客户端自带的 `X-Forwarded-*`，也不要为绕过校验而放宽 CSRF。
 - **开放 API 免扰机制**：
-  - 请求头中**存在** `Authorization: Bearer …` 即自动豁免 Origin 校验，兼容脚本、快捷指令与自动化流水线；
-  - ⚠️ 该豁免只判断头部**是否存在**及 `bearer ` 前缀，**不校验 Token 是否有效、是否在库**——真正的鉴权发生在后续路由里。
+  - 请求头中**存在**有效 `Authorization: Bearer nvx_live_...` 时豁免 Origin 校验，兼容脚本、快捷指令与自动化流水线；
+  - 显式携带 Bearer 的请求不会回退到浏览器 Cookie 会话：Token 无效、过期或账号停用即返回 **401**，避免「用无效头骗取 CSRF 豁免」。
 
 ---
 
@@ -46,9 +51,9 @@ graph LR
   - 默认对目标做 DNS 解析并拦截内网地址（`10.0.0.0/8`、`172.16.0.0/12`、`192.168.0.0/16` 等私有网段，以及 `127.0.0.0/8`、`169.254.169.254` 云元数据地址）；
   - 严禁 `file://`、`gopher://`、`ftp://` 等危险协议。
 - **⚠️ 以下调用点显式放行私有网段**（仅拦截回环与链路本地地址），这是**有意设计**而非疏漏：
-  - **Favicon 抓取**（`/api/favicon`）：为了让自建 NAS / 路由器 / 内网服务的图标能正常显示，主动允许访问内网地址；
+  - **Favicon 抓取**（`/api/favicon`）：同时允许**公网与内网**（RFC1918）目标 —— 既能为 NAS / 路由器 / 内网服务取图（支持 `nas.local`、`router.internal` 等内网域名，不止裸 IP），也能照常为公网书签取图（含 DuckDuckGo 等公网图标服务兜底）。域名准入按**解析出的 IP** 判定：解析到回环、链路本地或云元数据地址即拒绝，因此指向 `127.0.0.1` / `169.254.169.254` 的域名仍被拦。每一跳重定向重新校验；
   - **AI 端点**（`/api/ai/chat`、`/api/ai/daily-schedule`、`/api/ai/project-breakdown`、`/api/ai/summarize`）：允许把 BaseURL 指向内网或本机服务（例如自建的 Ollama）。
-  - **含义**：能配置这些项的用户，可以借服务端发起对内网的请求。请勿把管理员权限授予不可信的人；对公网暴露实例时尤其注意。
+  - **含义**：任何登录用户可以借服务端向内网发起请求（用于取图标）。风险边界是「谁能拿到账号」：注册默认关闭（`allowRegistration=false`），账号由管理员创建，但**该接口没有限流**。对公网暴露实例时请确认没有开放注册、不把账号给不可信的人；需要更严的限制时，可在反向代理层按来源限制 `/api/favicon`，或改为上传图标。
 - 天气、Telegram、健康巡检等其余出网点使用默认的**严格模式**。
 
 ---

@@ -20,8 +20,14 @@ import { resolveDataDir } from "./data-dir.ts";
  */
 
 const BACKUP_DIR = path.join(resolveDataDir(), "backups");
-const MAX_BACKUPS = 7;
-export const BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
+export function backupPolicy(env: Record<string, string | undefined> = process.env): { maxBackups: number; intervalMs: number } {
+  const positive = (raw: string | undefined, fallback: number, max: number) => {
+    const value = Number(raw);
+    return Number.isInteger(value) && value > 0 && value <= max ? value : fallback;
+  };
+  return { maxBackups: positive(env.NAVELIX_MAX_BACKUPS, 7, 1000), intervalMs: positive(env.NAVELIX_BACKUP_INTERVAL_HOURS, 24, 8760) * 60 * 60 * 1000 };
+}
+export const BACKUP_INTERVAL_MS = backupPolicy().intervalMs;
 
 export type BackupOutcome =
   | {
@@ -123,8 +129,9 @@ export function listBackupFiles(): { name: string; path: string; mtime: number }
 export function cleanOldBackups() {
   try {
     const files = listBackupFiles();
-    if (files.length > MAX_BACKUPS) {
-      const toDelete = files.slice(MAX_BACKUPS);
+    const { maxBackups } = backupPolicy();
+    if (files.length > maxBackups) {
+      const toDelete = files.slice(maxBackups);
       for (const item of toDelete) {
         try {
           fs.unlinkSync(item.path);

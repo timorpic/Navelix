@@ -1,4 +1,4 @@
-import { createHmac, hkdfSync } from "node:crypto";
+import { createHmac, hkdfSync, timingSafeEqual } from "node:crypto";
 import { db } from "./db.ts";
 import { getSecretKey } from "./secret.ts";
 import type { Category, SiteLink, Project } from "@/types";
@@ -54,8 +54,8 @@ export function verifyShareToken(token: string): {
     return { valid: false, error: "无效的分享凭证" };
   }
 
-  const [base64Payload, signature] = token.split(".");
-  if (!base64Payload || !signature) {
+  const [base64Payload, signature, extra] = token.split(".");
+  if (!base64Payload || !signature || extra !== undefined) {
     return { valid: false, error: "分享凭证格式错误" };
   }
 
@@ -63,7 +63,7 @@ export function verifyShareToken(token: string): {
     .update(base64Payload)
     .digest("hex");
 
-  if (expectedHmac !== signature) {
+  if (!/^[a-f0-9]{64}$/.test(signature) || !timingSafeEqual(Buffer.from(expectedHmac, "hex"), Buffer.from(signature, "hex"))) {
     return { valid: false, error: "凭证签名校验失败或已被篡改" };
   }
 

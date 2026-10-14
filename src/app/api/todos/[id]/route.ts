@@ -1,3 +1,4 @@
+import { AssignmentError } from "@/lib/workspace-members";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
@@ -33,7 +34,15 @@ export async function PATCH(
     return localizedJson({ error: "无权修改该待办" }, { status: 403 });
   }
 
-  const changed = updateTodoFields(id, ownerId, body);
+  if (ownerId !== userId && ["assigneeId", "assigneeName", "projectId"].some(key => Object.hasOwn(body, key))) {
+    return localizedJson({ error: "仅任务所有者可更改指派或所属项目" }, { status: 403 });
+  }
+  let changed: string[];
+  try { changed = updateTodoFields(id, ownerId, body); }
+  catch (error) {
+    if (error instanceof AssignmentError) return localizedJson({ error: error.message }, { status: 403 });
+    throw error;
+  }
   if (changed.length === 0) {
     return localizedJson({ error: "无更新字段" }, { status: 400 });
   }

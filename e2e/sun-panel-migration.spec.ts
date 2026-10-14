@@ -13,7 +13,7 @@ const fixture = { icons: [{ title: "NAS", children: [
 ] }] };
 const file = { name: "sun-panel.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(fixture)) };
 
-test("Sun-Panel: empty entry, persisted counts, repeat import, and failed save", async ({ page }) => {
+test("Sun-Panel: empty entry, persisted counts, repeat import, and failed save", async ({ page }, testInfo) => {
   await login(page);
   await page.evaluate(async () => {
     const current = await (await fetch("/api/user/data")).json();
@@ -23,18 +23,18 @@ test("Sun-Panel: empty entry, persisted counts, repeat import, and failed save",
   await page.reload();
   await expect(page.getByRole("heading", { name: "已经在用 Sun-Panel？" })).toBeVisible();
   const card = page.locator('section[aria-labelledby="migration-heading"]');
-  await card.screenshot({ caret: "initial", path: "public/screenshots/sun-panel-import-empty.png" });
+  await card.screenshot({ caret: "initial", path: testInfo.outputPath('sun-panel-import-empty.png') });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => document.documentElement.classList.add("dark"));
   await expect(card).toBeVisible();
   expect(await card.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
-  await card.screenshot({ caret: "initial", path: "public/screenshots/sun-panel-import-empty-mobile-dark.png" });
+  await card.screenshot({ caret: "initial", path: testInfo.outputPath('sun-panel-import-empty-mobile-dark.png') });
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.evaluate(() => document.documentElement.classList.remove("dark"));
   await page.getByLabel("选择 Sun-Panel JSON").setInputFiles(file);
   const dialog = page.getByRole("dialog", { name: "Sun-Panel 导入完成" });
   await expect(dialog).toContainText("已新增 1 个分组、1 个链接，跳过 1 个重复网址");
-  await dialog.screenshot({ caret: "initial", path: "public/screenshots/sun-panel-import-result.png" });
+  await dialog.screenshot({ caret: "initial", path: testInfo.outputPath('sun-panel-import-result.png') });
   await page.keyboard.press("Tab");
   await expect(dialog.getByRole("button", { name: "Close" })).toBeFocused();
   await page.keyboard.press("Shift+Tab");

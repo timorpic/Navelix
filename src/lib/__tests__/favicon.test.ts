@@ -1,5 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import http from "node:http";
+import os from "node:os";
 import { fetchWebsiteIcon, resolveIconCandidates, iconContentType } from "../favicon.ts";
 
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==", "base64");
@@ -58,5 +60,64 @@ describe("website favicon discovery", () => {
       return url.endsWith("large.png") ? new Response(new Uint8Array(1_000_001), { headers: { "content-type": "image/png" } }) : image();
     });
     assert.equal(icon?.iconUrl, "https://www.timor.eu.org/valid.png");
+  });
+});
+
+/**
+ * 内网图标的准入由 `allowPrivateIPs` 控制（`/api/favicon` 按内网可用传入 true）。
+ * 这里用本机真实网卡上的 RFC1918 地址起一个 HTTP 服务，验证两种模式的实际
+ * 网络可达性 —— 不是断言选项被传递，而是断言请求真的发出（或真的被拦）。
+ */
+describe("intranet favicon access follows allowPrivateIPs", () => {
+  /** 返回本机一个 RFC1918 地址；没有则返回 null，用例跳过。 */
+  function privateIPv4(): string | null {
+    for (const entries of Object.values(os.networkInterfaces())) {
+      for (const entry of entries ?? []) {
+        if (entry.family === "IPv4" && !entry.internal &&
+            /^(?:10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)/.test(entry.address)) {
+          return entry.address;
+        }
+      }
+    }
+    return null;
+  }
+
+  it("reaches a private host when allowed and blocks it by default", async (t) => {
+    const host = privateIPv4();
+    if (!host) { t.skip("本机没有 RFC1918 地址，跳过"); return; }
+    let hits = 0;
+    const server = http.createServer((_req, res) => {
+      hits++;
+      res.writeHead(200, { "content-type": "image/png" });
+      res.end(png);
+    });
+    await new Promise<void>(resolve => server.listen(0, "0.0.0.0", resolve));
+    const { port } = server.address() as { port: number };
+    const target = new URL(`http://${host}:${port}/`);
+    try {
+      // 严格模式（默认）：拒绝，且请求根本没发出去
+      assert.equal(await fetchWebsiteIcon(target, undefined, { allowPrivateIPs: false }), null);
+      assert.equal(hits, 0, "严格模式不应发出任何请求");
+
+      // 允许内网：真实取到图标
+      const icon = await fetchWebsiteIcon(target, undefined, { allowPrivateIPs: true });
+      assert.ok(icon, "允许内网时应取到图标");
+      assert.equal(icon.dataUrl, `data:image/png;base64,${png.toString("base64")}`);
+      assert.equal(hits, 1);
+    } finally {
+      await new Promise<void>(resolve => server.close(() => resolve()));
+    }
+  });
+
+  it("still blocks loopback and link-local even when private IPs are allowed", async () => {
+    const server = http.createServer((_req, res) => { res.writeHead(200, { "content-type": "image/png" }); res.end(png); });
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
+    const { port } = server.address() as { port: number };
+    try {
+      assert.equal(await fetchWebsiteIcon(new URL(`http://127.0.0.1:${port}/`), undefined, { allowPrivateIPs: true }), null);
+      assert.equal(await fetchWebsiteIcon(new URL("http://169.254.169.254/"), undefined, { allowPrivateIPs: true }), null);
+    } finally {
+      await new Promise<void>(resolve => server.close(() => resolve()));
+    }
   });
 });

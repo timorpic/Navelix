@@ -56,7 +56,7 @@ export default function AdminSystemAccessCard({ isAdmin }: { isAdmin: boolean })
               isAdmin ? "cursor-pointer" : "cursor-not-allowed opacity-80"
             } ${
               config.allowPublicAccess
-                ? "bg-[#00C776] text-white"
+                ? "bg-brand text-white"
                 : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
             }`}
           >
@@ -89,7 +89,7 @@ export default function AdminSystemAccessCard({ isAdmin }: { isAdmin: boolean })
               isAdmin ? "cursor-pointer" : "cursor-not-allowed opacity-80"
             } ${
               config.allowRegistration
-                ? "bg-[#00C776] text-white"
+                ? "bg-brand text-white"
                 : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
             }`}
           >

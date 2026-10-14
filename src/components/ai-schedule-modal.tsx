@@ -48,7 +48,7 @@ export default function AiScheduleModal({
   if (!open) return null;
 
   return (
-    <Overlay>
+    <Overlay title={tx("ai_copilot_scheduling_suggestions_59d4f89d")} onClose={onClose}>
       <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-xl border border-gray-100 dark:border-slate-800 space-y-4 max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-slate-800">
           <div className="flex items-center gap-2">
@@ -84,7 +84,7 @@ export default function AiScheduleModal({
 
             {/* 建议策略 */}
             {advice && (
-              <div className="p-3 rounded-xl bg-[#00C776]/10 border border-[#00C776]/30 text-xs text-gray-800 dark:text-slate-200">
+              <div className="p-3 rounded-xl bg-brand/10 border border-brand/30 text-xs text-gray-800 dark:text-slate-200">
                 <p className="font-semibold">{advice}</p>
               </div>
             )}
@@ -98,7 +98,7 @@ export default function AiScheduleModal({
                 <button
                   type="button"
                   onClick={onAddCustomTask}
-                  className="text-xs text-[#00C776] hover:underline font-bold cursor-pointer"
+                  className="text-xs text-brand hover:underline font-bold cursor-pointer"
                 >
                   {tx("add_task_1132dccd")}</button>
               </div>
@@ -118,7 +118,7 @@ export default function AiScheduleModal({
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => onToggleIndex(idx)}
-                      className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
+                      className="w-4 h-4 rounded text-brand focus:ring-brand cursor-pointer"
                     />
 
                     {/* 任务名称 */}
@@ -179,7 +179,7 @@ export default function AiScheduleModal({
               type="button"
               disabled={planning || applying || selectedIndices.size === 0}
               onClick={onApply}
-              className="px-4 py-1.5 bg-[#00C776] hover:bg-[#00B068] text-white text-xs font-black rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-4 py-1.5 bg-brand hover:bg-brand-hover text-white text-xs font-black rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <span>{applying ? tx("saving_22a6a532") : tx("accept_add_to_calendar_b14ea5df")}</span>
             </button>

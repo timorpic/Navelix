@@ -1,7 +1,7 @@
 import { getLocale } from "next-intl/server";
 import { translateText } from "@/lib/server-translations";
 import { localizedJson } from "@/lib/localized-json";
-import { db } from "@/lib/db";
+import { listWorkspaceMembers } from "@/lib/workspace-members";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
 import { toLocalDateStr, addDaysLocal } from "@/lib/date-utils";
@@ -88,10 +88,7 @@ export async function POST(req: Request) {
       return localizedJson({ error: "项目名称不能为空" }, { status: 400 });
     }
 
-    // 查询系统中所有注册成员列表
-    const members = db
-      .prepare("SELECT id, username, display_name AS displayName FROM users ORDER BY created_at ASC")
-      .all() as Array<{ id: string; username: string; displayName: string }>;
+    const members = listWorkspaceMembers(user.id);
 
     // 服务端维护 展示名 → 真实用户 ID 映射；只把展示名发给大模型，避免泄露内部 ID
     const memberById = new Map<string, string>(

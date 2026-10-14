@@ -1,4 +1,7 @@
 "use client";
+import { useText } from "@/hooks/use-text";
+
+import { projectStatusLabel } from "@/lib/project-status";
 
 import { useTranslations } from "next-intl";
 import type { Project, TodoItem } from "@/types";
@@ -28,6 +31,7 @@ export default function ProjectGanttView({
   onEditProject: (project: Project, triggerAi?: boolean) => void;
 }) {
   const tx = useTranslations();
+  const text = useText();
   return (
     <div className="bg-white dark:bg-slate-900/90 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-2xs overflow-hidden flex flex-col">
       {/* 甘特图工具栏 (Gantt Toolbar) */}
@@ -40,7 +44,7 @@ export default function ProjectGanttView({
                     <button
                       type="button"
                       onClick={() => gantt.setOffset(0)}
-                      className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-700 dark:text-slate-300 hover:text-[#00C776] cursor-pointer shadow-2xs transition-colors"
+                      className="px-2 py-0.5 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-700 dark:text-slate-300 hover:text-brand cursor-pointer shadow-2xs transition-colors"
                     >
                       {gantt.scale === "day" ? tx("go_to_today_187aa111") : gantt.scale === "month" ? tx("go_to_this_month_9de73b6d") : tx("go_to_this_year_23c504b1")}
                     </button>
@@ -48,7 +52,7 @@ export default function ProjectGanttView({
                     <select
                       value={gantt.projectFilter}
                       onChange={(e) => gantt.setProjectFilter(e.target.value)}
-                      className="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-700 dark:text-slate-300 cursor-pointer shadow-2xs transition-colors focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
+                      className="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-700 dark:text-slate-300 cursor-pointer shadow-2xs transition-colors focus:outline-none focus:ring-2 focus:ring-brand/40"
                     >
                       <option value="all">{tx("all_projects_e3040dfd")}</option>
                       {projects.map((p) => (
@@ -65,7 +69,7 @@ export default function ProjectGanttView({
               onClick={() => gantt.handleScaleChange("day")}
               className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 gantt.scale === "day"
-                  ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
+                  ? "bg-white dark:bg-slate-900 text-brand shadow-2xs"
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
               title={tx("21_day_agile_planning_view_f4107594")}
@@ -76,7 +80,7 @@ export default function ProjectGanttView({
               onClick={() => gantt.handleScaleChange("month")}
               className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 gantt.scale === "month"
-                  ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
+                  ? "bg-white dark:bg-slate-900 text-brand shadow-2xs"
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
               title={tx("12_month_planning_view_d5863c1d")}
@@ -87,7 +91,7 @@ export default function ProjectGanttView({
               onClick={() => gantt.handleScaleChange("year")}
               className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 gantt.scale === "year"
-                  ? "bg-white dark:bg-slate-900 text-[#00C776] shadow-2xs"
+                  ? "bg-white dark:bg-slate-900 text-brand shadow-2xs"
                   : "text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
               }`}
               title={tx("3_year_strategic_roadmap_e9028d8f")}
@@ -135,7 +139,7 @@ export default function ProjectGanttView({
                   key={col.key}
                   className={`py-2 px-0.5 flex flex-col items-center justify-center transition-colors ${
                     col.isCurrent
-                      ? "bg-[#00C776]/15 text-[#00C776] font-black"
+                      ? "bg-brand/15 text-brand font-black"
                       : col.isWeekend
                       ? "bg-gray-100/50 dark:bg-slate-800/40 text-amber-600 dark:text-amber-400"
                       : "text-gray-700 dark:text-slate-300"
@@ -144,7 +148,7 @@ export default function ProjectGanttView({
                   <span className="text-[9px] opacity-70 truncate max-w-full px-0.5">{col.subLabel}</span>
                   <span className="text-xs font-black">{col.label}</span>
                   {col.isCurrent && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#00C776] mt-0.5 animate-ping" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand mt-0.5 animate-ping" />
                   )}
                 </div>
               ))}
@@ -194,7 +198,7 @@ export default function ProjectGanttView({
                         </span>
                         <button
                           onClick={() => onEditProject(p, true)}
-                          className="p-1 text-gray-400 hover:text-[#00C776] text-xs cursor-pointer"
+                          className="p-1 text-gray-400 hover:text-brand text-xs cursor-pointer"
                           title={tx("add_tasks_with_ai_breakdown_af3ef928")}
                         >
                           ✨
@@ -214,7 +218,7 @@ export default function ProjectGanttView({
                             key={col.key}
                             className={`h-full ${
                               col.isCurrent
-                                ? "bg-[#00C776]/5"
+                                ? "bg-brand/5"
                                 : col.isWeekend
                                 ? "bg-gray-50/50 dark:bg-slate-800/20"
                                 : ""
@@ -242,7 +246,7 @@ export default function ProjectGanttView({
                           }}
                         />
                         <span className="relative z-10 text-[10px] font-black text-gray-800 dark:text-white truncate">
-                          {p.name} · {p.status}
+                          {p.name} · {text(projectStatusLabel(p.status))}
                         </span>
                         <span className="relative z-10 text-[10px] font-black text-gray-800 dark:text-white shrink-0 ml-1">
                           {done}/{total} ({percent}%)
@@ -269,7 +273,7 @@ export default function ProjectGanttView({
                                 type="checkbox"
                                 checked={isDone}
                                 onChange={() => onToggleTodo(t.id, t.done, t.ownerId)}
-                                className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
+                                className="w-3.5 h-3.5 rounded text-brand focus:ring-brand cursor-pointer"
                               />
                               <span
                                 className={`truncate text-xs font-medium ${
@@ -304,7 +308,7 @@ export default function ProjectGanttView({
                                   key={col.key}
                                   className={`h-full ${
                                     col.isCurrent
-                                      ? "bg-[#00C776]/5"
+                                      ? "bg-brand/5"
                                       : col.isWeekend
                                       ? "bg-gray-50/30 dark:bg-slate-800/10"
                                       : ""
@@ -360,7 +364,7 @@ export default function ProjectGanttView({
           <span className="flex items-center gap-1.5 font-bold">
             <span className="w-3 h-3 rounded-md bg-rose-500" /> {tx("high_priority_milestone_e00f96d0")}</span>
           <span className="flex items-center gap-1.5 font-bold">
-            <span className="w-3 h-3 rounded-md bg-[#00C776]" /> {tx("project_stage_progress_d2767046")}</span>
+            <span className="w-3 h-3 rounded-md bg-brand" /> {tx("project_stage_progress_d2767046")}</span>
           <span className="flex items-center gap-1.5 font-bold">
             <span className="w-3 h-3 rounded-md bg-slate-400" /> {tx("completed_a69a6412")}</span>
         </div>

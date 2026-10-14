@@ -1,5 +1,5 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { checkCSRF } from "@/lib/csrf";
+import { NextResponse, type NextRequest } from "next/server.js";
+import { checkCSRF } from "./lib/csrf.ts";
 
 /**
  * 向 NextResponse 注入安全响应头。
@@ -36,6 +36,11 @@ export function proxy(req: NextRequest) {
   // 对所有 API 的写操作（POST / PUT / PATCH / DELETE）强制进行 CSRF / Origin 校验
   if (req.nextUrl.pathname.startsWith("/api/")) {
     if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+      const contentType = req.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
+      const isBackupUpload = method === "POST" && req.nextUrl.pathname === "/api/admin/backup" && contentType === "multipart/form-data";
+      if (!isBackupUpload && contentType && ["application/x-www-form-urlencoded", "multipart/form-data", "text/plain"].includes(contentType)) {
+        return applySecurityHeaders(NextResponse.json({ error: "JSON content type required" }, { status: 415 }));
+      }
       const res = checkCSRF(req);
       if (!res.success) {
         return applySecurityHeaders(

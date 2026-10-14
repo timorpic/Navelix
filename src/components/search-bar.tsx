@@ -35,8 +35,8 @@ export default function SearchBar({ value, onChange, className = "" }: SearchBar
 
   return (
     <form onSubmit={handleSubmit} className={`relative w-full ${className}`}>
-      <div className="relative flex items-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl border border-gray-200/80 dark:border-slate-700 shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#00C776]/40 focus-within:border-[#00C776]">
-        <div className="pl-4 pr-2 text-[#00C776] shrink-0">
+      <div className="relative flex items-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl border border-gray-200/80 dark:border-slate-700 shadow-sm transition-all focus-within:ring-2 focus-within:ring-brand/40 focus-within:border-brand">
+        <div className="pl-4 pr-2 text-brand shrink-0">
           <svg
             width="18"
             height="18"
@@ -71,7 +71,7 @@ export default function SearchBar({ value, onChange, className = "" }: SearchBar
               onClick={() => onChange("")}
               aria-label={tx("clear_search_b6f00afa")}
               title={tx("clear_search_b6f00afa")}
-              className="w-5 h-5 rounded-full flex items-center justify-center text-xs text-gray-400 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 hover:text-white hover:bg-[#00C776] transition-colors cursor-pointer"
+              className="w-5 h-5 rounded-full flex items-center justify-center text-xs text-gray-400 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 hover:text-white hover:bg-brand transition-colors cursor-pointer"
             >
               ✕
             </button>

@@ -170,15 +170,11 @@ export async function validateHostIPs(hostname: string, options: ValidateHostOpt
 
   // 1. 如果配置了允许内网 IP（导航站抓取内网 NAS/路由器/开发服务）
 if (allowPrivateIPs) {
-    // 绝对封禁：回环地址与链路本地（含云元数据）——不论内网模式是否开启
-    if (
-      cleanHost === "localhost" ||
-      cleanHost.endsWith(".localhost") ||
-      cleanHost.endsWith(".local") ||
-      cleanHost.endsWith(".internal")
-    ) {
-      throw new Error(`SSRF_BLOCKED: Host '${hostname}' is an internal domain name`);
-    }
+    // 此模式允许 RFC1918 与内网域名（`nas.local`、`router.internal` 等 —— 内网设备
+    // 常以主机名而非裸 IP 配置，禁掉会让内网抓取形同虚设）。
+    // 本机回环仍绝对封禁：回环可探针宿主机本机服务（如反代端口、容器管理面）。
+    // 域名不做黑名单，改由下面的 IP 级复查兜底：解析结果里出现回环/链路本地即拒绝，
+    // 因此 `nas.local` → 192.168.x.x 放行，而指向 127.0.0.1 / 169.254.x.x 的域名仍被拦。
     if (net.isIP(cleanHost) && isLoopbackOrLinkLocalIP(cleanHost)) {
       throw new Error(`SSRF_BLOCKED: IP '${cleanHost}' is loopback/link-local and forbidden`);
     }

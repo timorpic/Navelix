@@ -63,9 +63,9 @@ export async function GET(req: NextRequest) {
           `SELECT u.id, u.username, u.password_hash, u.display_name, u.email, u.bio, u.role, u.avatar, u.created_at
            FROM api_tokens t
            JOIN users u ON u.id = t.user_id
-           WHERE t.token_hash = ?`,
+           WHERE t.token_hash = ? AND t.expires_at > ? AND u.disabled = 0`,
         )
-        .get(tokenHash) as UserRow | undefined;
+        .get(tokenHash, Date.now()) as UserRow | undefined;
       if (tokenRow) {
         user = toPublicUser(tokenRow);
       }

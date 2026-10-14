@@ -172,7 +172,7 @@ docker compose up -d
 | `HOSTNAME` | `0.0.0.0` | 绑定网络主机地址 |
 | `NAVELIX_ADMIN_PASSWORD` | *(留空)* | 初始管理员密码，留空则自动生成强密码 |
 | `NAVELIX_COOKIE_SECURE` | `false` | Cookie Secure 属性；HTTP 保持 `false`，HTTPS 设为 `true` |
-| `TRUST_PROXY` | `false` | 是否信任反向代理 `X-Forwarded-For` 标头 |
+| `TRUST_PROXY` | `false` | 是否信任反向代理覆盖的转发头。影响两处：`X-Forwarded-For` / `X-Real-IP` 客户端 IP 解析，以及写请求 CSRF 校验采用的 `X-Forwarded-Host` / `X-Forwarded-Proto`。TLS 在代理终结（浏览器访问 HTTPS、应用内部为 HTTP）时必须设为 `true`，否则写请求会因来源不匹配返回 403 |
 | `NAVELIX_DATA_DIR` | `/app/data` | 数据存储目录（SQLite 库、备份、日志与初始密码文件）；Docker 镜像内为 `/app/data`，源码部署默认为 `<cwd>/data` |
 | `NAVELIX_LICENSE_KEY` | *(留空)* | 商业版 License Key；容器启动时注入激活，也可在管理后台网页激活 |
 | `NAVELIX_GITHUB_REPO` | `timorpic/Navelix` | 版本更新检测使用的 GitHub 仓库（`owner/repo`）；fork 后可指向自己的仓库 |

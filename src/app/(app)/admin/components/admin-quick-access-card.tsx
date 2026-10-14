@@ -114,8 +114,8 @@ export default function AdminQuickAccessCard({
                     }}
                     className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                       l.isQuickAccess
-                        ? "bg-teal-50 dark:bg-teal-950/60 text-[#00C776] border border-teal-200 dark:border-teal-800 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
-                        : "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-300 hover:bg-[#00C776] hover:text-white"
+                        ? "bg-teal-50 dark:bg-teal-950/60 text-brand border border-teal-200 dark:border-teal-800 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
+                        : "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-300 hover:bg-brand hover:text-white"
                     }`}
                   >
                     {l.isQuickAccess ? tx("pinned_click_to_unpin_3830bf12") : tx("pin_to_quick_access_e46b522e")}

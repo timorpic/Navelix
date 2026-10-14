@@ -68,7 +68,7 @@ test("设置作用域：管理员系统菜单、个人偏好、Telegram 用户�
     expect((await write(member, "/api/user/telegram", "PUT", { botToken: "member-fixture-token", chatId: "456" })).status).toBe(200);
     expect((await write(member, "/api/user/data", "POST", { config: { linkOpenTarget: "_self" } })).status).toBe(200);
     await member.goto("/admin?tab=personalization");
-    await expect(member.getByRole("button", { name: "在当前页打开" })).toHaveClass(/bg-\[#00C776\]/);
+    await expect(member.getByRole("button", { name: "在当前页打开" })).toHaveClass(/bg-brand(?:\s|$)/);
     await expect(member.getByText("首页搜索栏", { exact: true }).first()).toBeVisible();
     const stored = await member.evaluate(async () => (await fetch("/api/user/data")).json());
     expect(stored.config.weatherLocation).toBe("scope-city");

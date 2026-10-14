@@ -1,3 +1,4 @@
+import { migrateV20 } from "./v20.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { migrateV1 } from "./v1.ts";
 import { migrateV2 } from "./v2.ts";
@@ -41,4 +42,5 @@ export const VERSIONED_MIGRATIONS: Array<{
   { version: 17, name: "v17: personal Telegram subscriptions and deliveries", migrate: migrateV17 },
   { version: 18, name: "v18: account disable status", migrate: migrateV18 },
   { version: 19, name: "v19: remove usage analytics and telemetry", migrate: migrateV19 },
+  { version: 20, name: "v20: expiring tokens and stable project statuses", migrate: migrateV20 },
 ];

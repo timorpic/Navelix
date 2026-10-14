@@ -52,7 +52,7 @@ export default function CategoryColumns({
                     const r = await copyShareLink("category", cat.id, cat.name);
                     flash(text(r.message));
                   }}
-                  className="text-gray-400 dark:text-slate-400 hover:text-[#00C776] dark:hover:text-[#00C776] p-1 rounded-md transition-colors text-xs"
+                  className="text-gray-400 dark:text-slate-400 hover:text-brand dark:hover:text-brand p-1 rounded-md transition-colors text-xs"
                   title={tx("copy_public_share_link_99f1df95")}
                 >
                   🔗
@@ -75,7 +75,7 @@ export default function CategoryColumns({
                     <BrandIcon name={item.icon || item.title} className="w-5 h-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-semibold text-gray-800 dark:text-slate-100 group-hover:text-[#00C776] transition-colors">
+                    <p className="truncate text-xs font-semibold text-gray-800 dark:text-slate-100 group-hover:text-brand transition-colors">
                       {item.title}
                     </p>
                     <p className="truncate text-[10px] text-gray-400 dark:text-slate-400">
@@ -94,7 +94,7 @@ export default function CategoryColumns({
             <div className="mt-3 pt-2 border-t border-gray-50 dark:border-slate-700/60">
               <button
                 onClick={() => onViewCategory && onViewCategory(cat.id)}
-                className="flex items-center gap-1 text-xs font-medium text-gray-400 dark:text-slate-400 hover:text-[#00C776] transition-colors cursor-pointer"
+                className="flex items-center gap-1 text-xs font-medium text-gray-400 dark:text-slate-400 hover:text-brand transition-colors cursor-pointer"
               >
                 <span>{tx("view_all_aae985bd")}{links.filter((l) => l.category === cat.id).length})</span>
                 <span className="text-sm">→</span>

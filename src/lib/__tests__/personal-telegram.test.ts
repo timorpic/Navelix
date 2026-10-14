@@ -20,7 +20,7 @@ function cleanup() {
 beforeEach(() => {
   cleanup();
   for (const id of users) {
-    db.prepare("INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, 'hash', 'user', ?)").run(id, id, Date.now());
+    db.prepare("INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, 'hash', ?, ?)").run(id, id, id === users[0] ? "admin" : "user", Date.now());
     saveTelegramSettings(id, { botToken: "test-token", chatId: "123", enabled: true, notifyTodo: true, notifyAssignment: true, notifyDataTransfer: true });
   }
 });

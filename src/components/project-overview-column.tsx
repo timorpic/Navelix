@@ -1,4 +1,7 @@
 "use client";
+import { useText } from "@/hooks/use-text";
+
+import { normalizeProjectStatus, projectStatusLabel } from "@/lib/project-status";
 
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -23,6 +26,7 @@ export default function ProjectOverviewColumn({
   nowTs: number;
 }) {
   const tx = useTranslations();
+  const text = useText();
   const { projects, todos, hydrated } = useNavelixData();
   const projectsLoading = !hydrated;
   const { todayStr, toggleTodo: handleToggleTodo } = useWorkspaceTodos();
@@ -45,7 +49,7 @@ const activeProjectAnalysis = useMemo(() => {
   const pTodos = todos.filter((t) => !t.isDelegated && t.projectId === p.id);
   const done = pTodos.filter((t) => t.done).length;
   const total = pTodos.length;
-  const progress = total > 0 ? Math.round((done / total) * 100) : p.status === "已完成" ? 100 : 0;
+  const progress = total > 0 ? Math.round((done / total) * 100) : normalizeProjectStatus(p.status) === "completed" ? 100 : 0;
 
   // 风险评估
   const overdueList = pTodos.filter((t) => !t.done && t.dueDate && t.dueDate < todayStr);
@@ -133,7 +137,7 @@ const activeProjectAnalysis = useMemo(() => {
       <span className="text-base">🗂️</span>
       <h3 className="text-sm font-black text-gray-900 dark:text-white">
         {tx("project_overview_97ddf37b")}</h3>
-      <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-[#00C776] text-[10px] font-bold">
+      <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-brand text-[10px] font-bold">
         {projects.length} {tx("projects_5e7e8850")}</span>
     </div>
 
@@ -156,7 +160,7 @@ const activeProjectAnalysis = useMemo(() => {
 
       <button
         onClick={() => onSelectCategory("feature-projects")}
-        className="text-xs font-bold text-[#00C776] hover:underline flex items-center gap-1 cursor-pointer"
+        className="text-xs font-bold text-brand hover:underline flex items-center gap-1 cursor-pointer"
       >
         <span>{tx("all_projects_e3040dfd")}</span>
         <span>→</span>
@@ -190,7 +194,7 @@ const activeProjectAnalysis = useMemo(() => {
               {activeProjectAnalysis.project.name}
             </h4>
             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
-              {activeProjectAnalysis.project.status}
+              {text(projectStatusLabel(activeProjectAnalysis.project.status))}
             </span>
           </div>
 
@@ -199,7 +203,7 @@ const activeProjectAnalysis = useMemo(() => {
               href={activeProjectAnalysis.project.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-bold text-[#00C776] hover:underline flex items-center gap-1 truncate max-w-[120px]"
+              className="text-xs font-bold text-brand hover:underline flex items-center gap-1 truncate max-w-[120px]"
               title={tx("open_project_link_0b8f2a34")}
             >
               <span>{tx("open_1a793027")}</span>
@@ -214,7 +218,7 @@ const activeProjectAnalysis = useMemo(() => {
           <div className="p-2 rounded-xl bg-gray-50/90 dark:bg-slate-900/60 border border-gray-100 dark:border-slate-800 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] text-gray-400 font-bold mb-0.5">
               {tx("progress_f81ff55d")}</span>
-            <span className="text-xs font-black text-[#00C776] flex items-center gap-1">
+            <span className="text-xs font-black text-brand flex items-center gap-1">
               <span>🟢</span>
               <span>{activeProjectAnalysis.progress}%</span>
             </span>
@@ -275,7 +279,7 @@ const activeProjectAnalysis = useMemo(() => {
                       type="checkbox"
                       checked={task.done}
                       onChange={() => handleToggleTodo(task.id, task.done, task.ownerId)}
-                      className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
+                      className="w-3.5 h-3.5 rounded text-brand focus:ring-brand cursor-pointer"
                     />
                     <span
                       className={`truncate font-medium ${
@@ -322,7 +326,7 @@ const activeProjectAnalysis = useMemo(() => {
                     href={activeProjectAnalysis.project.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-[#00C776] text-[10px] font-bold hover:underline shrink-0 flex items-center gap-1"
+                    className="px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-brand text-[10px] font-bold hover:underline shrink-0 flex items-center gap-1"
                   >
                     <span>{tx("official_link_f49b1b04")}</span>
                   </a>
@@ -333,7 +337,7 @@ const activeProjectAnalysis = useMemo(() => {
                     href={l.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 text-[10px] font-bold hover:text-[#00C776] shrink-0 flex items-center gap-1"
+                    className="px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 text-[10px] font-bold hover:text-brand shrink-0 flex items-center gap-1"
                     title={l.description || l.title}
                   >
                     <span>📄</span>
@@ -347,7 +351,7 @@ const activeProjectAnalysis = useMemo(() => {
           <button
             type="button"
             onClick={() => onSelectCategory("feature-projects")}
-            className="text-[11px] font-bold text-[#00C776] hover:underline shrink-0 cursor-pointer"
+            className="text-[11px] font-bold text-brand hover:underline shrink-0 cursor-pointer"
           >
             {tx("manage_70539f6d")}</button>
         </div>

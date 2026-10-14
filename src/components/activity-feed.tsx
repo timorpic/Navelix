@@ -116,7 +116,7 @@ export default function ActivityFeed({
         <button
           type="button"
           onClick={handleNavigateToNotifications}
-          className="text-[11px] font-semibold text-[#00C776] hover:underline flex items-center gap-0.5 shrink-0 cursor-pointer"
+          className="text-[11px] font-semibold text-brand hover:underline flex items-center gap-0.5 shrink-0 cursor-pointer"
           title={tx("go_to_notifications_and_activity_28d1591c")}
         >
           <span>{tx("view_all_ac4b7fbb")}</span>

@@ -62,7 +62,7 @@ export default function AdminProLinkProbeCard({
               }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 licenseStatus.isPro && config.linkStatusEnabled
-                  ? "bg-[#00C776] text-white"
+                  ? "bg-brand text-white"
                   : "bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300"
               }`}
             >

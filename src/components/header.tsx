@@ -30,7 +30,7 @@ export default function Header({
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00C776] to-[#009a5a] flex items-center justify-center text-white font-bold text-sm">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-strong flex items-center justify-center text-white font-bold text-sm">
             N
           </div>
           <span className="text-lg font-semibold text-gray-900">Navelix</span>
@@ -43,7 +43,7 @@ export default function Header({
               onClick={() => onSelectCategory(tab.id)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 activeCategory === tab.id
-                  ? "bg-[#00C776]/10 text-[#00C776]"
+                  ? "bg-brand/10 text-brand"
                   : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
               }`}
             >
@@ -69,7 +69,7 @@ export default function Header({
           )}
           {user ? (
             <>
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#00C776] to-[#009a5a] text-xs font-semibold uppercase text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-strong text-xs font-semibold uppercase text-white">
                 {user.displayName.charAt(0) || user.username.charAt(0)}
               </div>
               <button
@@ -83,7 +83,7 @@ export default function Header({
           ) : (
             <Link
               href="/login"
-              className="flex h-8 items-center rounded-lg bg-[#00C776] px-3.5 text-xs font-medium text-white transition-colors hover:bg-[#009a5a]"
+              className="flex h-8 items-center rounded-lg bg-brand px-3.5 text-xs font-medium text-white transition-colors hover:bg-brand-strong"
             >
               Sign In
             </Link>

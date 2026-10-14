@@ -1,3 +1,4 @@
+import { API_TOKEN_TTL_MS } from "../token-policy.ts";
 import { createHash, randomBytes } from "node:crypto";
 import { db } from "../db.ts";
 
@@ -24,6 +25,7 @@ export interface ApiTokenItem {
   tokenPrefix: string;
   createdAt: number;
   lastUsedAt: number | null;
+  expiresAt: number;
 }
 
 interface ApiTokenRow {
@@ -32,13 +34,14 @@ interface ApiTokenRow {
   token_prefix: string;
   created_at: number;
   last_used_at: number | null;
+  expires_at: number;
 }
 
 /** 列出某用户的全部 API Token（新建在前）。 */
 export function listApiTokens(userId: string): ApiTokenItem[] {
   const rows = db
     .prepare(
-      `SELECT id, name, token_prefix, created_at, last_used_at
+      `SELECT id, name, token_prefix, created_at, last_used_at, expires_at
        FROM api_tokens
        WHERE user_id = ?
        ORDER BY created_at DESC`,
@@ -51,6 +54,7 @@ export function listApiTokens(userId: string): ApiTokenItem[] {
     tokenPrefix: r.token_prefix,
     createdAt: r.created_at,
     lastUsedAt: r.last_used_at,
+    expiresAt: r.expires_at,
   }));
 }
 
@@ -60,6 +64,7 @@ export interface IssuedApiToken {
   tokenId: string;
   name: string;
   tokenPrefix: string;
+  expiresAt: number;
 }
 
 /**
@@ -76,13 +81,15 @@ export function issueApiToken(userId: string, rawName: unknown): IssuedApiToken 
   const tokenPrefix = `${API_TOKEN_PREFIX}${secretPart.slice(0, 4)}...${secretPart.slice(-4)}`;
   const tokenId = `tok_${randomBytes(8).toString("hex")}`;
 
+  const now = Date.now();
+  const expiresAt = now + API_TOKEN_TTL_MS;
   const result = db.prepare(
-    `INSERT INTO api_tokens (id, user_id, name, token_hash, token_prefix, created_at, last_used_at)
-     SELECT ?, id, ?, ?, ?, ?, NULL FROM users WHERE id = ? AND disabled = 0`,
-  ).run(tokenId, name, hashToken(token), tokenPrefix, Date.now(), userId);
+    `INSERT INTO api_tokens (id, user_id, name, token_hash, token_prefix, created_at, last_used_at, expires_at)
+     SELECT ?, id, ?, ?, ?, ?, NULL, ? FROM users WHERE id = ? AND disabled = 0`,
+  ).run(tokenId, name, hashToken(token), tokenPrefix, now, expiresAt, userId);
   if (!result.changes) throw new Error("账号已停用或不存在");
 
-  return { token, tokenId, name, tokenPrefix };
+  return { token, tokenId, name, tokenPrefix, expiresAt };
 }
 
 /** 撤销指定 Token。带 user_id 条件，因此无法删除他人的 Token。 */

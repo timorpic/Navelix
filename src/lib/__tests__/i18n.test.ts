@@ -40,9 +40,9 @@ describe("translation catalogs", () => {
       const messages: Record<string, string> = locale === "en" ? en : zh;
       const tx = createTranslator({ locale, messages, onError(error) { throw error; } });
       for (const [key, message] of Object.entries(messages)) {
-        const variables = Array.from(message.matchAll(/\{(v\d+)\}/g), match => match[1]);
+        const variables = Array.from(message.matchAll(/\{([a-zA-Z]\w*)\}/g), match => match[1]);
         const counterpart = (locale === "en" ? zh : en) as Record<string, string>;
-        assert.deepEqual(variables.sort(), Array.from(counterpart[key].matchAll(/\{(v\d+)\}/g), match => match[1]).sort(), key);
+        assert.deepEqual(variables.sort(), Array.from(counterpart[key].matchAll(/\{([a-zA-Z]\w*)\}/g), match => match[1]).sort(), key);
         assert.equal(typeof tx(key, Object.fromEntries(variables.map(name => [name, "Example"]))), "string", key);
       }
     }

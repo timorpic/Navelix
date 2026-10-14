@@ -27,6 +27,8 @@ export interface RenderResult {
   rerender: (props: Record<string, unknown>) => void;
 }
 
+const mountedRoots = new Set<RenderResult>();
+
 /** 把组件挂载到一个新建的容器 div 上。 */
 export function render(
   Component: AnyComponent,
@@ -49,14 +51,17 @@ export function render(
   };
   paint(props);
 
-  return {
+  const result: RenderResult = {
     container,
     unmount: () => {
+      if (!mountedRoots.delete(result)) return;
       act(() => root.unmount());
       container.remove();
     },
     rerender: (p) => paint(p),
   };
+  mountedRoots.add(result);
+  return result;
 }
 
 /** 执行一段会触发状态更新的交互，并等待 React 提交。 */
@@ -117,5 +122,6 @@ export function setValue(
 
 /** 清空 document.body（每个用例之间调用）。 */
 export function cleanup(): void {
+  for (const root of mountedRoots) root.unmount();
   document.body.innerHTML = "";
 }

@@ -23,7 +23,7 @@ export default function AiBreakdownCard({
   if (ai.tasks.length === 0) return null;
 
   return (
-    <div className="p-4 rounded-xl bg-[#00C776]/5 border border-[#00C776]/30 space-y-3">
+    <div className="p-4 rounded-xl bg-brand/5 border border-brand/30 space-y-3">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-base">✨</span>
@@ -42,7 +42,7 @@ export default function AiBreakdownCard({
               type="checkbox"
               checked={ai.syncToCalendar}
               onChange={(e) => ai.setSyncToCalendar(e.target.checked)}
-              className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776]"
+              className="w-4 h-4 rounded text-brand focus:ring-brand"
             />
             <span>{tx("sync_automatically_to_calendar_067bbfa8")}</span>
           </label>
@@ -54,7 +54,7 @@ export default function AiBreakdownCard({
       )}
 
       {ai.notice && (
-        <p className="text-[11px] text-[#00C776] font-medium">
+        <p className="text-[11px] text-brand font-medium">
           {ai.notice}
         </p>
       )}
@@ -77,7 +77,7 @@ export default function AiBreakdownCard({
               value={task.title}
               onChange={(e) => ai.updateTitle(idx, e.target.value)}
               placeholder={tx("task_name_f6a13c73")}
-              className="flex-1 px-2.5 py-1 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#00C776]"
+              className="flex-1 px-2.5 py-1 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand"
             />
 
             {/* 指派责任人 */}
@@ -91,6 +91,10 @@ export default function AiBreakdownCard({
                 className="px-2 py-1 text-xs font-bold rounded-lg border bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 cursor-pointer max-w-[110px] truncate"
                 title={tx("assign_to_1c362011")}
               >
+                <option value="">{tx("unassigned_myself_bc4db75f")}</option>
+                {task.assigneeId && !members.some(m => m.id === task.assigneeId) && (
+                  <option value={task.assigneeId} disabled>{task.assigneeName || tx("existing_assignee")}</option>
+                )}
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>
                     👤 {m.displayName || m.username}
@@ -154,7 +158,7 @@ export default function AiBreakdownCard({
         <button
           type="button"
           onClick={ai.addTask}
-          className="text-xs text-[#00C776] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+          className="text-xs text-brand hover:underline font-bold flex items-center gap-1 cursor-pointer"
         >
           <span>+</span>
           <span>{tx("add_custom_stage_task_79ef3419")}</span>

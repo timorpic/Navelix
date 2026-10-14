@@ -1,4 +1,6 @@
 "use client";
+import { projectStatusLabel } from "@/lib/project-status";
+import { useText } from "@/hooks/use-text";
 import { useLocale } from "next-intl";
 
 import { useTranslations } from "next-intl";
@@ -40,7 +42,7 @@ function highlight(text: string, keywords: string[]): React.ReactNode {
       ? (
           <mark
             key={i}
-            className="bg-[#00C776]/20 text-[#00C776] dark:text-[#33d68a] rounded px-0.5"
+            className="bg-brand/20 text-brand dark:text-[#33d68a] rounded px-0.5"
           >
             {part}
           </mark>
@@ -96,6 +98,7 @@ export default function GlobalSearchResults({
 }: GlobalSearchResultsProps) {
   const locale = useLocale();
   const tx = useTranslations();
+  const text = useText();
   const { categories, links, projects, todos } = useNavelixData();
   const { config } = useNavelixConfig();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -174,10 +177,10 @@ export default function GlobalSearchResults({
     if (!keywords.length) return [];
     return projects
       .filter((p) =>
-        matchText(keywords, p.name, p.description || "", p.status || ""),
+        matchText(keywords, p.name, p.description || "", text(projectStatusLabel(p.status))),
       )
       .slice(0, MAX_PER_SECTION);
-  }, [projects, keywords]);
+  }, [projects, keywords, text]);
 
   const matchedNotifications = useMemo(() => {
     if (!keywords.length) return [];
@@ -306,8 +309,8 @@ export default function GlobalSearchResults({
   const rowClass = (active: boolean) =>
     `flex items-center gap-3 p-3 text-left rounded-xl border shadow-2xs transition-all cursor-pointer group ${
       active
-        ? "bg-[#00C776]/5 border-[#00C776]/60 dark:border-[#00C776]/60"
-        : "bg-white/90 dark:bg-slate-900/80 border-gray-200/80 dark:border-slate-800 hover:border-[#00C776]/50 hover:shadow-md"
+        ? "bg-brand/5 border-brand/60 dark:border-brand/60"
+        : "bg-white/90 dark:bg-slate-900/80 border-gray-200/80 dark:border-slate-800 hover:border-brand/50 hover:shadow-md"
     }`;
 
   const suggestedLinks = useMemo(() => {
@@ -330,7 +333,7 @@ export default function GlobalSearchResults({
         </h2>
         <button
           onClick={onClear}
-          className="text-xs text-[#00C776] hover:underline cursor-pointer"
+          className="text-xs text-brand hover:underline cursor-pointer"
         >
           {tx("clear_search_ee32f25f")}</button>
       </div>
@@ -354,7 +357,7 @@ export default function GlobalSearchResults({
                   <button
                     key={l.id}
                     onClick={() => handleOpenLink(l.url)}
-                    className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-[#00C776]/10 hover:text-[#00C776] border border-gray-200 dark:border-slate-700 transition-colors cursor-pointer"
+                    className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-brand/10 hover:text-brand border border-gray-200 dark:border-slate-700 transition-colors cursor-pointer"
                   >
                     {l.title}
                   </button>
@@ -391,7 +394,7 @@ export default function GlobalSearchResults({
                         </span>
                       )}
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-semibold text-gray-800 dark:text-slate-200 group-hover:text-[#00C776] transition-colors">
+                        <span className="block truncate text-sm font-semibold text-gray-800 dark:text-slate-200 group-hover:text-brand transition-colors">
                           {highlight(l.title, keywords)}
                         </span>
                         <span className="block truncate text-xs text-gray-400 dark:text-slate-500">
@@ -430,7 +433,7 @@ export default function GlobalSearchResults({
                         📅
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-semibold text-gray-800 dark:text-slate-200 group-hover:text-[#00C776] transition-colors">
+                        <span className="block truncate text-sm font-semibold text-gray-800 dark:text-slate-200 group-hover:text-brand transition-colors">
                           {highlight(t.title, keywords)}
                         </span>
                         <span className="block truncate text-xs text-gray-400 dark:text-slate-500">
@@ -471,16 +474,16 @@ export default function GlobalSearchResults({
                         style={{ backgroundColor: p.color || "#00C776" }}
                       />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-semibold text-gray-800 dark:text-slate-200 group-hover:text-[#00C776] transition-colors">
+                        <span className="block truncate text-sm font-semibold text-gray-800 dark:text-slate-200 group-hover:text-brand transition-colors">
                           {highlight(p.name, keywords)}
                         </span>
                         <span className="block truncate text-xs text-gray-400 dark:text-slate-500">
-                          {p.description || p.status || tx("no_description_4172af0c")}
+                          {p.description || (p.status ? text(projectStatusLabel(p.status)) : "") || tx("no_description_4172af0c")}
                         </span>
                       </span>
                       {p.status && (
                         <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800">
-                          {p.status}
+                          {text(projectStatusLabel(p.status))}
                         </span>
                       )}
                     </button>
@@ -514,7 +517,7 @@ export default function GlobalSearchResults({
                         🔔
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-semibold text-gray-800 dark:text-slate-200 group-hover:text-[#00C776] transition-colors">
+                        <span className="block truncate text-sm font-semibold text-gray-800 dark:text-slate-200 group-hover:text-brand transition-colors">
                           {highlight(n.title, keywords)}
                         </span>
                         <span className="block truncate text-xs text-gray-400 dark:text-slate-500">

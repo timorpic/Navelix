@@ -113,7 +113,7 @@ const getProjectName = (pid?: string) => {
       <span className="text-base">📅</span>
       <h3 className="text-sm font-bold text-gray-900 dark:text-white">
         {tx("schedule_overview_eadb6af8")}</h3>
-      <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-[#00C776] text-[10px] font-bold">
+      <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-brand text-[10px] font-bold">
         {todayCompletedCount}/{todayTodos.length} {tx("completed_bc3a7758")}{todayProgressPercent}%
       </span>
     </div>
@@ -129,7 +129,7 @@ const getProjectName = (pid?: string) => {
           }}
           className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
             agendaTab === "today" && !selectedDayFilter
-              ? "bg-white dark:bg-slate-800 text-[#00C776] shadow-2xs"
+              ? "bg-white dark:bg-slate-800 text-brand shadow-2xs"
               : "text-gray-500 hover:text-gray-800 dark:text-slate-400"
           }`}
         >
@@ -142,7 +142,7 @@ const getProjectName = (pid?: string) => {
           }}
           className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
             agendaTab === "upcoming" && !selectedDayFilter
-              ? "bg-white dark:bg-slate-800 text-[#00C776] shadow-2xs"
+              ? "bg-white dark:bg-slate-800 text-brand shadow-2xs"
               : "text-gray-500 hover:text-gray-800 dark:text-slate-400"
           }`}
         >
@@ -155,7 +155,7 @@ const getProjectName = (pid?: string) => {
           }}
           className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
             agendaTab === "completed" && !selectedDayFilter
-              ? "bg-white dark:bg-slate-800 text-[#00C776] shadow-2xs"
+              ? "bg-white dark:bg-slate-800 text-brand shadow-2xs"
               : "text-gray-500 hover:text-gray-800 dark:text-slate-400"
           }`}
         >
@@ -164,7 +164,7 @@ const getProjectName = (pid?: string) => {
 
       <button
         onClick={() => onSelectCategory("feature-calendar")}
-        className="text-xs font-semibold text-[#00C776] hover:underline flex items-center gap-0.5 ml-1 cursor-pointer shrink-0"
+        className="text-xs font-semibold text-brand hover:underline flex items-center gap-0.5 ml-1 cursor-pointer shrink-0"
         title={tx("open_full_calendar_eea24503")}
       >
         <span>{tx("calendar_a00f295c")}</span>
@@ -190,9 +190,9 @@ const getProjectName = (pid?: string) => {
           }}
           className={`py-1 rounded-lg flex flex-col items-center justify-center transition-all cursor-pointer ${
             isSelected
-              ? "bg-[#00C776] text-white shadow-2xs font-bold"
+              ? "bg-brand text-white shadow-2xs font-bold"
               : d.isToday
-              ? "bg-[#00C776]/15 text-[#00C776] font-bold"
+              ? "bg-brand/15 text-brand font-bold"
               : "hover:bg-gray-200/50 dark:hover:bg-slate-800 text-gray-600 dark:text-slate-400"
           }`}
         >
@@ -245,7 +245,7 @@ const getProjectName = (pid?: string) => {
                 checked={item.done}
                 onChange={() => handleToggleTodo(item.id, item.done, item.ownerId)}
                 aria-label={tx("message_ac34883a8f3d", {v0: item.title})}
-                className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] border-gray-300 dark:border-slate-600 cursor-pointer shrink-0"
+                className="w-3.5 h-3.5 rounded text-brand focus:ring-brand border-gray-300 dark:border-slate-600 cursor-pointer shrink-0"
               />
 
               <span
@@ -308,7 +308,7 @@ const getProjectName = (pid?: string) => {
                 <button
                   type="button"
                   onClick={() => handlePostponeOneDay(item)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-[10px] text-gray-400 hover:text-[#00C776] transition-opacity cursor-pointer"
+                  className="opacity-0 group-hover:opacity-100 p-1 text-[10px] text-gray-400 hover:text-brand transition-opacity cursor-pointer"
                   title={tx("move_to_tomorrow_15f4d177")}
                 >
                   {tx("1_day_fdeaec10")}</button>
@@ -334,7 +334,7 @@ const getProjectName = (pid?: string) => {
           ? tx("message_a5c1b0090662", {v0: selectedDayFilter.slice(5)})
           : tx("quick_add_a_task_for_today_c92cbc93")
       }
-      className="flex-1 px-3 py-1.5 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 text-gray-800 dark:text-slate-100"
+      className="flex-1 px-3 py-1.5 text-xs bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/40 text-gray-800 dark:text-slate-100"
     />
     <select
       name="quickTodoPriority"
@@ -350,7 +350,7 @@ const getProjectName = (pid?: string) => {
     </select>
     <button
       type="submit"
-      className="px-3.5 py-1.5 bg-[#00C776] text-white text-xs font-bold rounded-xl hover:bg-[#00B068] transition-colors cursor-pointer shrink-0"
+      className="px-3.5 py-1.5 bg-brand text-white text-xs font-bold rounded-xl hover:bg-brand-hover transition-colors cursor-pointer shrink-0"
     >
       {tx("add_7a8a11ea")}</button>
   </form>

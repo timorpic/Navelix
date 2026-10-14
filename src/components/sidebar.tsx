@@ -149,7 +149,7 @@ export default function Sidebar({
             title={config.theme === "system" ? tx("system_theme_217cfe7d") : isDark ? tx("switch_to_light_mode_fe05df6e") : tx("switch_to_dark_mode_65ec2b0d")}
           >
             {config.theme === "system" ? (
-              <svg className="w-4 h-4 text-[#00C776]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
               </svg>
             ) : isDark ? (
@@ -164,7 +164,7 @@ export default function Sidebar({
           </button>
           <Link
             href="/admin"
-            className="px-3 py-1.5 rounded-lg bg-[#00C776] text-white text-xs font-semibold transition-colors hover:bg-[#009a5a]"
+            className="px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-semibold transition-colors hover:bg-brand-strong"
           >
             {tx("admin_2e0bd135")}</Link>
         </div>
@@ -212,7 +212,7 @@ export default function Sidebar({
                   title={config.theme === "system" ? tx("system_theme_217cfe7d") : isDark ? tx("switch_to_light_mode_fe05df6e") : tx("switch_to_dark_mode_65ec2b0d")}
                 >
                   {config.theme === "system" ? (
-                    <svg className="w-4 h-4 text-[#00C776]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
                     </svg>
                   ) : isDark ? (
@@ -255,7 +255,7 @@ export default function Sidebar({
                         : "flex-1 gap-3.5 px-3.5 py-2.5 text-xs font-semibold justify-start"
                     } ${
                       isSelected
-                        ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
+                        ? "bg-brand text-white shadow-sm shadow-brand/20"
                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                     }`}
                   >
@@ -285,7 +285,7 @@ export default function Sidebar({
                       className={`absolute right-2 p-1 rounded-md text-xs transition-opacity ${
                         isSelected
                           ? "text-white/80 hover:text-white hover:bg-white/20"
-                          : "text-gray-400 hover:text-[#00C776] hover:bg-gray-200/60 dark:hover:bg-slate-700 opacity-0 group-hover:opacity-100"
+                          : "text-gray-400 hover:text-brand hover:bg-gray-200/60 dark:hover:bg-slate-700 opacity-0 group-hover:opacity-100"
                       }`}
                     >
                       🔗
@@ -298,7 +298,7 @@ export default function Sidebar({
             {!collapsed && (
               <button
                 onClick={() => setTeamModalOpen(true)}
-                className="flex items-center gap-2 px-3 py-1.5 mt-1 rounded-xl text-[11px] font-medium text-gray-500 hover:text-[#00C776] hover:bg-[#00C776]/10 dark:text-slate-400 dark:hover:text-[#00C776] transition-colors cursor-pointer"
+                className="flex items-center gap-2 px-3 py-1.5 mt-1 rounded-xl text-[11px] font-medium text-gray-500 hover:text-brand hover:bg-brand/10 dark:text-slate-400 dark:hover:text-brand transition-colors cursor-pointer"
               >
                 <span>👥</span>
                 <span>{tx("subscribe_to_team_categories_35d0292a")}</span>
@@ -328,7 +328,7 @@ export default function Sidebar({
                         : "flex-1 gap-3.5 px-3.5 py-2.5 text-xs font-semibold justify-start"
                     } ${
                       isSelected
-                        ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
+                        ? "bg-brand text-white shadow-sm shadow-brand/20"
                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                     }`}
                   >
@@ -402,7 +402,7 @@ export default function Sidebar({
               className="flex items-center justify-between p-2.5 rounded-xl border transition-colors cursor-pointer group bg-gray-50/80 hover:bg-gray-50 border-gray-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:border-slate-700 select-none"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00C776] to-[#009a5a] flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden shadow-2xs">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-strong flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden shadow-2xs">
                   {/* eslint-disable-next-line @next/next/no-img-element -- 头像可能是任意图片地址或 data URL */}
                   <img
                     src={resolveAvatar(currentUser?.avatar, currentUser?.username)}
@@ -473,7 +473,7 @@ export default function Sidebar({
         onClose={() => setShowProfileModal(false)}
       >
         <div className="flex flex-col items-center p-3 text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00C776] to-[#009a5a] flex items-center justify-center text-white text-2xl font-bold shadow-md overflow-hidden">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand to-brand-strong flex items-center justify-center text-white text-2xl font-bold shadow-md overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element -- 头像可能是任意图片地址或 data URL */}
             <img
               src={resolveAvatar(currentUser?.avatar, currentUser?.username)}
@@ -524,7 +524,7 @@ export default function Sidebar({
             <Link
               href="/admin"
               onClick={() => setShowProfileModal(false)}
-              className="w-full h-9 rounded-lg bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+              className="w-full h-9 rounded-lg bg-brand hover:bg-brand-strong text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
             >
               {tx("open_my_administration_panel_0684e9a1")}</Link>
 

@@ -8,6 +8,7 @@ import type { TodoItem } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
 import { toLocalDateStr } from "@/lib/date-utils";
 import ConfirmDialog from "./confirm-dialog";
+import Overlay from "./overlay";
 
 export default function ScheduleAdminPanel() {
   const tx = useTranslations();
@@ -65,7 +66,7 @@ export default function ScheduleAdminPanel() {
             title: formTitle.trim(),
             dueDate: formDueDate,
             priority: formPriority,
-            projectId: formProjectId,
+            ...(!editingSchedule.isDelegated ? { projectId: formProjectId } : {}),
           }),
         });
         if (res.ok) {
@@ -168,7 +169,7 @@ export default function ScheduleAdminPanel() {
 
         <button
           onClick={() => handleOpenModal()}
-          className="self-start sm:self-auto px-4 py-2 bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-bold rounded-xl shadow-xs hover:shadow-md transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+          className="self-start sm:self-auto px-4 py-2 bg-brand hover:bg-brand-strong text-white text-xs font-bold rounded-xl shadow-xs hover:shadow-md transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
         >
           <span>✨</span>
           <span>{tx("new_schedule_5090d53a")}</span>
@@ -187,7 +188,7 @@ export default function ScheduleAdminPanel() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={tx("search_schedule_titles_74510774")}
-            className="w-full pl-8 pr-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
+            className="w-full pl-8 pr-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/40"
           />
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
             🔍
@@ -201,7 +202,7 @@ export default function ScheduleAdminPanel() {
           aria-label={tx("filter_schedules_by_priority_eaac7b54")}
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
-          className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"
+          className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand/40 cursor-pointer"
         >
           <option value="all">{tx("all_priorities_73385818")}</option>
           <option value="high">{tx("high_priority_b755604e")}</option>
@@ -216,7 +217,7 @@ export default function ScheduleAdminPanel() {
           aria-label={tx("filter_schedules_by_status_3806369f")}
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"
+          className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand/40 cursor-pointer"
         >
           <option value="all">{tx("all_statuses_cacda875")}{schedules.length})</option>
           <option value="pending">{tx("in_progress_ad8d3439")}{pendingCount})</option>
@@ -259,7 +260,7 @@ export default function ScheduleAdminPanel() {
                         type="checkbox"
                         checked={item.done}
                         onChange={() => handleToggleDone(item)}
-                        className="w-4 h-4 rounded text-[#00C776] focus:ring-[#00C776] cursor-pointer"
+                        className="w-4 h-4 rounded text-brand focus:ring-brand cursor-pointer"
                       />
                     </td>
 
@@ -330,11 +331,13 @@ export default function ScheduleAdminPanel() {
                           className="text-xs font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 cursor-pointer"
                         >
                           {tx("edit_05183656")}</button>
-                        <button
-                          onClick={() => setScheduleToDelete(item)}
-                          className="text-xs font-semibold text-rose-500 hover:text-rose-600 cursor-pointer"
-                        >
-                          {tx("delete_2f9daa82")}</button>
+                        {!item.isDelegated && (
+                          <button
+                            onClick={() => setScheduleToDelete(item)}
+                            className="text-xs font-semibold text-rose-500 hover:text-rose-600 cursor-pointer"
+                          >
+                            {tx("delete_2f9daa82")}</button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -347,7 +350,10 @@ export default function ScheduleAdminPanel() {
 
       {/* Add / Edit Schedule Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+        <Overlay
+          title={editingSchedule ? tx("edit_schedule_a564a40b") : tx("new_calendar_entry_dbfa0a33")}
+          onClose={() => setShowModal(false)}
+        >
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-100 dark:border-slate-700 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-700">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
@@ -378,7 +384,7 @@ export default function ScheduleAdminPanel() {
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder={tx("e_g_prepare_the_q3_requirements_review_5462992d")}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand/40"
                 />
               </div>
 
@@ -396,7 +402,7 @@ export default function ScheduleAdminPanel() {
                     type="date"
                     value={formDueDate}
                     onChange={(e) => setFormDueDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand/40 cursor-pointer"
                   />
                 </div>
 
@@ -413,7 +419,7 @@ export default function ScheduleAdminPanel() {
                     onChange={(e) =>
                       setFormPriority(e.target.value as "high" | "medium" | "low")
                     }
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand/40 cursor-pointer"
                   >
                     <option value="high">{tx("high_priority_b755604e")}</option>
                     <option value="medium">{tx("medium_priority_8642409d")}</option>
@@ -432,11 +438,15 @@ export default function ScheduleAdminPanel() {
                 <select
                   id="schedule-panel-form-project-id"
                   name="formProjectId"
+                  disabled={editingSchedule?.isDelegated}
                   value={formProjectId}
                   onChange={(e) => setFormProjectId(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200/80 dark:border-slate-700 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand/40 cursor-pointer"
                 >
                   <option value="">{tx("independent_entry_no_project_40693cca")}</option>
+                  {formProjectId && !projects.some(p => p.id === formProjectId) && (
+                    <option value={formProjectId}>{tx("owner_managed_project")}</option>
+                  )}
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>
                       🗂️ {p.name}
@@ -459,13 +469,13 @@ export default function ScheduleAdminPanel() {
                   {tx("cancel_2cd0f3be")}</button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer"
+                  className="px-4 py-2 bg-brand hover:bg-brand-strong text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer"
                 >
                   {tx("save_schedule_c0a55a7b")}</button>
               </div>
             </form>
           </div>
-        </div>
+        </Overlay>
       )}
 
       {/* Delete Confirmation */}

@@ -29,7 +29,7 @@ export default function AdminProfileBasicsCard({
             onClick={account.openAvatarModal}
             title={tx("click_to_change_avatar_fa41f745")}
           >
-            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#3B82F6] via-[#00C776] to-[#8B5CF6] flex items-center justify-center text-white text-xl font-bold shadow-md overflow-hidden">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#3B82F6] via-brand to-[#8B5CF6] flex items-center justify-center text-white text-xl font-bold shadow-md overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={resolveAvatar(currentUser?.avatar, currentUser?.username)}

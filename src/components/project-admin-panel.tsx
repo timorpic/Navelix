@@ -1,5 +1,7 @@
 "use client";
 
+import { normalizeProjectStatus, projectStatusLabel } from "@/lib/project-status";
+
 import { useText } from "@/hooks/use-text";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -7,10 +9,10 @@ import type { Project } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
 
 const STATUS_OPTIONS = [
-  { label: "进行中", color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400" },
-  { label: "研究中", color: "bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400" },
-  { label: "维护中", color: "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400" },
-  { label: "已完成", color: "bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400" },
+  { label: "进行中", value: "in-progress", color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400" },
+  { label: "研究中", value: "research", color: "bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400" },
+  { label: "维护中", value: "maintenance", color: "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400" },
+  { label: "已完成", value: "completed", color: "bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400" },
 ];
 
 export default function ProjectAdminPanel() {
@@ -18,7 +20,7 @@ export default function ProjectAdminPanel() {
   const tx = useTranslations();
   const { projects, todos, refreshData } = useNavelixData();
   const [name, setName] = useState("");
-  const [status, setStatus] = useState("进行中");
+  const [status, setStatus] = useState("in-progress");
   const [url, setUrl] = useState("");
   const [color, setColor] = useState("#00C776");
   const [editing, setEditing] = useState<Project | null>(null);
@@ -26,7 +28,7 @@ export default function ProjectAdminPanel() {
 
   const resetForm = () => {
     setName("");
-    setStatus("进行中");
+    setStatus("in-progress");
     setUrl("");
     setColor("#00C776");
     setEditing(null);
@@ -65,7 +67,7 @@ export default function ProjectAdminPanel() {
   const startEdit = (p: Project) => {
     setEditing(p);
     setName(p.name);
-    setStatus(p.status || "进行中");
+    setStatus(normalizeProjectStatus(p.status));
     setUrl(p.url || "");
     setColor(p.color || p.statusColor || "#00C776");
     setError("");
@@ -153,7 +155,7 @@ export default function ProjectAdminPanel() {
                 className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-2 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white cursor-pointer"
               >
                 {STATUS_OPTIONS.map((opt) => (
-                  <option key={text(opt.label)} value={text(opt.label)}>
+                  <option key={opt.value} value={opt.value}>
                     {text(opt.label)}
                   </option>
                 ))}
@@ -184,12 +186,12 @@ export default function ProjectAdminPanel() {
             <span className="text-[10px] text-gray-400 dark:text-slate-400">{tx("quick_status_9411738e")}</span>
             {STATUS_OPTIONS.map((opt) => (
               <button
-                key={text(opt.label)}
+                key={opt.value}
                 type="button"
-                onClick={() => setStatus(opt.label)}
+                onClick={() => setStatus(opt.value)}
                 className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all cursor-pointer ${
-                  status === opt.label
-                    ? "ring-1 ring-[#00C776] font-bold"
+                  status === opt.value
+                    ? "ring-1 ring-brand font-bold"
                     : "opacity-60 hover:opacity-100"
                 } ${opt.color}`}
               >
@@ -200,7 +202,7 @@ export default function ProjectAdminPanel() {
 
           <button
             onClick={submit}
-            className="h-8 px-4 bg-[#00C776] hover:bg-[#009a5a] text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+            className="h-8 px-4 bg-brand hover:bg-brand-strong text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
           >
             {editing ? tx("save_project_a637cf46") : tx("add_project_8964f53a")}
           </button>
@@ -217,7 +219,7 @@ export default function ProjectAdminPanel() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((p) => {
-              const matchedOpt = STATUS_OPTIONS.find((s) => s.label === p.status);
+              const matchedOpt = STATUS_OPTIONS.find((s) => s.value === normalizeProjectStatus(p.status));
               const badgeClass = matchedOpt
                 ? matchedOpt.color
                 : "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400";
@@ -240,7 +242,7 @@ export default function ProjectAdminPanel() {
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => startEdit(p)}
-                        className="text-gray-400 hover:text-[#00C776] transition-colors cursor-pointer text-xs"
+                        className="text-gray-400 hover:text-brand transition-colors cursor-pointer text-xs"
                         title={tx("edit_05183656")}
                       >
                         ✏️
@@ -257,14 +259,14 @@ export default function ProjectAdminPanel() {
 
                   <div className="flex items-center justify-between text-xs">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${badgeClass}`}>
-                      {text(p.status || "进行中")}
+                      {text(projectStatusLabel(p.status))}
                     </span>
                     {p.url && (
                       <a
                         href={p.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[11px] text-gray-400 hover:text-[#00C776] truncate max-w-[140px]"
+                        className="text-[11px] text-gray-400 hover:text-brand truncate max-w-[140px]"
                         title={p.url}
                       >
                         {p.url.replace(/^https?:\/\//, "")} ↗

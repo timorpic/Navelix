@@ -107,6 +107,25 @@ test("日历视图：AI 排程弹窗（use-ai-schedule + ai-schedule-modal）", 
   await expect(page.getByText("AI Copilot 智能排程建议")).toBeHidden();
 });
 
+test("后台日程管理：新建日程弹窗提供对话框语义、Escape 关闭与焦点恢复", async ({ page }) => {
+  await login(page);
+  await page.goto("/admin?tab=schedules");
+
+  const opener = page.getByRole("button", { name: /新建日程/ });
+  await opener.focus();
+  await opener.click();
+
+  // 弹窗改用共享 Overlay（此前只有遮罩样式，没有 dialog 语义与键盘行为）
+  const dialog = page.getByRole("dialog", { name: "新建日历日程" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("日程标题 *")).toBeVisible();
+
+  // Escape 关闭，焦点回到触发按钮
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(opener).toBeFocused();
+});
+
 test("侧边栏：时钟/天气/表盘小组件（clock-weather-widget）", async ({ page }) => {
   await login(page);
 

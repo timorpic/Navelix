@@ -83,7 +83,7 @@ export default function RecentActivitiesFilterBar({
                 onSearchQueryChange(e.target.value);
               }}
               placeholder={tx("search_titles_logs_content_sources_79b4d4c7")}
-              className="w-full h-9 pl-3 pr-8 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
+              className="w-full h-9 pl-3 pr-8 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand/40"
             />
             {searchQuery && (
               <button
@@ -104,7 +104,7 @@ export default function RecentActivitiesFilterBar({
               onChange={(e) => {
                 onFilterSourceChange(e.target.value as ActivitySource);
               }}
-              className="w-full h-9 px-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer"
+              className="w-full h-9 px-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand/40 cursor-pointer"
             >
               {sourceTabs.map((tab) => (
                 <option key={tab.id} value={tab.id}>
@@ -126,7 +126,7 @@ export default function RecentActivitiesFilterBar({
                   }}
                   className={`flex-1 py-1 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer ${
                     timeRange === t.id
-                      ? "bg-[#00C776] text-white shadow-2xs"
+                      ? "bg-brand text-white shadow-2xs"
                       : "text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800"
                   }`}
                 >
@@ -194,7 +194,7 @@ export default function RecentActivitiesFilterBar({
               }}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                 filterSource === tab.id
-                  ? "bg-[#00C776] text-white shadow-2xs"
+                  ? "bg-brand text-white shadow-2xs"
                   : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 border border-gray-200/60 dark:border-slate-700 hover:bg-gray-50"
               }`}
             >
@@ -218,12 +218,12 @@ export default function RecentActivitiesFilterBar({
           <div className="flex items-center justify-between pt-2 border-t border-gray-200/60 dark:border-slate-800 text-xs">
             <span className="text-gray-500 dark:text-slate-400">
               {tx("filtered_79df4cd7")}{" "}
-              <strong className="text-[#00C776]">{filteredCount}</strong>{" "}
+              <strong className="text-brand">{filteredCount}</strong>{" "}
               {tx("records_out_of_17c8dbd4")}{totalCount} {tx("records_34265e57")}</span>
             <button
               type="button"
               onClick={onResetFilters}
-              className="text-[#00C776] hover:underline font-bold cursor-pointer"
+              className="text-brand hover:underline font-bold cursor-pointer"
             >
               {tx("reset_all_filters_d29601c7")}</button>
           </div>
@@ -234,7 +234,7 @@ export default function RecentActivitiesFilterBar({
       {selectedCount > 0 && (
         <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-xs mb-3.5 animate-fadeIn">
           <div className="flex items-center gap-2">
-            <span className="text-[#00C776] font-bold">
+            <span className="text-brand font-bold">
               {tx("selected_d2f52775")}{selectedCount} {tx("records_6016bf63")}</span>
           </div>
 

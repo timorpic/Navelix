@@ -39,7 +39,7 @@ export default function PendingRemindersWidget() {
         <span className="text-sm">📌</span>
         <h3 className="text-xs font-black text-gray-900 dark:text-white tracking-wide">{tx("pending_reminders_31e81252")}</h3>
         {pending.length > 0 && (
-          <span className="px-1.5 py-0.5 rounded-full bg-[#00C776]/10 text-[#00C776] text-[9px] font-bold ml-auto">
+          <span className="px-1.5 py-0.5 rounded-full bg-brand/10 text-brand text-[9px] font-bold ml-auto">
             {pending.length}
           </span>
         )}

@@ -1,4 +1,5 @@
 "use client";
+import { useDialogFocus } from "@/hooks/use-dialog-focus";
 
 import { useTranslations } from "next-intl";
 import BrandLogo from "@/components/brand-logo";
@@ -21,8 +22,9 @@ export default function AdminProLicenseModal({
   license: UseAdminLicenseResult;
 }) {
   const tx = useTranslations();
+  const panelRef = useDialogFocus(true, license.closeLicenseModal);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
+    <div ref={panelRef} role="dialog" aria-modal="true" aria-label={tx("activate_navelix_pro_f76452f4")} tabIndex={-1} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fadeIn">
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-gray-100 dark:border-slate-800 space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -55,7 +57,7 @@ export default function AdminProLicenseModal({
               <button
                 type="button"
                 onClick={license.copyFingerprint}
-                className="text-[11px] text-[#00C776] hover:underline font-bold cursor-pointer"
+                className="text-[11px] text-brand hover:underline font-bold cursor-pointer"
               >
                 {tx("copy_fingerprint_40ba1003")}</button>
             </div>
@@ -75,7 +77,7 @@ export default function AdminProLicenseModal({
               value={license.licenseInput}
               onChange={(e) => license.setLicenseInput(e.target.value)}
               placeholder={tx("paste_your_complete_license_key_starting_with_ey_fc5fdf17")}
-              className="w-full border border-gray-200 dark:border-slate-700 rounded-xl p-3 text-xs font-mono bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00C776]/50"
+              className="w-full border border-gray-200 dark:border-slate-700 rounded-xl p-3 text-xs font-mono bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand/50"
             />
           </div>
 
@@ -96,7 +98,7 @@ export default function AdminProLicenseModal({
             <button
               type="submit"
               disabled={license.isActivatingLicense || !license.licenseInput.trim()}
-              className="px-5 py-2 text-xs font-bold text-white bg-[#00C776] hover:bg-[#00B068] rounded-xl transition-all disabled:opacity-50 cursor-pointer shadow-md"
+              className="px-5 py-2 text-xs font-bold text-white bg-brand hover:bg-brand-hover rounded-xl transition-all disabled:opacity-50 cursor-pointer shadow-md"
             >
               {license.isActivatingLicense ? tx("verifying_license_ba50213e") : tx("activate_pro_dab153b1")}
             </button>

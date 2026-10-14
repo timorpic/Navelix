@@ -54,14 +54,14 @@ export default function RegisterPage() {
   };
 
   const inputClass =
-    "h-10 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-[#00C776] focus:outline-none focus:ring-2 focus:ring-[#00C776]/20";
+    "h-10 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#F6F8FA] px-4">
       <div className="absolute top-4 right-4 rounded-xl bg-white p-2"><LanguageSwitcher appearance="light" /></div>
       <div className="w-full max-w-sm rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
         <div className="mb-6 flex flex-col items-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#00C776] to-[#009a5a] text-lg font-bold text-white shadow-sm">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-strong text-lg font-bold text-white shadow-sm">
             N
           </div>
           <h1 className="text-xl font-bold text-gray-900">{tx("create_account_4cebd79c")}</h1>
@@ -145,7 +145,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="h-10 w-full rounded-lg bg-[#00C776] text-sm font-semibold text-white transition-colors hover:bg-[#009a5a] disabled:opacity-60 cursor-pointer"
+            className="h-10 w-full rounded-lg bg-brand text-sm font-semibold text-white transition-colors hover:bg-brand-strong disabled:opacity-60 cursor-pointer"
           >
             {loading ? tx("creating_799d2061") : tx("register_5bddf41d")}
           </button>
@@ -157,7 +157,7 @@ export default function RegisterPage() {
           {tx("already_have_an_account_bbaffe14")}{" "}
           <Link
             href="/login"
-            className="font-medium text-[#00C776] hover:underline"
+            className="font-medium text-brand hover:underline"
           >
             {tx("sign_in_3ee55f9e")}</Link>
         </p>

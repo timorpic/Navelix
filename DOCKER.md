@@ -74,7 +74,7 @@ docker run -d \
 | `HOSTNAME` | `0.0.0.0` | 绑定网络主机地址 |
 | `NAVELIX_ADMIN_PASSWORD` | *(留空)* | 初始管理员密码，留空则自动生成随机强密码并保存在 `data/` 目录下 |
 | `NAVELIX_COOKIE_SECURE` | `false` | Cookie Secure 属性；HTTP 保持 `false`，HTTPS 设为 `true` |
-| `TRUST_PROXY` | `false` | 是否信任反向代理 `X-Forwarded-For` 标头 |
+| `TRUST_PROXY` | `false` | 是否信任反向代理覆盖的转发头。同时影响 `X-Forwarded-For` / `X-Real-IP` 客户端 IP 解析与写请求 CSRF 校验采用的 `X-Forwarded-Host` / `X-Forwarded-Proto`。TLS 在代理终结时必须设为 `true`，否则写请求返回 403 |
 | `NAVELIX_DATA_DIR` | `/app/data` | 数据目录（SQLite 库、备份、`.app_secret`）覆盖项；常规部署无需修改 |
 | `NAVELIX_GITHUB_REPO` | `timorpic/Navelix` | 版本更新检测使用的 **GitHub 仓库**（`owner/repo`，走 Releases API）；fork 后可指向自己的仓库 |
 | `NAVELIX_LICENSE_KEY` | *(留空)* | 商业版 License Key，容器启动时注入激活；也可稍后在后台网页激活 |

@@ -59,7 +59,7 @@ export default function AdminProfileSessionsCard({
                     {sessionLabel(s.userAgent)}
                   </span>
                   {s.isCurrent && (
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#00C776] text-white">
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-brand text-white">
                       {tx("this_device_c6897853")}</span>
                   )}
                 </div>

@@ -1,4 +1,5 @@
 "use client";
+import { isActiveProjectStatus, normalizeProjectStatus } from "@/lib/project-status";
 
 import { useTranslations } from "next-intl";
 import React, { useState, useMemo } from "react";
@@ -53,11 +54,7 @@ export default function TopStatsBar({
   // Derived metrics for Actionable Cockpit
   // 1. 进行中项目数
   const inProgressProjectsCount = useMemo(() => {
-    return projects.filter((p) => {
-      const status = (p.status || "").trim();
-      if (!status) return true;
-      return status.includes("进行") || status.includes("开发") || status.includes("研究") || status.toLowerCase().includes("progress");
-    }).length;
+    return projects.filter(p => isActiveProjectStatus(p.status)).length;
   }, [projects]);
 
   // 2. 待处理任务数
@@ -70,7 +67,7 @@ export default function TopStatsBar({
   const weeklyCompletedCount = useMemo(() => {
     const completedTodos = todos.filter((t) => t.done).length;
     const completedProjects = projects.filter(
-      (p) => p.status === "已完成" || (p.status || "").includes("完成"),
+      (p) => normalizeProjectStatus(p.status) === "completed",
     ).length;
     return completedTodos + completedProjects;
   }, [todos, projects]);
@@ -258,7 +255,7 @@ export default function TopStatsBar({
           <div className="grid grid-cols-3 gap-1.5">
             <button
               onClick={() => setShowAddLinkModal(true)}
-              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
+              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-brand hover:bg-brand/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>📝</span>
               <span className="truncate">{tx("new_bookmark_56c28f8d")}</span>
@@ -266,7 +263,7 @@ export default function TopStatsBar({
 
             <button
               onClick={() => setShowQuickNoteModal(true)}
-              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
+              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-brand hover:bg-brand/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>💡</span>
               <span className="truncate">{tx("capture_idea_e3097d3e")}</span>
@@ -274,7 +271,7 @@ export default function TopStatsBar({
 
             <button
               onClick={() => setShowAddLinkModal(true)}
-              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
+              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-brand hover:bg-brand/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>📤</span>
               <span className="truncate">{tx("upload_file_bb5caa9c")}</span>
@@ -282,7 +279,7 @@ export default function TopStatsBar({
 
             <button
               onClick={() => setShowTaskModal(true)}
-              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
+              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-brand hover:bg-brand/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>☑️</span>
               <span className="truncate">{tx("create_task_d2ff17f4")}</span>
@@ -290,7 +287,7 @@ export default function TopStatsBar({
 
             <button
               onClick={() => onSelectCategory && onSelectCategory("feature-projects")}
-              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
+              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-brand hover:bg-brand/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>📂</span>
               <span className="truncate">{tx("new_project_0e1a7040")}</span>
@@ -298,7 +295,7 @@ export default function TopStatsBar({
 
             <button
               onClick={() => setShowAiModal(true)}
-              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
+              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-brand hover:bg-brand/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>🤖</span>
               <span className="truncate">{tx("ai_assistant_1b0049fc")}</span>
@@ -320,7 +317,7 @@ export default function TopStatsBar({
 
       {/* Quick Note Modal */}
       {showQuickNoteModal && (
-        <Overlay>
+        <Overlay title={tx("capture_an_idea_note_013680b3")} onClose={() => setShowQuickNoteModal(false)}>
           <div className="w-full max-w-sm rounded-xl bg-white dark:bg-slate-900 p-4 shadow-xl border border-gray-100 dark:border-slate-800">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
               {tx("capture_an_idea_note_013680b3")}</h3>
@@ -331,10 +328,10 @@ export default function TopStatsBar({
                 onChange={(e) => setQuickNote(e.target.value)}
                 placeholder={tx("quickly_jot_down_thoughts_ideas_or_reminders_ff82d5ee")}
                 rows={3}
-                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
+                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand"
               />
               {noteNotice && (
-                <p className="text-[11px] text-[#00C776]">{noteNotice}</p>
+                <p className="text-[11px] text-brand">{noteNotice}</p>
               )}
               <div className="flex justify-end gap-2">
                 <button
@@ -345,7 +342,7 @@ export default function TopStatsBar({
                   {tx("cancel_2cd0f3be")}</button>
                 <button
                   type="submit"
-                  className="px-3 py-1 bg-[#00C776] text-white text-xs font-bold rounded-lg hover:bg-[#00B068]"
+                  className="px-3 py-1 bg-brand text-white text-xs font-bold rounded-lg hover:bg-brand-hover"
                 >
                   {tx("save_a3030bf8")}</button>
               </div>
@@ -356,7 +353,7 @@ export default function TopStatsBar({
 
       {/* Create Task Modal */}
       {showTaskModal && (
-        <Overlay>
+        <Overlay title={tx("create_todo_78d5d585")} onClose={() => setShowTaskModal(false)}>
           <div className="w-full max-w-sm rounded-xl bg-white dark:bg-slate-900 p-4 shadow-xl border border-gray-100 dark:border-slate-800">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
               {tx("create_todo_78d5d585")}</h3>
@@ -367,10 +364,10 @@ export default function TopStatsBar({
                 value={taskTitle}
                 onChange={(e) => setTaskTitle(e.target.value)}
                 placeholder={tx("enter_a_task_title_76dbbf63")}
-                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
+                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand"
               />
               {taskNotice && (
-                <p className="text-[11px] text-[#00C776]">{taskNotice}</p>
+                <p className="text-[11px] text-brand">{taskNotice}</p>
               )}
               <div className="flex justify-end gap-2">
                 <button
@@ -381,7 +378,7 @@ export default function TopStatsBar({
                   {tx("cancel_2cd0f3be")}</button>
                 <button
                   type="submit"
-                  className="px-3 py-1 bg-[#00C776] text-white text-xs font-bold rounded-lg hover:bg-[#00B068]"
+                  className="px-3 py-1 bg-brand text-white text-xs font-bold rounded-lg hover:bg-brand-hover"
                 >
                   {tx("create_cde2cd07")}</button>
               </div>
@@ -392,7 +389,7 @@ export default function TopStatsBar({
 
       {/* AI Ask Modal */}
       {showAiModal && (
-        <Overlay>
+        <Overlay title={tx("ask_ai_copilot_91824cdb")} onClose={() => setShowAiModal(false)}>
           <div className="w-full max-w-md rounded-xl bg-white dark:bg-slate-900 p-4 shadow-xl border border-gray-100 dark:border-slate-800">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
               {tx("ask_ai_copilot_91824cdb")}</h3>
@@ -403,7 +400,7 @@ export default function TopStatsBar({
                 value={aiQuery}
                 onChange={(e) => setAiQuery(e.target.value)}
                 placeholder={tx("what_would_you_like_to_ask_or_analyze_955df7ef")}
-                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
+                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand"
               />
               {aiLoading && (
                 <p className="text-[11px] text-gray-400">{tx("ai_is_thinking_b67cf8f5")}</p>
@@ -423,7 +420,7 @@ export default function TopStatsBar({
                 <button
                   type="submit"
                   disabled={aiLoading}
-                  className="px-3 py-1 bg-[#00C776] text-white text-xs font-bold rounded-lg hover:bg-[#00B068] disabled:opacity-50"
+                  className="px-3 py-1 bg-brand text-white text-xs font-bold rounded-lg hover:bg-brand-hover disabled:opacity-50"
                 >
                   {tx("send_edecf0ae")}</button>
               </div>

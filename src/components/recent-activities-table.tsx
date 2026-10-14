@@ -65,7 +65,7 @@ export default function RecentActivitiesTable({
             <button
               type="button"
               onClick={onResetFilters}
-              className="mt-1 px-3 py-1.5 rounded-xl bg-[#00C776]/10 text-[#00C776] font-bold hover:bg-[#00C776]/20 transition-colors cursor-pointer"
+              className="mt-1 px-3 py-1.5 rounded-xl bg-brand/10 text-brand font-bold hover:bg-brand/20 transition-colors cursor-pointer"
             >
               {tx("clear_all_filters_711bebe8")}</button>
           )}
@@ -81,7 +81,7 @@ export default function RecentActivitiesTable({
                     checked={isAllSelected}
                     onChange={onToggleSelectAll}
                     aria-label={tx("select_all_on_this_page_bd082d9a")}
-                    className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] border-gray-300 dark:border-slate-600 cursor-pointer"
+                    className="w-3.5 h-3.5 rounded text-brand focus:ring-brand border-gray-300 dark:border-slate-600 cursor-pointer"
                   />
                 </th>
                 <th className="py-2.5 px-3 w-12 text-center">#</th>
@@ -112,7 +112,7 @@ export default function RecentActivitiesTable({
                         checked={isSelected}
                         onChange={() => onToggleSelectOne(item.id)}
                         aria-label={tx("message_e9d637c0cb75", {v0: item.title})}
-                        className="w-3.5 h-3.5 rounded text-[#00C776] focus:ring-[#00C776] border-gray-300 dark:border-slate-600 cursor-pointer"
+                        className="w-3.5 h-3.5 rounded text-brand focus:ring-brand border-gray-300 dark:border-slate-600 cursor-pointer"
                       />
                     </td>
 
@@ -167,7 +167,7 @@ export default function RecentActivitiesTable({
                             href={item.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-[#00C776] hover:bg-emerald-100 font-semibold text-[11px] transition-colors"
+                            className="px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-brand hover:bg-emerald-100 font-semibold text-[11px] transition-colors"
                             title={tx("open_target_url_2ec6a66a")}
                           >
                             {tx("open_fbde27b8")}</a>

@@ -74,7 +74,7 @@ export default function AddTodoModal({ open, onClose, onAdded }: AddTodoModalPro
             onChange={(e) => setTitle(e.target.value)}
             placeholder={tx("what_needs_to_be_done_435a0c73")}
             autoFocus
-            className="w-full rounded-lg border border-gray-200 bg-gray-50 p-2.5 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#00C776] dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 p-2.5 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-brand dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           />
         </div>
 
@@ -87,7 +87,7 @@ export default function AddTodoModal({ open, onClose, onAdded }: AddTodoModalPro
               onChange={(e) =>
                 setPriority(e.target.value as "high" | "medium" | "low")
               }
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 p-2.5 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#00C776] dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 p-2.5 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-brand dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             >
               {PRIORITIES.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -103,7 +103,7 @@ export default function AddTodoModal({ open, onClose, onAdded }: AddTodoModalPro
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 p-2.5 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#00C776] dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 p-2.5 text-sm text-gray-800 focus:outline-none focus:ring-1 focus:ring-brand dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             />
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function AddTodoModal({ open, onClose, onAdded }: AddTodoModalPro
           <button
             type="submit"
             disabled={!title.trim() || submitting}
-            className="rounded-lg bg-[#00C776] px-4 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#00B068] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-brand px-4 py-1.5 text-xs font-bold text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? tx("creating_56b63def") : tx("create_cde2cd07")}
           </button>

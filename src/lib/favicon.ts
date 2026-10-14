@@ -90,14 +90,39 @@ export function iconContentType(bytes: Buffer, declared: string | null): string 
 }
 
 const fetchResource: FetchResource = url => safeFetch(url, {
-  timeoutMs: 8_000, allowPrivateIPs: true, headers: { "User-Agent": USER_AGENT },
+  timeoutMs: 8_000, allowPrivateIPs: false, headers: { "User-Agent": USER_AGENT },
 });
 
-export async function fetchWebsiteIcon(pageUrl: URL, fetcher: FetchResource = fetchResource): Promise<WebsiteIcon | null> {
+export interface FetchWebsiteIconOptions {
+  /**
+   * 允许访问私有网段（RFC1918），用于抓取内网 NAS / 路由器等自建服务的图标。
+   *
+   * 与 AI 端点一致，即使开启本项也**始终**封禁回环与链路本地地址
+   * （`127.0.0.0/8`、`::1`、`169.254.0.0/16` 云元数据），详见 `ssrf.ts`。
+   */
+  allowPrivateIPs?: boolean;
+}
+
+/**
+ * 抓取网站图标。
+ *
+ * `fetcher` 省略时按 `options.allowPrivateIPs` 构造实际请求器 —— 每一跳
+ * （首页、声明的图标、根 favicon、重定向）都重新经过 SSRF 校验，
+ * 内网模式不会因为图标 URL 指向别的主机而放宽。
+ */
+export async function fetchWebsiteIcon(
+  pageUrl: URL,
+  fetcher?: FetchResource,
+  options: FetchWebsiteIconOptions = {},
+): Promise<WebsiteIcon | null> {
+  const request = fetcher ?? (options.allowPrivateIPs === true
+    ? (url: string) => safeFetch(url, { timeoutMs: 8_000, allowPrivateIPs: true, headers: { "User-Agent": USER_AGENT } })
+    : fetchResource);
+
   let base = pageUrl;
   let candidates: string[] = [];
   try {
-    const response = await fetcher(pageUrl.href);
+    const response = await request(pageUrl.href);
     if (response.ok) {
       base = new URL(response.url || pageUrl.href);
       const isImage = response.headers.get("content-type")?.toLowerCase().startsWith("image/") ?? false;
@@ -115,7 +140,7 @@ export async function fetchWebsiteIcon(pageUrl: URL, fetcher: FetchResource = fe
   );
   for (const url of new Set(candidates)) {
     try {
-      const response = await fetcher(url);
+      const response = await request(url);
       if (!response.ok) { await response.body?.cancel(); continue; }
       const bytes = await readLimited(response, MAX_ICON_BYTES);
       const type = iconContentType(bytes, response.headers.get("content-type"));

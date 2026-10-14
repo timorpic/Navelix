@@ -37,6 +37,14 @@ describe("Database Secrets Encryption & Decryption (AES-256-GCM)", () => {
   });
 });
 
+it("tampered or malformed encrypted secrets fail closed", () => {
+  const ciphertext = encryptSecret("regression-secret");
+  const parts = ciphertext.split(":");
+  parts[3] = "0".repeat(32); // corrupt authentication tag
+  assert.equal(decryptSecret(parts.join(":")), "");
+  assert.equal(decryptSecret("enc:v1:broken"), "");
+});
+
 describe("Security Audit Logs System", () => {
   it("should record and query audit log entries", () => {
     const testUserId = `test-user-${Date.now()}`;

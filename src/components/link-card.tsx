@@ -63,8 +63,8 @@ export default function LinkCard({ link, status }: LinkCardProps) {
   };
 
   const cardStyle = config.glassmorphism
-    ? "backdrop-blur-md bg-white/70 dark:bg-slate-800/70 border-white/40 dark:border-slate-700/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_16px_rgba(0,0,0,0.08)] hover:border-[#00C776]/50"
-    : "bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700 hover:shadow-md hover:border-[#00C776]/40";
+    ? "backdrop-blur-md bg-white/70 dark:bg-slate-800/70 border-white/40 dark:border-slate-700/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_16px_rgba(0,0,0,0.08)] hover:border-brand/50"
+    : "bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700 hover:shadow-md hover:border-brand/40";
 
   return (
     <a
@@ -106,7 +106,7 @@ export default function LinkCard({ link, status }: LinkCardProps) {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-1">
-          <p className="truncate text-sm font-semibold text-gray-900 dark:text-slate-100 transition-colors group-hover:text-[#00C776]">
+          <p className="truncate text-sm font-semibold text-gray-900 dark:text-slate-100 transition-colors group-hover:text-brand">
             {link.title}
           </p>
           {typeof latency === "number" && currentStatus === "online" && (

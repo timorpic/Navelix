@@ -69,7 +69,7 @@ export default function AdminProLicenseCard({
           <button
             type="button"
             onClick={onOpenLicenseModal}
-            className="w-full md:w-auto px-5 py-2.5 rounded-xl text-xs font-black bg-[#00C776] hover:bg-[#00B068] text-white transition-all cursor-pointer shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
+            className="w-full md:w-auto px-5 py-2.5 rounded-xl text-xs font-black bg-brand hover:bg-brand-hover text-white transition-all cursor-pointer shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
           >
             <span>💎</span>
             <span>{tx("enter_a_license_key_to_unlock_pro_7731402a")}</span>

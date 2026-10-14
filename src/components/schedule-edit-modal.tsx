@@ -38,6 +38,7 @@ export default function ScheduleEditModal({
   );
   const [projectId, setProjectId] = useState(item.projectId || "");
   const [assigneeId, setAssigneeId] = useState(item.assigneeId || "");
+  const [notice, setNotice] = useState("");
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,19 +52,21 @@ export default function ScheduleEditModal({
           title: title.trim(),
           dueDate,
           priority,
-          projectId,
-          assigneeId,
-          assigneeName: matchedMember
-            ? matchedMember.displayName || matchedMember.username
-            : "",
+          ...(!item.isDelegated ? {
+            projectId,
+            assigneeId,
+            assigneeName: matchedMember ? matchedMember.displayName || matchedMember.username : "",
+          } : {}),
         }),
       });
       if (res.ok) {
         onClose();
         onSaved();
+      } else {
+        setNotice(tx("failed_to_save_try_again_f42a1238"));
       }
     } catch {
-      // ignore
+      setNotice(tx("network_error_43c4db17"));
     }
   };
 
@@ -79,7 +82,7 @@ export default function ScheduleEditModal({
   };
 
   return (
-    <Overlay>
+    <Overlay title={tx("edit_schedule_item_69676260")} onClose={onClose}>
       <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-xl border border-gray-100 dark:border-slate-800 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-black text-gray-900 dark:text-white">
@@ -102,7 +105,7 @@ export default function ScheduleEditModal({
               name="formTitle"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
+              className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand"
             />
           </div>
 
@@ -143,11 +146,15 @@ export default function ScheduleEditModal({
                 {tx("related_project_81b8238f")}</label>
               <select
                 name="formProjectId"
+                disabled={item.isDelegated}
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
                 className="w-full px-2 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-white"
               >
                 <option value="">{tx("no_related_project_46062b1a")}</option>
+                {projectId && !projects.some(p => p.id === projectId) && (
+                  <option value={projectId}>{tx("owner_managed_project")}</option>
+                )}
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -161,11 +168,15 @@ export default function ScheduleEditModal({
                 {tx("assign_to_1c362011")}</label>
               <select
                 name="formAssigneeId"
+                disabled={item.isDelegated}
                 value={assigneeId}
                 onChange={(e) => setAssigneeId(e.target.value)}
                 className="w-full px-2 py-1.5 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-gray-800 dark:text-white"
               >
                 <option value="">{tx("unassigned_myself_bc4db75f")}</option>
+                {assigneeId && !members.some(m => m.id === assigneeId) && (
+                  <option value={assigneeId} disabled>{item.assigneeName || tx("existing_assignee")}</option>
+                )}
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>
                     👤 {m.displayName || m.username}
@@ -175,13 +186,16 @@ export default function ScheduleEditModal({
             </div>
           </div>
 
+          {notice && <p role="alert" className="text-xs text-rose-500">{notice}</p>}
           <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="text-xs text-rose-500 hover:underline font-bold"
-            >
-              {tx("delete_item_9f1e8663")}</button>
+            {!item.isDelegated && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="text-xs text-rose-500 hover:underline font-bold"
+              >
+                {tx("delete_item_9f1e8663")}</button>
+            )}
             <div className="flex gap-2">
               <button
                 type="button"
@@ -191,7 +205,7 @@ export default function ScheduleEditModal({
                 {tx("cancel_2cd0f3be")}</button>
               <button
                 type="submit"
-                className="px-4 py-1.5 bg-[#00C776] text-white text-xs font-bold rounded-xl hover:bg-[#00B068]"
+                className="px-4 py-1.5 bg-brand text-white text-xs font-bold rounded-xl hover:bg-brand-hover"
               >
                 {tx("save_changes_84b88b0f")}</button>
             </div>

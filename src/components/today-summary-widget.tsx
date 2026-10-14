@@ -1,4 +1,5 @@
 "use client";
+import { isActiveProjectStatus } from "@/lib/project-status";
 
 import { useTranslations } from "next-intl";
 import { useNavelixData } from "@/context/navelix-context";
@@ -9,11 +10,7 @@ export default function TodaySummaryWidget() {
   const { todos, projects } = useNavelixData();
 
   const done = todos.filter((t) => t.done).length;
-  const inProgress = projects.filter((p) =>
-    [tx("in_progress_760aa168"), tx("development_9ec42862"), tx("research_4ff0f1dd"), "progress"].some((k) =>
-      (p.status || "").toLowerCase().includes(k),
-    ),
-  ).length;
+  const inProgress = projects.filter(p => isActiveProjectStatus(p.status)).length;
 
   const data = {
     totalTodos: todos.length,
@@ -46,7 +43,7 @@ export default function TodaySummaryWidget() {
             </div>
             <div className="h-1 rounded-full bg-gray-200 dark:bg-slate-700 overflow-hidden">
               <div
-                className="h-full rounded-full bg-[#00C776] transition-all"
+                className="h-full rounded-full bg-brand transition-all"
                 style={{ width: `${donePct}%` }}
               />
             </div>

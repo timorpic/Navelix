@@ -21,7 +21,7 @@ export default function IcalExportModal({
   if (!open) return null;
 
   return (
-    <Overlay>
+    <Overlay title={tx("calendar_subscription_export_ical_ics_40b41d3c")} onClose={onClose}>
       <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-xl border border-gray-100 dark:border-slate-800 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
@@ -45,7 +45,7 @@ export default function IcalExportModal({
           <a
             href="/api/calendar/export"
             download="navelix-schedule.ics"
-            className="w-full py-2 bg-[#00C776] hover:bg-[#00B068] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
+            className="w-full py-2 bg-brand hover:bg-brand-hover text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <span>📥</span>
             <span>{tx("download_navelix_schedule_ics_6ecf282a")}</span>
