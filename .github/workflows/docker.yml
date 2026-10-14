@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # 版本一致性强制闸门：Release tag 必须与 package.json version 完全一致（v 前缀除外），
       # 否则直接构建失败，从代码层面杜绝「忘记同步 package.json / Dockerfile」。
