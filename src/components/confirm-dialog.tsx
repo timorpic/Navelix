@@ -8,6 +8,7 @@ interface ConfirmDialogProps {
   title: string;
   message: string;
   confirmLabel?: string;
+  variant?: "danger" | "default";
   /** 取消按钮文案（此前硬编码为英文 "Cancel"） */
   cancelLabel?: string;
   /** 允许返回 Promise：确认期间按钮进入禁用态，避免重复提交 */
@@ -22,6 +23,7 @@ export default function ConfirmDialog({
   title,
   message,
   confirmLabel,
+  variant = "danger",
   cancelLabel,
   onConfirm,
   onCancel,
@@ -44,18 +46,20 @@ export default function ConfirmDialog({
     // elevated：确认框常由弹窗内触发（如云端快照列表里点「一键还原」）。
     // 普通弹窗同为 z-50，同层级下后渲染者覆盖先渲染者，确认框会被列表盖住
     // 而无法点击。此处提升到 z-[60]，保证确认层始终浮在触发它的弹窗之上。
-    <Modal open={open} title={title} onClose={handleCancel} elevated>
-      <p className="text-sm leading-relaxed text-gray-600">{message}</p>
+    <Modal open={open} title={title} onClose={handleCancel} elevated manageFocus>
+      <p className="text-sm leading-relaxed text-gray-600 dark:text-slate-300">{message}</p>
       <div className="mt-6 flex justify-end gap-3">
         <button
+          type="button"
           onClick={handleCancel}
-          className="h-9 rounded-lg px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100"
+          className="h-9 rounded-lg px-4 text-sm font-medium text-gray-600 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-slate-700"
         >
           {cancelLabel || tx("cancel_2cd0f3be")}
         </button>
         <button
+          type="button"
           onClick={handleConfirm}
-          className="h-9 rounded-lg bg-red-500 px-4 text-sm font-medium text-white transition-colors hover:bg-red-600"
+          className={`h-9 rounded-lg px-4 text-sm font-medium text-white transition-colors ${variant === "danger" ? "bg-red-500 hover:bg-red-600" : "bg-[#00C776] hover:bg-[#00B068]"}`}
         >
           {confirmLabel || tx("confirm_delete_a3ea3c17")}
         </button>

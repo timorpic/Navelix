@@ -1,3 +1,5 @@
+import { recordAIUsage } from "@/lib/logging/ai-usage";
+import { withRequestLogging } from "@/lib/logging/request";
 import { getLocale } from "next-intl/server";
 import { translateText } from "@/lib/server-translations";
 import { localizedJson } from "@/lib/localized-json";
@@ -33,7 +35,7 @@ function extractTitle(html: string): string {
   return "";
 }
 
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   const locale = await getLocale();
   const text = (value: string) => translateText(locale, value);
   const user = await getSessionUser();
@@ -133,6 +135,7 @@ export async function POST(req: Request) {
       });
       if (res.ok) {
         const data = await res.json().catch(() => null);
+    recordAIUsage(data, modelName);
         aiNotes = (data?.choices?.[0]?.message?.content || "").trim();
       }
     } catch {
@@ -150,3 +153,5 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export const POST = withRequestLogging("/api/ai/summarize", POSTHandler);

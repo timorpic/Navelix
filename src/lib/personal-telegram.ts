@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { writeLog } from "./logging/events.ts";
 import { translateText } from "./server-translations.ts";
 import { getUserConfigRow } from "./global-config.ts";
 import { randomUUID } from "node:crypto";
@@ -35,7 +37,7 @@ export function enqueueChangedAssignments(before: AssignmentSnapshot): void {
     const recipient = assignee(task);
     if (before.recipients.get(JSON.stringify([task.user_id, task.id])) === recipient) continue;
     // Supersede undelivered assignments, including reassignment away and back before the next tick.
-    db.prepare("UPDATE telegram_deliveries SET finished = 1 WHERE owner_id = ? AND todo_id = ? AND kind = 'assignment' AND finished = 0")
+    db.prepare("UPDATE telegram_deliveries SET finished = 1, outcome = 'skipped' WHERE owner_id = ? AND todo_id = ? AND kind = 'assignment' AND finished = 0")
       .run(task.user_id, task.id);
     if (!recipient || recipient === task.user_id) continue;
     if (!isPersonalTelegramEnabled(recipient, "assignment")) continue;
@@ -80,7 +82,8 @@ export async function runPersonalTelegramNotifications(now = new Date(), send: P
       ? event.user_id === assignee(task)
       : task.due_date === event.due_date && event.due_date === toLocalDateStr(now));
     if (!valid || !isPersonalTelegramEnabled(event.user_id, event.kind)) {
-      db.prepare("UPDATE telegram_deliveries SET finished = 1 WHERE event_key = ?").run(event.event_key);
+      db.prepare("UPDATE telegram_deliveries SET finished = 1, outcome = 'skipped' WHERE event_key = ?").run(event.event_key);
+      writeLog({ category: "notification", event: "telegram.delivery.skipped", outcome: "skipped", operationId: createHash("sha256").update(event.event_key).digest("hex"), subjectId: event.user_id });
       continue;
     }
     const rawText = event.kind === "assignment"
@@ -89,8 +92,9 @@ export async function runPersonalTelegramNotifications(now = new Date(), send: P
     const text = translateText(getUserConfigRow(event.user_id)?.language, rawText);
     let sent = false;
     try { sent = await send(event.user_id, text, event.kind); } catch { /* retry without leaking transport credentials */ }
-    if (sent || event.attempts + 1 >= 3) {
-      db.prepare("UPDATE telegram_deliveries SET finished = 1 WHERE event_key = ?").run(event.event_key);
-    }
+    const outcome = sent ? "succeeded" : event.attempts + 1 >= 3 ? "exhausted" : "failed";
+    db.prepare("UPDATE telegram_deliveries SET finished = ?, outcome = ? WHERE event_key = ?").run(sent || outcome === "exhausted" ? 1 : 0, outcome, event.event_key);
+    writeLog({ category: "notification", event: `telegram.delivery.${outcome}`, outcome, level: sent ? "info" : "warn",
+      operationId: createHash("sha256").update(event.event_key).digest("hex"), subjectId: event.user_id, details: { attempt: event.attempts + 1, channel: "telegram" } });
   }
 }

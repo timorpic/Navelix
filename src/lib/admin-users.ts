@@ -1,3 +1,4 @@
+import { logContext } from "./logging/context.ts";
 import { recordAuditLog } from "./audit.ts";
 import { db } from "./db.ts";
 
@@ -53,6 +54,7 @@ export function deleteUserCascade(userId: string): void {
       db.prepare(`DELETE FROM ${table} WHERE user_id = ?`).run(userId);
     }
     db.prepare("DELETE FROM users WHERE id = ?").run(userId);
+    recordAuditLog({ userId: logContext.getStore()?.actorId ?? "system", action: "user.deleted", target: userId });
     db.exec("COMMIT;");
   } catch (err) {
     try {
@@ -174,6 +176,7 @@ export function updateUser(
       recordAuditLog({ userId: options.actorId, action: input.disabled ? "user.disabled" : "user.enabled", target: userId });
       changed.push("disabled");
     }
+    if (changed.length && input.disabled === undefined) recordAuditLog({ userId: options.actorId, action: input.role ? "user.role.updated" : input.passwordHash ? "user.password.updated" : "user.updated", target: userId });
     db.exec("COMMIT;");
     return changed;
   } catch (err) {

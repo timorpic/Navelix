@@ -1,3 +1,4 @@
+import { writeLog } from "../logging/events.ts";
 import { seedInitialUserData } from "./seed.ts";
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
@@ -52,5 +53,13 @@ initSchema(db);
 
 // 迁移逻辑已抽离至 src/lib/migrations/index.ts（Schema 版本 v1~v13 + 数据修复）
 const needsInitialAdmin = !db.prepare("SELECT 1 FROM users LIMIT 1").get();
-runMigrations(db);
+const beforeVersion = Number(db.prepare("PRAGMA user_version").get()?.user_version ?? 0);
+try {
+  runMigrations(db);
+  const version = Number(db.prepare("PRAGMA user_version").get()?.user_version ?? 0);
+  if (version !== beforeVersion) writeLog({ category: "runtime", event: "database.migration.completed", details: { previousVersion: beforeVersion, version } });
+} catch (error) {
+  writeLog({ category: "runtime", event: "database.migration.failed", level: "error", outcome: "failed", details: { previousVersion: beforeVersion } });
+  throw error;
+}
 if (needsInitialAdmin) seedInitialUserData(db, "admin-001");

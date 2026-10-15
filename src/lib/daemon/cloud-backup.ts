@@ -1,3 +1,4 @@
+import { writeLog } from "../logging/events.ts";
 import { sendTelegramNotification } from "../telegram.ts";
 
 /**
@@ -19,6 +20,7 @@ export async function runCloudBackupSchedule(): Promise<void> {
     if (!cfg.enabled || !cfg.autoBackupDaily || cfg.type === "none") return;
 
     const { performDatabaseBackup } = await import("../db-backup.ts");
+    writeLog({ category: "backup", event: "backup.cloud.started", outcome: "started" });
     const localSnapshot = performDatabaseBackup("daemon-auto-cloud-backup");
     if (!localSnapshot) return;
 
@@ -26,19 +28,19 @@ export async function runCloudBackupSchedule(): Promise<void> {
     const fileName = path.basename(localSnapshot);
     const res = await uploadBackupToStorage(cfg, localSnapshot, fileName);
     if (res.success) {
-      console.log(`[Daemon] 成功完成每日自动异地云备份: ${fileName}`);
+      writeLog({ category: "backup", event: "backup.cloud.completed" });
       sendTelegramNotification(
         `✅ Navelix 云备份成功\n\n文件：${fileName}\n位置：${cfg.type} 存储`,
         "backup",
       ).catch(() => {});
     } else {
-      console.warn(`[Daemon] 自动异地云备份上传失败:`, res.error);
+      writeLog({ category: "backup", event: "backup.cloud.failed", level: "error", outcome: "failed" });
       sendTelegramNotification(
         `❌ Navelix 云备份上传失败\n\n错误：${res.error || "未知错误"}`,
         "backup",
       ).catch(() => {});
     }
-  } catch (err) {
-    console.warn("[Daemon] 自动异地云备份异常:", err);
+  } catch {
+    writeLog({ category: "backup", event: "backup.cloud.exception", level: "error", outcome: "failed" });
   }
 }

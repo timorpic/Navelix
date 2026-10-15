@@ -1,3 +1,6 @@
+import { recordAIUsage } from "@/lib/logging/ai-usage";
+import { writeLog } from "@/lib/logging/events";
+import { withRequestLogging } from "@/lib/logging/request";
 import { getLocale } from "next-intl/server";
 import { translateText } from "@/lib/server-translations";
 import { localizedJson } from "@/lib/localized-json";
@@ -68,7 +71,7 @@ function generateRuleBasedBreakdown(
   ];
 }
 
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   const locale = await getLocale();
   const text = (value: string) => translateText(locale, value);
   const user = await getSessionUser();
@@ -167,6 +170,7 @@ export async function POST(req: Request) {
       }
 
       const aiData = await response.json();
+    recordAIUsage(aiData, modelName);
       const rawContent = aiData?.choices?.[0]?.message?.content || "";
       
       // 清洗 json 响应
@@ -220,7 +224,7 @@ export async function POST(req: Request) {
 
       throw new Error("Invalid tasks format from model response");
     } catch (modelError) {
-      console.warn("[AI Project Breakdown] Model call failed, fallback to rule generator:", modelError);
+      writeLog({ category: "ai", event: "ai.project.fallback", outcome: "failed", level: "warn", details: { errorName: modelError instanceof Error ? modelError.name : "UnknownError" } });
       const fallbackTasks = generateRuleBasedBreakdown(projectName, startDate, defaultAssignee, locale);
       return localizedJson({
         success: true,
@@ -235,3 +239,5 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export const POST = withRequestLogging("/api/ai/project-breakdown", POSTHandler);

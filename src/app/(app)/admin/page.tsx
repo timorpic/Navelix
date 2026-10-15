@@ -19,7 +19,7 @@ import AdminLinksTab from "./components/admin-links-tab";
 import AdminSettingsTab from "./components/admin-settings-tab";
 import { SYSTEM_SETTINGS_NAV, getSystemSettingsNav, getUserSettingsNav, USER_SETTINGS_NAV, isSystemSettingsTab, resolveSettingsTab } from "@/lib/admin-settings-nav";
 import AdminProTab from "./components/admin-pro-tab";
-import AdminAuditLogsPanel from "./components/admin-audit-logs-panel";
+import AdminLogsPanel from "./components/admin-logs-panel";
 
 type AdminTab = import("./components/admin-sidebar").AdminTab;
 
@@ -153,11 +153,8 @@ export default function AdminPage() {
     ...(currentUser?.role === "admin"
       ? [{ id: "users" as AdminTab, icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>, label: tx("account_management_eba54690"), badge: users.length || 1 }]
       : []),
-    ...(currentUser?.role === "admin"
-      ? [{ id: "auditLogs" as AdminTab, icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /><path d="M9 14l2 2 4-4" /></svg>, label: tx("audit_logs_a0f79e91") }]
-      : []),
     ...(currentUser?.role === "admin" ? [{ id: "pro" as AdminTab, icon: <span>💎</span>, label: tx("pro_features_f1c252c0"), badge: "PRO" }] : []),
-    ...(currentUser?.role === "admin" ? getSystemSettingsNav(config.showProMenus !== false).map(item => ({ ...item, badge: item.pro ? "PRO" : undefined, icon: <span>⚙</span> })) : []),
+    ...(currentUser?.role === "admin" ? getSystemSettingsNav(config.showProMenus !== false).map(item => ({ ...item, label: item.id === "logs" ? tx("logs_title") : item.label, badge: item.pro ? "PRO" : undefined, icon: <span>⚙</span> })) : []),
     ...getUserSettingsNav(config.showProMenus !== false).map(item => ({ ...item, badge: "pro" in item && item.pro ? "PRO" : undefined, icon: <span>·</span> })),
   ];
 
@@ -273,6 +270,7 @@ export default function AdminPage() {
         <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
           <Toast message={notice} className="mb-4" />
 
+          {(activeTab === "links" || activeTab === "categories" || activeTab === "quickAccess") && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-gray-100/90 dark:border-slate-700 shadow-2xs flex items-start justify-between transition-colors">
               <div className="flex flex-col">
@@ -308,6 +306,8 @@ export default function AdminPage() {
             </div>
           </div>
 
+          )}
+
           {/* TAB 1/2/3: 链接/分组/快捷访问 */}
           {(activeTab === "links" || activeTab === "categories" || activeTab === "quickAccess") && (
             <AdminLinksTab activeTab={activeTab} />
@@ -319,9 +319,10 @@ export default function AdminPage() {
           {/* TAB 4: 👤 账号管理 */}
           {activeTab === "users" && currentUser?.role === "admin" && <AdminUsersPanel />}
           {/* TAB 6.5: 🧾 审计日志（仅管理员） */}
-          {activeTab === "auditLogs" && currentUser?.role === "admin" && <AdminAuditLogsPanel />}
+          {activeTab === "auditLogs" && currentUser?.role === "admin" && <AdminLogsPanel legacy />}
+          {activeTab === "logs" && currentUser?.role === "admin" && <AdminLogsPanel />}
           {/* TAB 7: ⚙️ 系统与数据管理 */}
-          {(SYSTEM_SETTINGS_NAV.some(item => item.id === activeTab) || USER_SETTINGS_NAV.some(item => item.id === activeTab)) &&
+          {activeTab !== "logs" && (SYSTEM_SETTINGS_NAV.some(item => item.id === activeTab) || USER_SETTINGS_NAV.some(item => item.id === activeTab)) &&
             (!isSystemSettingsTab(activeTab) || currentUser?.role === "admin") &&
             <AdminSettingsTab key={activeTab} tab={activeTab} isAdmin={currentUser?.role === "admin"} />}
           {/* TAB 7.5: 💎 Pro 商业特权 */}

@@ -1,4 +1,8 @@
 import { randomBytes } from "node:crypto";
+import { createLogEvent } from "./logging/events.ts";
+import { categoryForEvent } from "./logging/catalog.ts";
+import { safeIdentifier, safeText, sanitizeChanges } from "./logging/redact.ts";
+import type { LogEvent } from "./logging/types.ts";
 import { db } from "./db.ts";
 
 export interface AuditLogEntry {
@@ -21,24 +25,28 @@ export function recordAuditLog(params: {
   target?: string;
   ip?: string;
   details?: string;
+  outcome?: LogEvent["outcome"];
+  operationId?: string;
 }): void {
-  try {
-    const id = `aud-${Date.now()}-${randomBytes(4).toString("hex")}`;
+  let details = safeText(params.details ?? "", 4000);
+  try { const parsed: unknown = JSON.parse(params.details ?? ""); if (Array.isArray(parsed)) details = JSON.stringify(sanitizeChanges(parsed)); } catch { /* Legacy plain text. */ }
+  const event = createLogEvent({ category: params.target === "user_notification_settings" ? "notification" : categoryForEvent(params.action), event: params.action, kind: "audit", actorId: params.userId, actorType: params.userId === "system" ? "system" : params.userId ? "user" : "anonymous", level: params.outcome === "failed" ? "warn" : "info",
+    subjectId: params.target, outcome: params.outcome ?? "succeeded", operationId: params.operationId, details: { changes: (() => { try { return JSON.parse(details); } catch { return []; } })() } });
+  const id = `aud-${Date.now()}-${randomBytes(4).toString("hex")}`;
     db.prepare(`
-      INSERT INTO audit_logs (id, user_id, action, target, ip, details, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO audit_logs (id, user_id, action, target, ip, details, created_at, category, event_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       params.userId,
       params.action,
-      params.target || "",
-      params.ip || "",
-      params.details || "",
-      Date.now(),
+      safeIdentifier(params.target),
+      "",
+      details,
+      event.timestamp,
+      event.category,
+      JSON.stringify({ ...event, id }),
     );
-  } catch (err) {
-    console.warn("[Navelix Audit] Failed to record audit log:", err);
-  }
 }
 
 /**
@@ -95,8 +103,7 @@ export function listAuditLogs(options: ListAuditLogsOptions = {}): AuditLogListR
 
   const whereSql = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
 
-  try {
-    const totalRow = db
+  const totalRow = db
       .prepare(`SELECT COUNT(*) AS c FROM audit_logs a LEFT JOIN users u ON u.id = a.user_id ${whereSql}`)
       .get(...params) as { c: number };
 
@@ -113,7 +120,4 @@ export function listAuditLogs(options: ListAuditLogsOptions = {}): AuditLogListR
       .all(...params, limit, offset) as unknown as AuditLogListEntry[];
 
     return { logs: rows, total: totalRow.c };
-  } catch {
-    return { logs: [], total: 0 };
-  }
 }

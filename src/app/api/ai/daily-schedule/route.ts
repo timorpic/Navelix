@@ -1,3 +1,5 @@
+import { recordAIUsage } from "@/lib/logging/ai-usage";
+import { withRequestLogging } from "@/lib/logging/request";
 import { getLocale } from "next-intl/server";
 import { translateText } from "@/lib/server-translations";
 import { localizedJson } from "@/lib/localized-json";
@@ -15,7 +17,7 @@ interface ScheduledTask {
   dueDate: string;
 }
 
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   const locale = await getLocale();
   const text = (value: string) => translateText(locale, value);
   const user = await getSessionUser();
@@ -136,6 +138,7 @@ export async function POST(req: Request) {
       }
 
       const aiData = await response.json();
+    recordAIUsage(aiData, modelName);
       const raw = aiData?.choices?.[0]?.message?.content || "";
       let cleaned = raw.trim();
       if (cleaned.startsWith("```json")) cleaned = cleaned.slice(7);
@@ -175,3 +178,5 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export const POST = withRequestLogging("/api/ai/daily-schedule", POSTHandler);

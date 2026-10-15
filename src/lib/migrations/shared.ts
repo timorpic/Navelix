@@ -1,3 +1,4 @@
+import { writeLog } from "../logging/events.ts";
 import fs from "node:fs";
 import path from "node:path";
 import type { DatabaseSync } from "node:sqlite";
@@ -15,14 +16,13 @@ export function persistAdminPassword(password: string) {
     fs.writeFileSync(
       file,
       `Navelix 管理员初始密码（请登录后立即修改，并删除本文件）\n\n用户名: admin\n密码: ${password}\n`,
-      "utf8",
+      { encoding: "utf8", mode: 0o600 },
     );
   } catch {
-    // ignore
+    writeLog({ category: "security", event: "auth.bootstrap.password_file.failed", outcome: "failed", level: "error" });
+    return;
   }
-  console.warn(
-    `[Navelix] 管理员 admin 的初始密码为: ${password}\n请登录后立即修改，并删除 data/${ADMIN_PASSWORD_FILE} 文件。`,
-  );
+  writeLog({ category: "security", event: "auth.bootstrap.password_file", message: "Read navelix-admin-password.txt from the data directory to obtain the initial password." });
 }
 
 export { ensureColumn } from "../db/columns.ts";
@@ -38,11 +38,8 @@ export function dropColumn(db: DatabaseSync, table: string, column: string) {
   if (columns.some((c) => c.name === column)) {
     try {
       db.exec(`ALTER TABLE ${table} DROP COLUMN ${column}`);
-    } catch (err) {
-      console.error(
-        `[Navelix] 删除列 ${table}.${column} 失败:`,
-        err instanceof Error ? err.message : err,
-      );
+    } catch {
+      writeLog({ category: "runtime", event: "database.column.drop_failed", level: "error", outcome: "failed", details: { fieldNames: [table, column] } });
     }
   }
 }

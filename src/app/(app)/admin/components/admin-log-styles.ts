@@ -1,0 +1,1 @@
+export const logControl = "min-w-0 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[#00C776] transition-colors enabled:hover:border-[#00C776]/50 disabled:cursor-not-allowed disabled:opacity-50";

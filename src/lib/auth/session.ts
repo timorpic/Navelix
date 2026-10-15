@@ -1,3 +1,6 @@
+import { recordAuditLog } from "../audit.ts";
+import { auditedTransaction } from "../logging/transaction.ts";
+import { setLogActor } from "../logging/context.ts";
 import { randomBytes } from "node:crypto";
 import { cookies, headers } from "next/headers.js";
 import {
@@ -35,15 +38,23 @@ export async function createSession(userId: string, req?: Request): Promise<stri
     ipAddress = getClientId(req);
   }
 
+  return auditedTransaction(() => {
   const result = db.prepare(
     "INSERT INTO sessions (token_hash, user_id, user_agent, ip_address, last_active_at, expires_at, created_at) SELECT ?, id, ?, ?, ?, ?, ? FROM users WHERE id = ? AND disabled = 0",
   ).run(hashToken(token), userAgent, ipAddress, now, now + SESSION_IDLE_TTL_MS, now, userId);
   if (!result.changes) throw new Error("账号已停用或不存在");
+  recordAuditLog({ userId, action: "auth.login.succeeded" });
+  setLogActor(userId);
   return token;
+  });
 }
 
 export async function destroySession(token: string): Promise<void> {
-  db.prepare("DELETE FROM sessions WHERE token_hash = ?").run(hashToken(token));
+  auditedTransaction(() => {
+    const row = db.prepare("SELECT user_id FROM sessions WHERE token_hash = ?").get(hashToken(token));
+    db.prepare("DELETE FROM sessions WHERE token_hash = ?").run(hashToken(token));
+    if (row) recordAuditLog({ userId: String(row.user_id), action: "auth.logout.succeeded" });
+  });
 }
 
 /**
@@ -105,6 +116,7 @@ export async function getSessionUser(req?: Request): Promise<PublicUser | null> 
           now,
           tokenRow.token_id,
         );
+        setLogActor(tokenRow.id);
         return toPublicUser(tokenRow);
       }
     }
@@ -136,5 +148,6 @@ export async function getSessionUser(req?: Request): Promise<PublicUser | null> 
   db.prepare("UPDATE sessions SET last_active_at = ? WHERE token_hash = ?").run(now, tokenHash);
   db.prepare("DELETE FROM sessions WHERE expires_at <= ? OR created_at + ? <= ?")
     .run(now, SESSION_MAX_TTL_MS, now);
+  setLogActor(row.id);
   return toPublicUser(row);
 }

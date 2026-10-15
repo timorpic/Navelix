@@ -1,3 +1,4 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { getUserTodos } from "@/lib/todo-store";
@@ -5,13 +6,13 @@ import { getSessionUser } from "@/lib/auth";
 import { emitUserEvent } from "@/lib/events";
 import { createTodo } from "@/lib/todos-projects";
 
-export async function GET() {
+async function GETHandler() {
   const user = await getSessionUser();
   if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   return localizedJson({ todos: getUserTodos(user.id) });
 }
 
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const userId = user.id;
@@ -46,3 +47,6 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestLogging("/api/todos", GETHandler);
+export const POST = withRequestLogging("/api/todos", POSTHandler);

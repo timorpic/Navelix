@@ -104,7 +104,7 @@ pnpm start
 | :--- | :--- | :---: | :--- |
 | `PORT` | `3721` | 否 | 服务监听的 HTTP 端口（项目默认标准为 `3721`） |
 | `NODE_ENV` | `production` | 否 | 运行环境模式 (`production` / `development`) |
-| `NAVELIX_ADMIN_PASSWORD` | *(自动生成随机强密码)* | 否 | 首次初始化时默认管理员 `admin` 的初始密码（若未配置，系统会自动生成并输出到控制台与 `data/navelix-admin-password.txt`） |
+| `NAVELIX_ADMIN_PASSWORD` | *(自动生成随机强密码)* | 否 | 首次初始化时默认管理员 `admin` 的初始密码（若未配置，系统会自动生成并写入 `data/navelix-admin-password.txt`，控制台只提示文件名） |
 | `NAVELIX_COOKIE_SECURE` | `false` | 否 | 认证 Cookie 是否强制 `Secure` 标头（局域网 HTTP 保持 `false`；使用域名并启用 HTTPS 反代时设为 `true`） |
 | `TRUST_PROXY` | `false` | 否 | 是否信任上游反向代理的 `X-Forwarded-For` 真实 IP 标头（若前置部署了 Nginx/Caddy/Cloudflare，**务必设为 `true`** 以启用精准限流） |
 | `NAVELIX_DATA_DIR` | `/app/data` | 否 | 数据存储目录（SQLite 库、备份、日志与初始密码文件）；Docker 镜像内为 `/app/data`，源码部署默认为 `<cwd>/data` |

@@ -1,3 +1,4 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth";
@@ -9,12 +10,12 @@ import { validateConfigPatch } from "@/lib/config-validation";
 import { saveUserConfigs } from "@/lib/user-data";
 import { getProFeatureFlags } from "@/lib/ee-gate";
 
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   if (!await requireAdmin(req)) return localizedJson({ error: "仅管理员可访问" }, { status: 403 });
   const config = mapUserConfigRow(getGlobalConfigRow());
   return localizedJson({ config: Object.fromEntries(Object.entries(config).filter(([key]) => GLOBAL_SCOPE_CONFIG_KEYS.has(key) || key === "aiKeyConfigured" || key === "weatherKeyConfigured")) });
 }
-export async function PATCH(req: NextRequest) {
+async function PATCHHandler(req: NextRequest) {
   const user = await requireAdmin(req);
   if (!user) return localizedJson({ error: "仅管理员可访问" }, { status: 403 });
   const csrf = checkCSRF(req);
@@ -35,5 +36,8 @@ export async function PATCH(req: NextRequest) {
     saveUserConfigs(user.id, patch);
     db.exec("COMMIT");
   } catch { db.exec("ROLLBACK"); return localizedJson({ error: "保存失败" }, { status: 500 }); }
-  return GET(req);
+  return GETHandler(req);
 }
+
+export const GET = withRequestLogging("/api/admin/settings", GETHandler);
+export const PATCH = withRequestLogging("/api/admin/settings", PATCHHandler);

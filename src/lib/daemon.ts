@@ -1,3 +1,9 @@
+import { startLogLifecycle } from "./logging/lifecycle.ts";
+import { createLogAlerts } from "./logging/alerts.ts";
+import { runLogMaintenance } from "./daemon/log-maintenance.ts";
+import { flushLogGroups, setLogAlertSink, writeLog } from "./logging/events.ts";
+import { randomUUID } from "node:crypto";
+import { logContext } from "./logging/context.ts";
 import { runPersonalTelegramNotifications } from "./personal-telegram.ts";
 import { sendTelegramNotification } from "./telegram.ts";
 import { scheduleAutoBackup } from "./db-backup.ts";
@@ -32,8 +38,8 @@ type DaemonTask = () => Promise<unknown> | void;
 function scheduleTask(task: DaemonTask, delayMs: number): NodeJS.Timeout {
   const timer = setTimeout(() => {
     Promise.resolve()
-      .then(task)
-      .catch(() => {})
+      .then(() => logContext.run({ requestId: "", operationId: randomUUID(), source: "scheduler" }, task))
+      .catch(() => { writeLog({ category: "runtime", event: "scheduler.task.failed", outcome: "failed", level: "error" }); })
       .finally(() => {
         // 仅当任务仍在运行中时才调度下一轮（stop 后不再续期）
         if (globalThis.__navelix_daemon_started__) {
@@ -41,6 +47,7 @@ function scheduleTask(task: DaemonTask, delayMs: number): NodeJS.Timeout {
         }
       });
   }, delayMs);
+  timer.unref();
   return timer;
 }
 
@@ -54,7 +61,11 @@ export function startBackgroundDaemon(): void {
   globalThis.__navelix_daemon_started__ = true;
   globalThis.__navelix_daemon_timers__ = [];
 
-  console.log("[Daemon] Navelix 后台守护任务体系已启动");
+  startLogLifecycle();
+  writeLog({ category: "runtime", event: "runtime.started" });
+  setLogAlertSink(createLogAlerts(message => sendTelegramNotification(message, "system")));
+  globalThis.__navelix_daemon_timers__.push(scheduleTask(() => runLogMaintenance(), 86400_000));
+  globalThis.__navelix_daemon_timers__.push(scheduleTask(() => flushLogGroups(), 60_000));
 
   // 服务启动通知（系统异常场景：服务重启）
   sendTelegramNotification(
@@ -69,6 +80,7 @@ export function startBackgroundDaemon(): void {
   // 1. 服务启动 10 秒后执行首次数据库维护
   const initTimer = setTimeout(() => {
     runDatabaseMaintenance();
+    runLogMaintenance();
   }, 10_000);
   globalThis.__navelix_daemon_timers__.push(initTimer);
 

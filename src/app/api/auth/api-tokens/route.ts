@@ -1,9 +1,10 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { getSessionUser } from "@/lib/auth";
 import { issueApiToken, listApiTokens, revokeApiToken } from "@/lib/auth/api-tokens";
 
 // GET /api/auth/api-tokens - 获取用户的 API Token 列表
-export async function GET() {
+async function GETHandler() {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -13,7 +14,7 @@ export async function GET() {
 }
 
 // POST /api/auth/api-tokens - 创建新的个人 API Token
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
 }
 
 // DELETE /api/auth/api-tokens - 删除/撤销指定的 API Token
-export async function DELETE(req: Request) {
+async function DELETEHandler(req: Request) {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -59,3 +60,7 @@ export async function DELETE(req: Request) {
     message: "已撤销并删除指定的 API 密钥",
   });
 }
+
+export const GET = withRequestLogging("/api/auth/api-tokens", GETHandler);
+export const POST = withRequestLogging("/api/auth/api-tokens", POSTHandler);
+export const DELETE = withRequestLogging("/api/auth/api-tokens", DELETEHandler);

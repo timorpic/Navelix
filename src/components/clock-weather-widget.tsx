@@ -92,12 +92,12 @@ export default function ClockWeatherWidget() {
   }, [fetchWeather]);
 
   return (
-    <div className="px-2 py-1.5 rounded-xl text-center bg-gray-50 text-gray-800 dark:bg-slate-800/60 dark:text-slate-100">
+    <div className="px-2 py-2 rounded-2xl text-center bg-gray-50 text-gray-800 dark:bg-slate-800/60 dark:text-slate-100">
       {/* Tab 切换条 */}
-      <div className="flex items-center gap-0.5 mb-1.5 bg-black/5 dark:bg-white/5 rounded-lg p-0.5">
+      <div className="flex items-center gap-0.5 mb-1.5 bg-black/5 dark:bg-white/5 rounded-full p-0.5">
         <button
           onClick={() => setClockTab("time")}
-          className={`flex-1 py-0.5 px-1.5 rounded-md text-[10px] font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+          className={`flex-1 py-1 px-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
             (config.clockWidgetMode || clockTab) === "time" || clockTab === "time"
               ? "bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm"
               : "text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300"
@@ -107,7 +107,7 @@ export default function ClockWeatherWidget() {
         </button>
         <button
           onClick={() => setClockTab("weather")}
-          className={`flex-1 py-0.5 px-1.5 rounded-md text-[10px] font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+          className={`flex-1 py-1 px-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
             clockTab === "weather"
               ? "bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm"
               : "text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300"
@@ -117,7 +117,7 @@ export default function ClockWeatherWidget() {
         </button>
         <button
           onClick={() => setClockTab("analog")}
-          className={`flex-1 py-0.5 px-1.5 rounded-md text-[10px] font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+          className={`flex-1 py-1 px-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
             clockTab === "analog"
               ? "bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm"
               : "text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300"
@@ -129,10 +129,10 @@ export default function ClockWeatherWidget() {
 
         {clockTab === "time" ? (
           <>
-            <p suppressHydrationWarning className="text-lg font-bold tabular-nums leading-tight">
+            <p suppressHydrationWarning className="text-xl font-bold tabular-nums leading-tight">
               {now.toLocaleTimeString(locale, { hour12: false })}
             </p>
-            <p suppressHydrationWarning className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
+            <p suppressHydrationWarning className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
               {now.toLocaleDateString(locale, { month: "short", day: "numeric", weekday: "short" })}
             </p>
           </>
@@ -168,7 +168,7 @@ export default function ClockWeatherWidget() {
               />
               <circle cx="50" cy="50" r="3" className="fill-rose-500" />
             </svg>
-            <p suppressHydrationWarning className="text-[10px] text-gray-400 dark:text-slate-400 mt-1 font-mono">
+            <p suppressHydrationWarning className="text-xs text-gray-400 dark:text-slate-400 mt-1 font-mono">
               {now.toLocaleTimeString(locale, { hour12: false })}
             </p>
           </div>
@@ -183,7 +183,7 @@ export default function ClockWeatherWidget() {
               )}
               <span>{Number.isNaN(weather.temp) ? "" : `${weather.temp}°C`}</span>
             </p>
-            <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5 flex items-center justify-center gap-1">
+            <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5 flex items-center justify-center gap-1">
               <span>{weather.desc}</span>
               <span>·</span>
               <span>{weather.location}</span>
@@ -191,8 +191,8 @@ export default function ClockWeatherWidget() {
           </>
         ) : (
           <>
-            <p className="text-lg font-bold tabular-nums leading-tight">--°C</p>
-            <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-0.5">
+            <p className="text-xl font-bold tabular-nums leading-tight">--°C</p>
+            <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
               {tx("weather_not_configured_3207c857")}</p>
           </>
         )}

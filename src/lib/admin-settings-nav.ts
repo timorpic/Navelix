@@ -3,6 +3,7 @@ export const SYSTEM_SETTINGS_NAV = [
   { id: "site", label: "站点与服务", pro: false },
   { id: "access", label: "访问与安全", pro: false },
   { id: "proSystem", label: "系统功能", pro: true },
+  { id: "logs", label: "日志中心", pro: false },
   { id: "system", label: "数据与维护", pro: false },
 ] as const;
 export const USER_SETTINGS_NAV = [

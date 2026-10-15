@@ -1,10 +1,11 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { eventBus, type RealtimeEvent } from "@/lib/events";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   const user = await getSessionUser(req);
   if (!user) {
     return new Response(JSON.stringify({ error: "未登录" }), {
@@ -66,3 +67,5 @@ export async function GET(req: NextRequest) {
     },
   });
 }
+
+export const GET = withRequestLogging("/api/realtime", GETHandler);

@@ -33,7 +33,7 @@ docker compose logs --tail=100 navelix
 curl --fail http://localhost:3721/api/healthz
 ```
 
-首次运行自动创建管理员；可通过环境变量指定初始密码，或从控制台/数据目录初始密码文件获取随机密码。不要将真实密码写入公开仓库。容器以 UID/GID `1001:1001` 的 `nextjs` 用户运行，挂载目录须允许该身份写入。
+首次运行自动创建管理员；可通过环境变量指定初始密码，或从数据目录初始密码文件获取随机密码（控制台仅提示文件名）。不要将真实密码写入公开仓库。容器以 UID/GID `1001:1001` 的 `nextjs` 用户运行，挂载目录须允许该身份写入。
 
 生产部署建议固定已验收版本或镜像 digest，便于升级与回退。自建镜像可用 `docker build -t navelix:local .`，再将 Compose image 改为该标签。公开仓库不包含商业驱动源码；CE 构建可运行，完整 Pro 能力需要官方制品和有效许可。
 
@@ -84,3 +84,5 @@ pnpm start
 运行中的 SQLite 使用 WAL；不要仅复制 `navelix.db` 作为完整热备份。优先使用应用的 SQLite 快照流程；文件级归档应停服后进行并保留相关配置与密钥材料。不要直接覆盖运行中的数据库；恢复前另存当前数据，完成后校验完整性及权限。
 
 更多使用说明见 [DOCKER](../DOCKER.md)、[快速入门](../wiki/Quick-Start-快速入门.md) 与 [安全运维](../wiki/Security-安全机制与运维规范.md)。发布流水线见 [REGISTRY](REGISTRY.md)。
+
+日志中心、文件保留、容量和容器轮转配置见 [日志中心说明](LOGGING.md)。迁移实例时应同时保留数据目录中的 `logs/settings.json`；它不包含在个人 JSON 导出或主库快照中。

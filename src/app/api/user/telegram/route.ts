@@ -1,3 +1,4 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
@@ -5,12 +6,12 @@ import { checkCSRF } from "@/lib/csrf";
 import { getTelegramConfigStatus, getTelegramSettings, saveTelegramSettings } from "@/lib/user-notifications";
 import { sendTelegramMessage } from "@/lib/telegram";
 
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   const user = await getSessionUser(req);
   if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   return localizedJson({ status: getTelegramConfigStatus(user.id), chatId: getTelegramSettings(user.id).chat_id });
 }
-export async function PUT(req: NextRequest) {
+async function PUTHandler(req: NextRequest) {
   const user = await getSessionUser(req);
   if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const csrf = checkCSRF(req);
@@ -22,7 +23,7 @@ export async function PUT(req: NextRequest) {
     return localizedJson({ error: error instanceof Error ? error.message : "保存失败" }, { status: 400 });
   }
 }
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const user = await getSessionUser(req);
   if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const csrf = checkCSRF(req);
@@ -30,3 +31,7 @@ export async function POST(req: NextRequest) {
   const ok = await sendTelegramMessage(user.id, "🔔 Navelix Telegram 通知测试：通知配置已生效。");
   return localizedJson(ok ? { success: true } : { error: "发送失败，请检查 Token、Chat ID 和总开关" }, { status: ok ? 200 : 400 });
 }
+
+export const GET = withRequestLogging("/api/user/telegram", GETHandler);
+export const PUT = withRequestLogging("/api/user/telegram", PUTHandler);
+export const POST = withRequestLogging("/api/user/telegram", POSTHandler);

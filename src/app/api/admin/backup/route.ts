@@ -1,3 +1,5 @@
+import { writeLog } from "@/lib/logging/events";
+import { withRequestLogging } from "@/lib/logging/request";
 import { NextResponse } from "next/server";
 import { localizedJson } from "@/lib/localized-json";
 import { restoreDatabaseSnapshot } from "@/lib/db-restore";
@@ -12,7 +14,7 @@ import { recordAuditLog } from "@/lib/audit";
 import { resolveDataDir } from "@/lib/data-dir";
 
 // GET: 下载当前 SQLite 数据库的物理快照备份文件 (.db)
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   const adminUser = await requireAdmin(req);
   if (!adminUser) {
     return localizedJson({ error: "无权访问，仅管理员可下载数据库备份" }, { status: 403 });
@@ -38,7 +40,7 @@ export async function GET(req: NextRequest) {
 }
 
 // POST: 上传 .db 备份文件并恢复还原数据库
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const adminUser = await requireAdmin(req);
   if (!adminUser) {
     return localizedJson({ error: "无权访问，仅管理员可恢复数据库" }, { status: 403 });
@@ -114,7 +116,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "恢复数据库失败";
-    console.error("[Database Restore Error]:", err);
+    writeLog({ category: "backup", event: "backup.restore.failed", level: "error", outcome: "failed", details: { errorName: err instanceof Error ? err.name : "UnknownError" } });
     return localizedJson({ error: `数据库恢复失败: ${msg}` }, { status: 500 });
   }
 }
+
+export const GET = withRequestLogging("/api/admin/backup", GETHandler);
+export const POST = withRequestLogging("/api/admin/backup", POSTHandler);

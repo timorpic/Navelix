@@ -1,3 +1,4 @@
+import { writeLog } from "../logging/events.ts";
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -23,15 +24,10 @@ export function migrateLegacyDatabase(
     legacyDb.exec("PRAGMA busy_timeout = 5000;");
     legacyDb.exec(`VACUUM INTO '${dbFile.replace(/'/g, "''")}'`);
     legacyDb.close();
-    console.log(
-      "[Navelix] 检测到旧版数据库，已自动迁移 nexus.db → navelix.db（旧文件已保留，可手动删除）",
-    );
+    writeLog({ category: "runtime", event: "database.legacy.migrated" });
     return;
-  } catch (err) {
-    console.error(
-      "[Navelix] 旧库 VACUUM INTO 迁移失败，尝试文件重命名回退:",
-      err instanceof Error ? err.message : err,
-    );
+  } catch {
+    writeLog({ category: "runtime", event: "database.legacy.fallback", level: "warn", outcome: "failed" });
   }
 
   try {
@@ -47,10 +43,8 @@ export function migrateLegacyDatabase(
         }
       }
     }
-    console.log(
-      "[Navelix] 已通过文件重命名完成 nexus.db → navelix.db 迁移",
-    );
-  } catch (err) {
-    console.error("[Navelix] 旧数据库迁移失败:", err);
+    writeLog({ category: "runtime", event: "database.legacy.renamed" });
+  } catch {
+    writeLog({ category: "runtime", event: "database.legacy.failed", level: "error", outcome: "failed" });
   }
 }

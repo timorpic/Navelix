@@ -1,3 +1,4 @@
+import RuntimeErrorReporter from "@/components/runtime-error-reporter";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { getSessionUser } from "@/lib/auth";
@@ -52,7 +53,7 @@ export default async function AppLayout({
     }
     return (
       <NavelixProvider initialData={initialData}>
-        <ErrorBoundary>{children}</ErrorBoundary>
+        <ErrorBoundary><RuntimeErrorReporter />{children}</ErrorBoundary>
       </NavelixProvider>
     );
   }
@@ -74,7 +75,7 @@ export default async function AppLayout({
 
   return (
     <NavelixProvider initialData={initialData}>
-      <ErrorBoundary>{children}</ErrorBoundary>
+      <ErrorBoundary><RuntimeErrorReporter />{children}</ErrorBoundary>
     </NavelixProvider>
   );
 }

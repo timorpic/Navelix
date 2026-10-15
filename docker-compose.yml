@@ -7,6 +7,11 @@ services:
     image: registry-1.docker.io/timorpic/navelix:latest
     container_name: navelix
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "3721:3721"
     environment:

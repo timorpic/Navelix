@@ -101,10 +101,10 @@ export default function AdminSidebar({
   };
 
   return (
-    <aside className="hidden lg:flex w-60 shrink-0 flex-col justify-between h-screen overflow-y-auto sticky top-0 border-r rounded-r-2xl border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 select-none z-30 transition-colors">
-      <div className="flex flex-col gap-6">
+    <aside className="hidden lg:flex w-60 shrink-0 flex-col h-dvh sticky top-0 border-r rounded-r-2xl border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 select-none z-30 transition-colors">
+      <div className="flex-1 min-h-0 flex flex-col gap-6">
         {/* Brand Logo Header */}
-        <div className="flex items-center gap-3 px-1">
+        <div className="shrink-0 flex items-center gap-3 px-1">
           <LogoMark size="md" />
           <div className="flex flex-col min-w-0">
             <span className="text-base font-bold tracking-tight text-gray-900 dark:text-white truncate">
@@ -116,7 +116,7 @@ export default function AdminSidebar({
         </div>
 
         {/* Admin Navigation Menu Items */}
-        <nav className="flex flex-col gap-1.5">
+        <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-1.5 [&>button]:shrink-0 [&>div]:shrink-0">
           {adminNavItems.filter(item => !isSystemSettingsTab(item.id) && !USER_SETTINGS_NAV.some(child => child.id === item.id)).map(renderNavButton)}
           {[
             ...(currentUser?.role === "admin" ? [{ label: tx("system_settings_68ea5dd4"), items: adminNavItems.filter(item => isSystemSettingsTab(item.id)), open: systemOpen, toggle: () => setSystemOpen(v => !v) }] : []),
@@ -135,7 +135,7 @@ export default function AdminSidebar({
       </div>
 
       {/* Bottom Profile Card */}
-      <div className="pt-4 border-t border-gray-100 dark:border-slate-800 relative" ref={userMenuRef}>
+      <div className="shrink-0 pt-4 border-t border-gray-100 dark:border-slate-800 relative" ref={userMenuRef}>
         {/* User Popover Menu */}
         {showUserMenu && (
           <div className="absolute bottom-16 left-0 right-0 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 z-50 animate-fadeIn flex flex-col gap-1 text-xs font-semibold text-gray-700 dark:text-slate-200">

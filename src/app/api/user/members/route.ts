@@ -1,8 +1,9 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 
-export async function GET() {
+async function GETHandler() {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -25,3 +26,5 @@ export async function GET() {
 
   return localizedJson({ members });
 }
+
+export const GET = withRequestLogging("/api/user/members", GETHandler);

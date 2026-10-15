@@ -32,11 +32,11 @@
 
 ## 管理后台组成
 
-后台以 `AdminSidebar` 和功能内容区组织，支持 `/admin?tab=system` 一类深链。有效 tab 包括：
+后台以 `AdminSidebar` 和功能内容区组织，支持 `/admin?tab=system` 一类深链。顶部通用统计卡片仅在链接、分类和快捷访问管理页显示，项目、日程、账号、日志及设置页不显示。有效 tab 包括：
 
 - 内容：`links`、`categories`、`quickAccess`、`projects`、`schedules`。
-- 管理功能：`users`、`auditLogs`、`pro`，其中账号管理、审计及 Pro 配置仅管理员可访问。
-- 系统设置（仅管理员）：`site`（站点与服务，含页脚、社交主页、AI 与天气）、`access`（访问与安全）、`proSystem`（系统功能，含品牌定制、云备份、自定义代码与链接探针）、`system`（数据与维护）。
+- 管理功能：`users`、`pro`（历史 `auditLogs` 链接兼容日志中心的审计视图），其中账号管理、审计及 Pro 配置仅管理员可访问。
+- 系统设置（仅管理员）：`site`（站点与服务，含页脚、社交主页、AI 与天气）、`access`（访问与安全）、`proSystem`（系统功能，含品牌定制、云备份、自定义代码与链接探针）、`logs`（日志中心，按八类功能筛选）、`system`（数据与维护）。
 - 用户设置：`profile`（个人与偏好，含资料、头像、语言、界面与功能、Telegram 通知）、`account`（账号与数据，含密码、会话、API Token 和个人导入导出）、`proUser`（用户功能预留页面）。
 
 桌面采用可折叠二级菜单，系统设置与用户设置可独立展开或折叠；选中子页面不强制展开，折叠不切换当前页面。移动端使用同一导航定义。旧 `system` 深链继续进入数据与维护，`profile` 进入个人与偏好。旧 `ai` / `weather` 链接映射到 `site`，`personalization` / `notifications` 映射到 `profile`，`personalData` 映射到 `account`，URL 自动更新，刷新和浏览器历史保持一致。Pro 二级菜单统一带 PRO 标记并受全站显示开关控制，一级 Pro 高级功能入口始终保留。站点社交主页属于系统设置；Telegram 渠道属于当前用户，管理员才可订阅全站事件。

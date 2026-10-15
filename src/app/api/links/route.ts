@@ -1,3 +1,4 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { randomBytes } from "node:crypto";
@@ -24,7 +25,7 @@ interface LinkInput {
 }
 
 // GET /api/links - 当前用户的书签 + 全部分类（供扩展/快捷指令读取）
-export async function GET() {
+async function GETHandler() {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -47,7 +48,7 @@ export async function GET() {
 }
 
 // POST /api/links - 单条新增书签（幂等：同 URL 已存在则返回既有记录）
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -107,3 +108,6 @@ export async function POST(req: NextRequest) {
     { status: 201 },
   );
 }
+
+export const GET = withRequestLogging("/api/links", GETHandler);
+export const POST = withRequestLogging("/api/links", POSTHandler);

@@ -1,3 +1,5 @@
+import { recordAuditLog } from "../audit.ts";
+import { auditedTransaction } from "../logging/transaction.ts";
 import { db, SESSION_COOKIE } from "../db.ts";
 import { cookies } from "next/headers.js";
 import { hashToken } from "./api-tokens.ts";
@@ -60,10 +62,13 @@ export function listSessions(userId: string, currentHash: string): SessionItem[]
 
 /** 注销该用户除当前会话外的全部设备。 */
 export function revokeOtherSessions(userId: string, currentHash: string): void {
-  db.prepare("DELETE FROM sessions WHERE user_id = ? AND token_hash != ?").run(
+  auditedTransaction(() => {
+  const result = db.prepare("DELETE FROM sessions WHERE user_id = ? AND token_hash != ?").run(
     userId,
     currentHash,
   );
+  if (result.changes) recordAuditLog({ userId, action: "auth.sessions.revoked" });
+  });
 }
 
 /**
@@ -72,8 +77,11 @@ export function revokeOtherSessions(userId: string, currentHash: string): void {
  * 带 `user_id` 条件，因此无法踢掉他人的会话 —— 即使拿到了对方的 token 摘要。
  */
 export function revokeSession(userId: string, tokenHash: string): void {
-  db.prepare("DELETE FROM sessions WHERE user_id = ? AND token_hash = ?").run(
+  auditedTransaction(() => {
+  const result = db.prepare("DELETE FROM sessions WHERE user_id = ? AND token_hash = ?").run(
     userId,
     tokenHash,
   );
+  if (result.changes) recordAuditLog({ userId, action: "auth.session.revoked" });
+  });
 }

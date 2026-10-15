@@ -1,3 +1,4 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
@@ -9,7 +10,7 @@ import {
 } from "@/lib/notification-store";
 
 // GET /api/notifications - 当前用户的操作记录（最新在前）
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   const user = await getSessionUser(req);
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/notifications - 记录一条当前用户的操作通知，携带声明来源（source / tag）
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const user = await getSessionUser(req);
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
 }
 
 // DELETE /api/notifications - 清空当前用户全部操作记录
-export async function DELETE() {
+async function DELETEHandler() {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -49,3 +50,7 @@ export async function DELETE() {
   deleteAllNotifications(user.id);
   return localizedJson({ ok: true });
 }
+
+export const GET = withRequestLogging("/api/notifications", GETHandler);
+export const POST = withRequestLogging("/api/notifications", POSTHandler);
+export const DELETE = withRequestLogging("/api/notifications", DELETEHandler);

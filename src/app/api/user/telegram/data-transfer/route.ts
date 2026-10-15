@@ -1,3 +1,4 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
@@ -5,7 +6,7 @@ import { checkCSRF } from "@/lib/csrf";
 import { sendUserTelegramNotification } from "@/lib/telegram";
 
 /** Browser export completion; no caller-supplied message, channel or recipient accepted. */
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const user = await getSessionUser(req);
   if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const csrf = checkCSRF(req);
@@ -22,3 +23,5 @@ export async function POST(req: NextRequest) {
     return localizedJson({ error: "无效请求" }, { status: 400 });
   }
 }
+
+export const POST = withRequestLogging("/api/user/telegram/data-transfer", POSTHandler);

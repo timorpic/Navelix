@@ -1,4 +1,5 @@
 "use client";
+import { reportFrontendError } from "@/lib/client/error-report";
 
 import React from "react";
 import { useTranslations } from "next-intl";
@@ -28,6 +29,7 @@ export default class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("ErrorBoundary caught:", error, errorInfo);
+    reportFrontendError("render-error");
   }
 
   render() {

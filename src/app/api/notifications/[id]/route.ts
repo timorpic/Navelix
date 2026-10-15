@@ -1,10 +1,11 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { deleteNotification, patchNotification } from "@/lib/notification-store";
 
 // PATCH /api/notifications/[id] - 更新通知/活动记录
-export async function PATCH(
+async function PATCHHandler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -22,7 +23,7 @@ export async function PATCH(
 }
 
 // DELETE /api/notifications/[id] - 删除单条通知/活动记录
-export async function DELETE(
+async function DELETEHandler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -34,3 +35,6 @@ export async function DELETE(
 
   return localizedJson({ ok: true });
 }
+
+export const PATCH = withRequestLogging("/api/notifications/[id]", PATCHHandler);
+export const DELETE = withRequestLogging("/api/notifications/[id]", DELETEHandler);

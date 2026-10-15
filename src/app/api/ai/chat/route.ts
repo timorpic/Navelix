@@ -1,3 +1,6 @@
+import { recordAIUsage } from "@/lib/logging/ai-usage";
+import { writeLog } from "@/lib/logging/events";
+import { withRequestLogging } from "@/lib/logging/request";
 import { getLocale } from "next-intl/server";
 import { translateText } from "@/lib/server-translations";
 import { localizedJson } from "@/lib/localized-json";
@@ -155,12 +158,12 @@ ${linkLines}
 - 删除操作（delete_todo / delete_project）不会被立即执行：系统会先暂存并向用户请求二次确认，用户在回复中明确「确认删除」后才会真正删除。你在正文中只需说明将删除的目标，不需要用户现在回复确认。
 - 不要编造待办或项目的 id；若需要修改/删除特定项，从上方工作区数据中引用其真实 id（若未提供，可要求用户说明要操作的是哪一项）。`;
   } catch (e) {
-    console.error("[AI Chat] Failed to build workspace context:", e);
+    writeLog({ category: "ai", event: "ai.context.failed", outcome: "failed", level: "error", details: { errorName: e instanceof Error ? e.name : "UnknownError" } });
     return "你是由 Navelix 数字导航工作空间集成的 AI 智能助手。请解答用户的疑问，使用简洁、清晰且富有条理的中文回答。";
   }
 }
 
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   const locale = await getLocale();
   const text = (value: string) => translateText(locale, value);
   const user = await getSessionUser();
@@ -259,6 +262,7 @@ export async function POST(req: Request) {
     }
 
     const data = await response.json().catch(() => null);
+    recordAIUsage(data, modelName);
     const replyText =
       data?.choices?.[0]?.message?.content ||
       data?.choices?.[0]?.text ||
@@ -303,3 +307,5 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export const POST = withRequestLogging("/api/ai/chat", POSTHandler);

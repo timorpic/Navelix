@@ -1,3 +1,4 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { getSessionUser } from "@/lib/auth";
 import {
@@ -11,7 +12,7 @@ import { simpleRateLimit } from "@/lib/rate-limit";
 export type { SessionItem } from "@/lib/auth/sessions";
 
 // GET /api/auth/sessions - 获取当前用户所有活跃会话设备
-export async function GET() {
+async function GETHandler() {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -22,7 +23,7 @@ export async function GET() {
 }
 
 // DELETE /api/auth/sessions - 踢出特定会话或注销其他所有设备
-export async function DELETE(req: Request) {
+async function DELETEHandler(req: Request) {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -60,3 +61,6 @@ export async function DELETE(req: Request) {
 
   return localizedJson({ error: "缺少操作参数" }, { status: 400 });
 }
+
+export const GET = withRequestLogging("/api/auth/sessions", GETHandler);
+export const DELETE = withRequestLogging("/api/auth/sessions", DELETEHandler);

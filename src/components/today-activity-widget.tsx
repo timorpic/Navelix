@@ -56,22 +56,22 @@ export default function TodayActivityWidget() {
   }, [load]);
 
   return (
-    <div className="rounded-2xl p-4 bg-white/90 dark:bg-slate-900/70 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-3 transition-colors">
+    <div className="shrink-0 rounded-2xl p-4 bg-white/90 dark:bg-slate-900/70 border border-gray-100 dark:border-slate-700 space-y-3 transition-colors">
       <div className="flex items-center gap-2">
         <span className="text-sm">⚡</span>
-        <h3 className="text-xs font-black text-gray-900 dark:text-white tracking-wide">{tx("today_s_activity_09e08032")}</h3>
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white">{tx("today_s_activity_09e08032")}</h3>
       </div>
 
       {loading ? (
-        <p className="py-3 text-center text-[10px] text-gray-400 dark:text-slate-500">{tx("loading_4927a53b")}</p>
+        <p className="py-3 text-center text-xs text-gray-400 dark:text-slate-500">{tx("loading_4927a53b")}</p>
       ) : items.length === 0 ? (
-        <p className="py-3 text-center text-[10px] text-gray-400 dark:text-slate-500">{tx("no_activity_yet_b5046209")}</p>
+        <p className="py-3 text-center text-xs text-gray-400 dark:text-slate-500">{tx("no_activity_yet_b5046209")}</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {items.map((item) => (
             <div key={item.id} className="flex items-center gap-2 min-w-0">
-              <span className="text-[11px] shrink-0">{item.icon}</span>
-              <span className="flex-1 text-[11px] text-gray-600 dark:text-slate-300 truncate">
+              <span className="text-xs shrink-0">{item.icon}</span>
+              <span className="flex-1 text-xs text-gray-600 dark:text-slate-300 truncate">
                 {item.text}
               </span>
               <span className="text-[9px] text-gray-400 dark:text-slate-500 shrink-0">

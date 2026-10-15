@@ -1,4 +1,4 @@
-import { setEELoadState } from "./lib/ee-bridge/load-state";
+import { setEELoadState, getEELoadState } from "./lib/ee-bridge/load-state";
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
@@ -43,6 +43,10 @@ export async function register() {
         `[Navelix EE] 已检测到 EE 制品但加载失败，本次以开源社区版 (CE) 运行${hint}: ${detail}`,
       );
     }
+
+    const { writeLog } = await import("./lib/logging/events");
+    const loadState = getEELoadState();
+    writeLog({ category: "system", event: `ee.driver.${loadState.state}`, level: loadState.state === "failed" ? "error" : "info", outcome: loadState.state === "failed" ? "failed" : "succeeded", code: loadState.failure ?? "" });
 
     // 2. 启动后台守护任务
     const { startBackgroundDaemon } = await import("./lib/daemon");

@@ -1,9 +1,10 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const adminUser = await requireAdmin(req);
   if (!adminUser) {
     return localizedJson({ error: "无权访问，仅管理员可执行清理操作" }, { status: 403 });
@@ -31,3 +32,5 @@ export async function POST(req: NextRequest) {
     purgedCount,
   });
 }
+
+export const POST = withRequestLogging("/api/admin/cache-purge", POSTHandler);

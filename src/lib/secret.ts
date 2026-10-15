@@ -1,3 +1,4 @@
+import { writeLog } from "./logging/events.ts";
 import {
   createCipheriv,
   createDecipheriv,
@@ -59,7 +60,7 @@ export function encryptSecret(plainText: string): string {
     const authTag = cipher.getAuthTag().toString("hex");
     return `${PREFIX}${iv.toString("hex")}:${authTag}:${encrypted}`;
   } catch (err) {
-    console.error("[Navelix Secret] Encrypt failed:", err);
+    writeLog({ category: "security", event: "security.encryption.failed", level: "error", outcome: "failed", details: { errorName: err instanceof Error ? err.name : "UnknownError" } });
     throw new Error("加密失败，请检查系统状态");
   }
 }
@@ -86,7 +87,7 @@ export function decryptSecret(cipherText: string): string {
     decrypted += decipher.final("utf8");
     return decrypted;
   } catch (err) {
-    console.error("[Navelix Secret] Decrypt failed, returning empty string:", err);
+    writeLog({ category: "security", event: "security.decryption.failed", level: "error", outcome: "failed", details: { errorName: err instanceof Error ? err.name : "UnknownError" } });
     return "";
   }
 }

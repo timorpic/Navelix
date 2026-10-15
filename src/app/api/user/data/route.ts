@@ -1,3 +1,5 @@
+import { writeLog } from "@/lib/logging/events";
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { sendUserTelegramNotification } from "@/lib/telegram";
 import { NextRequest } from "next/server";
@@ -19,7 +21,7 @@ import { getWorkspaceRevision, requireWorkspaceRevision, WorkspaceConflictError 
 import { GLOBAL_SCOPE_CONFIG_KEYS } from "@/lib/user-config-columns";
 
 // GET /api/user/data - Fetch categories, links, and config for current logged-in user
-export async function GET() {
+async function GETHandler() {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -31,7 +33,7 @@ export async function GET() {
 }
 
 // POST /api/user/data - Save full categories, links, projects, todos, or config for current user
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -111,6 +113,10 @@ export async function POST(req: NextRequest) {
 
     const revision = getWorkspaceRevision(userId);
     db.exec("COMMIT");
+    for (const key of ["categories", "links", "projects", "todos"] as const) {
+      if (Array.isArray(body[key])) writeLog({ category: key === "links" || key === "categories" ? "navigation" : "workspace",
+        event: `${key}.snapshot.saved`, kind: "business", actorId: userId, details: { count: body[key].length } });
+    }
 
     // 广播实时变更通知
     if (Array.isArray(body.links)) emitUserEvent(userId, "links:change");
@@ -140,3 +146,5 @@ export async function POST(req: NextRequest) {
     return localizedJson({ error: message }, { status: 500 });
   }
 }
+export const GET = withRequestLogging("/api/user/data", GETHandler);
+export const POST = withRequestLogging("/api/user/data", POSTHandler);

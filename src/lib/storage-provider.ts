@@ -1,3 +1,4 @@
+import { writeLog } from "./logging/events.ts";
 import { db } from "./db.ts";
 import { encryptSecret, decryptSecret } from "./secret.ts";
 
@@ -87,7 +88,7 @@ import { getStorageDriver } from "./ee-bridge/index.ts";
 // ═══════════════════════════════════════════════════════════════
 
 export async function testStorageConnection(cfg: CloudStorageConfig): Promise<{ success: boolean; message: string }> {
-  return getStorageDriver().testConnection(cfg);
+  return logStorageOperation("backup.cloud.connection", () => getStorageDriver().testConnection(cfg));
 }
 
 export async function uploadBackupToStorage(
@@ -95,7 +96,7 @@ export async function uploadBackupToStorage(
   localFilePath: string,
   fileName: string,
 ): Promise<{ success: boolean; error?: string }> {
-  return getStorageDriver().uploadBackup(cfg, localFilePath, fileName);
+  return logStorageOperation("backup.cloud.upload", () => getStorageDriver().uploadBackup(cfg, localFilePath, fileName));
 }
 
 export async function listRemoteBackups(cfg: CloudStorageConfig): Promise<RemoteBackupItem[]> {
@@ -107,6 +108,19 @@ export async function downloadBackupFromStorage(
   fileName: string,
   targetLocalPath: string,
 ): Promise<{ success: boolean; error?: string }> {
-  return getStorageDriver().downloadBackup(cfg, fileName, targetLocalPath);
+  return logStorageOperation("backup.cloud.download", () => getStorageDriver().downloadBackup(cfg, fileName, targetLocalPath));
 }
 
+
+async function logStorageOperation<T extends { success: boolean }>(event: string, task: () => Promise<T>): Promise<T> {
+  const start = performance.now();
+  writeLog({ category: "backup", event: `${event}.started`, outcome: "started" });
+  try {
+    const result = await task();
+    writeLog({ category: "backup", event: `${event}.${result.success ? "completed" : "failed"}`, outcome: result.success ? "succeeded" : "failed", level: result.success ? "info" : "error", durationMs: performance.now() - start });
+    return result;
+  } catch (error) {
+    writeLog({ category: "backup", event: `${event}.failed`, outcome: "failed", level: "error", durationMs: performance.now() - start });
+    throw error;
+  }
+}

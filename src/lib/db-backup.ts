@@ -1,3 +1,4 @@
+import { writeLog } from "./logging/events.ts";
 import { db } from "./db.ts";
 import { recordAuditLog } from "./audit.ts";
 import { sendTelegramNotification } from "./telegram.ts";
@@ -17,6 +18,8 @@ import {
  * 本文件是面向 API / 守护进程的完整版本，公开 API 保持不变。
  */
 export function performDatabaseBackup(operatorUserId = "system"): string | null {
+  const started = performance.now();
+  writeLog({ category: "backup", event: "backup.local.started", outcome: "started", actorId: operatorUserId });
   const outcome = createPhysicalBackup(db);
 
   if (!outcome.ok) {
@@ -30,6 +33,7 @@ export function performDatabaseBackup(operatorUserId = "system"): string | null 
   // 同名快照已存在（同秒内重复调用）：沿用原实现的提前返回语义，
   // 不重复写审计日志、不重复发通知。
   if (!outcome.created) {
+    writeLog({ category: "backup", event: "backup.local.reused", outcome: "skipped", actorId: operatorUserId });
     return outcome.path;
   }
 
@@ -40,6 +44,8 @@ export function performDatabaseBackup(operatorUserId = "system"): string | null 
     target: outcome.fileName,
     details: `成功创建物理数据库热快照: ${outcome.fileName}`,
   });
+
+  writeLog({ category: "backup", event: "backup.local.completed", actorId: operatorUserId, durationMs: performance.now() - started, details: { bytes: outcome.size } });
 
   // 保留最近 MAX_BACKUPS 个备份文件，清理旧备份
   cleanOldBackups();

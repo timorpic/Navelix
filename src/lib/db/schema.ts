@@ -116,6 +116,8 @@ export function initSchema(db: DatabaseSync): void {
       target TEXT NOT NULL DEFAULT '',
       ip TEXT NOT NULL DEFAULT '',
       details TEXT NOT NULL DEFAULT '',
+      category TEXT NOT NULL DEFAULT '',
+      event_json TEXT NOT NULL DEFAULT '',
       created_at INTEGER NOT NULL
     );
 

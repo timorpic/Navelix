@@ -1,3 +1,5 @@
+import { recordAuditLog } from "@/lib/audit";
+import { withRequestLogging } from "@/lib/logging/request";
 import { getLocale } from "next-intl/server";
 import { normalizeLocale } from "@/lib/i18n";
 import { saveUserConfigs } from "@/lib/user-data";
@@ -10,11 +12,11 @@ import { canRegister } from "@/lib/registration";
 
 // GET /api/auth/register - 公开读取注册开关（登录页/注册页为未登录页面，无法走需 session 的 /api/user/data）。
 // allowRegistration 是纯布尔策略，不含用户列表/用户名等敏感信息，且该状态本可经 POST 试探得出，故无需鉴权。
-export async function GET() {
+async function GETHandler() {
   return localizedJson({ allowRegistration: canRegister() });
 }
 
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   const language = normalizeLocale(await getLocale());
   const body = await req.json().catch(() => null);
   const username = String(body?.username ?? "")
@@ -74,6 +76,7 @@ export async function POST(req: Request) {
 
       seedUserData(id);
       saveUserConfigs(id, { language });
+      recordAuditLog({ userId: id, action: "auth.register.succeeded", target: id });
       db.exec("COMMIT");
       return role;
     } catch (err) {
@@ -116,3 +119,6 @@ export async function POST(req: Request) {
 
   return res;
 }
+
+export const GET = withRequestLogging("/api/auth/register", GETHandler);
+export const POST = withRequestLogging("/api/auth/register", POSTHandler);

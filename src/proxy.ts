@@ -1,3 +1,4 @@
+import { writeLog } from "@/lib/logging/events";
 import { NextResponse, type NextRequest } from "next/server";
 import { checkCSRF } from "@/lib/csrf";
 
@@ -38,6 +39,7 @@ export function proxy(req: NextRequest) {
     if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
       const res = checkCSRF(req);
       if (!res.success) {
+        writeLog({ category: "security", event: "security.csrf.blocked", level: "warn", outcome: "failed", actorType: "anonymous", details: { method } });
         return applySecurityHeaders(
           NextResponse.json(
             { error: res.error || "CSRF 验证失败：跨域请求被拒绝" },

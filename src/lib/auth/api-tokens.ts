@@ -1,3 +1,5 @@
+import { recordAuditLog } from "../audit.ts";
+import { auditedTransaction } from "../logging/transaction.ts";
 import { createHash, randomBytes } from "node:crypto";
 import { db } from "../db.ts";
 
@@ -76,16 +78,22 @@ export function issueApiToken(userId: string, rawName: unknown): IssuedApiToken 
   const tokenPrefix = `${API_TOKEN_PREFIX}${secretPart.slice(0, 4)}...${secretPart.slice(-4)}`;
   const tokenId = `tok_${randomBytes(8).toString("hex")}`;
 
+  return auditedTransaction(() => {
   const result = db.prepare(
     `INSERT INTO api_tokens (id, user_id, name, token_hash, token_prefix, created_at, last_used_at)
      SELECT ?, id, ?, ?, ?, ?, NULL FROM users WHERE id = ? AND disabled = 0`,
   ).run(tokenId, name, hashToken(token), tokenPrefix, Date.now(), userId);
   if (!result.changes) throw new Error("账号已停用或不存在");
 
+  recordAuditLog({ userId, action: "auth.token.created", target: tokenId });
   return { token, tokenId, name, tokenPrefix };
+  });
 }
 
 /** 撤销指定 Token。带 user_id 条件，因此无法删除他人的 Token。 */
 export function revokeApiToken(userId: string, tokenId: string): void {
-  db.prepare("DELETE FROM api_tokens WHERE id = ? AND user_id = ?").run(tokenId, userId);
+  auditedTransaction(() => {
+    const result = db.prepare("DELETE FROM api_tokens WHERE id = ? AND user_id = ?").run(tokenId, userId);
+    if (result.changes) recordAuditLog({ userId, action: "auth.token.revoked", target: tokenId });
+  });
 }

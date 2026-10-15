@@ -53,3 +53,18 @@ it("database restore preserves disabled account status", () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+it("merges snapshot audits with current history without losing recent or deleted-account events", () => {
+  const dir = mkdtempSync(join(tmpdir(), "navelix-restore-audit-"));
+  const file = join(dir, "snapshot.db");
+  const source = new DatabaseSync(file); const target = new DatabaseSync(":memory:");
+  try {
+    initSchema(source); runMigrations(source); initSchema(target); runMigrations(target);
+    source.exec("INSERT INTO audit_logs(id,user_id,action,created_at) VALUES ('snapshot-event','deleted-user','config.updated',1)");
+    target.exec("INSERT INTO audit_logs(id,user_id,action,created_at) VALUES ('current-event','current-user','database.restore.started',2)");
+    source.close(); restoreDatabaseSnapshot(target, file); restoreDatabaseSnapshot(target, file);
+    assert.deepEqual(target.prepare("SELECT id FROM audit_logs ORDER BY id").all().map(row => row.id), ["current-event", "snapshot-event"]);
+  } finally {
+    if (source.isOpen) source.close(); target.close(); rmSync(dir, { recursive: true, force: true });
+  }
+});

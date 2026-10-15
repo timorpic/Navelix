@@ -25,6 +25,7 @@ export const TELEGRAM_DELIVERIES_SQL = `CREATE TABLE IF NOT EXISTS telegram_deli
   created_at INTEGER NOT NULL,
   next_attempt INTEGER NOT NULL DEFAULT 0,
   attempts INTEGER NOT NULL DEFAULT 0,
-  finished INTEGER NOT NULL DEFAULT 0
+  finished INTEGER NOT NULL DEFAULT 0,
+  outcome TEXT NOT NULL DEFAULT 'unknown'
 );
 CREATE INDEX IF NOT EXISTS idx_telegram_deliveries_pending ON telegram_deliveries(finished, next_attempt);`;

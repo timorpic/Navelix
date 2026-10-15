@@ -1,3 +1,6 @@
+import { auditedTransaction } from "@/lib/logging/transaction";
+import { recordAuditLog } from "@/lib/audit";
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { getEEDriverStatus } from "@/lib/ee-bridge";
 import { NextRequest } from "next/server";
@@ -11,7 +14,7 @@ import {
 import { getMachineFingerprint } from "@/lib/fingerprint";
 import { getBuildInfo } from "@/lib/build-info";
 
-export async function GET() {
+async function GETHandler() {
   const user = await requireAdmin();
   if (!user) {
     return localizedJson({ error: "需要管理员权限" }, { status: 403 });
@@ -28,7 +31,7 @@ export async function GET() {
   });
 }
 
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const user = await requireAdmin();
   if (!user) {
     return localizedJson({ error: "需要管理员权限" }, { status: 403 });
@@ -54,7 +57,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  saveLicenseKey(key);
+  auditedTransaction(() => { saveLicenseKey(key); recordAuditLog({ userId: user.id, action: "license.activated" }); });
 
   const status = getLicenseStatus();
   const buildInfo = getBuildInfo();
@@ -68,13 +71,13 @@ export async function POST(req: NextRequest) {
   });
 }
 
-export async function DELETE() {
+async function DELETEHandler() {
   const user = await requireAdmin();
   if (!user) {
     return localizedJson({ error: "需要管理员权限" }, { status: 403 });
   }
 
-  removeLicenseKey();
+  auditedTransaction(() => { removeLicenseKey(); recordAuditLog({ userId: user.id, action: "license.removed" }); });
 
   return localizedJson({
     success: true,
@@ -83,3 +86,7 @@ export async function DELETE() {
     message: "许可证已注销",
   });
 }
+
+export const GET = withRequestLogging("/api/admin/license", GETHandler);
+export const POST = withRequestLogging("/api/admin/license", POSTHandler);
+export const DELETE = withRequestLogging("/api/admin/license", DELETEHandler);

@@ -1,10 +1,11 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { listAuditLogs } from "@/lib/audit";
 
 // GET /api/admin/audit-logs - 后台「审计日志」页：分页查询全站审计记录（仅管理员）
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   const adminUser = await requireAdmin(req);
   if (!adminUser) {
     return localizedJson({ error: "需要管理员权限" }, { status: 403 });
@@ -23,3 +24,5 @@ export async function GET(req: NextRequest) {
 
   return localizedJson({ logs, total });
 }
+
+export const GET = withRequestLogging("/api/admin/audit-logs", GETHandler);

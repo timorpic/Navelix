@@ -1,3 +1,4 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
@@ -5,7 +6,7 @@ import { saveUserConfigs } from "@/lib/user-data";
 import { isLocale, LOCALE_COOKIE } from "@/lib/i18n";
 
 /** Also supports anonymous viewers; the API proxy enforces CSRF for both. */
-export async function POST(request: NextRequest) {
+async function POSTHandler(request: NextRequest) {
   let body: unknown;
   try { body = await request.json(); } catch { return localizedJson({ error: "Invalid JSON", code: "INVALID_JSON" }, { status: 400 }); }
   const language = body && typeof body === "object" && "language" in body ? body.language : undefined;
@@ -16,3 +17,5 @@ export async function POST(request: NextRequest) {
   response.cookies.set(LOCALE_COOKIE, language, { path: "/", maxAge: 31536000, sameSite: "lax", httpOnly: true, secure: process.env.NAVELIX_COOKIE_SECURE === "true" });
   return response;
 }
+
+export const POST = withRequestLogging("/api/user/locale", POSTHandler);

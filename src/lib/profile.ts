@@ -1,3 +1,4 @@
+import { recordAuditLog } from "./audit.ts";
 import { db, type UserRow } from "./db.ts";
 import { hashPassword, verifyPassword } from "./auth.ts";
 
@@ -89,6 +90,7 @@ export function updateProfile(
     if (bio !== undefined) {
       db.prepare("UPDATE users SET bio = ? WHERE id = ?").run(bio, userId);
     }
+    recordAuditLog({ userId, action: newHash !== null ? "auth.password.changed" : "auth.profile.updated", target: userId });
     db.exec("COMMIT;");
   } catch (e) {
     db.exec("ROLLBACK;");

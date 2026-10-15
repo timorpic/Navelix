@@ -1,3 +1,4 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
@@ -7,7 +8,7 @@ import { getProbeDriver, isEEAvailable, CE_PRO_MESSAGE } from "@/lib/ee-bridge";
 const MAX_URLS = 25;
 
 // 服务端代理连通性与网络延迟探测 (Pro 专享 · 需官方 EE 驱动)
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -54,3 +55,5 @@ export async function GET(req: NextRequest) {
   return localizedJson({ results });
 }
 
+
+export const GET = withRequestLogging("/api/link-status", GETHandler);

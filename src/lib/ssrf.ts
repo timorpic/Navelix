@@ -1,3 +1,5 @@
+import { writeLog } from "./logging/events.ts";
+import { logContext } from "./logging/context.ts";
 import dns from "node:dns/promises";
 import net from "node:net";
 import http from "node:http";
@@ -368,7 +370,7 @@ export async function performFetch(
 }
 
 /** Every redirect uses the validated socket addresses and the same total deadline. */
-export async function safeFetch(urlInput: string, options: SafeFetchOptions = {}): Promise<Response> {
+async function safeFetchInternal(urlInput: string, options: SafeFetchOptions = {}): Promise<Response> {
   const { maxRedirects = 5, timeoutMs = 10_000, maxResponseBytes = 2 * 1024 * 1024, allowPrivateIPs = false, ...initial } = options;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(new DOMException("Request timed out", "TimeoutError")), timeoutMs);
@@ -398,4 +400,23 @@ export async function safeFetch(urlInput: string, options: SafeFetchOptions = {}
     }
     throw new Error("MAX_REDIRECTS_EXCEEDED");
   } finally { clearTimeout(timer); }
+}
+
+/** Shared outbound diagnostics. URLs, headers and bodies never enter logs. */
+export async function safeFetch(urlInput: string, options: SafeFetchOptions = {}): Promise<Response> {
+  const start = performance.now();
+  let category = logContext.getStore()?.category ?? "runtime";
+  try { if (new URL(urlInput).hostname === "api.telegram.org") category = "notification"; } catch { /* Validation below handles malformed URLs. */ }
+  try {
+    const response = await safeFetchInternal(urlInput, options);
+    writeLog({ category, event: `${category}.external.${response.ok ? "completed" : "failed"}`, level: response.ok ? (category === "ai" ? "info" : "debug") : "warn",
+      outcome: response.ok ? "succeeded" : "failed", durationMs: performance.now() - start, code: `HTTP_${response.status}`, details: { status: response.status } });
+    return response;
+  } catch (error) {
+    const blocked = error instanceof Error && error.message.includes("SSRF_BLOCKED");
+    writeLog({ category: blocked ? "security" : category, event: blocked ? "security.ssrf.blocked" : `${category}.external.exception`,
+      level: blocked ? "warn" : "error", outcome: "failed", code: blocked ? "SSRF_BLOCKED" : "EXTERNAL_FAILED", durationMs: performance.now() - start,
+      details: { errorName: error instanceof Error ? error.name : "UnknownError" } });
+    throw error;
+  }
 }

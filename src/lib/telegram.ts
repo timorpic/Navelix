@@ -1,3 +1,4 @@
+import { writeLog } from "./logging/events.ts";
 import { normalizeLocale, type Locale } from "./i18n.ts";
 import { translateText } from "./server-translations.ts";
 import { getUserConfigRow } from "./global-config.ts";
@@ -39,14 +40,13 @@ export async function sendTelegramMessage(userId: string, text: string): Promise
 
     if (!res.ok) {
       // 静默记录，不影响业务
-      console.warn(
-        `[Telegram] 发送失败 (HTTP ${res.status})`,
-      );
+      writeLog({ category: "notification", event: "telegram.send.failed", level: "warn", outcome: "failed", details: { status: res.status }, subjectId: userId });
       return false;
     }
+    writeLog({ category: "notification", event: "telegram.send.succeeded", subjectId: userId });
     return true;
   } catch {
-    console.warn("[Telegram] 发送异常");
+    writeLog({ category: "notification", event: "telegram.send.exception", level: "warn", outcome: "failed", subjectId: userId });
     return false;
   }
 }

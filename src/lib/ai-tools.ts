@@ -1,3 +1,4 @@
+import { writeLog } from "./logging/events.ts";
 import { randomBytes } from "node:crypto";
 import { deleteProjectCascade } from "./todos-projects.ts";
 import { db } from "./db.ts";
@@ -221,7 +222,7 @@ function runDeleteProject(userId: string, args: Record<string, unknown>): AiTool
 }
 
 /** 执行单个工具调用（非删除类工具直接执行） */
-export function executeAiTool(userId: string, call: AiToolCall): AiToolExecResult {
+function executeAiToolInternal(userId: string, call: AiToolCall): AiToolExecResult {
   switch (call.tool) {
     case "create_todo":
       return runCreateTodo(userId, call.args);
@@ -329,11 +330,14 @@ export function consumePendingDelete(
   const prompt = userPrompt.trim();
   if (/取消|不了|不要|别|撤销|cancel|\bno\b/i.test(prompt)) {
     pendingDeletes.delete(key);
+    writeLog({ category: "ai", event: "ai.tool.delete.cancelled", outcome: "cancelled", actorId: userId });
     return { ok: true, message: "已取消删除操作。" };
   }
   if (prompt !== pending.confirmation) return null;
   pendingDeletes.delete(key);
-  return runPendingDelete(pending);
+  const result = runPendingDelete(pending);
+  writeLog({ category: "ai", event: "ai.tool.delete.confirmed", actorId: userId, outcome: result.ok ? "succeeded" : "failed" });
+  return result;
 }
 
 /** 从 AI 回复文本中解析 <TOOL>...</TOOL> 工具调用块（可多个） */
@@ -357,4 +361,10 @@ export function extractToolCalls(replyText: string): AiToolCall[] {
 /** 从 AI 回复中剥离工具调用块，只保留给用户看的正文 */
 export function stripToolCalls(replyText: string): string {
   return replyText.replace(/<TOOL>[\s\S]*?<\/TOOL>/g, "").trim();
+}
+
+export function executeAiTool(userId: string, call: AiToolCall): AiToolExecResult {
+  const result = executeAiToolInternal(userId, call);
+  writeLog({ category: "ai", event: "ai.tool.executed", actorId: userId, outcome: result.ok ? "succeeded" : "failed", level: result.ok ? "info" : "warn" });
+  return result;
 }

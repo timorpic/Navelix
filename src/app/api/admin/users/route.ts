@@ -1,3 +1,5 @@
+import { recordAuditLog } from "@/lib/audit";
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { randomBytes } from "node:crypto";
 import { db, seedUserData } from "@/lib/db";
@@ -5,7 +7,7 @@ import { checkCSRF, hashPassword, requireAdmin } from "@/lib/auth";
 import { adminCount, deleteUserCascade, updateUser, UserUpdateError } from "@/lib/admin-users";
 
 // GET: Fetch list of all registered users
-export async function GET() {
+async function GETHandler() {
   const adminUser = await requireAdmin();
   if (!adminUser) {
     return localizedJson({ error: "Unauthorized access" }, { status: 403 });
@@ -23,7 +25,7 @@ export async function GET() {
 }
 
 // POST: Create a new user from Admin Console
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   const adminUser = await requireAdmin(req);
   if (!adminUser) {
     return localizedJson({ error: "Unauthorized access" }, { status: 403 });
@@ -84,6 +86,7 @@ export async function POST(req: Request) {
   );
 
   seedUserData(id);
+  recordAuditLog({ userId: adminUser.id, action: "user.created", target: id });
   db.exec("COMMIT");
   } catch (error) { db.exec("ROLLBACK"); throw error; }
 
@@ -91,7 +94,7 @@ export async function POST(req: Request) {
 }
 
 // PATCH: Update user role / password / display name
-export async function PATCH(req: Request) {
+async function PATCHHandler(req: Request) {
   const adminUser = await requireAdmin(req);
   if (!adminUser) {
     return localizedJson({ error: "Unauthorized access" }, { status: 403 });
@@ -162,7 +165,7 @@ export async function PATCH(req: Request) {
 }
 
 // DELETE: Remove a user account
-export async function DELETE(req: Request) {
+async function DELETEHandler(req: Request) {
   const adminUser = await requireAdmin(req);
   if (!adminUser) {
     return localizedJson({ error: "Unauthorized access" }, { status: 403 });
@@ -207,3 +210,8 @@ export async function DELETE(req: Request) {
 
   return localizedJson({ message: "User deleted successfully" });
 }
+
+export const GET = withRequestLogging("/api/admin/users", GETHandler);
+export const POST = withRequestLogging("/api/admin/users", POSTHandler);
+export const PATCH = withRequestLogging("/api/admin/users", PATCHHandler);
+export const DELETE = withRequestLogging("/api/admin/users", DELETEHandler);

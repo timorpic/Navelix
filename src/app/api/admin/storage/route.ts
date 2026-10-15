@@ -1,3 +1,5 @@
+import { auditedTransaction } from "@/lib/logging/transaction";
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { restoreDatabaseSnapshot } from "@/lib/db-restore";
 import { NextRequest } from "next/server";
@@ -20,7 +22,7 @@ import { performDatabaseBackup } from "@/lib/db-backup";
 import { db } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit";
 
-export async function GET() {
+async function GETHandler() {
   const user = await requireAdmin();
   if (!user) {
     return localizedJson({ error: "需要管理员权限" }, { status: 403 });
@@ -42,7 +44,7 @@ export async function GET() {
   return localizedJson(masked);
 }
 
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const user = await requireAdmin();
   if (!user) {
     return localizedJson({ error: "需要管理员权限" }, { status: 403 });
@@ -92,6 +94,7 @@ export async function POST(req: NextRequest) {
         : existing.encryptionPassphrase || "",
   };
 
+  auditedTransaction(() => {
   saveCloudStorageConfig(nextConfig);
 
   recordAuditLog({
@@ -100,10 +103,11 @@ export async function POST(req: NextRequest) {
     details: `更新云端异地备份配置 (类型: ${nextConfig.type})`,
   });
 
+  });
   return localizedJson({ success: true, message: "云存储配置已安全保存" });
 }
 
-export async function PUT(req: NextRequest) {
+async function PUTHandler(req: NextRequest) {
   const user = await requireAdmin();
   if (!user) {
     return localizedJson({ error: "需要管理员权限" }, { status: 403 });
@@ -236,3 +240,7 @@ export async function PUT(req: NextRequest) {
 
   return localizedJson({ error: "不支持的操作" }, { status: 400 });
 }
+
+export const GET = withRequestLogging("/api/admin/storage", GETHandler);
+export const POST = withRequestLogging("/api/admin/storage", POSTHandler);
+export const PUT = withRequestLogging("/api/admin/storage", PUTHandler);

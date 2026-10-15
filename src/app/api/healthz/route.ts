@@ -1,3 +1,4 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { db } from "@/lib/db";
 import fs from "node:fs";
@@ -17,7 +18,7 @@ const DATA_DIR = resolveDataDir();
  * 6. SQLite WAL 文件大小（自托管用户最怕 WAL 膨胀）
  * 任何一步失败返回 503，避免 SQLite 已损坏/只读时健康检查仍误报绿灯。
  */
-export async function GET() {
+async function GETHandler() {
   const payload: Record<string, unknown> = {
     status: "ok",
     time: Date.now(),
@@ -88,3 +89,4 @@ export async function GET() {
 
   return localizedJson(payload, { status: healthy ? 200 : 503 });
 }
+export const GET = withRequestLogging("/api/healthz", GETHandler);

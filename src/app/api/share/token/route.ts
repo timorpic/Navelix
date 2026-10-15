@@ -1,10 +1,11 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { createShareToken } from "@/lib/share";
 
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -51,3 +52,5 @@ export async function POST(req: NextRequest) {
     expiresInDays: days,
   });
 }
+
+export const POST = withRequestLogging("/api/share/token", POSTHandler);

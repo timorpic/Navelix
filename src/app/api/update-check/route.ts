@@ -1,3 +1,4 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { getSessionUser } from "@/lib/auth";
 import { getBuildInfo } from "@/lib/build-info";
@@ -49,7 +50,7 @@ function versionGt(a: number[], b: number[]): boolean {
 }
 
 // GET /api/update-check - 依据 GitHub Releases 纯官方发布源自检版本
-export async function GET() {
+async function GETHandler() {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -151,3 +152,4 @@ export async function GET() {
     });
   }
 }
+export const GET = withRequestLogging("/api/update-check", GETHandler);

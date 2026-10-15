@@ -7,7 +7,7 @@ import { mapUserConfigRow, USER_CONFIG_MAPPED_COLUMNS, isGlobalScoped } from "./
 const RESTORE_TABLES = [
   "users", "user_configs", "user_notification_settings", "user_categories", "user_links",
   "user_category_subscriptions", "projects", "user_todos", "api_tokens", "notifications",
-  "system_settings", "audit_logs", "telegram_deliveries",
+  "system_settings", "telegram_deliveries",
 ] as const;
 
 /** Upgrade the temporary snapshot first; restore all scoped settings atomically. */
@@ -30,6 +30,10 @@ export function restoreDatabaseSnapshot(db: DatabaseSync, snapshotPath: string):
       const columns = (db.prepare(`PRAGMA main.table_info(${table})`).all() as { name: string }[]).map(row => `"${row.name}"`).join(", ");
       db.exec(`INSERT INTO main.${table} (${columns}) SELECT ${columns} FROM config_restore.${table}`);
     }
+    db.exec("DELETE FROM main.system_settings WHERE key LIKE 'logging_preview_%'");
+    // Keep live audit history and merge snapshot records in the same restore transaction.
+    const auditColumns = (db.prepare("PRAGMA main.table_info(audit_logs)").all() as { name: string }[]).map(row => `"${row.name}"`).join(", ");
+    db.exec(`INSERT OR IGNORE INTO main.audit_logs (${auditColumns}) SELECT ${auditColumns} FROM config_restore.audit_logs`);
     // Gate persisted site settings as well as SSR reads.
     const row: Record<string, unknown> = Object.fromEntries((db.prepare("SELECT key, value FROM system_settings").all() as { key: string; value: string }[]).map(row => [row.key, row.value]));
     const config = applyEEGateToConfig(mapUserConfigRow(row));

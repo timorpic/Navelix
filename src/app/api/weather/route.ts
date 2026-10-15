@@ -1,3 +1,5 @@
+import { writeLog } from "@/lib/logging/events";
+import { withRequestLogging } from "@/lib/logging/request";
 import { getLocale } from "next-intl/server";
 import { translateText } from "@/lib/server-translations";
 import { localizedJson } from "@/lib/localized-json";
@@ -7,7 +9,7 @@ import { decryptSecret } from "@/lib/secret";
 import { getGlobalConfigRow } from "@/lib/global-config";
 
 // GET /api/weather - 后端代理心知天气，隐藏 API Key 与位置
-export async function GET() {
+async function GETHandler() {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -49,7 +51,7 @@ export async function GET() {
       }
     }
   } catch (err) {
-    console.warn("[Weather API] Fetch failed, returning degraded status", err);
+    writeLog({ category: "runtime", event: "weather.fetch.failed", outcome: "failed", level: "warn", details: { errorName: err instanceof Error ? err.name : "UnknownError" } });
   }
 
   // 优雅降级：明确标记 isFallback，前端展示"数据暂不可用"而非模拟数据
@@ -63,3 +65,5 @@ export async function GET() {
     updatedAt: "",
   });
 }
+
+export const GET = withRequestLogging("/api/weather", GETHandler);

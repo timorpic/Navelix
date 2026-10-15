@@ -34,10 +34,10 @@ export default function PendingRemindersWidget() {
   };
 
   return (
-    <div className="rounded-2xl p-4 bg-white/90 dark:bg-slate-900/70 border border-gray-100 dark:border-slate-700 shadow-2xs space-y-3 transition-colors">
+    <div className="shrink-0 rounded-2xl p-4 bg-white/90 dark:bg-slate-900/70 border border-gray-100 dark:border-slate-700 space-y-3 transition-colors">
       <div className="flex items-center gap-2">
         <span className="text-sm">📌</span>
-        <h3 className="text-xs font-black text-gray-900 dark:text-white tracking-wide">{tx("pending_reminders_31e81252")}</h3>
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white">{tx("pending_reminders_31e81252")}</h3>
         {pending.length > 0 && (
           <span className="px-1.5 py-0.5 rounded-full bg-[#00C776]/10 text-[#00C776] text-[9px] font-bold ml-auto">
             {pending.length}
@@ -46,13 +46,13 @@ export default function PendingRemindersWidget() {
       </div>
 
       {pending.length === 0 ? (
-        <p className="py-3 text-center text-[10px] text-gray-400 dark:text-slate-500">{tx("nothing_pending_e9f5dfa8")}</p>
+        <p className="py-3 text-center text-xs text-gray-400 dark:text-slate-500">{tx("nothing_pending_e9f5dfa8")}</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {pending.map((todo) => (
             <div key={`${todo.ownerId ?? ""}:${todo.id}`} className="flex items-center gap-2 min-w-0">
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priorityColor(todo.priority)}`} />
-              <span className="flex-1 text-[11px] text-gray-700 dark:text-slate-200 truncate">
+              <span className="flex-1 text-xs text-gray-700 dark:text-slate-200 truncate">
                 {todo.title}
               </span>
               {todo.dueDate && (

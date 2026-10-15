@@ -1,8 +1,9 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { NextResponse } from "next/server";
 import { SESSION_COOKIE } from "@/lib/db";
 import { clearSessionCookieOptions, destroySession } from "@/lib/auth";
 
-export async function POST() {
+async function POSTHandler() {
   const cookieStore = await import("next/headers").then((m) => m.cookies());
   const token = cookieStore.get(SESSION_COOKIE)?.value;
 
@@ -12,3 +13,5 @@ export async function POST() {
 
   return res;
 }
+
+export const POST = withRequestLogging("/api/auth/logout", POSTHandler);

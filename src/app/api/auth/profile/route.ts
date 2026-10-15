@@ -1,9 +1,10 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { getSessionUser, toPublicUser } from "@/lib/auth";
 import { getUserRow, updateProfile } from "@/lib/profile";
 
 // PATCH /api/auth/profile - 当前登录用户自助修改个人资料（头像、显示名称、个人密码）
-export async function PATCH(req: Request) {
+async function PATCHHandler(req: Request) {
   const user = await getSessionUser();
   if (!user) {
     return localizedJson({ error: "未登录" }, { status: 401 });
@@ -25,3 +26,5 @@ export async function PATCH(req: Request) {
     message: result.passwordChanged ? "个人资料与密码已成功更新" : "个人资料更新成功",
   });
 }
+
+export const PATCH = withRequestLogging("/api/auth/profile", PATCHHandler);

@@ -1,3 +1,4 @@
+import { writeLog } from "./logging/events.ts";
 import { captureTaskAssignments, enqueueChangedAssignments } from "./personal-telegram.ts";
 import { db } from "./db.ts";
 import { addDaysLocal } from "./date-utils.ts";
@@ -108,6 +109,7 @@ export function updateTodoFields(id: string, userId: string, input: TodoPatchInp
 
     enqueueChangedAssignments(assignmentsBefore);
     db.exec("COMMIT;");
+    writeLog({ category: "workspace", event: "todo.updated", kind: "business", actorId: userId, subjectId: id, details: { fieldNames: changed } });
   } catch (e) {
     db.exec("ROLLBACK;");
     throw e;
@@ -134,6 +136,7 @@ export function deleteProjectCascade(projectId: string, userId: string): void {
       userId,
     );
     db.exec("COMMIT;");
+    writeLog({ category: "workspace", event: "project.deleted", kind: "business", actorId: userId, subjectId: projectId, details: {} });
   } catch (e) {
     db.exec("ROLLBACK;");
     throw e;
@@ -166,6 +169,7 @@ export function syncProjectMilestones(
     syncProjectMilestonesInTransaction(projectId, userId, todos);
     enqueueChangedAssignments(assignmentsBefore);
     db.exec("COMMIT;");
+    writeLog({ category: "workspace", event: "project.milestones.updated", kind: "business", actorId: userId, subjectId: projectId, details: {} });
   } catch (e) {
     db.exec("ROLLBACK;");
     throw e;
@@ -318,6 +322,7 @@ export function rolloverOverdueTodos(
     }
 
     db.exec("COMMIT;");
+    writeLog({ category: "workspace", event: "calendar.todos.rolled_over", kind: "business", actorId: userId, subjectId: undefined, details: { count: overdueTodos.length } });
   } catch (e) {
     db.exec("ROLLBACK;");
     throw e;
@@ -385,6 +390,7 @@ export function createTodo(userId: string, input: CreateTodoInput): string {
 
     enqueueChangedAssignments(assignmentsBefore);
     db.exec("COMMIT;");
+    writeLog({ category: "workspace", event: "todo.created", kind: "business", actorId: userId, subjectId: id, details: {} });
   } catch (e) {
     db.exec("ROLLBACK;");
     throw e;
@@ -473,6 +479,7 @@ export function createProject(userId: string, input: CreateProjectInput): Create
 
     enqueueChangedAssignments(assignmentsBefore);
     db.exec("COMMIT;");
+    writeLog({ category: "workspace", event: "project.created", kind: "business", actorId: userId, subjectId: id, details: {} });
   } catch (e) {
     db.exec("ROLLBACK;");
     throw e;
@@ -555,6 +562,7 @@ export function updateProject(projectId: string, userId: string, input: ProjectP
     }
     enqueueChangedAssignments(assignmentsBefore);
     db.exec("COMMIT;");
+    writeLog({ category: "workspace", event: "project.updated", kind: "business", actorId: userId, subjectId: projectId, details: {} });
   } catch (e) {
     db.exec("ROLLBACK;");
     throw e;

@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+import { recordAuditLog } from "@/lib/audit";
+import { withRequestLogging } from "@/lib/logging/request";
 import { translateText } from "@/lib/server-translations";
 import { localizedJson } from "@/lib/localized-json";
 import { NextResponse } from "next/server";
@@ -21,7 +24,7 @@ import { sendTelegramNotification } from "@/lib/telegram";
 /** 登录失败达到该次数后向 Telegram 推送安全告警 */
 const LOGIN_ALERT_THRESHOLD = 3;
 
-export async function POST(req: Request) {
+async function POSTHandler(req: Request) {
   const body = await req.json().catch(() => null);
   const username = String(body?.username ?? "")
     .trim()
@@ -59,6 +62,7 @@ export async function POST(req: Request) {
     | undefined;
 
   if (!row || !verifyPassword(password, row.password_hash)) {
+    recordAuditLog({ userId: "", action: "auth.login.failed", outcome: "failed", target: createHash("sha256").update(username.slice(0, 100)).digest("hex") });
     recordLoginFailure(limitKey);
     const status = checkLoginRateLimit(limitKey);
     // 连续失败达到阈值：向 Telegram 推送登录异常安全告警
@@ -97,3 +101,5 @@ export async function POST(req: Request) {
 
   return res;
 }
+
+export const POST = withRequestLogging("/api/auth/login", POSTHandler);

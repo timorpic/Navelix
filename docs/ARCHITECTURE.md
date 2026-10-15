@@ -49,6 +49,10 @@ docs/                    # 开发与维护文档
 
 API 处理器保持 HTTP 职责，复杂行为使用 `admin-*`、`todos-projects`、`notification-store` 等业务模块。客户端不能导入服务端运行时代码。
 
+## 模块化与组合
+
+全系统的依赖方向、业务职责、JSON 契约及步骤编排见 [模块边界与流程组合](MODULES.md)。`lib/workflows/` 提供独立于业务的版本化计划校验和进程内顺序执行；日志管理已通过注入 API 与确认能力接入。日志列表的筛选、表格、分页独立展示，状态和副作用进入对应 Hook，HTTP 由 `lib/client/admin-logs.ts` 统一适配。源码依赖边界由自动测试保护；其他业务尚未全部迁入该执行器。
+
 ## 数据组织与迁移
 
 `resolveDataDir()` 使用 `NAVELIX_DATA_DIR`，未设置时取 `<cwd>/data`。主库为 `navelix.db`，运行中可能出现 `navelix.db-wal` 与 `navelix.db-shm`。
@@ -114,3 +118,7 @@ Schema v19 移除使用事件采集、后台使用统计与匿名遥测周报。
 `safeFetch()` 用 Node HTTP(S) 传输将实际 socket 连接绑定已检查的地址，同时保留原域名 Host 与 TLS SNI；每次重定向重新校验。它返回有大小限制的缓冲 Response，默认解压后最多 2 MiB，可通过 `maxResponseBytes` 调整。总截止时间覆盖 DNS、重定向与正文读取；跨来源跳转移除 Authorization/Cookie，遵循 POST 重定向转 GET 语义，并保留调用方取消信号。图标模块仍保留自身更小的页面/图标大小限制。
 
 AI 删除请求按账号及对话隔离，确认必须精确匹配服务端签发的确认文本；取消会清理待删状态。请求保存在进程内，五分钟过期；重启后需重新请求删除。
+
+## 日志中心
+
+日志按八类功能组织，关键审计存 SQLite，普通业务和运行诊断使用带保留等级的 JSONL 分片。`lib/logging/` 提供脱敏、请求上下文、文件缓冲轮转、有界查询、清理预览和告警；底层不依赖数据库，查询与管理适配层才引用数据库。API 包装层只记录静态路由模板、结果与耗时。Schema v20 补充审计分类和事件 JSON、投递结果；恢复合并审计而不覆盖当前历史。实际边界见 [日志中心说明](LOGGING.md)。

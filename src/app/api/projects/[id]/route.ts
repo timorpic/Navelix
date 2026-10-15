@@ -1,9 +1,10 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { deleteProjectCascade, updateProject } from "@/lib/todos-projects";
 
-export async function PATCH(
+async function PATCHHandler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -28,7 +29,7 @@ export async function PATCH(
   return localizedJson({ success: true });
 }
 
-export async function DELETE(
+async function DELETEHandler(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -40,3 +41,6 @@ export async function DELETE(
   deleteProjectCascade(id, userId);
   return localizedJson({ success: true });
 }
+
+export const PATCH = withRequestLogging("/api/projects/[id]", PATCHHandler);
+export const DELETE = withRequestLogging("/api/projects/[id]", DELETEHandler);

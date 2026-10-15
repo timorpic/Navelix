@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { SYSTEM_SETTINGS_NAV, USER_SETTINGS_NAV, isSystemSettingsTab, resolveSettingsTab } from "../admin-settings-nav.ts";
 
 describe("consolidated settings navigation", () => {
-  it("keeps four system destinations and three user destinations", () => {
-    assert.deepEqual(SYSTEM_SETTINGS_NAV.map(item => item.id), ["site", "access", "proSystem", "system"]);
+  it("keeps five system destinations and three user destinations", () => {
+    assert.deepEqual(SYSTEM_SETTINGS_NAV.map(item => item.id), ["site", "access", "proSystem", "logs", "system"]);
     assert.deepEqual(USER_SETTINGS_NAV.map(item => item.id), ["profile", "account", "proUser"]);
   });
   it("resolves old bookmarks to the correct group without changing their scope", () => {

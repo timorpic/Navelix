@@ -180,25 +180,25 @@ export default function Sidebar({
 
       <aside
         className={`fixed inset-y-0 left-0 z-50 ${
-          collapsed ? "w-16 px-2 py-4" : "w-60 p-5"
-        } shrink-0 flex flex-col justify-between border-r rounded-r-2xl select-none overflow-x-hidden ${
+          collapsed ? "w-16 px-2 py-4" : "w-64 p-4 lg:w-[clamp(15rem,15.7vw,16.5rem)] lg:p-5"
+        } shrink-0 flex flex-col justify-between border rounded-r-3xl select-none ${
           mounted ? "transition-all duration-300 ease-in-out" : "transition-none"
-        } lg:static lg:z-auto lg:translate-x-0 lg:h-screen lg:sticky lg:top-0 ${
+        } lg:static lg:z-auto lg:translate-x-0 lg:h-[calc(100dvh-2rem)] lg:sticky lg:top-4 lg:my-4 lg:ml-5 lg:rounded-3xl ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         } text-gray-900 dark:text-slate-100 ${
           config.glassmorphism
             ? "backdrop-blur-xl bg-white/75 dark:bg-slate-900/80 border-white/40 dark:border-slate-700/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_4px_16px_rgba(0,0,0,0.06)]"
-            : "bg-white border-gray-100 dark:bg-slate-900 dark:border-slate-800"
+            : "bg-white/95 border-[#e5f4f4] shadow-[0_8px_32px_-16px_rgba(0,167,130,0.12)] dark:bg-slate-900 dark:border-slate-800"
         }`}
       >
         {/* Top Section - 填满剩余空间，让底部抽屉固定在最低端 */}
-        <div className="flex-1 min-h-0 flex flex-col gap-6">
+        <div className="flex-1 min-h-0 flex flex-col gap-5">
           {/* Brand Logo & Theme Toggle */}
           <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between px-2"} w-full`}>
             <div className="flex items-center gap-3 min-w-0">
               <LogoMark size={collapsed ? "sm" : "md"} />
               {!collapsed && (
-                <span className="text-lg font-bold tracking-tight truncate text-gray-900 dark:text-white">
+                <span className="text-[23px] font-bold tracking-tight truncate text-gray-900 dark:text-white">
                   <BrandLogoText text={config.logoText} />
                 </span>
               )}
@@ -230,9 +230,9 @@ export default function Sidebar({
           </div>
 
           {/* Main Navigation Menu - 在品牌与底部抽屉之间滚动 */}
-          <nav className="flex-1 min-h-0 flex flex-col gap-1.5 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <nav className="flex-1 min-h-0 flex flex-col gap-1 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {!collapsed && (
-              <div className="px-3.5 mb-1 text-[10px] font-bold tracking-wider text-gray-400 dark:text-slate-500 uppercase">
+              <div className="px-3.5 mb-1 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase">
                 {tx("category_bookmarks_9dcc3bfc")}</div>
             )}
             {dynamicNavItems.map((item) => {
@@ -248,18 +248,20 @@ export default function Sidebar({
                       onSelectCategory(item.id);
                       setMobileOpen(false);
                     }}
+                    aria-current={isSelected ? "page" : undefined}
+                    aria-label={item.name}
                     title={item.name}
                     className={`flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer ${
                       collapsed
                         ? "w-10 h-10 text-base shrink-0"
-                        : "flex-1 gap-3.5 px-3.5 py-2.5 text-xs font-semibold justify-start"
+                        : "min-w-0 flex-1 gap-4 px-3.5 py-2.5 text-sm font-semibold justify-start"
                     } ${
                       isSelected
-                        ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
+                        ? "bg-gradient-to-r from-[#00cb87] to-[#00c776] text-white shadow-[0_4px_12px_rgba(0,199,118,0.24)]"
                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                     }`}
                   >
-                    <span className="shrink-0">{item.icon}</span>
+                    <span aria-hidden="true" className="w-6 text-center text-base shrink-0">{item.icon}</span>
                     {!collapsed && (
                       <div className="flex items-center gap-1.5 min-w-0 pr-6">
                         <span className="truncate">{item.name}</span>
@@ -298,7 +300,7 @@ export default function Sidebar({
             {!collapsed && (
               <button
                 onClick={() => setTeamModalOpen(true)}
-                className="flex items-center gap-2 px-3 py-1.5 mt-1 rounded-xl text-[11px] font-medium text-gray-500 hover:text-[#00C776] hover:bg-[#00C776]/10 dark:text-slate-400 dark:hover:text-[#00C776] transition-colors cursor-pointer"
+                className="flex items-center gap-4 px-3.5 py-2.5 mt-1 rounded-xl text-sm font-medium text-gray-500 hover:text-[#00C776] hover:bg-[#00C776]/10 dark:text-slate-400 dark:hover:text-[#00C776] transition-colors cursor-pointer"
               >
                 <span>👥</span>
                 <span>{tx("subscribe_to_team_categories_35d0292a")}</span>
@@ -307,7 +309,7 @@ export default function Sidebar({
 
             {/* 工作空间应用扩展：日历日程、项目管理、数据看板 */}
             {!collapsed && (
-              <div className="px-3.5 mt-4 mb-1 text-[10px] font-bold tracking-wider text-gray-400 dark:text-slate-500 uppercase">
+              <div className="px-3.5 pt-4 mt-2 mb-1 border-t border-gray-100 dark:border-slate-800 text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase">
                 {tx("workspace_6fed7e86")}</div>
             )}
             {workspaceTools.map((tool) => {
@@ -321,18 +323,20 @@ export default function Sidebar({
                       onSelectCategory(tool.id);
                       setMobileOpen(false);
                     }}
+                    aria-current={isSelected ? "page" : undefined}
+                    aria-label={tool.name}
                     title={tool.name}
                     className={`flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer ${
                       collapsed
                         ? "w-10 h-10 text-base shrink-0"
-                        : "flex-1 gap-3.5 px-3.5 py-2.5 text-xs font-semibold justify-start"
+                        : "min-w-0 flex-1 gap-4 px-3.5 py-2.5 text-sm font-semibold justify-start"
                     } ${
                       isSelected
-                        ? "bg-[#00C776] text-white shadow-sm shadow-[#00C776]/20"
+                        ? "bg-gradient-to-r from-[#00cb87] to-[#00c776] text-white shadow-[0_4px_12px_rgba(0,199,118,0.24)]"
                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                     }`}
                   >
-                    <span className="shrink-0">{tool.icon}</span>
+                    <span aria-hidden="true" className="w-6 text-center text-base shrink-0">{tool.icon}</span>
                     {!collapsed && <span className="truncate">{tool.name}</span>}
                   </button>
                 </div>
@@ -343,11 +347,13 @@ export default function Sidebar({
 
         {/* Bottom Section 抽屉 */}
         {!collapsed && (
-        <div className="relative flex flex-col pt-4 border-t border-gray-100 dark:border-slate-800">
+        <div className="relative shrink-0 flex flex-col mt-4 p-2 rounded-2xl border border-gray-100 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70">
           {/* 抽屉切换按钮 */}
           <button
             onClick={() => setBottomOpen(!bottomOpen)}
-            className="flex items-center justify-center gap-1.5 mb-3 text-[10px] font-medium text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors cursor-pointer select-none"
+            aria-expanded={bottomOpen}
+            aria-controls="sidebar-tools"
+            className="flex items-center justify-center gap-1.5 py-1 mb-2 text-xs font-medium text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors cursor-pointer select-none"
           >
             <svg
               className={`w-3 h-3 transition-transform duration-200 ${bottomOpen ? "rotate-180" : ""}`}
@@ -360,6 +366,8 @@ export default function Sidebar({
 
           {/* 可折叠内容 */}
           <div
+            id="sidebar-tools"
+            inert={!bottomOpen}
             className={`overflow-hidden transition-all duration-300 ease-in-out ${
               bottomOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
             }`}
@@ -397,12 +405,14 @@ export default function Sidebar({
               </div>
             )}
 
-            <div
+            <button
+              type="button"
+              aria-expanded={showUserMenu}
               onClick={() => setShowUserMenu((prev) => !prev)}
-              className="flex items-center justify-between p-2.5 rounded-xl border transition-colors cursor-pointer group bg-gray-50/80 hover:bg-gray-50 border-gray-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:border-slate-700 select-none"
+              className="w-full text-left flex items-center justify-between p-2.5 rounded-xl border transition-colors cursor-pointer group bg-gray-50/80 hover:bg-gray-50 border-gray-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:border-slate-700 select-none"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00C776] to-[#009a5a] flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden shadow-2xs">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00C776] to-[#009a5a] flex items-center justify-center text-white font-bold text-xs shrink-0 overflow-hidden shadow-2xs">
                   {/* eslint-disable-next-line @next/next/no-img-element -- 头像可能是任意图片地址或 data URL */}
                   <img
                     src={resolveAvatar(currentUser?.avatar, currentUser?.username)}
@@ -411,10 +421,10 @@ export default function Sidebar({
                   />
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold truncate text-gray-900 dark:text-white">
+                  <span className="text-sm font-bold truncate text-gray-900 dark:text-white">
                     {currentUser?.displayName || tx("user_0d0e1a86")}
                   </span>
-                  <span className="text-[10px] text-gray-400 dark:text-slate-400 truncate">
+                  <span className="text-xs text-gray-400 dark:text-slate-400 truncate">
                     {currentUser?.bio || (currentUser?.role === "admin"
                       ? tx("administrator_5775c0be")
                       : tx("build_design_ai_tech_1493f8f8"))}
@@ -424,12 +434,12 @@ export default function Sidebar({
               <svg className={`w-3.5 h-3.5 text-gray-400 dark:text-slate-500 group-hover:text-gray-700 dark:group-hover:text-slate-300 transition-transform duration-200 shrink-0 ${showUserMenu ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
               </svg>
-            </div>
+            </button>
           </div>
 
           {/* Custom Footer Copyright + 收起按钮 */}
           <div className="flex items-center justify-between px-1 mt-2">
-            <p className="text-[10px] text-gray-400 dark:text-slate-400 truncate">
+            <p className="text-xs text-gray-400 dark:text-slate-400 truncate">
               {!config.customFooter || config.customFooter === DEFAULT_CUSTOM_FOOTER ? text(DEFAULT_CUSTOM_FOOTER) : config.customFooter}
             </p>
             <button

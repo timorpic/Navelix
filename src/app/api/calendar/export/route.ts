@@ -1,3 +1,4 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { NextResponse } from "next/server";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
@@ -49,7 +50,7 @@ function foldIcsLine(line: string): string {
   return lines.join("\r\n");
 }
 
-export async function GET(req: NextRequest) {
+async function GETHandler(req: NextRequest) {
   let user = await getSessionUser(req);
 
   // 若未通过 Header / Session 鉴权，尝试从 URL Query 中提取 Token (兼容 iOS / Apple Calendar / Outlook 日历订阅链接)
@@ -157,3 +158,5 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestLogging("/api/calendar/export", GETHandler);

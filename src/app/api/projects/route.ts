@@ -1,10 +1,11 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { createProject } from "@/lib/todos-projects";
 
-export async function GET() {
+async function GETHandler() {
   const user = await getSessionUser();
   if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const userId = user.id;
@@ -42,7 +43,7 @@ export async function GET() {
   });
 }
 
-export async function POST(req: NextRequest) {
+async function POSTHandler(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) return localizedJson({ error: "未登录" }, { status: 401 });
   const userId = user.id;
@@ -71,3 +72,6 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const GET = withRequestLogging("/api/projects", GETHandler);
+export const POST = withRequestLogging("/api/projects", POSTHandler);

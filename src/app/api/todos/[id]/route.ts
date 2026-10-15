@@ -1,3 +1,4 @@
+import { withRequestLogging } from "@/lib/logging/request";
 import { localizedJson } from "@/lib/localized-json";
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
@@ -7,7 +8,7 @@ import { resolveTodoOwner } from "@/lib/todo-store";
 import { updateTodoFields } from "@/lib/todos-projects";
 
 // PATCH /api/todos/[id] - toggle done / update fields
-export async function PATCH(
+async function PATCHHandler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -51,7 +52,7 @@ export async function PATCH(
 }
 
 // DELETE /api/todos/[id] - delete a todo
-export async function DELETE(
+async function DELETEHandler(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -84,3 +85,6 @@ export async function DELETE(
 
   return localizedJson({ success: true });
 }
+
+export const PATCH = withRequestLogging("/api/todos/[id]", PATCHHandler);
+export const DELETE = withRequestLogging("/api/todos/[id]", DELETEHandler);

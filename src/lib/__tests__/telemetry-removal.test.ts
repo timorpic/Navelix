@@ -20,7 +20,7 @@ function seedLegacyTelemetry(db: DatabaseSync) {
 function assertRetired(db: DatabaseSync) {
   assert.equal(db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'analytics_events'").get(), undefined);
   assert.equal((db.prepare("SELECT COUNT(*) AS count FROM system_settings WHERE key GLOB 'analytics_*' OR key GLOB 'telemetry_*'").get() as { count: number }).count, 0);
-  assert.equal((db.prepare("PRAGMA user_version").get() as { user_version: number }).user_version, 19);
+  assert.equal((db.prepare("PRAGMA user_version").get() as { user_version: number }).user_version, 20);
 }
 
 describe("retiring usage analytics and telemetry", () => {
