@@ -101,7 +101,7 @@ export default function AdminSidebar({
   };
 
   return (
-    <aside className="hidden lg:flex w-60 shrink-0 flex-col justify-between h-screen overflow-y-auto sticky top-0 border-r border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 select-none z-30 transition-colors">
+    <aside className="hidden lg:flex w-60 shrink-0 flex-col justify-between h-screen overflow-y-auto sticky top-0 border-r rounded-r-2xl border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 select-none z-30 transition-colors">
       <div className="flex flex-col gap-6">
         {/* Brand Logo Header */}
         <div className="flex items-center gap-3 px-1">

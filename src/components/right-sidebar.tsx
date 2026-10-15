@@ -204,7 +204,7 @@ export default function RightSidebar({
       collapsed
         ? "w-10 lg:w-10"
         : "w-full lg:w-80"
-    } shrink-0 flex flex-col bg-white/50 dark:bg-slate-900/90 backdrop-blur-sm border-t border-gray-100 dark:border-slate-800 lg:border-t-0 lg:border-l lg:sticky lg:top-0 lg:h-screen ${
+    } shrink-0 flex flex-col bg-white/50 dark:bg-slate-900/90 backdrop-blur-sm border-t border-gray-100 dark:border-slate-800 lg:border-t-0 lg:border-l lg:rounded-l-2xl lg:sticky lg:top-0 lg:h-screen ${
       mounted ? "transition-all duration-300 ease-in-out" : "transition-none"
     }`}
     >

@@ -181,7 +181,7 @@ export default function Sidebar({
       <aside
         className={`fixed inset-y-0 left-0 z-50 ${
           collapsed ? "w-16 px-2 py-4" : "w-60 p-5"
-        } shrink-0 flex flex-col justify-between border-r select-none overflow-x-hidden ${
+        } shrink-0 flex flex-col justify-between border-r rounded-r-2xl select-none overflow-x-hidden ${
           mounted ? "transition-all duration-300 ease-in-out" : "transition-none"
         } lg:static lg:z-auto lg:translate-x-0 lg:h-screen lg:sticky lg:top-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"

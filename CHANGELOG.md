@@ -10,6 +10,13 @@
 
 ## [未发布]
 
+---
+
+## [2.10.15] - 2026-10-15
+
+### 变更
+- **侧边栏改贴边圆角**：左侧栏与后台侧边栏的右侧两角、右侧栏的左侧两角改为 16px 圆角（`rounded-r-2xl` / `lg:rounded-l-2xl`），外缘仍与视口齐平，壁纸不从中缝透出；右侧栏的圆角仅在 `lg` 以上生效，窄屏下仍是横向底栏。仅调整圆角工具类，未新增 `overflow-hidden`（左侧栏原有的 `overflow-x-hidden` 不变），个人资料弹出菜单仍完整显示。
+
 ### 移除
 - **无效代码与配套产物清理**：删除 5 个自 v2.8.1 起从未被任何代码、测试或文档引用的组件文件（`activity-feed`、`knowledge-graph`、`category-columns`、`header`、`todo-admin-panel`，共 808 行），其职能已分别由 `RecentActivitiesCard`、`CardGrid`、`Sidebar`、`ScheduleAdminPanel` 承担。同步删除零引用导出与死常量（`getRecentAuditLogs`、`emitBroadcast`、`isCloudMetadataIP`、`getSystemSetting`、`useRecentLinks`、`buildUserConfigsUpsertSql`、`GLOBAL_SCOPE_COLUMN_NAMES`、`DB_FILE_NAME`、`DEFAULT_PORT` 与 3 个未使用类型）、仅由上述组件引用的 22 条界面文案、已被 `src/app/manifest.ts` 取代的 `public/pwa/site.webmanifest` 与零引用的 `public/navelix-symbol.svg`。`getRecentAuditLogs`、`emitBroadcast` 的断言改为覆盖实际线上路径 `listAuditLogs`、`emitUserEvent`。同时修正 `migrations/data.ts` 中与实际注册表不符的迁移版本区间注释，并清理 `.scrollbar-thin` 等零引用样式规则。不改变任何运行时行为。
 
