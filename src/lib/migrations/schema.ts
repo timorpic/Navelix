@@ -1,3 +1,4 @@
+import { ensureFunctionalLogSchema } from "./logging-schema.ts";
 import { USER_NOTIFICATION_SETTINGS_SQL, TELEGRAM_DELIVERIES_SQL } from "../notification-schema.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { dropColumn, ensureColumn } from "./shared.ts";
@@ -68,6 +69,8 @@ export function ensureSchema(db: DatabaseSync): void {
  * 后置列，ensureUserConfigColumns 幂等，已存在列安全跳过。
  */
 export function ensureSchemaPostMigrations(db: DatabaseSync): void {
+  // Version numbers alone cannot establish structure after a rollback or restore.
+  ensureFunctionalLogSchema(db);
   ensureUserConfigColumns(db);
   ensureColumn(db, "user_links", "notes", "notes TEXT NOT NULL DEFAULT ''");
 

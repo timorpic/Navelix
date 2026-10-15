@@ -51,7 +51,7 @@ try {
 
 initSchema(db);
 
-// 迁移逻辑已抽离至 src/lib/migrations/index.ts（Schema 版本 v1~v13 + 数据修复）
+// 迁移逻辑及幂等结构核验统一由 src/lib/migrations/index.ts 编排。
 const needsInitialAdmin = !db.prepare("SELECT 1 FROM users LIMIT 1").get();
 const beforeVersion = Number(db.prepare("PRAGMA user_version").get()?.user_version ?? 0);
 try {

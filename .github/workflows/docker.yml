@@ -248,6 +248,15 @@ jobs:
           docker stop smoke-test-app
           docker rm smoke-test-app
 
+      - name: Checkout upgrade smoke test
+        uses: actions/checkout@v6
+
+      - name: Verify legacy v20 database upgrade
+        run: |
+          IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          SOURCE_SHA="${{ github.sha }}"
+          bash scripts/smoke-log-upgrade.sh "${IMAGE_NAME}:sha-${SOURCE_SHA:0:7}"
+
       - name: Send Telegram Notification
         if: ${{ always() && github.event.release != null }}
         env:

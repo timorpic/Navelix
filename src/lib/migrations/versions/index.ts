@@ -1,3 +1,4 @@
+import { migrateV21 } from "./v21.ts";
 import { migrateV20 } from "./v20.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { migrateV1 } from "./v1.ts";
@@ -43,4 +44,5 @@ export const VERSIONED_MIGRATIONS: Array<{
   { version: 18, name: "v18: account disable status", migrate: migrateV18 },
   { version: 19, name: "v19: remove usage analytics and telemetry", migrate: migrateV19 },
   { version: 20, name: "v20: functional logs and delivery outcomes", migrate: migrateV20 },
+  { version: 21, name: "v21: repair functional log schema after historical v20", migrate: migrateV21 },
 ];
