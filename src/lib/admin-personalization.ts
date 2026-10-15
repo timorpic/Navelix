@@ -89,7 +89,6 @@ export function buildWidgetToggles(config: Partial<SystemConfig>): WidgetToggle[
 
   return [
     mk("aiCopilot", "AI Copilot", "智能助手状态面板", "🤖", "aiCopilotEnabled"),
-    mk("todayActivity", "今日动态", "今日工作动态与事件", "⚡", "todayActivityEnabled"),
     mk("linkStatus", "连接状态", "第三方服务连接状态", "🔗", "linkStatusEnabled"),
     mk("quickAccess", "快捷访问", "常用快捷链接访问", "⭐", "recentVisitsEnabled"),
     mk(

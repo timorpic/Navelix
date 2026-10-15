@@ -30,7 +30,7 @@ export async function pushNotification(
   }
 }
 
-/** The feed is shared by the header and the home activity strip. */
+/** Fetch the notification preview and unread count for the workspace header. */
 export async function fetchNotificationFeed(signal: AbortSignal) {
   const response = await fetch("/api/notifications", { signal });
   if (response.status === 401) return { notifications: [], unreadCount: 0 };

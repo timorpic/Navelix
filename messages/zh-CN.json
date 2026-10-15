@@ -1649,8 +1649,7 @@
   "workspace_notifications_error": "通知加载或更新失败，请重试。",
   "workspace_retry": "重试",
   "workspace_view_all": "查看全部",
-  "workspace_recent_activity": "最近动态",
   "workspace_widgets": "工作区组件",
-  "workspace_widgets_description": "配置首页信息、顶部提醒和 AI 助手入口。",
+  "workspace_widgets_description": "配置工作区信息、顶部提醒和 AI 助手入口。",
   "workspace_assistant_toggle": "按需打开的智能助手"
 }

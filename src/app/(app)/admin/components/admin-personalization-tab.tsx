@@ -421,7 +421,7 @@ export default function AdminPersonalizationTab() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          通栏卡片 3：工作区组件（并排 6 个模块卡片）
+          通栏卡片 3：工作区组件
          ═══════════════════════════════════════════════════════════════ */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-gray-100/90 dark:border-slate-800 shadow-2xs transition-colors space-y-5">
         <div className="flex items-start gap-3">
@@ -434,8 +434,8 @@ export default function AdminPersonalizationTab() {
           </div>
         </div>
 
-        {/* 6 个组件卡片网格 */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 pt-2">
+        {/* 工作区组件开关 */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 pt-2">
           {widgetToggles.map((item) => (
             <div
               key={item.id}

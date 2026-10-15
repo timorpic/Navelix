@@ -50,13 +50,13 @@ test("助手覆盖主内容，快捷操作与悬浮入口共用会话，旧展�
   await launcher.click(); await expect(drawer.getByText("已收到你的安排请求 2", { exact: false })).toBeVisible();
 });
 
-test("顶部通知和首页动态共享真实记录，全部已读不完成待办", async ({ page }) => {
+test("首页不显示动态，顶部通知保留已读、待办与完整记录入口", async ({ page }) => {
   await login(page);
   expect(await write(page, "/api/user/data", { config: { pendingRemindersEnabled: true, todayActivityEnabled: true } })).toBe(200);
-  expect(await write(page, "/api/notifications", { title: "布局回归通知", content: "通知与动态共享同一条记录" })).toBe(201);
+  expect(await write(page, "/api/notifications", { title: "布局回归通知", content: "顶部通知保留完整记录入口" })).toBe(201);
   expect(await write(page, "/api/todos", { title: "需要保留的未完成待办", priority: "high" })).toBe(200);
   await page.reload();
-  await expect(page.getByRole("region", { name: "最近动态" }).getByText("通知与动态共享同一条记录")).toBeVisible();
+  await expect(page.getByRole("region", { name: "最近动态" })).toHaveCount(0);
   const bell = page.getByRole("button", { name: "提醒与通知", exact: true });
   await bell.click();
   const popover = page.getByRole("region", { name: "提醒与通知", exact: true });
@@ -73,7 +73,7 @@ test("顶部通知和首页动态共享真实记录，全部已读不完成待�
   await page.keyboard.press("Escape"); await expect(popover).toBeHidden(); await expect(bell).toBeFocused();
   await bell.click(); await popover.getByRole("button", { name: "查看全部", exact: false }).click();
   await expect(page.getByRole("heading", { name: /消息通知与活动动态/ })).toBeVisible();
-  const record = page.getByRole("row").filter({ hasText: "通知与动态共享同一条记录" });
+  const record = page.getByRole("row").filter({ hasText: "顶部通知保留完整记录入口" });
   await record.getByTitle("删除此记录").click();
   await page.getByRole("dialog").getByRole("button", { name: "删除", exact: true }).click();
   await expect(record).toHaveCount(0);
@@ -81,7 +81,7 @@ test("顶部通知和首页动态共享真实记录，全部已读不完成待�
   await expect(popover.getByText("布局回归通知")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: /首页总览/ }).click();
-  await expect(page.getByRole("region", { name: "最近动态" }).getByText("通知与动态共享同一条记录")).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "最近动态" })).toHaveCount(0);
 });
 
 test("手机抽屉适配视口、展示服务端错误；禁用后两个入口同时隐藏", async ({ page }) => {

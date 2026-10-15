@@ -11,7 +11,6 @@ import QuickAccess from "@/components/quick-access";
 import TopStatsBar from "@/components/top-stats-bar";
 import WorkspaceAssistant from "@/components/workspace-assistant";
 import WorkspaceNotifications from "@/components/workspace-notifications";
-import TodayActivityWidget from "@/components/today-activity-widget";
 import TodaySummaryWidget from "@/components/today-summary-widget";
 import { useWorkspaceAssistant } from "@/hooks/use-workspace-assistant";
 import { useWorkspaceNotifications } from "@/hooks/use-workspace-notifications";
@@ -300,7 +299,6 @@ function HomeContent() {
                     onSelectCategory={handleSelectCategory}
                   />
                   {config.todaySummaryEnabled && <TodaySummaryWidget />}
-                  {config.todayActivityEnabled !== false && <TodayActivityWidget feed={notifications} onViewAll={() => handleSelectCategory("feature-activities")} />}
                 </>
               )}
             </>

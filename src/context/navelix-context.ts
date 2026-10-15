@@ -42,7 +42,6 @@ export const defaultConfig: SystemConfig = {
   sidebarDefaultState: "expanded",
   clockWidgetMode: "time",
   aiCopilotEnabled: true,
-  todayActivityEnabled: true,
   recentVisitsEnabled: true,
   pendingRemindersEnabled: false,
   todaySummaryEnabled: false,

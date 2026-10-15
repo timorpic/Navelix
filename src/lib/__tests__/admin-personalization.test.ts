@@ -66,13 +66,12 @@ describe("状态文案", () => {
 });
 
 describe("buildWidgetToggles", () => {
-  it("固定 5 项，顺序与 id 稳定", () => {
+  it("固定 4 项，顺序与 id 稳定", () => {
     const toggles = buildWidgetToggles({});
     assert.deepEqual(
       toggles.map((t) => t.id),
       [
         "aiCopilot",
-        "todayActivity",
         "linkStatus",
         "quickAccess",
         "pendingReminders",
@@ -82,7 +81,6 @@ describe("buildWidgetToggles", () => {
       toggles.map((t) => t.configKey),
       [
         "aiCopilotEnabled",
-        "todayActivityEnabled",
         "linkStatusEnabled",
         "recentVisitsEnabled",
         "pendingRemindersEnabled",
@@ -90,7 +88,7 @@ describe("buildWidgetToggles", () => {
     );
   });
 
-  it("空配置下 5 项全部为显示（缺省即开启）", () => {
+  it("空配置下 4 项全部为显示（缺省即开启）", () => {
     for (const t of buildWidgetToggles({})) {
       assert.equal(t.enabled, true, `${t.id} 缺省应为显示`);
       assert.equal(t.toggleValue, false, `${t.id} 点击后应切到隐藏`);

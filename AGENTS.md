@@ -43,6 +43,8 @@ Navelix 是可自托管的个人数字工作空间，包含网址导航、项目
 
 ## 验证
 
+今后的测试使用 Computer Use 模式。
+
 常用检查：`pnpm typecheck`、`pnpm lint`、`pnpm test`、`pnpm build`。CI 还运行 `pnpm test:coverage` 和 `pnpm test:e2e`，详见开发文档。
 
 行为修复增加能覆盖回归场景的测试；纯文档修改检查路径、链接、命令及事实一致性即可。测试、构建和启动可能初始化 SQLite，应设置独立的 `NAVELIX_DATA_DIR`，不使用真实业务库验证破坏性操作。

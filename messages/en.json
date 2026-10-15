@@ -1649,8 +1649,7 @@
   "workspace_notifications_error": "Could not load or update notifications. Please try again.",
   "workspace_retry": "Retry",
   "workspace_view_all": "View all",
-  "workspace_recent_activity": "Recent activity",
   "workspace_widgets": "Workspace widgets",
-  "workspace_widgets_description": "Choose home information, header reminders, and the AI assistant entry.",
+  "workspace_widgets_description": "Choose workspace information, header reminders, and the AI assistant entry.",
   "workspace_assistant_toggle": "AI assistant available on demand"
 }

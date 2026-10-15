@@ -125,6 +125,7 @@ export interface SystemConfig {
   clockWidgetMode?: "time" | "weather" | "analog";
   // 前台工作区组件显示开关（管理后台「界面与功能偏好」可切换）
   aiCopilotEnabled?: boolean;
+  /** @deprecated 兼容历史配置；首页已移除动态组件。 */
   todayActivityEnabled?: boolean;
   recentVisitsEnabled?: boolean;
   pendingRemindersEnabled?: boolean;

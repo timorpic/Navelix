@@ -15,7 +15,7 @@
 
 ## 首页组成
 
-外层由 `Sidebar` 与可伸缩主内容组成；`WorkspaceAssistant` 通过固定入口打开覆盖式抽屉。主内容组合欢迎区、统计、搜索、快捷访问、工作概览、首页底部动态或分类卡片。`WorkspaceNotifications` 在顶部集中显示待办提醒与通知，和底部动态共用 `useWorkspaceNotifications` 的一份通知数据。`useWorkspaceAssistant` 维护单次页面会话，快捷操作与悬浮入口复用同一对话；网络适配位于 `lib/client/`。旧右栏展开 Cookie/本地偏好不再控制助手，组件显示仍遵循既有开关。`QuickCaptureLayer` 处理快捷采集入口，安全引导和操作反馈按状态展示。
+外层由 `Sidebar` 与可伸缩主内容组成；`WorkspaceAssistant` 通过固定入口打开覆盖式抽屉。主内容组合欢迎区、统计、搜索、快捷访问、工作概览或分类卡片。`WorkspaceNotifications` 在顶部集中显示待办提醒与通知，由 `useWorkspaceNotifications` 管理数据；完整记录从「消息通知」查看。首页已移除动态组件及对应设置开关，历史 `todayActivityEnabled` 配置保留兼容且不再影响显示。`useWorkspaceAssistant` 维护单次页面会话，快捷操作与悬浮入口复用同一对话；网络适配位于 `lib/client/`。旧右栏展开 Cookie/本地偏好不再控制助手，组件显示仍遵循既有开关。`QuickCaptureLayer` 处理快捷采集入口，安全引导和操作反馈按状态展示。
 
 首页不是每个功能一个独立路由，`tab` 查询参数选择视图，兼容旧的 `category` 参数：
 

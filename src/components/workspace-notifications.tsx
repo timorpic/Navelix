@@ -18,7 +18,7 @@ export default function WorkspaceNotifications({ feed, onNavigate }: { feed: Wor
   return <div ref={container} className="relative">
     <button ref={trigger} type="button" aria-label={t("workspace_notifications")} aria-expanded={open} aria-controls={id}
       onClick={() => { setOpen(!open); if (!open) void feed.refresh(); }}
-      className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-gray-100 bg-white/90 text-gray-600 shadow-2xs transition-colors hover:border-[#00C776]/40 hover:text-[#00C776] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00C776] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+      className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-gray-100 bg-white/90 text-gray-600 shadow-2xs transition-colors hover:border-[#00C776]/40 hover:text-[#00C776] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00C776] dark:border-white/10 dark:bg-white/[0.06] dark:text-gray-300 dark:shadow-none dark:hover:border-[#00C776]/30 dark:hover:bg-white/10 dark:hover:text-[#00C776]">
       <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" strokeLinejoin="round" d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
       {count > 0 && <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-[#00C776] px-1 text-[10px] leading-4 font-bold text-white" aria-label={t("workspace_notification_count", { v0: count })}>{count > 99 ? "99+" : count}</span>}
     </button>
