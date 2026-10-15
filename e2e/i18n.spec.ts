@@ -77,7 +77,7 @@ test("账号语言：跨设备、用户隔离、英文新增任务和移动端�
     expect(created.ok()).toBe(true);
     const todos = await (await member.request.get("/api/todos")).json();
     expect(todos.todos.some((todo: { title: string }) => todo.title === title)).toBe(true);
-    await expect(member.getByRole("main").getByText(title, { exact: true })).toBeVisible();
+    await expect(member.getByRole("checkbox", { name: `Toggle todo ${title}`, exact: true })).toBeVisible();
     const error = await write(member, "/api/todos", { title: "" });
     expect(error.status).toBe(400);
     expect(error.data.error).toBe("待办内容不能为空");

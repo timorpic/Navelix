@@ -9,7 +9,12 @@ import Sidebar from "@/components/sidebar";
 import HeroBanner from "@/components/hero-banner";
 import QuickAccess from "@/components/quick-access";
 import TopStatsBar from "@/components/top-stats-bar";
-import RightSidebar from "@/components/right-sidebar";
+import WorkspaceAssistant from "@/components/workspace-assistant";
+import WorkspaceNotifications from "@/components/workspace-notifications";
+import TodayActivityWidget from "@/components/today-activity-widget";
+import TodaySummaryWidget from "@/components/today-summary-widget";
+import { useWorkspaceAssistant } from "@/hooks/use-workspace-assistant";
+import { useWorkspaceNotifications } from "@/hooks/use-workspace-notifications";
 import CardGrid from "@/components/card-grid";
 import WorkspaceOverviewColumns from "@/components/workspace-overview-columns";
 import RecentActivitiesCard from "@/components/recent-activities-card";
@@ -28,26 +33,26 @@ import { copyShareLink } from "@/lib/share-link";
 function HomeContent() {
   const tx = useTranslations();
   const text = useText();
-  const { categories, links, hydrated, addLink } = useNavelixData();
+  const { categories, links, hydrated, addLink, user } = useNavelixData();
   const { config, updateConfig } = useNavelixConfig();
+  const assistant = useWorkspaceAssistant();
+  const notifications = useWorkspaceNotifications(user?.id);
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get("tab") || searchParams.get("category");
 
   // 优先级：用户会话交互点击 > URL 查询参数（SSR 首帧直出） > 默认 "all"
   const [internalCategory, setInternalCategory] = useState<string | null>(null);
   const activeCategory = internalCategory ?? tabFromUrl ?? "all";
+  const isFeatureView = ["feature-calendar", "feature-projects", "feature-dashboard", "feature-activities"].includes(activeCategory);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [notice, setNotice] = useState("");
   // 分享链接复制等一次性操作提示（与上方常驻的 notice 横幅是两回事）
   const { notice: actionNotice, flash: flashAction } = useToast();
 
-  // 左右侧边栏收起状态：初始均由服务端 SSR Cookie/配置注入，确保首帧 100% 零闪烁与零跳动
+  // 左侧导航沿用服务端注入的偏好；助手按需打开。
   const [leftCollapsed, setLeftCollapsed] = useState<boolean>(
     () => config.sidebarDefaultState === "collapsed",
-  );
-  const [rightCollapsed, setRightCollapsed] = useState<boolean>(
-    () => config.sidebarRightDefaultState === "collapsed",
   );
 
   // 挂载后同步本地设备持久化记忆
@@ -56,10 +61,6 @@ function HomeContent() {
       const left = localStorage.getItem("navelix_sidebar_left");
       if (left !== null) {
         queueMicrotask(() => setLeftCollapsed(left === "true"));
-      }
-      const right = localStorage.getItem("navelix_sidebar_right");
-      if (right !== null) {
-        queueMicrotask(() => setRightCollapsed(right === "true"));
       }
     } catch {
       /* ignore */
@@ -108,18 +109,6 @@ function HomeContent() {
       /* ignore */
     }
     updateConfig({ sidebarDefaultState: next ? "collapsed" : "expanded" });
-  };
-
-  const handleRightToggle = () => {
-    const next = !rightCollapsed;
-    setRightCollapsed(next);
-    try {
-      localStorage.setItem("navelix_sidebar_right", String(next));
-      document.cookie = `navelix_sidebar_right=${next ? "1" : "0"};path=/;max-age=31536000;SameSite=Lax`;
-    } catch {
-      /* ignore */
-    }
-    updateConfig({ sidebarRightDefaultState: next ? "collapsed" : "expanded" });
   };
 
   const filteredLinks = useMemo(() => {
@@ -195,7 +184,7 @@ function HomeContent() {
       />
 
       {/* 2. Center Workspace Main Area */}
-      <main className="relative z-10 flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-6">
+      <main className="relative z-10 flex-1 min-w-0 overflow-y-auto p-4 pb-24 sm:p-6 sm:pb-24 lg:p-6 lg:pb-24">
         <div className={`${maxWidthClass} mx-auto flex flex-col gap-3.5`}>
           <Toast message={actionNotice} className="mb-1" />
           {notice && (
@@ -216,6 +205,8 @@ function HomeContent() {
           {/* 首次登录安全设置引导横幅（仅管理员且未完成时展示） */}
           <SecuritySetupBanner />
 
+          {isFeatureView && <div className="flex justify-end"><WorkspaceNotifications feed={notifications} onNavigate={handleSelectCategory} /></div>}
+
           {/* Feature Pages (日历日程、项目管理、数据看板、消息通知等独立全景页面不展示 HeroBanner) */}
           {activeCategory === "feature-calendar" ? (
             <CalendarView />
@@ -234,6 +225,7 @@ function HomeContent() {
             <>
               {/* Top Hero Banner 仅在主工作台与书签视图展示 */}
               <HeroBanner
+                actions={<WorkspaceNotifications feed={notifications} onNavigate={handleSelectCategory} />}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 onSelectCategory={handleSelectCategory}
@@ -292,6 +284,7 @@ function HomeContent() {
 
                   {/* 顶部五卡片：今日专注、待办任务、知识笔记、项目进度、快速操作 */}
                   <TopStatsBar
+                    onOpenAssistant={assistant.enabled ? assistant.show : undefined}
                     categories={categories}
                     links={links}
                     onSelectCategory={handleSelectCategory}
@@ -306,6 +299,8 @@ function HomeContent() {
                     links={links}
                     onSelectCategory={handleSelectCategory}
                   />
+                  {config.todaySummaryEnabled && <TodaySummaryWidget />}
+                  {config.todayActivityEnabled !== false && <TodayActivityWidget feed={notifications} onViewAll={() => handleSelectCategory("feature-activities")} />}
                 </>
               )}
             </>
@@ -313,11 +308,7 @@ function HomeContent() {
         </div>
       </main>
 
-      {/* 3. Right Sidebar Dashboard */}
-      <RightSidebar
-        collapsed={rightCollapsed}
-        onToggle={handleRightToggle}
-      />
+      <WorkspaceAssistant assistant={assistant} />
 
       {/* 4. 自定义 CSS 与统计探针代码注入 */}
       {config.customCss && (

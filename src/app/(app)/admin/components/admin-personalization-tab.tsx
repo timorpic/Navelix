@@ -384,7 +384,7 @@ export default function AdminPersonalizationTab() {
                     </div>
                     {item.desc && (
                       <p className="text-[10px] text-gray-400 dark:text-slate-500 pl-6">
-                        {text(item.desc)}
+                        {item.id === "aiCopilot" ? tx("workspace_assistant_toggle") : text(item.desc)}
                       </p>
                     )}
                   </button>
@@ -421,16 +421,16 @@ export default function AdminPersonalizationTab() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          通栏卡片 3：右侧侧边栏组件（并排 6 个模块卡片）
+          通栏卡片 3：工作区组件（并排 6 个模块卡片）
          ═══════════════════════════════════════════════════════════════ */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-gray-100/90 dark:border-slate-800 shadow-2xs transition-colors space-y-5">
         <div className="flex items-start gap-3">
           <span className="text-base shrink-0">📑</span>
           <div>
             <h3 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
-              {tx("right_sidebar_widgets_c247073d")}</h3>
+              {tx("workspace_widgets")}</h3>
             <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
-              {tx("show_or_hide_the_information_modules_you_need_in_02a4e045")}</p>
+              {tx("workspace_widgets_description")}</p>
           </div>
         </div>
 
@@ -449,7 +449,7 @@ export default function AdminPersonalizationTab() {
                   </h4>
                 </div>
                 <p className="text-[10px] text-gray-400 dark:text-slate-400 line-clamp-1">
-                  {text(item.desc)}
+                  {item.id === "aiCopilot" ? tx("workspace_assistant_toggle") : text(item.desc)}
                 </p>
               </div>
 

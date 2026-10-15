@@ -1,5 +1,6 @@
 "use client";
 
+import { deleteNotificationRecords } from "@/lib/client/notifications";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { SiteLink } from "@/types";
@@ -311,7 +312,7 @@ export function useRecentActivities(links: SiteLink[]): UseRecentActivitiesResul
             // ignore
           }
         } else {
-          await fetch(`/api/notifications/${item.rawId}`, { method: "DELETE" });
+          await deleteNotificationRecords(item.rawId);
         }
         await loadActivities();
       } catch {
@@ -350,7 +351,7 @@ export function useRecentActivities(links: SiteLink[]): UseRecentActivitiesResul
             // ignore
           }
         } else {
-          await fetch(`/api/notifications/${item.rawId}`, { method: "DELETE" });
+          await deleteNotificationRecords(item.rawId);
         }
       }
       setSelectedIds(new Set());
@@ -371,7 +372,7 @@ export function useRecentActivities(links: SiteLink[]): UseRecentActivitiesResul
     });
     if (!okToClear) return;
     try {
-      await fetch("/api/notifications", { method: "DELETE" });
+      await deleteNotificationRecords();
       localStorage.removeItem(LINK_USAGE_KEY);
       setSelectedIds(new Set());
       await loadActivities();

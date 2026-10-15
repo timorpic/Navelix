@@ -1,6 +1,7 @@
 "use client";
 
 import { useText } from "@/hooks/use-text";
+import AccountSocialLinks from "@/components/account-social-links";
 import { useTranslations } from "next-intl";
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
@@ -391,6 +392,7 @@ export default function Sidebar({
                   <span>⚙️</span>
                   <span>{tx("administration_41119eca")}</span>
                 </Link>
+                <AccountSocialLinks config={config} />
                 <div className="my-0.5 border-t border-gray-100 dark:border-slate-700" />
                 <button
                   onClick={() => {
@@ -503,6 +505,8 @@ export default function Sidebar({
               {currentUser?.role === "admin" ? tx("administrator_admin_ddd26fb7") : tx("registered_user_7fb8c713")}
             </div>
           </div>
+
+          <AccountSocialLinks config={config} />
 
           {/* Detailed Info Grid */}
           <div className="w-full text-left space-y-2.5 p-3 rounded-xl bg-gray-50 dark:bg-slate-800/80 border border-gray-100 dark:border-slate-700 text-xs">

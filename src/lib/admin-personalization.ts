@@ -61,7 +61,7 @@ export interface WidgetToggle {
 }
 
 /**
- * 右侧侧边栏的 6 个组件开关。
+ * 工作区组件开关（首页、通知与按需助手）。
  *
  * 注意 `config.xxxEnabled !== false` 这一判定：配置缺省（老库没有该列）时
  * 视为**开启**，只有显式存了 `false` 才隐藏。写成纯函数后这层默认值语义

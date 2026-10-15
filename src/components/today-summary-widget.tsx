@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useNavelixData } from "@/context/navelix-context";
 
-/** 右侧侧边栏小组件：今日摘要（待办完成度与项目进度概览） */
+/** 首页小组件：今日摘要（待办完成度与项目进度概览） */
 export default function TodaySummaryWidget() {
   const tx = useTranslations();
   const { todos, projects } = useNavelixData();

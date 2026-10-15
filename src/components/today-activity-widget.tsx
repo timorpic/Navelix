@@ -1,86 +1,15 @@
 "use client";
-import { useLocale } from "next-intl";
 
-import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { formatRelativeTime } from "@/lib/date-utils";
+import type { WorkspaceNotificationsState } from "@/hooks/use-workspace-notifications";
 
-interface TodayActivityItem {
-  id: string;
-  text: string;
-  icon: string;
-  ts: number;
-}
-
-
-/** 右侧侧边栏小组件：今日动态（最近通知与系统活动预览） */
-export default function TodayActivityWidget() {
+/** Compact home activity strip, using the same feed as the notification bell. */
+export default function TodayActivityWidget({ feed, onViewAll }: { feed: WorkspaceNotificationsState; onViewAll: () => void }) {
   const locale = useLocale();
-  const tx = useTranslations();
-  const [items, setItems] = useState<TodayActivityItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch("/api/notifications");
-      const data = await res.json();
-      const notifs: TodayActivityItem[] = (data.notifications || [])
-        .slice(0, 8)
-        .map((n: { id: string; title: string; content: string; createdAt: number }) => ({
-          id: `n-${n.id}`,
-          text: n.content || n.title,
-          icon: n.title.includes("🐳")
-            ? "🐳"
-            : n.title.includes("💾")
-            ? "💾"
-            : n.title.includes("📌")
-            ? "📌"
-            : "🔔",
-          ts: n.createdAt,
-        }));
-      setItems(notifs);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      load();
-    });
-    const handle = () => load();
-    window.addEventListener("navelix-workspace-updated", handle);
-    return () => window.removeEventListener("navelix-workspace-updated", handle);
-  }, [load]);
-
-  return (
-    <div className="shrink-0 rounded-2xl p-4 bg-white/90 dark:bg-slate-900/70 border border-gray-100 dark:border-slate-700 space-y-3 transition-colors">
-      <div className="flex items-center gap-2">
-        <span className="text-sm">⚡</span>
-        <h3 className="text-sm font-bold text-gray-900 dark:text-white">{tx("today_s_activity_09e08032")}</h3>
-      </div>
-
-      {loading ? (
-        <p className="py-3 text-center text-xs text-gray-400 dark:text-slate-500">{tx("loading_4927a53b")}</p>
-      ) : items.length === 0 ? (
-        <p className="py-3 text-center text-xs text-gray-400 dark:text-slate-500">{tx("no_activity_yet_b5046209")}</p>
-      ) : (
-        <div className="space-y-1.5">
-          {items.map((item) => (
-            <div key={item.id} className="flex items-center gap-2 min-w-0">
-              <span className="text-xs shrink-0">{item.icon}</span>
-              <span className="flex-1 text-xs text-gray-600 dark:text-slate-300 truncate">
-                {item.text}
-              </span>
-              <span className="text-[9px] text-gray-400 dark:text-slate-500 shrink-0">
-                {formatRelativeTime(item.ts, { style: "compact", fallbackAfterDays: Infinity , locale})}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  const t = useTranslations();
+  return <section aria-label={t("workspace_recent_activity")} className="rounded-2xl border border-gray-100 bg-white/90 p-4 dark:border-slate-800 dark:bg-slate-900/80">
+    <div className="flex items-center justify-between gap-3"><h2 className="text-sm font-bold"><span aria-hidden="true" className="mr-2 text-amber-500">ϟ</span>{t("workspace_recent_activity")}</h2><button type="button" onClick={onViewAll} className="min-h-9 text-xs font-semibold text-[#00A561] hover:underline dark:text-[#00C776]">{t("workspace_view_all")} →</button></div>
+    {feed.error ? <p role="alert" className="text-xs text-rose-600 dark:text-rose-400">{t("workspace_notifications_error")} <button type="button" onClick={() => void feed.refresh()} className="min-h-9 underline">{t("workspace_retry")}</button></p> : feed.loading ? <p role="status" className="py-3 text-xs text-gray-400">{t("loading_4927a53b")}</p> : feed.notifications.length === 0 ? <p className="py-3 text-xs text-gray-400 dark:text-slate-500">{t("no_activity_yet_b5046209")}</p> : <ul className="mt-2 flex gap-4 overflow-x-auto pb-2">{feed.notifications.slice(0, 6).map(item => <li key={item.id} className="flex w-60 shrink-0 gap-2 border-r border-gray-100 pr-4 last:border-0 dark:border-slate-800"><span aria-hidden="true" className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#00C776]" /><div className="min-w-0"><p className="truncate text-xs font-medium text-gray-700 dark:text-slate-200" title={item.content || item.title}>{item.content || item.title}</p><p className="mt-1.5 text-[10px] text-gray-400 dark:text-slate-500">{formatRelativeTime(item.createdAt, { style: "compact", fallbackAfterDays: Infinity, locale })}</p></div></li>)}</ul>}
+  </section>;
 }

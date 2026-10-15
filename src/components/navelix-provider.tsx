@@ -308,6 +308,7 @@ export function NavelixProvider({
     onLinksChange: loadData,
     onProjectsChange: loadData,
     onTodosChange: loadData,
+    onNotificationsNew: () => window.dispatchEvent(new Event("navelix-notifications-updated")),
     enabled: hydrated && Boolean(user),
   });
 

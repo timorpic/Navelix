@@ -19,7 +19,6 @@ export default async function AppLayout({
   ]);
 
   const leftCookie = cookieStore.get("navelix_sidebar_left")?.value;
-  const rightCookie = cookieStore.get("navelix_sidebar_right")?.value;
   const themeCookie = cookieStore.get("navelix_theme")?.value;
 
   if (!user) {
@@ -47,10 +46,6 @@ export default async function AppLayout({
       initialData.config.sidebarDefaultState =
         leftCookie === "1" || leftCookie === "true" ? "collapsed" : "expanded";
     }
-    if (rightCookie !== undefined) {
-      initialData.config.sidebarRightDefaultState =
-        rightCookie === "1" || rightCookie === "true" ? "collapsed" : "expanded";
-    }
     return (
       <NavelixProvider initialData={initialData}>
         <ErrorBoundary><RuntimeErrorReporter />{children}</ErrorBoundary>
@@ -67,10 +62,6 @@ export default async function AppLayout({
   if (leftCookie !== undefined) {
     initialData.config.sidebarDefaultState =
       leftCookie === "1" || leftCookie === "true" ? "collapsed" : "expanded";
-  }
-  if (rightCookie !== undefined) {
-    initialData.config.sidebarRightDefaultState =
-      rightCookie === "1" || rightCookie === "true" ? "collapsed" : "expanded";
   }
 
   return (

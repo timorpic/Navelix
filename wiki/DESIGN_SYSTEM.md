@@ -49,7 +49,7 @@
 | 变量 Token | HEX 色值 | Tailwind 类名 | 应用场景 |
 | :--- | :--- | :--- | :--- |
 | `--background` | `#151218` | `dark:bg-[#151218]` | 深色页面全局底色 |
-| `--card-bg` | `#1C1920` | `dark:bg-[#1C1920]` (`slate-800`) | 独立内容容器、右侧边栏底色 |
+| `--card-bg` | `#1C1920` | `dark:bg-[#1C1920]` (`slate-800`) | 独立内容容器、助手抽屉底色 |
 | `--card-border` | `#2A2530` | `dark:border-[#2A2530]` (`slate-700`) | 深色容器描边、分割线 |
 | `--card-hover` | `#24202B` | `dark:hover:bg-[#24202B]` | 交互卡片 Hover / Active 态 |
 | `--input-bg` | `#151218` | `dark:bg-slate-900` | 输入框、搜索栏内嵌下沉底色 |

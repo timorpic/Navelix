@@ -11,7 +11,7 @@ interface PendingTodo {
   dueDate: string;
 }
 
-/** 右侧侧边栏小组件：待处理提醒（未完成待办） */
+/** 通知弹层小组件：待处理提醒（未完成待办） */
 export default function PendingRemindersWidget() {
   const tx = useTranslations();
   const { todos } = useNavelixData();
@@ -28,9 +28,9 @@ export default function PendingRemindersWidget() {
     }));
 
   const priorityColor = (p: string) => {
-    if (p === "high") return "text-rose-500";
-    if (p === "low") return "text-gray-400";
-    return "text-amber-500";
+    if (p === "high") return "bg-rose-500";
+    if (p === "low") return "bg-gray-400";
+    return "bg-amber-500";
   };
 
   return (
@@ -40,7 +40,7 @@ export default function PendingRemindersWidget() {
         <h3 className="text-sm font-bold text-gray-900 dark:text-white">{tx("pending_reminders_31e81252")}</h3>
         {pending.length > 0 && (
           <span className="px-1.5 py-0.5 rounded-full bg-[#00C776]/10 text-[#00C776] text-[9px] font-bold ml-auto">
-            {pending.length}
+            {todos.filter(todo => !todo.done).length}
           </span>
         )}
       </div>

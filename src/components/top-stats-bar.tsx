@@ -10,6 +10,7 @@ import AddLinkModal from "./add-link-modal";
 import Overlay from "./overlay";
 
 interface TopStatsBarProps {
+  onOpenAssistant?: () => void;
   categories: Category[];
   links: SiteLink[];
   onSelectCategory?: (id: string) => void;
@@ -17,6 +18,7 @@ interface TopStatsBarProps {
 
 export default function TopStatsBar({
   categories,
+  onOpenAssistant,
   onSelectCategory,
 }: TopStatsBarProps) {
   const tx = useTranslations();
@@ -37,11 +39,6 @@ export default function TopStatsBar({
   const [showAddLinkModal, setShowAddLinkModal] = useState(false);
 
   // Quick Action Modal States
-  const [showAiModal, setShowAiModal] = useState(false);
-  const [aiQuery, setAiQuery] = useState("");
-  const [aiResponse, setAiResponse] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-
   const [showQuickNoteModal, setShowQuickNoteModal] = useState(false);
   const [quickNote, setQuickNote] = useState("");
   const [noteNotice, setNoteNotice] = useState("");
@@ -76,26 +73,6 @@ export default function TopStatsBar({
   }, [todos, projects]);
 
   // Quick Action Handlers
-  const handleAiAsk = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!aiQuery.trim()) return;
-    setAiLoading(true);
-    setAiResponse("");
-    try {
-      const res = await fetch("/api/ai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: aiQuery }),
-      });
-      const data = await res.json();
-      setAiResponse(data.text || data.reply || tx("ai_assistant_received_your_request_419c3721"));
-    } catch {
-      setAiResponse(tx("ai_request_failed_check_your_connection_e5953896"));
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
   const handleSaveQuickNote = (e: React.FormEvent) => {
     e.preventDefault();
     if (!quickNote.trim()) return;
@@ -296,13 +273,13 @@ export default function TopStatsBar({
               <span className="truncate">{tx("new_project_0e1a7040")}</span>
             </button>
 
-            <button
-              onClick={() => setShowAiModal(true)}
+            {onOpenAssistant && <button
+              onClick={onOpenAssistant}
               className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
             >
               <span>🤖</span>
               <span className="truncate">{tx("ai_assistant_1b0049fc")}</span>
-            </button>
+            </button>}
           </div>
         </div>
       </div>
@@ -390,47 +367,6 @@ export default function TopStatsBar({
         </Overlay>
       )}
 
-      {/* AI Ask Modal */}
-      {showAiModal && (
-        <Overlay>
-          <div className="w-full max-w-md rounded-xl bg-white dark:bg-slate-900 p-4 shadow-xl border border-gray-100 dark:border-slate-800">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
-              {tx("ask_ai_copilot_91824cdb")}</h3>
-            <form onSubmit={handleAiAsk} className="space-y-3">
-              <input
-                type="text"
-                name="aiQuery"
-                value={aiQuery}
-                onChange={(e) => setAiQuery(e.target.value)}
-                placeholder={tx("what_would_you_like_to_ask_or_analyze_955df7ef")}
-                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
-              />
-              {aiLoading && (
-                <p className="text-[11px] text-gray-400">{tx("ai_is_thinking_b67cf8f5")}</p>
-              )}
-              {aiResponse && (
-                <div className="p-2.5 rounded-lg bg-gray-50 dark:bg-slate-800 text-xs text-gray-800 dark:text-slate-200 max-h-40 overflow-y-auto leading-relaxed border border-gray-100 dark:border-slate-700">
-                  {aiResponse}
-                </div>
-              )}
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAiModal(false)}
-                  className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700"
-                >
-                  {tx("close_3fd47edc")}</button>
-                <button
-                  type="submit"
-                  disabled={aiLoading}
-                  className="px-3 py-1 bg-[#00C776] text-white text-xs font-bold rounded-lg hover:bg-[#00B068] disabled:opacity-50"
-                >
-                  {tx("send_edecf0ae")}</button>
-              </div>
-            </form>
-          </div>
-        </Overlay>
-      )}
     </div>
   );
 }

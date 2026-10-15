@@ -294,7 +294,7 @@ export const USER_CONFIG_COLUMNS: UserConfigColumnDef[] = [
     configDefault: true,
   },
 
-  // ── 右侧边栏小组件开关 ──
+  // ── 工作区组件开关 ──
   {
     column: "ai_copilot_enabled",
     def: "ai_copilot_enabled INTEGER NOT NULL DEFAULT 1",
