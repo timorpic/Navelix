@@ -394,11 +394,6 @@ export function isGlobalScoped(col: UserConfigColumnDef): boolean {
   return col.configKey != null && GLOBAL_SCOPE_CONFIG_KEYS.has(col.configKey);
 }
 
-/** 全站级列的 snake_case 名（用于迁移/重归属时的列级拷贝）。 */
-export const GLOBAL_SCOPE_COLUMN_NAMES: string[] = USER_CONFIG_MAPPED_COLUMNS.filter(
-  isGlobalScoped,
-).map((c) => c.column);
-
 /** 生成初次建表的 CREATE TABLE 语句（db/schema.ts 使用） */
 export function createUserConfigsTableSql(): string {
   const cols = USER_CONFIG_COLUMNS.map((c) => `    ${c.def}`).join(",\n");
@@ -465,20 +460,6 @@ export function defaultUserConfig(): SystemConfig {
     cfg[col.configKey!] = col.configDefault;
   }
   return cfg as unknown as SystemConfig;
-}
-
-/** 生成 saveUserConfigs 使用的 upsert SQL（user_id 为冲突键） */
-export function buildUserConfigsUpsertSql(): string {
-  const cols = USER_CONFIG_MAPPED_COLUMNS.map((c) => c.column);
-  const insertCols = ["user_id", ...cols].join(", ");
-  const placeholders = ["?", ...cols.map(() => "?")].join(", ");
-  const updateSet = cols
-    .map((c) => `      ${c} = excluded.${c}`)
-    .join(",\n");
-  return `INSERT INTO user_configs (${insertCols})
-    VALUES (${placeholders})
-    ON CONFLICT(user_id) DO UPDATE SET
-${updateSet}`;
 }
 
 /** 配置输入（宽松类型，运行期逐字段校验；密钥字段留空 = 保持不变） */

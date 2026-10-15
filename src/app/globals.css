@@ -130,10 +130,6 @@ main {
   animation: slideUp 0.5s ease-out both;
 }
 
-.scrollbar-thin {
-  scrollbar-width: thin;
-}
-
 /* Dark mode smooth transitions */
 .dark body {
   background-color: #151218;

@@ -33,16 +33,6 @@ class RealtimeEventBus extends EventEmitter {
     this.emit(`user:${userId}`, event);
     this.emit("broadcast", event);
   }
-
-  /** 向全站所有活跃连接广播事件 */
-  emitBroadcast(type: RealtimeEventType, payload?: Record<string, unknown>) {
-    const event: RealtimeEvent = {
-      type,
-      payload,
-      timestamp: Date.now(),
-    };
-    this.emit("broadcast", event);
-  }
 }
 
 // 单例模式导出
@@ -60,11 +50,4 @@ export function emitUserEvent(
   payload?: Record<string, unknown>,
 ) {
   eventBus.emitUserEvent(userId, type, payload);
-}
-
-export function emitBroadcast(
-  type: RealtimeEventType,
-  payload?: Record<string, unknown>,
-) {
-  eventBus.emitBroadcast(type, payload);
 }

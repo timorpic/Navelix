@@ -99,18 +99,6 @@ export function isPrivateIPv6(ip: string): boolean {
 }
 
 /**
- * 校验任意 IP 是否为云服务器元数据 IP (169.254.0.0/16)，任何模式下均绝对封禁
- */
-export function isCloudMetadataIP(ip: string): boolean {
-  if (!net.isIPv4(ip)) return false;
-  const parts = ip.split(".").map((p) => parseInt(p, 10));
-  return parts[0] === 169 && parts[1] === 254;
-}
-
-/**
- * 校验任意 IP（IPv4 或 IPv6）是否为受限的内部/保留 IP
- */
-/**
  * 回环地址与链路本地一律恒定拦截：
  * 回环可探针宿主机本机服务（如反代端口、容器管理面），
  * 链路本地 169.254/16 含云元数据凭据窃取面。
@@ -150,6 +138,7 @@ export function isLoopbackOrLinkLocalIP(ip: string): boolean {
   return false;
 }
 
+/** 校验任意 IP（IPv4 或 IPv6）是否为受限的内部/保留 IP */
 export function isPrivateOrReservedIP(ip: string): boolean {
   if (net.isIPv4(ip)) return isPrivateIPv4(ip);
   if (net.isIPv6(ip)) return isPrivateIPv6(ip);

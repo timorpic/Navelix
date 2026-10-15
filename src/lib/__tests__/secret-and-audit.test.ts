@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert";
 import { db } from "../db.ts";
 import { encryptSecret, decryptSecret } from "../secret.ts";
-import { recordAuditLog, getRecentAuditLogs, listAuditLogs } from "../audit.ts";
+import { recordAuditLog, listAuditLogs } from "../audit.ts";
 
 describe("Database Secrets Encryption & Decryption (AES-256-GCM)", () => {
   it("should encrypt and decrypt sensitive API keys faithfully", () => {
@@ -50,7 +50,7 @@ describe("Security Audit Logs System", () => {
       details: "Audit logging unit test entry",
     });
 
-    const logs = getRecentAuditLogs(testUserId, 10);
+    const { logs } = listAuditLogs({ action: testAction, limit: 10 });
     assert.ok(logs.length >= 1, "Should find at least 1 audit entry for the test user");
     assert.strictEqual(logs[0].userId, testUserId);
     assert.strictEqual(logs[0].action, testAction);

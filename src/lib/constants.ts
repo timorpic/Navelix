@@ -14,9 +14,3 @@ export const ADMIN_PASSWORD_FILE = "navelix-admin-password.txt";
 
 /** data 数据目录名 */
 export const DATA_DIR_NAME = "data";
-
-/** 主数据库文件名 */
-export const DB_FILE_NAME = "navelix.db";
-
-/** 应用默认端口 */
-export const DEFAULT_PORT = 3721;

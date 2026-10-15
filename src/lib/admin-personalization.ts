@@ -10,7 +10,6 @@ import type { SystemConfig } from "@/types";
  */
 
 export type WallpaperMode = "bing" | "custom" | "none";
-export type ClockWidgetMode = "time" | "weather" | "analog";
 
 /** 内容宽度选项 → 预览条的宽度类（未知值回落 1200px 对应的宽度）。 */
 export function previewWidthClass(maxWidth?: string): string {

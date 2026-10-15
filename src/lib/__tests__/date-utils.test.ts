@@ -44,7 +44,7 @@ describe("date-utils: formatRelativeTime", () => {
   });
 
   it("fallbackAfterDays 应可覆盖（保留各调用点原有观感）", () => {
-    // recent-activities-card 与 activity-feed 原为 7 天阈值
+    // recent-activities-card 原为 7 天阈值
     const at10Days = formatRelativeTime(NOW - 10 * DAY, { fallbackAfterDays: 7 });
     assert.doesNotMatch(at10Days, /天前$/, "7 天阈值下 10 天应回退为日期");
 

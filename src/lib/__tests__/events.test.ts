@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { eventBus, emitUserEvent, emitBroadcast, type RealtimeEvent } from "../events.ts";
+import { eventBus, emitUserEvent, type RealtimeEvent } from "../events.ts";
 
 describe("Realtime Event Bus (SSE)", () => {
   it("should deliver user-specific events to listening subscribers", async () => {
@@ -24,8 +24,9 @@ describe("Realtime Event Bus (SSE)", () => {
     assert.equal(received[0].payload?.linkId, "link-1");
   });
 
-  it("should broadcast general events to broadcast channel", async () => {
+  it("should fan user events out to the broadcast channel", async () => {
     const broadcasts: RealtimeEvent[] = [];
+    const testUserId = "user-test-456";
 
     const handler = (evt: RealtimeEvent) => {
       broadcasts.push(evt);
@@ -33,12 +34,13 @@ describe("Realtime Event Bus (SSE)", () => {
 
     eventBus.on("broadcast", handler);
 
-    emitBroadcast("notifications:new", { title: "Test Alert" });
+    emitUserEvent(testUserId, "notifications:new", { title: "Test Alert" });
 
     eventBus.off("broadcast", handler);
 
     assert.equal(broadcasts.length, 1);
     assert.equal(broadcasts[0].type, "notifications:new");
+    assert.equal(broadcasts[0].userId, testUserId);
     assert.equal(broadcasts[0].payload?.title, "Test Alert");
   });
 });

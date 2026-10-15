@@ -26,12 +26,6 @@ export interface SiteLink {
   notes?: string;
 }
 
-export interface ProductivityStat {
-  category: string;
-  time: string;
-  color: string;
-}
-
 export interface AIChatMessage {
   id: string;
   sender: "user" | "ai";

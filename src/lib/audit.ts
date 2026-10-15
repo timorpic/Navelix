@@ -42,35 +42,6 @@ export function recordAuditLog(params: {
 }
 
 /**
- * 查询最近的安全审计日志
- */
-export function getRecentAuditLogs(userId?: string, limit = 50): AuditLogEntry[] {
-  try {
-    if (userId) {
-      return (db
-        .prepare(`
-          SELECT id, user_id as userId, action, target, ip, details, created_at as createdAt
-          FROM audit_logs
-          WHERE user_id = ?
-          ORDER BY created_at DESC
-          LIMIT ?
-        `)
-        .all(userId, limit) as unknown) as AuditLogEntry[];
-    }
-    return (db
-      .prepare(`
-        SELECT id, user_id as userId, action, target, ip, details, created_at as createdAt
-        FROM audit_logs
-        ORDER BY created_at DESC
-        LIMIT ?
-      `)
-      .all(limit) as unknown) as AuditLogEntry[];
-  } catch {
-    return [];
-  }
-}
-
-/**
  * 审计日志列表项：附带操作者身份（用户名/显示名）。
  * `audit_logs.user_id` 无外键级联——被删账号的历史审计仍保留（合规证据），
  * 因此 LEFT JOIN 用户在行缺失时回退为「已删除账号」。

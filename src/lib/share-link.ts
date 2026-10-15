@@ -3,8 +3,8 @@
 /**
  * 免登录分享链接的获取与复制。
  *
- * 此前这段逻辑在 4 个组件里各写了一遍（`page.tsx`、`category-columns.tsx`、
- * `sidebar.tsx`、`add-category-modal.tsx`），且文案已经漂移出 3 种写法。
+ * 此前这段逻辑在 4 个组件里各写了一遍（`page.tsx`、`sidebar.tsx`、
+ * `add-category-modal.tsx` 等），且文案已经漂移出 3 种写法。
  * 统一到此处后，请求、剪贴板写入与提示文案只有一个来源。
  */
 

@@ -21,13 +21,6 @@ export interface TodoPatchInput {
   assigneeName?: unknown;
 }
 
-export interface TodoRowForPatch {
-  user_id: string;
-  assigned_to?: string;
-  project_id?: string;
-  due_date?: string;
-}
-
 /**
  * 更新待办字段，并在关联项目变化时同步两端的 `updated_at`。
  *
