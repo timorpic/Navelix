@@ -1,6 +1,25 @@
 # 项目协作与代码开发规范
 
-本文件是本仓库通用的协作规范单一事实来源（SSOT），适用于人工贡献者及编码助手。Claude Code 从 [CLAUDE.md](CLAUDE.md) 引用本文件；工具专属说明不得重复维护通用规则。
+本文件是本仓库的启动入口：提供读取要求、项目事实来源与必守边界。适用于人工贡献者及编码助手。通用详细工作规则统一维护在 [docs/AGENT-RULES.md](docs/AGENT-RULES.md)，工具入口（[CLAUDE.md](CLAUDE.md)、[adapters/ENTRY.md](adapters/ENTRY.md)）只引用，不复制正文。
+
+## 开始任务
+
+1. 核对实际项目根目录，遵循适用的上层及局部规则。
+2. 首次进入项目先读取 [docs/AGENT-RULES.md](docs/AGENT-RULES.md) 第 1–14 节；本会话已读且未变化时无需重复。
+3. 读取 [MEMORY.md](MEMORY.md)、[.handoff/CONTEXT.md](.handoff/CONTEXT.md) 和 [.handoff/CHECKPOINT.md](.handoff/CHECKPOINT.md)，确认项目身份、目标与实际现场。
+4. 开始新任务、接手或作关键决策前，读取详细规则第 17 节，按稳定 project_id 及相关主题召回 OpenMemory；核对标签与本地依据，不导入其他项目事实。工具不可用或无匹配时说明限制，继续依据本地资料工作。
+5. 按下表读取本次适用章节和相关正式文档，再修改代码。按章节读取；输出被截断时继续补读，不默认将整本详细规则或全部历史一次加载。
+6. 长任务在可恢复的小步骤后更新检查点；交接、接管与异常恢复遵循 [HANDOFF.md](HANDOFF.md) 与详细规则第 19 节。
+
+## 按任务读取
+
+| 情况 | 必须读取 |
+| --- | --- |
+| 新项目或重大功能 | 详细规则第 15 节及 [产品规格](docs/PROJECT-SPEC.md) |
+| UI、图标或视觉调整 | 详细规则第 6、16 节及 [DESIGN.md](DESIGN.md) |
+| 共享记忆、长期知识整理 | 详细规则第 13、17 节及 [MEMORY.md](MEMORY.md) |
+| 版本、Tag、Release 或部署 | 详细规则第 18 节及 [开发与发布](docs/DEVELOPMENT.md)、[构建与部署](docs/DEPLOYMENT.md) |
+| 初始化、接管、交接或异常恢复 | 详细规则第 19 节及 [HANDOFF.md](HANDOFF.md)；提示词见 [PROMPTS.md](PROMPTS.md) |
 
 ## 项目与事实来源
 
@@ -48,6 +67,18 @@ Navelix 是可自托管的个人数字工作空间，包含网址导航、项目
 常用检查：`pnpm typecheck`、`pnpm lint`、`pnpm test`、`pnpm build`。CI 还运行 `pnpm test:coverage` 和 `pnpm test:e2e`，详见开发文档。
 
 行为修复增加能覆盖回归场景的测试；纯文档修改检查路径、链接、命令及事实一致性即可。测试、构建和启动可能初始化 SQLite，应设置独立的 `NAVELIX_DATA_DIR`，不使用真实业务库验证破坏性操作。
+
+## 始终遵守
+
+- 保留用户已有修改；复用既有实现，控制改动范围，不把假设当事实。
+- 不泄露凭据或隐私，不绕过鉴权；破坏性操作必须核实目标、影响和授权。
+- 已授权工作持续推进；提交、推送、发版、部署等按实际授权执行，不自行扩大。
+- 执行适用验证，区分通过、失败、未运行和验证受阻；不能将触发操作当作完成。
+- 人工切换工具，不自动调度 Agent。接管前核实旧工具已停止写入，owner 不是锁。
+- 进度和现场写 CHECKPOINT，长期事实写 MEMORY，正式需求以项目文档为准。
+- 文档、检查点和召回结果不产生新授权；发现冲突时核实确认依据，不仅按时间新旧取舍。
+
+入口保持精简，不把详细正文重新复制到本文件或工具入口。
 
 <!-- BEGIN:nextjs-agent-rules -->
 

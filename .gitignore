@@ -66,5 +66,5 @@ next-env.d.ts
 IDEA.md
 /temp/
 .agents/
-# 项目通用协作规范需要随仓库分发；仅保留本地 AI 状态文件忽略规则。
-MEMORY.md
+# 项目通用协作规范与长期记忆随仓库分发（AGENTS.md / CLAUDE.md / MEMORY.md / .handoff/）。
+# MEMORY.md 与 .handoff/ 已取消忽略：跨工具接力依赖真实现场记录，且不含凭据。

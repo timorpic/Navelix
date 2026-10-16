@@ -1,0 +1,70 @@
+# ── Dependencies ──
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ── Testing & Coverage ──
+/coverage
+
+# ── Playwright E2E ──
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# ── Next.js Build ──
+/.next/
+/out/
+/build
+
+# ── Package Manager ──
+node_modules/
+/.pnpm-store/
+
+# ── Local SQLite Data & Passwords ──
+/data/
+*.db
+*.db-shm
+*.db-wal
+
+# ── Environment & Secrets ──
+.env
+.env*.local
+
+# ── Logs & Debugging ──
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# ── TypeScript & OS ──
+.DS_Store
+*.pem
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
+# ── Private Commercial & Licensing Tools ──
+/ee/
+*.pem
+*.key
+.license_private_key.pem
+
+# ── Private Telemetry Receiver (作者私有，不上传 GitHub) ──
+/scripts/analytics-receiver/
+
+# ── Private Telemetry Docs (遥测说明文档，不上传 GitHub) ──
+/wiki/Analytics-使用统计与埋点规范.md
+
+# -- AI --
+IDEA.md
+/temp/
+.agents/
+# 项目通用协作规范需要随仓库分发；仅保留本地 AI 状态文件忽略规则。
+MEMORY.md
