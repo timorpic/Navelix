@@ -90,9 +90,12 @@
 | CI（提交后） | `gh run view 38867511931`：`Lint, Test & Build` success、`Playwright E2E (Core UI Flow)` success，overall conclusion `success` | 2026-10-16T07:29Z 起，GitHub Actions `main` push | 提交 `1daa754` | passed（等待运行完成后回读结论，非以「已启动」计入） | run 38867511931 | 无 |
 | CI（记录提交后） | `gh run view 38868199848`：`Lint, Test & Build` success、`Playwright E2E (Core UI Flow)` success，overall conclusion `success` | 2026-10-16T07:35Z 起，同工作流 | 提交 `1dd8b16` | passed | run 38868199848 | 无 |
 | CI（末次推送） | `gh run view 38868787524`：overall conclusion `success`，`headSha` = `9a56cc1` | 2026-10-16T07:41Z 起，同工作流 | `8b82c75` 与 `9a56cc1` 同一次 push，GitHub 仅对推送 HEAD 触发 | passed | run 38868787524 | 无 |
-| 本地门禁（提交时） | `simple-git-hooks` pre-commit → `pnpm precommit`（`tsc --noEmit --noUnusedLocals --noUnusedParameters` + `eslint`）；四次提交均通过 | 同上 | `1daa754`、`1dd8b16`、`8b82c75`、`9a56cc1` | passed | 提交输出 | 无 |
+| CI（收尾提交） | `gh run view 38869395147`：overall conclusion `success`，`headSha` = `07ee49c` | 2026-10-16T07:44Z 起，同工作流 | `07ee49c` | passed | run 38869395147 | 无 |
+| 本地门禁（提交时） | `simple-git-hooks` pre-commit → `pnpm precommit`（`tsc --noEmit --noUnusedLocals --noUnusedParameters` + `eslint`）；五次提交均通过 | 同上 | `1daa754`、`1dd8b16`、`8b82c75`、`9a56cc1`、`07ee49c` | passed | 提交输出 | 无 |
 
 结果仅可填 passed / failed / blocked / not_run / stale。
+
+> 本次接入的 CI 记录到此为止。本表最后一行写入后不再为「记录 CI 结果」本身追加提交：CI 结果可用 `gh run list --branch main` 随时复核，其权威来源是 GitHub Actions，不是本文件。
 集成阶段的静态验证为纯文档变更，按 AGENTS.md 与 DEVELOPMENT.md 的约定**未**单独运行 `pnpm typecheck`/`lint`/`test`/`build`（项目测试会写入真实数据库，见 MEMORY 第 9 节）；提交时 pre-commit 门禁已实跑 typecheck 与 lint，推送后 CI 已跑完整 lint/test/build/E2E 并通过。
 
 ## 外部副作用台账
