@@ -7,18 +7,18 @@
 - project_id: Navelix
 - task_id: handoff-workflow-adoption
 - context_revision: 2
-- checkpoint_seq: 3
-- updated_at: 2026-10-16T15:45:00+08:00
+- checkpoint_seq: 4
+- updated_at: 2026-10-16T15:50:00+08:00
 - owner: Claude Code（本次会话；会话标识未记录）
 - status: completed
-- current_step: 已完成（`1daa754` 接入提交 + `1dd8b16` 记录提交均已推送，两轮 CI 均通过；本次回填改动待提交）
+- current_step: 已完成（接入与记录提交均已推送，全部 CI passed；本文件为最新现场，不因记录内容再追加提交）
 - single_writer_confirmed: 已核实（检查时段内无其他进程写入本仓库）
 
 ## 工作区身份
 
 - repo_root: `/root/Navelix`（本机路径，仅用于定位）
 - branch: `main`
-- HEAD: `1dd8b16`（记录提交，已推送；其父 `1daa754` 为本次接入提交）
+- HEAD: 以 `git log -1 --format=%h` 为准（本文件无法记录包含自身的提交）。本次接入的变更范围用 `git diff b65b7ad..HEAD --stat` 查看（起点 `1daa754` 为接入主体，其后为记录性提交）
 - base_commit: `b65b7ad691bb8260678f8be5a520ce0734ff0dcf`（本次改动基于该提交，之上的差异即本次接入）
 - context_path: .handoff/CONTEXT.md
 - 上下文版本核对：一致（CONTEXT rev 2 与本文件 context_revision 2 对应）
@@ -89,7 +89,8 @@
 | AC-06（提交后复核） | `git status --porcelain -uall` 无输出（工作区干净）；`git rev-parse HEAD` 与 `origin/main` 均为 `1daa754`；`gh api repos/.../git/trees/1daa754` 确认远端树中无 `ee/`、`data/`、`scripts/analytics-receiver/` | 2026-10-16，`/root/Navelix` | 提交 `1daa754226c40dc93ba9434b4caa8522c708736f` | passed | 命令输出 | 无 |
 | CI（提交后） | `gh run view 38867511931`：`Lint, Test & Build` success、`Playwright E2E (Core UI Flow)` success，overall conclusion `success` | 2026-10-16T07:29Z 起，GitHub Actions `main` push | 提交 `1daa754` | passed（等待运行完成后回读结论，非以「已启动」计入） | run 38867511931 | 无 |
 | CI（记录提交后） | `gh run view 38868199848`：`Lint, Test & Build` success、`Playwright E2E (Core UI Flow)` success，overall conclusion `success` | 2026-10-16T07:35Z 起，同工作流 | 提交 `1dd8b16` | passed | run 38868199848 | 无 |
-| 本地门禁（提交时） | `simple-git-hooks` pre-commit → `pnpm precommit`（`tsc --noEmit --noUnusedLocals --noUnusedParameters` + `eslint`）；两次提交均通过 | 同上 | `1daa754`、`1dd8b16` | passed | 提交输出 | 无 |
+| CI（末次推送） | `gh run view 38868787524`：overall conclusion `success`，`headSha` = `9a56cc1` | 2026-10-16T07:41Z 起，同工作流 | `8b82c75` 与 `9a56cc1` 同一次 push，GitHub 仅对推送 HEAD 触发 | passed | run 38868787524 | 无 |
+| 本地门禁（提交时） | `simple-git-hooks` pre-commit → `pnpm precommit`（`tsc --noEmit --noUnusedLocals --noUnusedParameters` + `eslint`）；四次提交均通过 | 同上 | `1daa754`、`1dd8b16`、`8b82c75`、`9a56cc1` | passed | 提交输出 | 无 |
 
 结果仅可填 passed / failed / blocked / not_run / stale。
 集成阶段的静态验证为纯文档变更，按 AGENTS.md 与 DEVELOPMENT.md 的约定**未**单独运行 `pnpm typecheck`/`lint`/`test`/`build`（项目测试会写入真实数据库，见 MEMORY 第 9 节）；提交时 pre-commit 门禁已实跑 typecheck 与 lint，推送后 CI 已跑完整 lint/test/build/E2E 并通过。
@@ -131,7 +132,7 @@
 
 ## 接管/恢复记录
 
-- 上一个检查点及备份：seq 1 完整记录归档于 `.handoff/previous/CHECKPOINT.seq1.md`（内容与提交 `1daa754` 中的版本一致）；seq 2 见提交 `1dd8b16`（`git show 1dd8b16:.handoff/CHECKPOINT.md`）。
-- 与当前现场的差异：seq 1 时改动未提交、状态 `active`；seq 2 记录提交推送完成与 CI 通过；seq 3 回填第二轮 CI 结论并更新 HEAD 至 `1dd8b16`。
+- 上一个检查点及备份：seq 1 完整记录归档于 `.handoff/previous/CHECKPOINT.seq1.md`（内容与提交 `1daa754` 中的版本一致）；seq 2/3 见提交 `1dd8b16`、`8b82c75`（`git show <sha>:.handoff/CHECKPOINT.md`）。seq 4 起不再为记录本身追加提交，历史版本改由 `git log -- .handoff/CHECKPOINT.md` 追溯。
+- 与当前现场的差异：seq 1 改动未提交、状态 `active`；seq 2 记录提交推送完成与 CI 通过；seq 3 回填第二轮 CI；seq 4 回填末次推送 CI 并更新 HEAD 至 `9a56cc1`。
 - 本次重建依据：不适用（本轮为正常推进，非异常恢复）。
 - 接手人核查结论：未核实（尚无接管发生）。
