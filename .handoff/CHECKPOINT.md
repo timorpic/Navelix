@@ -6,45 +6,49 @@
 - schema_version: 1
 - project_id: Navelix
 - task_id: handoff-workflow-adoption
-- context_revision: 1
-- checkpoint_seq: 1
-- updated_at: 2026-10-16T16:05:00+08:00
+- context_revision: 2
+- checkpoint_seq: 2
+- updated_at: 2026-10-16T15:35:00+08:00
 - owner: Claude Code（本次会话；会话标识未记录）
-- status: active
-- current_step: W-05 验证接入并整理交付说明
+- status: completed
+- current_step: 已完成（提交并推送 `1daa754`；CI 待回填实际结果）
 - single_writer_confirmed: 已核实（检查时段内无其他进程写入本仓库）
 
 ## 工作区身份
 
 - repo_root: `/root/Navelix`（本机路径，仅用于定位）
 - branch: `main`
-- HEAD: `b65b7ad691bb8260678f8be5a520ce0734ff0dcf`
-- base_commit: 同 HEAD（本次改动未提交，工作区基于该提交）
+- HEAD: `1daa754226c40dc93ba9434b4caa8522c708736f`（本次接入提交，已推送至 `origin/main`）
+- base_commit: `b65b7ad691bb8260678f8be5a520ce0734ff0dcf`（本次改动基于该提交，之上的差异即本次接入）
 - context_path: .handoff/CONTEXT.md
-- 上下文版本核对：一致（CONTEXT rev 1 与本文件 context_revision 1 对应）
+- 上下文版本核对：一致（CONTEXT rev 2 与本文件 context_revision 2 对应）
+- 工作区状态：干净（`git status --porcelain -uall` 无输出）
 
 ## 实际修改现场
 
-| 路径 | staged/unstaged/untracked | 修改意图 | 来源/归属 | 保存与恢复注意 |
-| --- | --- | --- | --- | --- |
-| `AGENTS.md` | unstaged（已修改） | 合并为「启动入口 + 必守边界」，规则正文移出至 AGENT-RULES；保留原有项目约定与 `nextjs-agent-rules` 块 | 本次接入 | 原文备份 `.handoff/previous/AGENTS.md.orig`；HEAD 版本可用 `git show HEAD:AGENTS.md` 恢复 |
-| `CLAUDE.md` | unstaged（已修改） | 工具入口改为引用统一规则，保留项目导航与接力/记忆入口 | 本次接入 | 原文备份 `.handoff/previous/CLAUDE.md.orig` |
-| `README.md` | unstaged（已修改） | 文档中心表格补充工作流导航 3 行，未改动其他章节 | 本次接入 | 原文备份 `.handoff/previous/README.md.orig` |
-| `.gitignore` | unstaged（已修改） | 取消忽略 `MEMORY.md`，使长期记忆随仓库分发 | 本次接入 | 原文备份 `.handoff/previous/gitignore.orig` |
-| `docs/AGENT-RULES.md` | untracked（新增） | 统一详细规则正文；写入本节项目落地说明（验证、图标、发版、版本号） | 本次接入，源自模板 | 模板原文 `/tmp/ah-tpl/docs/AGENT-RULES.md`（临时目录，不随仓库保留） |
-| `docs/INITIALIZATION.md` | untracked（新增） | 项目初始化记录、工作流文件树与阅读维护路径；已按本仓库改写，不再是模板原文 | 本次接入，源自模板并做项目化改写 | 模板原文 `/tmp/ah-tpl/docs/INITIALIZATION.md`（临时目录，不随仓库保留） |
-| `HANDOFF.md` | untracked（新增） | P0+P1 人工接力协议 | 本次接入，源自模板（未改动） | 同上 |
-| `PROMPTS.md` | untracked（新增） | 初始化、交接、接管与恢复提示词 | 本次接入，源自模板（未改动） | 同上 |
-| `adapters/ENTRY.md` | untracked（新增） | 其他工具的显式统一入口 | 本次接入，源自模板（未改动） | 同上 |
-| `MEMORY.md` | untracked（新增） | 长期知识：项目身份、技术栈、DEC-001–003、LES-001–004、发布约定 | 本次接入，内容核实自本仓库 | 本文件为新建，无被覆盖的原内容 |
-| `.handoff/CONTEXT.md` | untracked（新增） | 本次任务上下文（由模板 draft 初始化为 active） | 本次接入 | 无被覆盖的原内容 |
-| `.handoff/CHECKPOINT.md` | untracked（新增） | 本文件 | 本次接入 | 无被覆盖的原内容 |
+下表 16 个文件已全部提交于 `1daa754` 并推送至 `origin/main`；`staged/unstaged/untracked` 列改为记录**提交后状态**，工作区已干净。
 
-- 依赖的 ignored 文件：`ee/`（私有商业制品，未改动）、`data/`（真实数据库，未改动）、`.env.local`（如存在，未读取未改动）。均在 `.gitignore` 内，不随本次改动进出。
+| 路径 | 提交后状态 | 修改意图 | 来源/归属 | 保存与恢复注意 |
+| --- | --- | --- | --- | --- |
+| `AGENTS.md` | 已提交（修改） | 合并为「启动入口 + 必守边界」，规则正文移出至 AGENT-RULES；保留原有项目约定与 `nextjs-agent-rules` 块 | 本次接入 | 原文备份 `.handoff/previous/AGENTS.md.orig`；改动前版本可用 `git show b65b7ad:AGENTS.md` 取回 |
+| `CLAUDE.md` | 已提交（修改） | 工具入口改为引用统一规则，保留项目导航与接力/记忆入口 | 本次接入 | 原文备份 `.handoff/previous/CLAUDE.md.orig` |
+| `README.md` | 已提交（修改） | 文档中心表格补充工作流导航 4 行，未改动其他章节 | 本次接入 | 原文备份 `.handoff/previous/README.md.orig` |
+| `.gitignore` | 已提交（修改） | 取消忽略 `MEMORY.md`，使长期记忆随仓库分发 | 本次接入 | 原文备份 `.handoff/previous/gitignore.orig` |
+| `docs/AGENT-RULES.md` | 已提交（新增） | 统一详细规则正文；写入本节项目落地说明（验证、图标、发版、版本号） | 本次接入，源自模板 | 模板原文 `/tmp/ah-tpl/docs/AGENT-RULES.md`（临时目录，不随仓库保留） |
+| `docs/INITIALIZATION.md` | 已提交（新增） | 项目初始化记录、工作流文件树与阅读维护路径；已按本仓库改写，不再是模板原文 | 本次接入，源自模板并做项目化改写 | 模板原文 `/tmp/ah-tpl/docs/INITIALIZATION.md`（临时目录，不随仓库保留） |
+| `HANDOFF.md` | 已提交（新增） | P0+P1 人工接力协议 | 本次接入，源自模板（未改动） | 同上 |
+| `PROMPTS.md` | 已提交（新增） | 初始化、交接、接管与恢复提示词 | 本次接入，源自模板（未改动） | 同上 |
+| `adapters/ENTRY.md` | 已提交（新增） | 其他工具的显式统一入口 | 本次接入，源自模板（未改动） | 同上 |
+| `MEMORY.md` | 已提交（新增） | 长期知识：项目身份、技术栈、DEC-001–003、LES-001–004、发布约定 | 本次接入，内容核实自本仓库 | 本文件为新建，无被覆盖的原内容 |
+| `.handoff/CONTEXT.md` | 已提交（新增） | 本次任务上下文（由模板 draft 初始化为 active） | 本次接入 | 无被覆盖的原内容 |
+| `.handoff/CHECKPOINT.md` | 已提交（新增） | 本文件 | 本次接入 | 无被覆盖的原内容 |
+| `.handoff/previous/*.orig`（4 个） | 已提交（新增） | 入口与 README、.gitignore 的改动前原文，供恢复 | 本次接入 | 经 sha256 校验与 `b65b7ad` 版本一致；不含新增敏感信息 |
+
+- 依赖的 ignored 文件：`ee/`（私有商业制品，未改动）、`data/`（真实数据库，未改动）、`.env.local`（如存在，未读取未改动）。均在 `.gitignore` 内，未随本次提交进出；已核对推送后的远端树中不存在 `ee/`、`data/`、`scripts/analytics-receiver/`。
 - 未保存缓冲区：不适用（本次无编辑器外部缓冲）。
-- 后台进程/端口/执行任务：无由本次任务启动的长时间进程；未启动 dev、build、test 或容器。
-- 外部资源及状态查询方式：无。
-- 脱敏指纹/证据位置：原文备份位于 `.handoff/previous/`（见上表）；改动前版本另可用 `git show HEAD:<path>` 取回。
+- 后台进程/端口/执行任务：无长时间进程；未启动 dev、build、test 或容器。
+- 外部资源及状态查询方式：GitHub Actions 运行状态可用 `gh run view <id>` 查询。
+- 脱敏指纹/证据位置：原文备份位于 `.handoff/previous/`（见上表）；改动前版本另可用 `git show b65b7ad:<path>` 取回。
 
 ## 进展
 
@@ -54,6 +58,7 @@
   - W-03（AC-01、AC-04、AC-05）：入口与规则合并完成，差异项按项目既有约定保留（见「已做取舍」）。
   - W-04（AC-03、AC-08）：`MEMORY.md`、`.handoff/CONTEXT.md` 与本文件已建立，project_id 统一为 `Navelix`。
   - W-05（AC-02、AC-07）：执行静态验证，结果见下节。
+  - W-06（用户授权后追加）：提交 `1daa754` 并推送至 `origin/main`；用户审阅后明确指示「提交推送」，此前该操作属未授权。
 - 已做取舍（规则差异处理，保留项目原约定而非套用模板）：
   - 版本号：保留项目「Z 从 0 开始、不补前导零、无 v 前缀于 package.json」；在 AGENT-RULES 第 18.3 节显式声明其为通用格式的项目特例。
   - 图标：通用规则默认 Lucide；项目实际为内联 SVG + `brand-icon.tsx`（Iconify 命名）+ emoji 分类字段，在 16.1 节记录现状，未引入新图标库。
@@ -63,7 +68,7 @@
 - 进行中：无。
 - 失败/阻塞：无。
 - 未验证：真实工具接力（Codex/OpenCode/Antigravity 实际接管）未执行，属本轮范围外。
-- 推测及未知：无；未确认项已在 MEMORY.md 标注（2025 年发版历史）。
+- 推测及未知：无；未确认项已在 MEMORY.md 标注（2025 年发版历史）；提交推送已由用户授权并执行（见 W-06）。
 
 ## 验证记录
 
@@ -78,32 +83,37 @@
 | AC-05 | 检查是否存在重复主记录：TODO（计划）、CHANGELOG（版本）、docs/ 原文档职责未变；CONTEXT 只引用不复制 | 同上 | 同上 | passed | 文件清单 | 无 |
 | AC-06 | `git status --porcelain` 全量列出改动，确认无 `src/`、`scripts/`、`.github/`、`package.json`、`pnpm-lock.yaml` 变更；`git remote -v` 未改动 | 同上 | 同上 | passed | 命令输出 | 无 |
 | AC-07 | 通读 `PROMPTS.md` 五段提示词与 `HANDOFF.md` 第 3/6/7 节，确认提示词引用的文件名与章节在仓库内存在 | 同上 | 同上 | passed | PROMPTS.md、HANDOFF.md | 无 |
-| AC-08 | `grep` 扫描新增/修改文档中的凭据样式串（私钥、Token、密码、内网地址），确认无；修正 MEMORY.md 中一处远程地址写法为仓库标识；`.handoff/previous/` 备份经 sha256 校验与 HEAD 一致，且不含新增敏感信息 | 同上 | 同上 | passed | 本次 diff、`.handoff/previous/` | MEMORY.md 该行 |
+| AC-08 | `grep` 扫描新增/修改文档中的凭据样式串（私钥、Token、密码、内网地址），确认无；修正 MEMORY.md 中一处远程地址写法为仓库标识；`.handoff/previous/` 备份经 sha256 校验与 `b65b7ad` 版本一致，且不含新增敏感信息 | 同上 | 同上 | passed | 本次 diff、`.handoff/previous/` | MEMORY.md 该行 |
+| AC-06（提交后复核） | `git status --porcelain -uall` 无输出（工作区干净）；`git rev-parse HEAD` 与 `origin/main` 均为 `1daa754`；`gh api repos/.../git/trees/1daa754` 确认远端树中无 `ee/`、`data/`、`scripts/analytics-receiver/` | 2026-10-16，`/root/Navelix` | 提交 `1daa754226c40dc93ba9434b4caa8522c708736f` | passed | 命令输出 | 无 |
+| CI（提交后） | `gh run view 38867511931`：`Lint, Test & Build` success、`Playwright E2E (Core UI Flow)` success，overall conclusion `success` | 2026-10-16T07:29Z 起，GitHub Actions `main` push | 同上 | passed（等待运行完成后回读结论，非以「已启动」计入） | run 38867511931 | 无 |
+| 本地门禁（提交时） | `simple-git-hooks` pre-commit → `pnpm precommit`（`tsc --noEmit --noUnusedLocals --noUnusedParameters` + `eslint`） | 同上 | 同上 | passed | 提交输出 | 无 |
 
 结果仅可填 passed / failed / blocked / not_run / stale。
-本次为文档接入，按 AGENTS.md 与 DEVELOPMENT.md 的约定**未**运行 `pnpm typecheck`/`lint`/`test`/`build`——纯文档变更不要求，且项目测试会写入真实数据库（见 MEMORY 第 9 节）。
+集成阶段的静态验证为纯文档变更，按 AGENTS.md 与 DEVELOPMENT.md 的约定**未**单独运行 `pnpm typecheck`/`lint`/`test`/`build`（项目测试会写入真实数据库，见 MEMORY 第 9 节）；提交时 pre-commit 门禁已实跑 typecheck 与 lint，推送后 CI 已跑完整 lint/test/build/E2E 并通过。
 
 ## 外部副作用台账
 
 | 操作 | 授权依据 | 目标/版本/提交 | 操作 ID | 状态 | 实际核查结果 | 安全恢复办法 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 克隆模板仓库到 `/tmp/ah-tpl` | 本次用户授权「模板获取」 | `github.com/timorpic/agent-handoff` @ `e228286` | 不适用 | succeeded | 目标目录存在，HEAD 与记录一致 | 删除临时目录即可，无外部影响 |
-| 提交 / 推送 / 发版 / 部署 | **未授权** | — | — | not_run | 未执行 `git commit`、`git push`、tag、Release、镜像发布 | 不适用 |
+| 提交到本地 `main` | 用户于 2026-10-16 明确指示「提交推送」 | `1daa754226c40dc93ba9434b4caa8522c708736f`（父提交 `b65b7ad`） | 不适用 | succeeded | `git log` 与 `git status` 核对：16 文件、+2058/−4 | 未推送前可用 `git reset --soft HEAD~1` 撤回；已推送则用 `git revert 1daa754` 生成反向提交，不改写历史 |
+| 推送到 `origin/main` | 同上 | `b65b7ad..1daa754` | 不适用 | succeeded | `git rev-parse HEAD origin/main` 一致；远端树已核对 | `git revert` + 推送（团队约定不使用 force push 改写历史） |
+| 发版 / 部署 / 镜像发布 | **未授权** | — | — | not_run | 未打 tag、未创建 Release、未推送镜像 | 不适用 |
 
-进行中 Release：无。
+进行中 Release：无。`docker.yml` 仅由 `release: published` 与手动触发驱动，本次 push 未触发镜像构建。
 
 ## 本轮结果摘要
 
-- 本轮产出及证据引用：完成 W-01–W-05。新增 `docs/AGENT-RULES.md`、`docs/INITIALIZATION.md`、`HANDOFF.md`、`PROMPTS.md`、`adapters/ENTRY.md`、`MEMORY.md`、`.handoff/CONTEXT.md`、`.handoff/CHECKPOINT.md`；修改 `AGENTS.md`、`CLAUDE.md`、`README.md`、`.gitignore`。证据见上表与 `.handoff/previous/` 备份。
-- 尚未完成的验收项：无（AC-01–AC-08 均 passed）。
+- 本轮产出及证据引用：完成 W-01–W-06。新增 `docs/AGENT-RULES.md`、`docs/INITIALIZATION.md`、`HANDOFF.md`、`PROMPTS.md`、`adapters/ENTRY.md`、`MEMORY.md`、`.handoff/CONTEXT.md`、`.handoff/CHECKPOINT.md`、`.handoff/previous/*.orig` 4 个；修改 `AGENTS.md`、`CLAUDE.md`、`README.md`、`.gitignore`。全部提交于 `1daa754` 并推送。证据见上表与 `.handoff/previous/` 备份。
+- 尚未完成的验收项：无（AC-01–AC-08 均 passed，另加提交后 AC-06 复核与 CI 结果）。
 - 未验证项：真实跨工具接力未演练（本轮范围外，非验收项）。
 - 阻塞及解除条件：无。
-- 是否满足任务完成标准：满足本次接入验收标准；改动尚未提交（未授权），故不标 completed，保持 active 待用户决定后续动作。
+- 是否满足任务完成标准：满足本次接入验收标准，用户授权的提交与推送已完成、CI 通过，标记 `completed`。发版、部署与生产变更仍未授权、未执行。
 
 ## 下一步（最多三项）
 
-1. 用户审阅本次改动（重点：`AGENTS.md` 入口措辞、`MEMORY.md` 第 8 节发布约定、`docs/AGENT-RULES.md` 的四节项目落地说明），确认是否提交。提交属未授权操作，需用户明确指示。
-2. 若要演练接力：在另一工具中用 `PROMPTS.md`「人工接管」提示词接管本任务，核对 task_id/HEAD/现场后继续；接管前停止本工具写入。
+1. 若要演练接力：在另一工具中用 `PROMPTS.md`「人工接管」提示词接管本任务，核对 task_id/HEAD/现场后继续；接管前停止本工具写入。
+2. 开始新任务前，按 `HANDOFF.md` 第 10 节把当前 CONTEXT 与 CHECKPOINT 成对归档至 `.handoff/archive/<task_id>/`。
 3. 可选维护项：把 MEMORY 第 9 节的测试污染问题重新落地修复并提交；本条需用户确认后再开工。
 
 ## 记忆与同步
@@ -117,7 +127,7 @@
 
 ## 接管/恢复记录
 
-- 上一个检查点及备份：无（本文件为首份检查点）；改动前原文备份见 `.handoff/previous/`。
-- 与当前现场的差异：不适用。
-- 本次重建依据：不适用。
+- 上一个检查点及备份：seq 1 完整记录归档于 `.handoff/previous/CHECKPOINT.seq1.md`（内容与提交 `1daa754` 中的版本一致）。
+- 与当前现场的差异：seq 1 时改动未提交、状态 `active`；seq 2 记录提交 `1daa754` 与推送已完成、CI 通过、状态置 `completed`。
+- 本次重建依据：不适用（本轮为正常推进，非异常恢复）。
 - 接手人核查结论：未核实（尚无接管发生）。

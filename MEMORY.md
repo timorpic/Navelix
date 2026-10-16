@@ -198,6 +198,7 @@ AI（OpenAI 兼容）、天气、云存储、链接探针均可能访问外部�
 - 发布顺序约束：`sync-changelog.mjs --publish` **只创建/编辑 Release，不创建 tag**；必须先 `git tag vX.Y.Z` 并推送，否则 Docker 工作流的版本一致性闸门（Release tag == `package.json` version）会失败。
 - 当月下一序号：不在此维护；每次发布前核对远程 Tag 与 Release。
 - 最近一次发版结果：见 [CHANGELOG.md](CHANGELOG.md) 与 GitHub Releases；进行中的步骤见 [.handoff/CHECKPOINT.md](.handoff/CHECKPOINT.md)。
+- CI 影响：`ci.yml` 在每次 push 到 `main` 时运行完整检查；`docker.yml` **仅**由 `release: published` 与 `workflow_dispatch` 触发，普通 push 不会发布镜像。因此文档类提交不需要走版本号或 Release 流程。
 
 ### CI/CD
 
