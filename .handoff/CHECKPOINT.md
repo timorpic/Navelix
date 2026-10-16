@@ -7,22 +7,24 @@
 - project_id: Navelix
 - task_id: handoff-workflow-adoption
 - context_revision: 2
-- checkpoint_seq: 2
-- updated_at: 2026-10-16T15:35:00+08:00
+- checkpoint_seq: 3
+- updated_at: 2026-10-16T15:45:00+08:00
 - owner: Claude Code（本次会话；会话标识未记录）
 - status: completed
-- current_step: 已完成（提交并推送 `1daa754`；CI 待回填实际结果）
+- current_step: 已完成（`1daa754` 接入提交 + `1dd8b16` 记录提交均已推送，两轮 CI 均通过；本次回填改动待提交）
 - single_writer_confirmed: 已核实（检查时段内无其他进程写入本仓库）
 
 ## 工作区身份
 
 - repo_root: `/root/Navelix`（本机路径，仅用于定位）
 - branch: `main`
-- HEAD: `1daa754226c40dc93ba9434b4caa8522c708736f`（本次接入提交，已推送至 `origin/main`）
+- HEAD: `1dd8b16`（记录提交，已推送；其父 `1daa754` 为本次接入提交）
 - base_commit: `b65b7ad691bb8260678f8be5a520ce0734ff0dcf`（本次改动基于该提交，之上的差异即本次接入）
 - context_path: .handoff/CONTEXT.md
 - 上下文版本核对：一致（CONTEXT rev 2 与本文件 context_revision 2 对应）
-- 工作区状态：干净（`git status --porcelain -uall` 无输出）
+- 工作区状态：干净（`git status --porcelain -uall` 无输出；本文件 seq 3 回填改动尚未提交，见下）
+
+> 自引用说明：检查点无法记录包含自身的提交哈希。本文件内容一旦提交，`HEAD` 即前进一格。这是预期现象，**不需要**为此再追一次提交；以 `git log` 与 `git status` 的实际输出为准。下次接管时按 HANDOFF.md 第 6 节核对即可。
 
 ## 实际修改现场
 
@@ -85,8 +87,9 @@
 | AC-07 | 通读 `PROMPTS.md` 五段提示词与 `HANDOFF.md` 第 3/6/7 节，确认提示词引用的文件名与章节在仓库内存在 | 同上 | 同上 | passed | PROMPTS.md、HANDOFF.md | 无 |
 | AC-08 | `grep` 扫描新增/修改文档中的凭据样式串（私钥、Token、密码、内网地址），确认无；修正 MEMORY.md 中一处远程地址写法为仓库标识；`.handoff/previous/` 备份经 sha256 校验与 `b65b7ad` 版本一致，且不含新增敏感信息 | 同上 | 同上 | passed | 本次 diff、`.handoff/previous/` | MEMORY.md 该行 |
 | AC-06（提交后复核） | `git status --porcelain -uall` 无输出（工作区干净）；`git rev-parse HEAD` 与 `origin/main` 均为 `1daa754`；`gh api repos/.../git/trees/1daa754` 确认远端树中无 `ee/`、`data/`、`scripts/analytics-receiver/` | 2026-10-16，`/root/Navelix` | 提交 `1daa754226c40dc93ba9434b4caa8522c708736f` | passed | 命令输出 | 无 |
-| CI（提交后） | `gh run view 38867511931`：`Lint, Test & Build` success、`Playwright E2E (Core UI Flow)` success，overall conclusion `success` | 2026-10-16T07:29Z 起，GitHub Actions `main` push | 同上 | passed（等待运行完成后回读结论，非以「已启动」计入） | run 38867511931 | 无 |
-| 本地门禁（提交时） | `simple-git-hooks` pre-commit → `pnpm precommit`（`tsc --noEmit --noUnusedLocals --noUnusedParameters` + `eslint`） | 同上 | 同上 | passed | 提交输出 | 无 |
+| CI（提交后） | `gh run view 38867511931`：`Lint, Test & Build` success、`Playwright E2E (Core UI Flow)` success，overall conclusion `success` | 2026-10-16T07:29Z 起，GitHub Actions `main` push | 提交 `1daa754` | passed（等待运行完成后回读结论，非以「已启动」计入） | run 38867511931 | 无 |
+| CI（记录提交后） | `gh run view 38868199848`：`Lint, Test & Build` success、`Playwright E2E (Core UI Flow)` success，overall conclusion `success` | 2026-10-16T07:35Z 起，同工作流 | 提交 `1dd8b16` | passed | run 38868199848 | 无 |
+| 本地门禁（提交时） | `simple-git-hooks` pre-commit → `pnpm precommit`（`tsc --noEmit --noUnusedLocals --noUnusedParameters` + `eslint`）；两次提交均通过 | 同上 | `1daa754`、`1dd8b16` | passed | 提交输出 | 无 |
 
 结果仅可填 passed / failed / blocked / not_run / stale。
 集成阶段的静态验证为纯文档变更，按 AGENTS.md 与 DEVELOPMENT.md 的约定**未**单独运行 `pnpm typecheck`/`lint`/`test`/`build`（项目测试会写入真实数据库，见 MEMORY 第 9 节）；提交时 pre-commit 门禁已实跑 typecheck 与 lint，推送后 CI 已跑完整 lint/test/build/E2E 并通过。
@@ -98,6 +101,7 @@
 | 克隆模板仓库到 `/tmp/ah-tpl` | 本次用户授权「模板获取」 | `github.com/timorpic/agent-handoff` @ `e228286` | 不适用 | succeeded | 目标目录存在，HEAD 与记录一致 | 删除临时目录即可，无外部影响 |
 | 提交到本地 `main` | 用户于 2026-10-16 明确指示「提交推送」 | `1daa754226c40dc93ba9434b4caa8522c708736f`（父提交 `b65b7ad`） | 不适用 | succeeded | `git log` 与 `git status` 核对：16 文件、+2058/−4 | 未推送前可用 `git reset --soft HEAD~1` 撤回；已推送则用 `git revert 1daa754` 生成反向提交，不改写历史 |
 | 推送到 `origin/main` | 同上 | `b65b7ad..1daa754` | 不适用 | succeeded | `git rev-parse HEAD origin/main` 一致；远端树已核对 | `git revert` + 推送（团队约定不使用 force push 改写历史） |
+| 记录提交与推送 | 同上（同一指示覆盖本轮文档记录） | `1dd8b16`（父提交 `1daa754`）；推送 `1daa754..1dd8b16` | 不适用 | succeeded | 两轮 CI 均 success（见验证记录） | 同 `git revert 1dd8b16` |
 | 发版 / 部署 / 镜像发布 | **未授权** | — | — | not_run | 未打 tag、未创建 Release、未推送镜像 | 不适用 |
 
 进行中 Release：无。`docker.yml` 仅由 `release: published` 与手动触发驱动，本次 push 未触发镜像构建。
@@ -127,7 +131,7 @@
 
 ## 接管/恢复记录
 
-- 上一个检查点及备份：seq 1 完整记录归档于 `.handoff/previous/CHECKPOINT.seq1.md`（内容与提交 `1daa754` 中的版本一致）。
-- 与当前现场的差异：seq 1 时改动未提交、状态 `active`；seq 2 记录提交 `1daa754` 与推送已完成、CI 通过、状态置 `completed`。
+- 上一个检查点及备份：seq 1 完整记录归档于 `.handoff/previous/CHECKPOINT.seq1.md`（内容与提交 `1daa754` 中的版本一致）；seq 2 见提交 `1dd8b16`（`git show 1dd8b16:.handoff/CHECKPOINT.md`）。
+- 与当前现场的差异：seq 1 时改动未提交、状态 `active`；seq 2 记录提交推送完成与 CI 通过；seq 3 回填第二轮 CI 结论并更新 HEAD 至 `1dd8b16`。
 - 本次重建依据：不适用（本轮为正常推进，非异常恢复）。
 - 接手人核查结论：未核实（尚无接管发生）。
