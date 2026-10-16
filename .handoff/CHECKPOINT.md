@@ -22,7 +22,7 @@
 - base_commit: `b65b7ad691bb8260678f8be5a520ce0734ff0dcf`（本次改动基于该提交，之上的差异即本次接入）
 - context_path: .handoff/CONTEXT.md
 - 上下文版本核对：一致（CONTEXT rev 2 与本文件 context_revision 2 对应）
-- 工作区状态：干净（`git status --porcelain -uall` 无输出；本文件 seq 3 回填改动尚未提交，见下）
+- 工作区状态：本次接入与记录改动均已提交推送；`git status` 中若仅本文件有改动，属检查点自身的待提交回填，按下方自引用说明处理。
 
 > 自引用说明：检查点无法记录包含自身的提交哈希。本文件内容一旦提交，`HEAD` 即前进一格。这是预期现象，**不需要**为此再追一次提交；以 `git log` 与 `git status` 的实际输出为准。下次接管时按 HANDOFF.md 第 6 节核对即可。
 
