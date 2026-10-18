@@ -21,6 +21,12 @@
 
 回归用例已编写，执行结果以 [.handoff/CHECKPOINT.md](../.handoff/CHECKPOINT.md) 为准。生产放行仍取决于尚缺的 Computer Use、恢复及容量证据，不能仅因实现整改而宣称完全就绪。操作说明见 [生产验收与恢复演练](PRODUCTION-ACCEPTANCE.md)。
 
+## 发布验证结果
+
+加固已随 [v2.10.21](https://github.com/timorpic/Navelix/releases/tag/v2.10.21) 交付，[镜像流水线](https://github.com/timorpic/Navelix/actions/runs/39141084086) 的源码质量、镜像冒烟、旧库升级、生产镜像 UI（30 项）及稳定标签 digest 核验均通过。GHCR 与 Docker Hub 的 `latest` 已更新到同一被测镜像。main 保护已启用，并通过 PR #21 实际验证。
+
+v2.10.20 的镜像交付被门禁拦截，已保留为预发布；没有覆盖其 Tag 或跳过失败检查。生产环境的真实 HTTPS、云服务、灾难恢复及容量验证仍不在上述证据范围内。
+
 ## 结论与适用范围
 
 **当前属于预生产 / 候选发布阶段，不建议直接作为公网正式生产版本放行。** 产品功能与工程基础已经较完整，主要缺口在密钥异常处理、恢复保护、发布门禁及目标环境验收。这里的结论依据仓库静态审查与类型、lint 检查，不是线上安全认证或完整渗透测试结论。
