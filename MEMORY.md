@@ -182,7 +182,7 @@ AI（OpenAI 兼容）、天气、云存储、链接探针均可能访问外部�
 
 ### 分支策略
 
-主干 `main`；变更新分支默认使用 `codex/` 前缀（[DEVELOPMENT](docs/DEVELOPMENT.md)）。不在 `main` 上直接堆叠无关改动。
+主干 `main`；变更使用短期分支并通过 PR，默认 `codex/` 前缀。用户于 2026-10-18 确认个人维护模式：main 要求两个现有 GitHub Actions CI 检查、分支保持最新和讨论解决，审批人数 0；管理员同样受约束，禁止强推及删除。实际已通过 GitHub API 设置并回读确认，详见 [DEVELOPMENT](docs/DEVELOPMENT.md)「main 分支保护」。
 
 ### Commit 规范
 
@@ -319,3 +319,5 @@ AI（OpenAI 兼容）、天气、云存储、链接探针均可能访问外部�
 本轮上线加固的实现边界：主密钥异常失败关闭、恢复保护失败终止、管理员深度健康诊断与云备份持久化调度；说明见 docs/PRODUCTION-ACCEPTANCE.md，实际验证状态见 .handoff/CHECKPOINT.md。这些本地事实尚未同步到 OpenMemory（工具 unavailable）。
 
 用户已确认（2026-10-18）：部署保持原有 `latest` 镜像和 Watchtower 使用方式，不增加必填镜像标签变量或自动更新 profile；镜像验收门禁放在发布流水线。
+
+用户确认（2026-10-18）：Docker 镜像构建全部在 GitHub Actions 执行，本地不构建 Docker 镜像。

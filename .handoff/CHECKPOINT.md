@@ -3,8 +3,8 @@
 - schema_version: 1
 - project_id: Navelix
 - task_id: release-launch-hardening-20261018
-- context_revision: 1
-- checkpoint_seq: 1
+- context_revision: 2
+- checkpoint_seq: 3
 - updated_at: 2026-10-18T23:10:41+08:00
 - owner: Codex
 - status: active
@@ -25,3 +25,17 @@
 ## 发布准备进展
 
 远程 main 与本地基线一致，最新 Tag/Release 为 v2.10.19；已同步下一版本 2.10.20 及 CHANGELOG。用户补充生产已运行 v2.10.19，Release Notes 已按保留数据卷的原地升级编写。版本与日志校验、2.10.20 隔离生产构建（含敏感产物闸门）通过。即将提交并推送 main，等待该提交 CI 成功后才创建 Tag/Release；当前仍未发布。
+
+## 已提交推送
+
+提交 e7294b5951286f7278fb60c72fa251d2f2501db5 已推送 origin/main。提交 Hook 的 typecheck/lint 通过，2.10.20 隔离生产构建通过；正在等待此提交的 GitHub Actions。尚未创建新 Tag 或 Release，未改动生产实例。用户进一步明确：Docker 镜像构建全部放在 GitHub Actions；本地未执行 docker build/run。后续仍按该约束执行。
+
+## 源码 CI 已通过，即将发布
+
+GitHub Actions CI run 39139519445 成功，目标提交 e7294b5951286f7278fb60c72fa251d2f2501db5。两个 job 均成功：Lint/Test/Coverage/Build 与生产 Playwright E2E。Node 测试 578 项、576 通过、0 失败（其余跳过，以原始日志为准），覆盖率门禁通过。即将为同一提交创建并推送 v2.10.20，再运行项目发布脚本创建 Release，随后跟踪候选镜像验收与稳定标签提升。未执行本地 Docker 构建或生产部署。
+
+## Release 与分支保护现场
+
+v2.10.20 Tag 已创建并推送，指向 e7294b5951286f7278fb60c72fa251d2f2501db5；GitHub Release 已发布：https://github.com/timorpic/Navelix/releases/tag/v2.10.20。镜像工作流 39139772662 正在 GitHub Actions 运行，目前源码质量两个 job 成功、候选镜像构建进行中；尚不能认定 latest 已更新。
+
+用户新增 main 保护指示并明确选个人维护模式。已核对 ADMIN 权限、旧规则为空，PUT branch protection 后回读确认 protected=true：required PR，审批人数 0；strict CI 绑定 GitHub Actions app 15368，检查名为 Lint, Test & Build 与 Playwright E2E (Core UI Flow)；要求解决讨论、禁止 force/delete，enforce_admins=true。首次请求同时包含 deprecated contexts 与 checks 被 422 拒绝且未生效，移除 contexts 后同一策略成功；未降低规则。当前准备以 PR 记录治理和发布结果，不再直接推送 main。
