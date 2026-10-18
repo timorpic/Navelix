@@ -547,7 +547,7 @@ Content-Type: application/json
 ### 10.4 系统与运维
 | 方法 | 路径 | 说明 |
 | :--- | :--- | :--- |
-| `GET` | `/api/healthz` | **完全公开、无需鉴权**：返回迁移版本、守护进程状态与 SQLite 数据库 / WAL 文件大小 |
+| `GET` | `/api/healthz` | **完全公开、无需鉴权**：轻量数据库读取，返回 status、db 与 time；失败为 503 |
 | `GET` | `/api/update-check` | 版本更新检测 |
 | `GET` | `/api/weather` | 天气数据 |
 | `GET` | `/api/favicon` | 登录后传入 `?url=` 抓取网站或图片图标，返回 `{ dataUrl, iconUrl }`；优先解析站点声明，再尝试根图标和公开图标服务，忽略非图片响应，全部失败返回 502 |
@@ -604,3 +604,5 @@ Content-Type: application/json
 只接受 `zh-CN`、`en`，成功返回 `{ "language": "en" }` 并设置语言 Cookie。登录时同步保存当前账号的个人配置；未登录时仅保存当前浏览器的语言。写请求仍需通过 Origin / CSRF 校验，不接受指定其他用户 ID。非法语言返回 HTTP 400，`code` 为 `INVALID_LOCALE`。
 
 登录用户请求按账号语言返回展示文案，访客依次使用语言 Cookie、Accept-Language 和中文默认值。业务错误响应保留原有 `error`，新增 `message`（本地化展示文案）与 `code`（错误标识）；前端可优先展示 `message`，兼容仍仅提供 `error` 的代理／协议错误响应。不要依赖翻译后的文案判断业务分支。用户创建的任务、项目、笔记与名称保持原文。
+
+管理员深度诊断：`GET /api/admin/health`，需管理员身份；检查数据库完整性及写锁，返回迁移、守护进程与磁盘状态；全进程每分钟最多一次，超限返回 429 与 Retry-After。

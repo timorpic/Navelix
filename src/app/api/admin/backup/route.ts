@@ -88,7 +88,9 @@ async function POSTHandler(req: NextRequest) {
     }
 
     // 1. 先将当前数据库在线备份一份以防万一
-    performDatabaseBackup();
+    if (!performDatabaseBackup(adminUser.id)) {
+      return localizedJson({ error: "恢复前保护性备份失败，已终止还原，当前数据未修改" }, { status: 503 });
+    }
 
     // 2. 写入临时恢复文件
     const tempRestorePath = path.join(resolveDataDir(), `restore-temp-${Date.now()}.db`);

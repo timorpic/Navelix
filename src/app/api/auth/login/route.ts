@@ -20,18 +20,34 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { sendTelegramNotification } from "@/lib/telegram";
+import { readLimitedJson, RequestBodyError } from "@/lib/request-body";
+import { simpleRateLimit } from "@/lib/rate-limit";
 
 /** 登录失败达到该次数后向 Telegram 推送安全告警 */
 const LOGIN_ALERT_THRESHOLD = 3;
 
 async function POSTHandler(req: Request) {
-  const body = await req.json().catch(() => null);
+  const clientId = getClientId(req);
+  const limit = simpleRateLimit(`login:${clientId}`, 60, 60_000);
+  if (!limit.allowed) return localizedJson({ error: "登录尝试过于频繁，请稍后再试" }, {
+    status: 429, headers: { "Retry-After": String(Math.ceil(limit.retryAfterMs / 1000)) },
+  });
+  let parsed: unknown;
+  try { parsed = await readLimitedJson(req, 4096); }
+  catch (error) {
+    if (error instanceof RequestBodyError) return localizedJson({ error: error.message }, { status: error.status });
+    throw error;
+  }
+  const body = parsed && typeof parsed === "object" ? parsed as Record<string, unknown> : null;
+  if (!body || typeof body.username !== "string" || typeof body.password !== "string") {
+    return localizedJson({ error: "无效的请求数据" }, { status: 400 });
+  }
   const username = String(body?.username ?? "")
     .trim()
     .toLowerCase();
   const password = String(body?.password ?? "");
+  if (username.length > 100 || password.length > 256) return localizedJson({ error: "登录信息长度超出限制" }, { status: 400 });
 
-  const clientId = getClientId(req);
   // 叠加用户名作为二级限流 key：未开启 TRUST_PROXY 时所有请求落在
   // 全局 "direct-client" 桶，只有用户名维度可拆分，避免一个 IP 锁死全站
   const limitKey = username ? `${clientId}:${username}` : clientId;

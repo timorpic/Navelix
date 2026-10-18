@@ -1,7 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
 import { createPhysicalBackup } from "../../db-backup-core.ts";
-import { logger } from "../../logger.ts";
-import { dropColumn } from "../shared.ts";
 
 /**
  * v15：一次性迁移 —— 删除已废弃的「模型账号与额度监控」功能。
@@ -14,11 +12,20 @@ import { dropColumn } from "../shared.ts";
  * 复用 v11 的「迁移内核以参数接收 db」方式，避免引入 db.ts 单例造成导入环。
  */
 export function migrateV15(db: DatabaseSync): void {
+  const hasTable = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'model_accounts'").get();
+  const hasColumn = db.prepare("PRAGMA table_info(user_configs)").all().some(row => row.name === "model_monitor_enabled");
+  if (!hasTable && !hasColumn) return;
   const outcome = createPhysicalBackup(db);
-  if (!outcome.ok) {
-    logger.warn("v15 迁移前自动备份失败，继续执行迁移", { error: outcome.error });
+  if (!outcome.ok) throw new Error("v15 迁移前保护性备份失败，已终止迁移");
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.exec("DROP TABLE IF EXISTS model_accounts");
+    if (db.prepare("PRAGMA table_info(user_configs)").all().some(row => row.name === "model_monitor_enabled")) {
+      db.exec("ALTER TABLE user_configs DROP COLUMN model_monitor_enabled");
+    }
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
   }
-
-  db.exec("DROP TABLE IF EXISTS model_accounts");
-  dropColumn(db, "user_configs", "model_monitor_enabled");
 }

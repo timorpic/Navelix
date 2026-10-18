@@ -116,7 +116,7 @@ docker run --rm -v /volume1/docker/navelix:/src:ro -v "$(pwd)":/dst alpine \
 > **关于自动备份**：`data/backups/*.db` 目录最多保留最近 **7 份**，超出会自动清理。
 > 后台守护进程会**每 24 小时检查一次**，若目录内已有 24 小时内的快照则跳过 —— 因此它与 Pro 版的每日云端备份共享同一份快照，不会重复备份。
 > 后台的手动备份、迁移前的自动快照也写入同一目录，同样受此节流约束。
-> Watchtower 用户：建议将 Watchtower 改用手动触发或公告窗口，先快照再 `watchtower --run-once`。
+> 仓库 Compose 沿用 `latest` 与原有 Watchtower 自动更新方式，无需新增变量或 profile；`latest` 由发布流水线在候选镜像验收通过后更新。更新前应保留可恢复快照。
 > （仓库自带的 `docker-compose.yml` 已内置 watchtower 服务，其 `--cleanup navelix` 与 `container_name: navelix` 一致，可正常自动更新。）
 
 ### 🔑 主加密密钥（APP_SECRET / .app_secret）说明
@@ -157,3 +157,5 @@ docker run --rm -v /volume1/docker/navelix:/src:ro -v "$(pwd)":/dst alpine \
 ---
 
 **Navelix · Personal Digital Hub** — 让每一个常用入口，都在它该在的地方。
+
+生产健康检查使用轻量 `/api/healthz`；管理员深度诊断为 `/api/admin/health`。密钥保管、整机恢复与 Computer Use 验收见 [生产验收手册](docs/PRODUCTION-ACCEPTANCE.md)。

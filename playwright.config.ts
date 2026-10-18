@@ -4,6 +4,10 @@ import path from "node:path";
 import os from "node:os";
 
 const PORT = 3722;
+const externalBaseURL = process.env.E2E_BASE_URL;
+if (externalBaseURL && !/^http:\/\/(localhost|127\.0\.0\.1):3722$/.test(externalBaseURL)) {
+  throw new Error("E2E_BASE_URL 必须是隔离测试容器的本机 HTTP 地址，禁止使用生产实例");
+}
 
 // E2E 运行在隔离的数据目录（默认系统临时目录 /e2e-data）与独立端口，
 // 避免污染开发者本地 data/navelix.db，也不与本地 `next dev`(3721) 冲突。
@@ -22,20 +26,22 @@ export default defineConfig({
 
   use: {
     locale: "zh-CN",
-    baseURL: `http://localhost:${PORT}`,
+    baseURL: externalBaseURL || `http://localhost:${PORT}`,
     trace: process.env.CI ? "on-first-retry" : "off",
     screenshot: "only-on-failure",
   },
 
-  webServer: {
-    command: `pnpm exec next dev -p ${PORT}`,
+  webServer: externalBaseURL ? undefined : {
+    command: `pnpm build && pnpm exec next start -p ${PORT}`,
     port: PORT,
     reuseExistingServer: false,
-    timeout: 180_000,
+    timeout: 300_000,
     env: {
       PORT: String(PORT),
       NAVELIX_ADMIN_PASSWORD: "e2e-test-password",
       NAVELIX_DATA_DIR: E2E_DATA_DIR,
+      APP_SECRET: "",
+      NAVELIX_LICENSE_KEY: "",
     },
   },
 

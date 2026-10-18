@@ -1,10 +1,9 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * 可观测性端点验证：/api/healthz 需返回 DB 连通性、迁移版本、守护进程状态与 WAL 大小。
- * 该端点无需鉴权（Docker healthcheck 也在用），任何请求都应得到结构化 JSON。
+ * 公开探针仅返回轻量可用性；迁移、守护进程与磁盘诊断必须由管理员访问。
  */
-test("healthz 返回 DB / 迁移 / daemon / WAL 诊断信息", async ({ request }) => {
+test("healthz 公开返回轻量 DB 状态，深度诊断拒绝匿名", async ({ request }) => {
   const res = await request.get("/api/healthz");
   expect(res.status()).toBe(200);
 
@@ -12,6 +11,21 @@ test("healthz 返回 DB / 迁移 / daemon / WAL 诊断信息", async ({ request 
 
   expect(body.status).toBe("ok");
   expect(body.db).toBe("ok");
+  expect(body.migrations).toBeUndefined();
+  expect(body.disk).toBeUndefined();
+  expect(res.headers()["cache-control"]).toBe("no-store");
+  expect((await request.get("/api/admin/health")).status()).toBe(403);
+});
+
+test("管理员深度诊断提供迁移与磁盘信息，并限制扫描频率", async ({ page }) => {
+  await page.goto("/login");
+  await page.fill("#login-username", "admin");
+  await page.fill("#login-password", "e2e-test-password");
+  await page.getByRole("button", { name: "立即登录" }).click();
+  await page.waitForURL("/");
+  const res = await page.request.get("/api/admin/health");
+  expect(res.status()).toBe(200);
+  const body = await res.json();
 
   // 迁移版本：当前 user_version 必须 >= 1（全新库也会跑完 v13），且存在 next 字段
   expect(typeof body.migrations.current).toBe("number");
@@ -27,4 +41,7 @@ test("healthz 返回 DB / 迁移 / daemon / WAL 诊断信息", async ({ request 
   expect(typeof body.disk.shmSizeBytes).toBe("number");
   expect(body.disk.dbSizeBytes).toBeGreaterThanOrEqual(0);
   expect(body.disk.walSizeBytes).toBeGreaterThanOrEqual(0);
+  const repeated = await page.request.get("/api/admin/health");
+  expect(repeated.status()).toBe(429);
+  expect(Number(repeated.headers()["retry-after"])).toBeGreaterThan(0);
 });

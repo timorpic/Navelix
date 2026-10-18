@@ -103,6 +103,7 @@ export default function RegisterPage() {
             <input
               id="register-display-name"
               name="displayName"
+              maxLength={100}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder={tx("e_g_alex_3a823c0a")}
@@ -120,8 +121,10 @@ export default function RegisterPage() {
               name="password"
               type="password"
               value={password}
+              minLength={12}
+              maxLength={256}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={tx("at_least_6_characters_bff75c65")}
+              placeholder={tx("registration_password_length")}
               className={inputClass}
             />
           </div>
@@ -136,6 +139,7 @@ export default function RegisterPage() {
               name="confirmPassword"
               type="password"
               value={confirm}
+              maxLength={256}
               onChange={(e) => setConfirm(e.target.value)}
               placeholder={tx("enter_your_password_again_901b301d")}
               className={inputClass}

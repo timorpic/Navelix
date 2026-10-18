@@ -172,3 +172,5 @@ This project is released under the **Navelix Source-Available License** (source-
 ---
 
 **Navelix · Personal Digital Hub** — every everyday entry point, right where it belongs.
+
+The repository Compose file continues to use `latest` and the existing Watchtower setup; no additional tag variable or profile is required. See the [production acceptance and recovery guide](docs/PRODUCTION-ACCEPTANCE.md).

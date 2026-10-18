@@ -27,6 +27,8 @@ services:
       - ./data:/app/data
 ```
 
+沿用 `latest` 镜像及原有 Watchtower 使用方式，无需新增镜像标签变量或 profile。发布流水线在候选镜像验收通过后才更新 `latest`。
+
 ```bash
 docker compose up -d navelix
 docker compose logs --tail=100 navelix
@@ -51,7 +53,7 @@ pnpm start
 
 默认地址为 `http://localhost:3721`。`dev` 与 `start` 脚本写明 `-p 3721`；源码运行需要其他端口时使用 `pnpm exec next start -p 端口号`。为生产进程配置服务管理器，保持工作目录和数据路径稳定。
 
-构建期间部分模块可能初始化数据库，建议构建与运行设置不同的 `NAVELIX_DATA_DIR`；不要用真实生产库执行构建或测试。standalone 运行需同时保留 `.next/standalone/`、`public/`、`.next/static/` 所需资源，仓库 Dockerfile 已处理复制及运行依赖补齐。
+`pnpm build`、`pnpm test` 与 `pnpm test:coverage` 强制创建一次性系统临时数据目录并在结束后清理，不继承外部 `NAVELIX_DATA_DIR` 或生产密钥。直接调用 `next build` 或 Node 测试命令不经过此保护，禁止对真实生产库执行。standalone 运行需同时保留 `.next/standalone/`、`public/`、`.next/static/` 所需资源，仓库 Dockerfile 已处理复制及运行依赖补齐。
 
 ## 主要环境配置
 
@@ -72,7 +74,7 @@ pnpm start
 
 代理转发到服务端 3721，使用 HTTPS 时启用 Secure Cookie 并保证 Origin/Host 转发一致。实时通知使用 SSE，代理需允许长连接并按需关闭缓冲。不要通过关闭 CSRF 或放宽 SSRF 规则解决代理配置错误。
 
-部署后检查 `/api/healthz`：数据库读取、完整性和写锁检查失败返回 503；响应还提供迁移版本、守护任务标志与 WAL 大小。健康状态不能替代完整功能验收，还需检查登录、数据读写、静态资源、主题、实时更新及所需外部服务。
+部署后检查 `/api/healthz`：公开探针只执行轻量数据库读取，失败返回 503，不扫描整库、不尝试写锁、不公开磁盘及迁移详情。管理员可调用 `GET /api/admin/health` 执行完整性/写锁检查并查看迁移、守护任务标志和 WAL 大小，全进程每分钟最多一次，超限返回 429。两者均禁止缓存。轻量探针不证明数据库可写；健康状态也不能替代完整功能验收。验收与外部监控步骤见 [生产验收与恢复演练](PRODUCTION-ACCEPTANCE.md)。
 
 ## 备份、升级与回滚
 
@@ -86,3 +88,5 @@ pnpm start
 更多使用说明见 [DOCKER](../DOCKER.md)、[快速入门](../wiki/Quick-Start-快速入门.md) 与 [安全运维](../wiki/Security-安全机制与运维规范.md)。发布流水线见 [REGISTRY](REGISTRY.md)。
 
 日志中心、文件保留、容量和容器轮转配置见 [日志中心说明](LOGGING.md)。迁移实例时应同时保留数据目录中的 `logs/settings.json`；它不包含在个人 JSON 导出或主库快照中。
+
+密钥文件异常将阻止相关加密操作，不再退回固定密钥。历史异常实例的离线迁移、整机恢复材料及 RPO/RTO 演练见 [生产验收与恢复演练](PRODUCTION-ACCEPTANCE.md)。自动云备份启动后约两分钟检查一次，再每小时按持久化的成功上传时间检查；失败不推进成功时间。

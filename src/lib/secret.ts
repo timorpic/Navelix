@@ -17,27 +17,42 @@ const PREFIX = "enc:v1:";
  * 优先级：环境变量 APP_SECRET > data/.app_secret 机器本地密钥
  */
 export function getSecretKey(): Buffer {
-  if (process.env.APP_SECRET && process.env.APP_SECRET.trim().length >= 16) {
+  if (process.env.APP_SECRET) {
+    if (process.env.APP_SECRET.trim().length < 16) throw new Error("APP_SECRET 必须至少包含 16 个字符");
     return createHash("sha256").update(process.env.APP_SECRET.trim()).digest();
   }
 
   const secretFile = path.join(resolveDataDir(), ".app_secret");
+  const readKey = () => {
+    const fd = fs.openSync(secretFile, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK);
+    try {
+      const info = fs.fstatSync(fd);
+      if (!info.isFile() || info.size > 128) throw new Error("主密钥文件格式无效，请恢复原密钥");
+      const hex = fs.readFileSync(fd, "utf8").trim();
+      if (!/^[a-f0-9]{64}$/i.test(hex)) throw new Error("主密钥文件格式无效，请恢复原密钥");
+      return Buffer.from(hex, "hex");
+    } finally { fs.closeSync(fd); }
+  };
   try {
-    if (fs.existsSync(secretFile)) {
-      const hex = fs.readFileSync(secretFile, "utf8").trim();
-      if (hex.length === 64) {
-        return Buffer.from(hex, "hex");
-      }
+    return readKey();
+  } catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
+  }
+
+  fs.mkdirSync(resolveDataDir(), { recursive: true, mode: 0o700 });
+  const temporary = `${secretFile}.${randomBytes(12).toString("hex")}.tmp`;
+  try {
+    // Publish a complete file without replacing an existing key, including across workers.
+    const fd = fs.openSync(temporary, "wx", 0o600);
+    try { fs.writeFileSync(fd, randomBytes(32).toString("hex")); fs.fsyncSync(fd); }
+    finally { fs.closeSync(fd); }
+    try { fs.linkSync(temporary, secretFile); }
+    catch (error) {
+      if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
     }
-    const generated = randomBytes(32);
-    const dataDir = resolveDataDir();
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 });
-    }
-    fs.writeFileSync(secretFile, generated.toString("hex"), { mode: 0o600 });
-    return generated;
-  } catch {
-    return createHash("sha256").update("navelix-embedded-master-secret-fallback").digest();
+    return readKey();
+  } finally {
+    fs.rmSync(temporary, { force: true });
   }
 }
 

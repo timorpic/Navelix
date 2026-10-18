@@ -42,7 +42,7 @@ Node 内置 `node:sqlite`（SQLite + WAL），无外部数据库服务。Schema�
 ### 基础设施
 
 - 包管理与构建：pnpm `11.16.0`（`packageManager` 固定）。
-- CI：GitHub Actions `ci.yml`（lint / test / coverage / build / Playwright E2E）与 `docker.yml`（镜像构建、推送、冒烟）。仅此仓库启用 CI。
+- CI：GitHub Actions `ci.yml`（lint / test / coverage / build / 生产 Playwright E2E）可复用；`docker.yml` 在源码质量检查后构建候选镜像，按 digest 冒烟、升级与 UI 验证后才提升正式版本 / latest。手动运行不提升稳定标签。
 - 发布：Docker Hub 镜像 `timorpic/navelix` 与 GitHub Releases。
 - 生产部署：用户自建（Synology 上手工容器 + Watchtower 自动更新），不经仓库 compose 文件。
 
@@ -154,7 +154,7 @@ README 面向使用者与入口；`docs/` 面向开发与维护；仓库 `wiki/`
 
 ## 6. 开发约束
 
-- 运行测试、构建或启动前必须显式设置独立的 `NAVELIX_DATA_DIR`（如 `NAVELIX_DATA_DIR="$(mktemp -d /tmp/navelix-test.XXXXXX)"`）：当前 `pnpm test` / `pnpm build` 直接使用 `<cwd>/data`，会污染真实库。
+- `pnpm test`、`pnpm test:coverage` 和 `pnpm build` 已由 `scripts/run-isolated.mjs` 强制分配临时数据目录并清理，不继承外部业务库路径及密钥；直接调用底层 Node 测试 / Next 构建会绕过隔离。启动服务仍须显式指定正确数据目录；验收实例不得复用生产库。
 - `MEMORY.md` 与 `.handoff/` **有意纳入版本控制**；`.gitignore` 中取消忽略它们是刻意决定，不是遗留问题。`ee/`、`data/`、`.env*`、`/scripts/analytics-receiver/` 必须保持未跟踪。
 - 提交信息不得添加 `Co-Authored-By` 或工具署名（详见 LES-003）。
 - 不引入与当前任务无关的依赖、格式化或部署方式变更；Schema 改动必须同步首次建表与升级迁移。
@@ -198,7 +198,7 @@ AI（OpenAI 兼容）、天气、云存储、链接探针均可能访问外部�
 - 发布顺序约束：`sync-changelog.mjs --publish` **只创建/编辑 Release，不创建 tag**；必须先 `git tag vX.Y.Z` 并推送，否则 Docker 工作流的版本一致性闸门（Release tag == `package.json` version）会失败。
 - 当月下一序号：不在此维护；每次发布前核对远程 Tag 与 Release。
 - 最近一次发版结果：见 [CHANGELOG.md](CHANGELOG.md) 与 GitHub Releases；进行中的步骤见 [.handoff/CHECKPOINT.md](.handoff/CHECKPOINT.md)。
-- CI 影响：`ci.yml` 在每次 push 到 `main` 时运行完整检查；`docker.yml` **仅**由 `release: published` 与 `workflow_dispatch` 触发，普通 push 不会发布镜像。因此文档类提交不需要走版本号或 Release 流程。
+- CI 影响：`ci.yml` 在 main push / PR 或被发布工作流调用时运行；`docker.yml` 由应用 Release 与手动触发执行候选验证，普通 push 不发布镜像；非应用 Release 跳过，预发布不提升稳定标签。
 
 ### CI/CD
 
@@ -208,16 +208,9 @@ AI（OpenAI 兼容）、天气、云存储、链接探针均可能访问外部�
 
 ## 9. 已知问题
 
-#### 本地 `pnpm test` 会写入真实数据库（未修复）
+#### 测试与构建数据隔离
 
-影响
-`package.json` 的 `test` / `test:coverage` 是裸 `node --experimental-strip-types --test …`，无数据目录隔离；`src/lib/db/connection.ts` 在模块顶层解析数据目录并打开 `<cwd>/data/navelix.db`。直接运行会向真实库写入测试垃圾账号（2026-10-15 实测该库已有 7239 个 users，多数为 `tp-test-<timestamp>-<n>`），污染随时间累积。
-
-当前方案
-约定手动隔离：始终显式传入独立的 `NAVELIX_DATA_DIR`。
-
-注意事项
-`pnpm build` 同样读取 `<cwd>/data`。2026-10-14 曾以自建 `scripts/run-tests.mjs` 修复，但修改只在未提交工作区，随版本回退丢失；要真正修复需重新落地等效机制**并提交**，不要只放在工作区。
+历史上裸 Node 测试与 Next 构建会打开默认业务目录。当前脚本已改为 `scripts/run-isolated.mjs`，每次强制创建一次性目录，结束后清理；不继承业务数据路径和生产密钥。直接执行底层命令仍会绕过保护。构建后清理 instrumentation trace 引入的运行数据副本，并检查敏感运行文件不进入 standalone。实现改动与本次验证状态见当前检查点，不能继承历史全量测试结论。
 
 ---
 
@@ -322,3 +315,7 @@ AI（OpenAI 兼容）、天气、云存储、链接探针均可能访问外部�
 | MS-001 | 本文件第 13 节（文档 SSOT 分工）与第 4 节 DEC-001–003 | 有效（2026-10-16） | 无 | synced（2026-10-16 已确认存储完成） | `8cd96bf2-f3c8-4646-be69-8dcc4b89e08f` 等 12 条 |
 
 本地事实先落盘再同步；受理不等于成功，异步未确认时保持 pending。
+
+本轮上线加固的实现边界：主密钥异常失败关闭、恢复保护失败终止、管理员深度健康诊断与云备份持久化调度；说明见 docs/PRODUCTION-ACCEPTANCE.md，实际验证状态见 .handoff/CHECKPOINT.md。这些本地事实尚未同步到 OpenMemory（工具 unavailable）。
+
+用户已确认（2026-10-18）：部署保持原有 `latest` 镜像和 Watchtower 使用方式，不增加必填镜像标签变量或自动更新 profile；镜像验收门禁放在发布流水线。

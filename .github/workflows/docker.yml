@@ -5,9 +5,23 @@ on:
     types: [published]
   workflow_dispatch:
 
+concurrency:
+  group: navelix-image-release
+  cancel-in-progress: false
+
 jobs:
+  quality:
+    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'v') }}
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
   build:
-    name: Build & Push Image
+    name: Build Candidate Image
+    needs: quality
+    outputs:
+      repository: ${{ steps.repo_name.outputs.repo }}
+      digest: ${{ steps.push.outputs.digest }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -58,13 +72,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log in to Docker Hub (Optional)
-        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
-        uses: docker/login-action@v4
-        with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ env.DOCKERHUB_TOKEN }}
-
       - name: Lowercase repository name
         id: repo_name
         run: |
@@ -76,12 +83,8 @@ jobs:
         with:
           images: |
             ghcr.io/${{ steps.repo_name.outputs.repo }}
-            ${{ env.DOCKERHUB_USERNAME != '' && format('docker.io/{0}/navelix', env.DOCKERHUB_USERNAME) || '' }}
           tags: |
-            type=raw,value=latest
-            type=raw,value=${{ github.event.release.tag_name || github.ref_name }}
-            type=sha,prefix=sha-
-            type=semver,pattern={{version}}
+            type=raw,value=candidate-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Get build metadata
         id: date
@@ -98,7 +101,8 @@ jobs:
             echo "version=sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build and push Docker image
+      - name: Build and push candidate image
+        id: push
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -113,16 +117,6 @@ jobs:
             SOURCE_SHA=${{ github.sha }}
             BUILD_DATE=${{ steps.date.outputs.build_date }}
             NAVELIX_VERSION=${{ steps.date.outputs.version }}
-
-      - name: Update Docker Hub Description
-        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
-        uses: peter-evans/dockerhub-description@v5
-        with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ env.DOCKERHUB_TOKEN }}
-          repository: ${{ env.DOCKERHUB_USERNAME }}/navelix
-          short-description: "Navelix · Personal Digital Hub - 零依赖本地私有部署个人数字工作空间"
-          readme-filepath: ./DOCKER.md
 
   smoke-test:
     name: Smoke Test Image
@@ -144,7 +138,7 @@ jobs:
         run: |
           IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           SHORT_SHA="${{ github.sha }}"
-          IMAGE_TAG="${IMAGE_NAME}:sha-${SHORT_SHA:0:7}"
+          IMAGE_TAG="${IMAGE_NAME}@${{ needs.build.outputs.digest }}"
 
           echo "Pulling image ${IMAGE_TAG}..."
           docker pull "${IMAGE_TAG}"
@@ -255,8 +249,117 @@ jobs:
         run: |
           IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           SOURCE_SHA="${{ github.sha }}"
-          bash scripts/smoke-log-upgrade.sh "${IMAGE_NAME}:sha-${SOURCE_SHA:0:7}"
+          bash scripts/smoke-log-upgrade.sh "${IMAGE_NAME}@${{ needs.build.outputs.digest }}"
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install production UI verification dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+
+      - name: Verify production candidate UI
+        env:
+          E2E_BASE_URL: http://localhost:3722
+          IMAGE: ghcr.io/${{ needs.build.outputs.repository }}@${{ needs.build.outputs.digest }}
+        run: |
+          docker run -d --name production-e2e -p 127.0.0.1:3722:3721 \
+            -e NAVELIX_ADMIN_PASSWORD=e2e-test-password "$IMAGE"
+          trap 'docker stop production-e2e >/dev/null 2>&1 || true' EXIT
+          for i in {1..60}; do
+            if curl --fail --silent http://localhost:3722/api/healthz >/dev/null; then break; fi
+            sleep 2
+          done
+          curl --fail --silent http://localhost:3722/api/healthz >/dev/null
+          pnpm test:e2e
+
+      - name: Upload production UI failure evidence
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: production-playwright-report
+          path: test-results/
+          retention-days: 7
+
+  promote:
+    name: Promote verified digest to stable tags
+    needs: [build, smoke-test]
+    if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      VERIFIED_IMAGE: ghcr.io/${{ needs.build.outputs.repository }}@${{ needs.build.outputs.digest }}
+      GHCR_IMAGE: ghcr.io/${{ needs.build.outputs.repository }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/login-action@v4
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+      - name: Promote the tested manifest without rebuilding
+        run: |
+          VERSION="${RELEASE_TAG#v}"
+          docker buildx imagetools create --prefer-index=false \
+            -t "$GHCR_IMAGE:$RELEASE_TAG" -t "$GHCR_IMAGE:$VERSION" -t "$GHCR_IMAGE:latest" \
+            "$VERIFIED_IMAGE"
+          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+            HUB_IMAGE="docker.io/$DOCKERHUB_USERNAME/navelix"
+            docker buildx imagetools create --prefer-index=false \
+              -t "$HUB_IMAGE:$RELEASE_TAG" -t "$HUB_IMAGE:$VERSION" -t "$HUB_IMAGE:latest" \
+              "$VERIFIED_IMAGE"
+          fi
+      - name: Verify stable tags still reference the tested digest
+        run: |
+          EXPECTED="${VERIFIED_IMAGE##*@}"
+          verify_digest() {
+            ACTUAL=$(docker buildx imagetools inspect "$1" --format '{{json .Manifest}}' | jq -r '.digest')
+            if [ "$ACTUAL" != "$EXPECTED" ]; then
+              echo "Promoted digest differs from tested digest: $1"
+              exit 1
+            fi
+          }
+          for TAG in "$RELEASE_TAG" "${RELEASE_TAG#v}" latest; do
+            verify_digest "$GHCR_IMAGE:$TAG"
+            if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+              verify_digest "docker.io/$DOCKERHUB_USERNAME/navelix:$TAG"
+            fi
+          done
+      - name: Update Docker Hub Description
+        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+          repository: ${{ env.DOCKERHUB_USERNAME }}/navelix
+          short-description: "Navelix · Personal Digital Hub"
+          readme-filepath: ./DOCKER.md
+
+  notify:
+    name: Notify release result
+    needs: [quality, build, smoke-test, promote]
+    if: ${{ always() && github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v') }}
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
       - name: Send Telegram Notification
         if: ${{ always() && github.event.release != null }}
         env:
@@ -270,10 +373,11 @@ jobs:
 
           SHORT_SHA="${{ github.sha }}"
           SHORT_SHA="${SHORT_SHA:0:7}"
-          STATUS="${{ job.status }}"
+          STATUS="${{ needs.promote.result }}"
+          if [ "${{ needs.quality.result }}" != "success" ] || [ "${{ needs.build.result }}" != "success" ] || [ "${{ needs.smoke-test.result }}" != "success" ]; then STATUS=failed; fi
           MESSAGE=$(printf '%s\n' \
             "🐳 Docker 镜像构建完成 [${STATUS}]" \
-            "Navelix Docker 镜像版本 (sha-${SHORT_SHA}) 在 GitHub Actions 集中构建与冒烟测试已完成。" \
+            "Navelix Docker 镜像版本 (sha-${SHORT_SHA}) 在 GitHub Actions 集中发布流水线已结束（状态见下文）。" \
             "发布版本: ${{ github.event.release.tag_name }}，状态: ${STATUS}。")
 
           PAYLOAD_FILE=$(mktemp)

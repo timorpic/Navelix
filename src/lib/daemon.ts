@@ -89,10 +89,12 @@ export function startBackgroundDaemon(): void {
     scheduleTask(() => runDatabaseMaintenance(), 12 * 60 * 60 * 1000),
   );
 
-  // 3. 每日自动异地云备份检查（每 24 小时；上传可能因网络超时，完成后才调度下一轮）
+  // 3. 每小时检查持久化的成功时间；失败重试，重启不会重置每日备份周期。
   globalThis.__navelix_daemon_timers__.push(
-    scheduleTask(() => runCloudBackupSchedule(), 24 * 60 * 60 * 1000),
+    scheduleTask(() => runCloudBackupSchedule(), 60 * 60 * 1000),
   );
+  const cloudBackupInit = setTimeout(() => { void runCloudBackupSchedule(); }, 120_000);
+  globalThis.__navelix_daemon_timers__.push(cloudBackupInit);
 
   // 4. 本地自动备份（每 24 小时检查一次；目录内已有 24 小时内的快照则跳过，
   //    因此与上面的云备份共享同一份快照，不会在同一天重复 VACUUM INTO）

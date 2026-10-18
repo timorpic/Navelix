@@ -1,5 +1,12 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import path from "node:path";
+
+const runtimeDataPath = process.env.NAVELIX_DATA_DIR
+  ? path.relative(process.cwd(), path.resolve(process.env.NAVELIX_DATA_DIR.trim())) : null;
+// Turbopack rejects patterns outside its project root; those files are outside tracing scope already.
+const runtimeDataExcludes = runtimeDataPath && !runtimeDataPath.startsWith("..") && !path.isAbsolute(runtimeDataPath)
+  ? [`${runtimeDataPath}/**`] : [];
 
 // 生产环境移除 'unsafe-eval'（Next.js 生产包无需 eval），开发保留以兼容 HMR
 const isProduction = process.env.NODE_ENV === "production";
@@ -44,7 +51,7 @@ const nextConfig: NextConfig = {
   // 导致冒烟测试的 NAVELIX_ADMIN_PASSWORD 登录校验失败。
   // 种子数据源在 src/data/links.ts（由模块打包正常引入），不受此排除影响。
   outputFileTracingExcludes: {
-    "/*": ["./data/**"],
+    "/*": ["./data/**", "**/.app_secret", "**/navelix.db", "**/navelix.db-wal", "**/navelix.db-shm", "**/navelix-admin-password.txt", ...runtimeDataExcludes],
   },
   images: {
     remotePatterns: [

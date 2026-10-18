@@ -199,7 +199,10 @@ async function PUTHandler(req: NextRequest) {
     }
 
     // 执行安全还原：先对当前库做回滚保护快照
-    performDatabaseBackup("system-before-cloud-restore");
+    if (!performDatabaseBackup("system-before-cloud-restore")) {
+      try { fs.unlinkSync(tempFile); } catch { /* best effort */ }
+      return localizedJson({ error: "恢复前保护性备份失败，已终止还原，当前数据未修改" }, { status: 503 });
+    }
 
     try {
       // 验证下载的 SQLite 文件的合法性

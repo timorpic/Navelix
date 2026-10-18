@@ -8,9 +8,11 @@
 interface RateBucket {
   count: number;
   windowStart: number;
+  expiresAt: number;
 }
 
 const buckets = new Map<string, RateBucket>();
+const MAX_BUCKETS = 10_000;
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -33,7 +35,12 @@ export function simpleRateLimit(
   const bucket = buckets.get(key);
 
   if (!bucket || now - bucket.windowStart >= windowMs) {
-    buckets.set(key, { count: 1, windowStart: now });
+    // Bounded memory even when untrusted clients continually change identifiers.
+    if (!bucket && buckets.size >= MAX_BUCKETS) {
+      for (const [id, entry] of buckets) if (entry.expiresAt <= now) buckets.delete(id);
+      if (buckets.size >= MAX_BUCKETS) return { allowed: false, retryAfterMs: windowMs };
+    }
+    buckets.set(key, { count: 1, windowStart: now, expiresAt: now + windowMs });
     return { allowed: true, retryAfterMs: 0 };
   }
 

@@ -34,11 +34,14 @@
 
 源码 CI 执行 lint、类型检查、覆盖率、生产构建和 Playwright。`.github/workflows/docker.yml` 在 Release 发布或手动触发时构建镜像：
 
-1. Release tag 与 `package.json` 做版本一致性校验。
+1. 跳过非应用 Release，复用同一提交的源码 CI（lint、类型、覆盖率、构建及生产 E2E），校验应用 Release tag 与 `package.json` 一致。
 2. 如配置 `EE_COMMERCIAL_BUNDLE`，从 Secret 恢复商业驱动；没有则构建 CE。
-3. 推送 GHCR，并在 Docker Hub 凭据可用时推送 Docker Hub；产出 latest、版本及 SHA 等标签。
-4. 冒烟任务拉取本次 SHA 标签，检查登录、种子数据读取、配置写入、敏感字段过滤、非 root 运行、数据目录权限与镜像制品；另以独立 Docker 卷构造历史 v20 旧库，验证自动升级、日志查询、审计写入及原记录保留。
+3. 只向 GHCR 推送本次运行的 `candidate-<run_id>-<attempt>` 标签，并记录不可变 digest。
+4. 冒烟任务按 digest 拉取，检查登录、种子数据、配置写入、敏感字段、非 root、数据权限与制品；以独立卷验证历史 v20 升级；另启动独立容器运行生产镜像 E2E。
+5. 仅正式应用 Release 的全部门禁成功后，用同一 manifest digest 提升 GHCR 的版本及 latest；有凭据时同步 Docker Hub。使用 `imagetools create --prefer-index=false` 保留单一来源 manifest 格式，不重新构建。手动触发和预发布保留候选，不提升稳定标签。
 
-工作流当前先推送后运行冒烟；推送成功不代表验收通过，维护者需检查冒烟结果。组件改动随应用产物分发，不需要额外组件发布步骤。
+跨 registry 的提升不是事务：若只有一个 registry 成功，需分别报告并修复失败渠道；已经提升的也是通过验证的镜像。发布流程串行执行，任一验收失败时不进入提升任务。组件改动随应用产物分发，无独立组件发布步骤。该流程实现参考 [Docker imagetools create](https://docs.docker.com/reference/cli/docker/buildx/imagetools/create/)，远程发布结果须在实际运行后核验。
 
 版本与日志脚本见 [DEVELOPMENT](DEVELOPMENT.md)，持久化和运行条件见 [DEPLOYMENT](DEPLOYMENT.md)。
+
+构建入口先清理旧 standalone。当前 Next.js 的 instrumentation trace 不应用路由排除规则，入口会在构建后移除生成产物中的运行数据副本及其 trace 引用，并拒绝仍含主密钥、运行数据库或初始密码文件的产物；检查不读取密钥内容。

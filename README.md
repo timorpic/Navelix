@@ -157,7 +157,7 @@ services:
       - ./data:/app/data
 ```
 
-> 💡 提示：仓库自带 `docker-compose.yml` 使用 `/volume1/docker/navelix` 挂载数据，并包含可选 Watchtower 服务；请按实际主机调整路径和自动更新策略。
+> 💡 提示：仓库 Compose 使用 `latest` 和 `/volume1/docker/navelix` 数据挂载，保留原有 Watchtower 使用方式，无需新增配置变量。请按实际主机调整路径。生产验收与密钥恢复见 [运维手册](docs/PRODUCTION-ACCEPTANCE.md)。
 
 运行命令：
 
