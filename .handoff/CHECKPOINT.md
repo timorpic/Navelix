@@ -12,7 +12,9 @@
 
 ## 工作区与记录边界
 
-当前工作分支 codex/release-2.10.21-verification 仅保存结果记录，无业务代码变更。记录自身的提交/推送/合并状态以 git status、git log 与对应 PR 的实时结果为准，不以静态文件中的自引用哈希追逐提交。
+采集现场：仓库根目录 /root/Navelix，分支 codex/release-2.10.21-verification，HEAD 为 cc4c75c6773fbe08f6cbf25d5ddf1096e1703fa7，与远程同名分支同步。采集时暂存路径：无；未暂存路径：无；未跟踪路径：无，git status --short 为空。
+
+本次采集后的预定修改仅为 .handoff/CHECKPOINT.md，用于补全上述现场清单；不含业务代码变更。该记录提交后的 HEAD、推送与 PR #22 合并状态以 git status、git log 与对应 PR 的实时结果为准；上述哈希表示采集基点，不表示包含本记录的提交。
 
 发布代码提交为 f020f13d2ed73162aaf6552780433a233c9d127b，合并自 PR #21；Tag v2.10.21 固定指向该提交。后续仅文档记录提交不改变该发布基线。
 
