@@ -16,6 +16,8 @@
 
 本次采集后的预定修改仅为 .handoff/CHECKPOINT.md，用于补全上述现场清单；不含业务代码变更。该记录提交后的 HEAD、推送与 PR #22 合并状态以 git status、git log 与对应 PR 的实时结果为准；上述哈希表示采集基点，不表示包含本记录的提交。
 
+忽略路径清单（仅记录名称，不读取敏感内容）：.claude/、.next/、.pnpm-store/、coverage/、data/、ee/、next-env.d.ts、node_modules/、test-results/、tsconfig.tsbuildinfo。它们未纳入本次提交或发布凭据；生产与远程发布状态见下方证据。
+
 发布代码提交为 f020f13d2ed73162aaf6552780433a233c9d127b，合并自 PR #21；Tag v2.10.21 固定指向该提交。后续仅文档记录提交不改变该发布基线。
 
 ## 已完成与验证证据
