@@ -51,6 +51,14 @@ Playwright 配置自行创建临时数据目录，先构建生产包再以 `next
 
 CI 配置见 `.github/workflows/ci.yml`，镜像发布与冒烟测试见 `.github/workflows/docker.yml`。两条工作流中的 JavaScript action 均使用 Node.js 24 运行时，应用构建与测试由 `actions/setup-node` 配置为 Node.js 24；action 运行时版本与应用 Node.js 版本独立。本地 Hook 仅执行类型与 lint，不代表完整 CI 已通过。
 
+## main 分支保护
+
+`main` 已启用个人维护模式的分支保护。所有变更（含管理员）通过短期分支创建 PR，两个 GitHub Actions 检查 `Lint, Test & Build` 和 `Playwright E2E (Core UI Flow)` 均成功、分支保持最新且讨论解决后才能合并。审批人数设为 0，个人维护者无需另一人批准自己的 PR；这不免除代码自查与 CI。强推和删除 main 均被禁止，不配置日常绕过。
+
+依赖更新 PR 按实际差异审查并等待 CI；不能因为由机器人创建就批量合并。Issue 先定位、验证并通过对应 PR 交付，再按实际解决情况关闭。GitHub 页面中的数量只是待处理事项数量，不代表已确认缺陷。
+
+该设置属于仓库管理配置，不在 Git 文件中自动生效；实际状态以 [main 保护设置](https://github.com/timorpic/Navelix/settings/branches) 为准。调整 CI job 名称时须同步更新 required checks，避免 PR 永久等待不存在的检查。Tag/Release 仍只对应通过验证的目标提交，Docker 构建继续全部在 GitHub Actions 执行。
+
 ## 组件交付
 
 当前组件随应用代码一起交付，没有独立组件发布命令。新增或修改组件需完成调用点接入、类型、样式及必要的交互验证，随应用版本发布。浏览器扩展有独立 `extension/manifest.json` 和说明，不能用应用版本号覆盖其版本策略。

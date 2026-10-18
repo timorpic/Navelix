@@ -20,7 +20,6 @@ jobs:
     name: Build Candidate Image
     needs: quality
     outputs:
-      repository: ${{ steps.repo_name.outputs.repo }}
       digest: ${{ steps.push.outputs.digest }}
     runs-on: ubuntu-latest
     permissions:
@@ -268,8 +267,9 @@ jobs:
       - name: Verify production candidate UI
         env:
           E2E_BASE_URL: http://localhost:3722
-          IMAGE: ghcr.io/${{ needs.build.outputs.repository }}@${{ needs.build.outputs.digest }}
+          IMAGE_DIGEST: ${{ needs.build.outputs.digest }}
         run: |
+          IMAGE=$(node scripts/image-reference.mjs)
           docker run -d --name production-e2e -p 127.0.0.1:3722:3721 \
             -e NAVELIX_ADMIN_PASSWORD=e2e-test-password "$IMAGE"
           trap 'docker stop production-e2e >/dev/null 2>&1 || true' EXIT
@@ -300,8 +300,7 @@ jobs:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       RELEASE_TAG: ${{ github.event.release.tag_name }}
-      VERIFIED_IMAGE: ghcr.io/${{ needs.build.outputs.repository }}@${{ needs.build.outputs.digest }}
-      GHCR_IMAGE: ghcr.io/${{ needs.build.outputs.repository }}
+      IMAGE_DIGEST: ${{ needs.build.outputs.digest }}
     steps:
       - uses: actions/checkout@v6
       - uses: docker/setup-buildx-action@v4
@@ -317,6 +316,8 @@ jobs:
           password: ${{ env.DOCKERHUB_TOKEN }}
       - name: Promote the tested manifest without rebuilding
         run: |
+          VERIFIED_IMAGE=$(node scripts/image-reference.mjs)
+          GHCR_IMAGE="${VERIFIED_IMAGE%@*}"
           VERSION="${RELEASE_TAG#v}"
           docker buildx imagetools create --prefer-index=false \
             -t "$GHCR_IMAGE:$RELEASE_TAG" -t "$GHCR_IMAGE:$VERSION" -t "$GHCR_IMAGE:latest" \
@@ -329,6 +330,8 @@ jobs:
           fi
       - name: Verify stable tags still reference the tested digest
         run: |
+          VERIFIED_IMAGE=$(node scripts/image-reference.mjs)
+          GHCR_IMAGE="${VERIFIED_IMAGE%@*}"
           EXPECTED="${VERIFIED_IMAGE##*@}"
           verify_digest() {
             ACTUAL=$(docker buildx imagetools inspect "$1" --format '{{json .Manifest}}' | jq -r '.digest')
