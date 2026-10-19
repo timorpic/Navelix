@@ -15,7 +15,7 @@
 
 ## 验收与发布
 
-目标版本 v2.10.23：已查询远程 Tag 与 Release，最新为 v2.10.22。版本脚本同步四个版本位置，CHANGELOG 真源。按 main 分支保护，经 PR 的 Lint, Test & Build 与 Playwright E2E (Core UI Flow) 必需检查通过后合并，再推送 Tag、发布 Release，并等待镜像质量/候选/冒烟/稳定标签提升成功。
+本轮发布版本为 v2.10.23；发版前查询远程 Tag 与 Release，当时最新为 v2.10.22。版本脚本同步四个版本位置，CHANGELOG 真源。按 main 分支保护，经 PR 的 Lint, Test & Build 与 Playwright E2E (Core UI Flow) 必需检查通过后合并，再推送 Tag、发布 Release，并等待镜像质量/候选/冒烟/稳定标签提升成功。
 
 ## 约束与入口
 
