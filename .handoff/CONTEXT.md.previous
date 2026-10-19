@@ -4,8 +4,8 @@
 - project_id: Navelix
 - task_id: assistant-header-row-20261019
 - context_revision: 8
-- updated_at: 2026-10-19T22:26:33+08:00
-- status: completed
+- updated_at: 2026-10-19T22:14:01+08:00
+- status: active
 
 ## 用户目标与授权
 
@@ -20,7 +20,3 @@
 ## 约束与入口
 
 依据 AGENTS.md、docs/AGENT-RULES.md 第 18 节、docs/DEVELOPMENT.md、docs/DEPLOYMENT.md、DESIGN.md、MEMORY.md。本地无 Computer Use，已向用户提供隔离演示页并按反馈迭代；自动回归测试依照仓库 CI 门禁执行。真实业务库不得用于验证，Docker 只在 GitHub Actions 构建。现场见 CHECKPOINT.md。
-
-## 交付结果
-
-v2.10.23 已发布，PR #25 合并，main CI 与镜像流水线成功，六个稳定镜像标签摘要回读一致。预览服务已关闭。完整证据见 CHECKPOINT.md。
