@@ -3,43 +3,52 @@
 - schema_version: 1
 - project_id: Navelix
 - task_id: release-launch-hardening-20261018
-- context_revision: 3
-- checkpoint_seq: 4
-- updated_at: 2026-10-18T23:28:07+08:00
+- context_revision: 4
+- checkpoint_seq: 6
+- updated_at: 2026-10-18T23:43:35+08:00
 - owner: Codex
-- status: active
-- current_step: 修复 v2.10.20 镜像交付失败，准备通过 PR #21 发布 v2.10.21
+- status: completed
+- current_step: 上线加固已发布 v2.10.21、稳定镜像已更新，main 保护验证完成
 
-## 工作区
+## 工作区与记录边界
 
-- 当前分支：codex/main-protection-release-records-20261018。
-- main / PR 基线：e7294b5951286f7278fb60c72fa251d2f2501db5（上线加固发布提交）。
-- 分支已推送文档提交 b88264d；当前新增工作流修复、2.10.21 版本同步、镜像地址校验脚本与回归用例及记录修改尚待提交推送。
-- 当前 package.json / Dockerfile / build-info / admin-system 已同步 2.10.21，CHANGELOG 已准备对应说明。
-- 旧现场完整保存在 .handoff/previous/CHECKPOINT.release-launch.seq3.md。此处只记录当前状态，不继承旧快照中的待执行动作。
+采集现场：仓库根目录 /root/Navelix，分支 codex/release-2.10.21-verification，HEAD 为 cc4c75c6773fbe08f6cbf25d5ddf1096e1703fa7，与远程同名分支同步。采集时暂存路径：无；未暂存路径：无；未跟踪路径：无，git status --short 为空。
 
-## 外部状态与证据
+本次采集后的预定修改仅为 .handoff/CHECKPOINT.md，用于补全上述现场清单；不含业务代码变更。该记录提交后的 HEAD、推送与 PR #22 合并状态以 git status、git log 与对应 PR 的实时结果为准；上述哈希表示采集基点，不表示包含本记录的提交。
 
-- e7294b5 已推送 main。源码 CI 39139519445 成功：578 测试、576 通过、0 失败，覆盖率门禁成功；生产 E2E 30 通过。
-- v2.10.20 Tag 指向 e7294b5；Release https://github.com/timorpic/Navelix/releases/tag/v2.10.20 已标为预发布，并注明镜像交付失败。Tag 未移动或删除。
-- 镜像 run 39139772662：源码质量、候选构建、基础冒烟、旧库升级成功；生产 UI 容器启动因空镜像地址失败，稳定标签提升跳过，本轮未更新 latest。
-- 根因证据：build job 明确记录 Skip output repository since it may contain secret；跨 job 的 repository 值为空，形成 ghcr.io/@sha256 地址。修复为各 job 从官方 GITHUB_REPOSITORY 上下文生成镜像地址，仅跨 job 传 digest；新脚本校验地址与 digest，缺失即失败。
-- PR #21：https://github.com/timorpic/Navelix/pull/21，目前未合并。旧文档提交的两个 CI 已通过；新增修复提交仍须重新等待 CI。
-- main 已受保护且回读确认：两个 checks 绑定 github-actions app 15368（Lint, Test & Build / Playwright E2E (Core UI Flow)），strict=true，required PR，审批人数 0，解决讨论，管理员约束，禁止 force/delete。设置生效前 422 请求未产生变更，修正 API 字段后成功。
+忽略路径清单（仅记录名称，不读取敏感内容）：.claude/、.next/、.pnpm-store/、coverage/、data/、ee/、next-env.d.ts、node_modules/、test-results/、tsconfig.tsbuildinfo。它们未纳入本次提交或发布凭据；生产与远程发布状态见下方证据。
 
-## 当前验证与 review
+发布代码提交为 f020f13d2ed73162aaf6552780433a233c9d127b，合并自 PR #21；Tag v2.10.21 固定指向该提交。后续仅文档记录提交不改变该发布基线。
 
-- 原发布提交的 typecheck/lint/隔离生产构建与源 CI 通过。当前版本同步和新脚本已通过版本/CHANGELOG 校验、node --check、工作流 YAML / bash -n 及 diff 空白检查。
-- 新增镜像地址构造的回归用例尚待远程 CI；未本地执行 Docker 构建或浏览器测试。
-- PR review 指出检查点旧状态与追加记录冲突，已保留完整旧快照并重写当前 CONTEXT/CHECKPOINT；修复提交后再将该线程标为已解决，不绕过讨论门禁。
-- Computer Use / OpenMemory unavailable，无共享条目采用；真实生产、恢复与容量演练未执行。
+## 已完成与验证证据
 
-## 下一步
+- PR #21 已在必需 CI 全成功、review 线程解决后正常 squash 合并，未使用 admin bypass。合并前后文件树一致。
+- PR CI 39140665239、main CI 39140876377 成功，均包括类型、lint、覆盖率、生产构建和生产 E2E。
+- v2.10.21 正式 Release：https://github.com/timorpic/Navelix/releases/tag/v2.10.21。
+- Docker GitHub Actions run 39141084086 成功：https://github.com/timorpic/Navelix/actions/runs/39141084086。
+- 该 run 的源码质量、候选镜像构建、基础 CRUD/鉴权/敏感字段/非 root 冒烟、历史 v20 升级、生产镜像 UI（30 passed）、稳定标签提升与 digest 核验、发布通知均成功。
+- GHCR / Docker Hub 的 latest、v2.10.21、2.10.21 已由提升任务核对同一被测 digest：`sha256:5bb021fbd288af45dc33de4f161b9d2c3d047d02840d2d3b9185c25eed67c3d7`。
+- 另通过 Docker Hub 公共 API 独立回读三个标签，digest 均与 UI 被测镜像一致；latest 已从 2026-10-15 的旧 digest 更新到本次镜像。
+- Docker 镜像的构建、运行验证和推送全部在 GitHub Actions，本地未执行 Docker build/run。
 
-1. 提交并推送工作流修复与 2.10.21，重写 PR #21 的最终标题/说明，处理已修复的检查点 review 线程。
-2. 等待 PR 自身 CI 全通过，正常合并（不绕过 main 保护），再对经过验证的目标提交创建 v2.10.21 Tag/Release。
-3. 跟踪 GitHub Actions 镜像门禁和 registry digest，成功后向用户提供从生产 v2.10.19 升级的准确交付结果。
+## main 保护与流程
 
-## 授权边界
+已通过 API 应用并回读 protected=true：必需 PR；两个 required checks 绑定 github-actions app 15368（Lint, Test & Build / Playwright E2E (Core UI Flow)）；strict=true；审批人数 0；要求解决讨论；管理员同样受约束；禁止 force/delete。
 
-用户已授权发布及仓库保护；未直接操作生产实例，未自动调度其他 Agent，未发送额外外部消息，不批量处理截图中的其他 PR / Issue。发布镜像只在 GitHub Actions 执行。
+用户明确选择个人维护模式，不强制另一人批准。PR #21 实际验证了 CI/未解决讨论会阻止合并，条件满足后可正常合并。截图中的其他 Issue / PR 没有被批量关闭或合并。
+
+## 失败处理与历史
+
+v2.10.20 的镜像 run 39139772662 失败：跨 job 仓库名输出被 Actions Secret masking 屏蔽，UI 容器地址为空，稳定标签提升被跳过，未覆盖旧 latest。保留原 Tag 并将 Release 标为预发布，说明交付失败；没有移动或复用已发布 Tag。修复由 v2.10.21 交付：镜像地址在各 job 内从官方上下文构造，仅跨 job 传 digest，增加输入校验与回归用例，保留全部门禁。
+
+已修复 PR review 指出的检查点旧状态冲突：完整旧现场保存在 previous/，当前文件改写为有效状态，不追加过时待办。上一版现场见 .handoff/previous/CHECKPOINT.release-launch.seq5.md。
+
+## 生产边界与限制
+
+用户生产已部署 v2.10.19，本次提供原地升级镜像：继续使用 latest，保留原数据卷与环境变量。升级前保留可恢复快照和原 .app_secret / APP_SECRET；正常实例无需执行旧密钥迁移工具。未直接部署或修改生产数据；真实 HTTPS、云服务、RPO/RTO、容量与 Computer Use 验收未在本轮执行，不能以 CI / 镜像冒烟替代这些证据。
+
+Computer Use / OpenMemory unavailable；无共享记忆条目采用或 retain。本地长期约定已更新，发布过程与原始日志不写入 MEMORY。
+
+## 交付
+
+发布和仓库保护目标已完成。生产升级由用户按 docs/PRODUCTION-ACCEPTANCE.md 与 docs/DEPLOYMENT.md 执行；未来代码变更继续走分支、PR、必需 CI 与 release 门禁。
