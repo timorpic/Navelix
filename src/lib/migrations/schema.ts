@@ -36,6 +36,29 @@ export const CATEGORY_SUBSCRIPTIONS_TABLE_SQL = `CREATE TABLE IF NOT EXISTS user
       PRIMARY KEY (user_id, category_id, owner_id)
     );`;
 
+/**
+ * 工作区高频查询的索引（两处 schema 共用同一常量）。
+ *
+ * projects / user_todos / user_links / user_categories 的主键是复合 `(id, user_id)`，
+ * 前缀为 id —— 所有 `WHERE user_id = ?` 的查询都无法走主键。这些索引服务：
+ * 项目列表与 revision 快照、首页统计与 AI 每日计划、里程碑同步、分类页与级联删除。
+ */
+export const WORKSPACE_INDEXES_SQL = `
+    CREATE INDEX IF NOT EXISTS idx_projects_user_sort
+      ON projects(user_id, sort_order);
+
+    CREATE INDEX IF NOT EXISTS idx_user_todos_user_done_created
+      ON user_todos(user_id, done, created_at);
+
+    CREATE INDEX IF NOT EXISTS idx_user_todos_user_project
+      ON user_todos(user_id, project_id);
+
+    CREATE INDEX IF NOT EXISTS idx_user_links_user_category
+      ON user_links(user_id, category);
+
+    CREATE INDEX IF NOT EXISTS idx_user_categories_user
+      ON user_categories(user_id);`;
+
 export function ensureSchema(db: DatabaseSync): void {
   db.exec(USER_NOTIFICATION_SETTINGS_SQL);
   db.exec(TELEGRAM_DELIVERIES_SQL);
@@ -60,6 +83,10 @@ export function ensureSchema(db: DatabaseSync): void {
   ensureColumn(db, "projects", "description", "description TEXT NOT NULL DEFAULT ''");
   ensureColumn(db, "projects", "created_at", "created_at INTEGER NOT NULL DEFAULT 0");
   ensureColumn(db, "projects", "updated_at", "updated_at INTEGER NOT NULL DEFAULT 0");
+
+  // 索引必须在上述列补齐之后创建：旧库要等 ensureColumn 补出 project_id 等列，
+  // 才能建立引用它们的索引（新建库上这些列已由建表 DDL 提供）。
+  db.exec(WORKSPACE_INDEXES_SQL);
 }
 
 /**
@@ -79,4 +106,9 @@ export function ensureSchemaPostMigrations(db: DatabaseSync): void {
   for (const col of ["cliproxy_enabled", "cliproxy_url", "cliproxy_key"]) {
     dropColumn(db, "user_configs", col);
   }
+
+  // 工作区索引放在**迁移之后**补齐：v5 会重建 projects/user_links/user_categories
+  // 等表（DROP + RENAME），重建过程连同索引一起丢弃。前置 ensureSchema 里的同名
+  // 语句对新库无效（随后被 v5 删除），因此这里必须再执行一次。
+  db.exec(WORKSPACE_INDEXES_SQL);
 }

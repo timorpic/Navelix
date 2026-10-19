@@ -8,6 +8,7 @@ import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
 import { toLocalDateStr } from "@/lib/date-utils";
 import { resolveAIConfig } from "@/lib/ai-provider";
+import { normalizeProjectStatus } from "@/lib/project-status";
 
 const REQUEST_TIMEOUT_MS = 25_000;
 
@@ -38,11 +39,12 @@ async function POSTHandler(req: Request) {
       )
       .all(user.id) as Array<{ title: string; priority: string; due_date: string }>;
 
-    const activeProjects = db
-      .prepare(
-        "SELECT name, status FROM projects WHERE user_id = ? AND status != '已完成' LIMIT 5",
-      )
-      .all(user.id) as Array<{ name: string; status: string }>;
+    // 已完成判定必须走归一化：历史库可能存中文、英文或自定义变体，SQL 无法表达。
+    const activeProjects = (
+      db
+        .prepare("SELECT name, status FROM projects WHERE user_id = ? ORDER BY updated_at DESC")
+        .all(user.id) as Array<{ name: string; status: string }>
+    ).filter((p) => normalizeProjectStatus(p.status) !== "completed").slice(0, 5);
 
     // 2. 读取当前用户的 AI 配置（统一解析见 lib/ai-provider.ts）
     const { apiKey, modelName, targetUrl } = resolveAIConfig();

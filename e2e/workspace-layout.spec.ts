@@ -50,6 +50,33 @@ test("助手覆盖主内容，快捷操作与悬浮入口共用会话，旧展�
   await launcher.click(); await expect(drawer.getByText("已收到你的安排请求 2", { exact: false })).toBeVisible();
 });
 
+test("AI 删除确认卡：按钮走确定性接口，取消后数据仍在", async ({ page }) => {
+  await login(page);
+  const title = `删除确认卡回归 ${Date.now().toString().slice(-8)}`;
+  expect(await write(page, "/api/todos", { title, priority: "high" })).toBe(200);
+  const pendingId = "c".repeat(32);
+  await page.route("**/api/ai/chat", route => route.fulfill({
+    json: { text: `我将删除「${title}」。`, deletions: [{ pendingId, targetName: title, message: `⚠️ 将删除「${title}」。` }] },
+  }));
+  const decisions: Record<string, unknown>[] = [];
+  await page.route("**/api/ai/confirm-delete", async route => {
+    decisions.push(route.request().postDataJSON());
+    await route.fulfill({ json: { success: true, message: "已取消删除操作。" } });
+  });
+  await page.getByRole("button", { name: "AI 助手", exact: true }).last().click();
+  const drawer = page.getByRole("dialog", { name: "AI 助手", exact: true });
+  await drawer.getByRole("textbox").fill("删除这个待办");
+  await drawer.getByRole("button", { name: "发送", exact: true }).click();
+  await expect(drawer.getByRole("button", { name: "确认删除", exact: true })).toBeVisible();
+  await drawer.getByRole("button", { name: "取消", exact: true }).click();
+  await expect.poll(() => decisions.length).toBe(1);
+  expect(decisions[0]).toEqual({ pendingId, decision: "cancel" });
+  await expect(drawer.getByText("已取消删除操作。", { exact: false })).toBeVisible();
+  // 待办没有被删除：数据仍在
+  const todos = await page.evaluate(async () => (await (await fetch("/api/user/data", { cache: "no-store" })).json()).todos as { title: string }[]);
+  expect(todos.some(todo => todo.title === title)).toBe(true);
+});
+
 test("首页不显示动态，顶部通知保留已读、待办与完整记录入口", async ({ page }) => {
   await login(page);
   expect(await write(page, "/api/user/data", { config: { pendingRemindersEnabled: true, todayActivityEnabled: true } })).toBe(200);

@@ -48,6 +48,16 @@ export const defaultConfig: SystemConfig = {
   socialLinksEnabled: true,
 };
 
+/**
+ * 实体写结果。
+ *
+ * `conflict: true` 表示服务端拒绝了本次写入（工作区已在别处更新）——
+ * 数据已自动刷新，调用方应保留用户输入并提示重试，而不是静默重置表单。
+ */
+export type WorkspaceMutationResult =
+  | { ok: true; data: Record<string, unknown> }
+  | { ok: false; conflict: boolean; status: number; error: string };
+
 export interface NavelixDataApi {
   user?: {
     id: string;
@@ -64,6 +74,17 @@ export interface NavelixDataApi {
   todos: TodoItem[];
   hydrated: boolean;
   refreshData: () => void;
+  /**
+   * 实体写操作的统一入口。
+   *
+   * 自动注入 `expectedRevision`、串行化同页连续写入、成功后同步本地 revision。
+   * 冲突（409）时已自动刷新数据，返回 `conflict: true`，调用方据此保留用户
+   * 草稿并提示重新提交。
+   */
+  mutateWorkspace: (
+    url: string,
+    init: { method: "POST" | "PATCH" | "DELETE"; body?: unknown },
+  ) => Promise<WorkspaceMutationResult>;
   saveProjects: (projects: Project[]) => void;
   addCategory: (name: string, icon: string, isTeamShared?: boolean) => void;
   deleteCategory: (id: string) => void;

@@ -2,7 +2,6 @@
 
 import { todoUrl } from "@/lib/todo-url";
 
-import { useText } from "@/hooks/use-text";
 import { useTranslations } from "next-intl";
 import React, { useState, useEffect, useCallback } from "react";
 import type { Project, WorkspaceMember } from "@/types";
@@ -14,27 +13,34 @@ import ProjectGanttView from "./project-gantt-view";
 import { useGantt } from "@/hooks/use-gantt";
 import { useAiBreakdown, type GeneratedTask } from "@/hooks/use-ai-breakdown";
 import AiBreakdownCard from "./ai-breakdown-card";
+import {
+  DEFAULT_PROJECT_STATUS,
+  displayProjectStatus,
+  normalizeProjectStatus,
+  projectStatusOptions,
+  toStoredStatus,
+} from "@/lib/project-status";
 const STATUS_PRESETS = [
   {
-    label: "进行中",
+    key: "in-progress",
     color: "#00C776",
     badge:
       "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900",
   },
   {
-    label: "研究中",
+    key: "research",
     color: "#0284C7",
     badge:
       "bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 border-sky-200 dark:border-sky-900",
   },
   {
-    label: "维护中",
+    key: "maintenance",
     color: "#D97706",
     badge:
       "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-900",
   },
   {
-    label: "已完成",
+    key: "completed",
     color: "#9333EA",
     badge:
       "bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400 border-purple-200 dark:border-purple-900",
@@ -44,11 +50,10 @@ const STATUS_PRESETS = [
 type ProjectViewTab = "cards" | "gantt";
 
 export default function ProjectsView() {
-  const text = useText();
   const tx = useTranslations();
   const confirmDialog = useConfirm();
   const [viewTab, setViewTab] = useState<ProjectViewTab>("cards");
-  const { projects, todos, refreshData, hydrated } = useNavelixData();
+  const { projects, todos, refreshData, hydrated, mutateWorkspace } = useNavelixData();
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
   // AI 拆解草稿：任务列表、微调操作与同步开关全部由 hook 持有
   const ai = useAiBreakdown(members);
@@ -57,7 +62,7 @@ export default function ProjectsView() {
   // Form States
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState("进行中");
+  const [status, setStatus] = useState<string>(DEFAULT_PROJECT_STATUS);
   const [color, setColor] = useState("#00C776");
   const [url, setUrl] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -125,7 +130,7 @@ export default function ProjectsView() {
   const resetForm = () => {
     setName("");
     setDescription("");
-    setStatus("进行中");
+    setStatus(DEFAULT_PROJECT_STATUS);
     setColor("#00C776");
     setUrl("");
     setEditingId(null);
@@ -142,20 +147,23 @@ export default function ProjectsView() {
     try {
       if (editingId) {
         // 编辑模式：将项目基本信息与拆解/修改后的里程碑 todos 原子提交更新
-        const res = await fetch(`/api/projects/${editingId}`, {
+        const res = await mutateWorkspace(`/api/projects/${editingId}`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          body: {
             name: n,
             status,
             color,
             url,
             todos: ai.tasks,
-          }),
+          },
         });
 
         if (!res.ok) {
-          pushNotification(tx("project_update_failed_1ae41d93"), tx("the_server_could_not_save_your_changes_try_again_654bf0e1"), "project");
+          pushNotification(
+            tx("project_update_failed_1ae41d93"),
+            res.conflict ? tx("workspace_save_conflict") : tx("the_server_could_not_save_your_changes_try_again_654bf0e1"),
+            "project",
+          );
           return;
         }
 
@@ -183,14 +191,17 @@ export default function ProjectsView() {
           payload.todos = ai.tasks;
         }
 
-        const res = await fetch("/api/projects", {
+        const res = await mutateWorkspace("/api/projects", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: payload,
         });
 
         if (!res.ok) {
-          pushNotification(tx("project_creation_failed_69e6fd96"), tx("the_server_could_not_save_the_project_try_again__f0dc2104"), "project");
+          pushNotification(
+            tx("project_creation_failed_69e6fd96"),
+            res.conflict ? tx("workspace_save_conflict") : tx("the_server_could_not_save_the_project_try_again__f0dc2104"),
+            "project",
+          );
           return;
         }
 
@@ -213,7 +224,7 @@ export default function ProjectsView() {
   const handleEdit = (p: Project, triggerAi = false) => {
     setEditingId(p.id);
     setName(p.name);
-    setStatus(p.status || "进行中");
+    setStatus(toStoredStatus(p.status));
     setColor(p.color || p.statusColor || "#00C776");
     setUrl(p.url || "");
 
@@ -254,9 +265,13 @@ export default function ProjectsView() {
     });
     if (!okToDelete) return;
     try {
-      const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
+      const res = await mutateWorkspace(`/api/projects/${id}`, { method: "DELETE" });
       if (!res.ok) {
-        pushNotification(tx("delete_failed_8a7bf43e"), tx("the_server_could_not_delete_this_project_try_aga_befb1e22"), "project");
+        pushNotification(
+          tx("delete_failed_8a7bf43e"),
+          res.conflict ? tx("workspace_save_conflict") : tx("the_server_could_not_delete_this_project_try_aga_befb1e22"),
+          "project",
+        );
         return;
       }
       refreshData();
@@ -268,12 +283,11 @@ export default function ProjectsView() {
   // Toggle todo done right inside project view
   const handleToggleTodo = async (id: string, done: boolean, ownerId?: string) => {
     try {
-      const response = await fetch(todoUrl(id, ownerId), {
+      const res = await mutateWorkspace(todoUrl(id, ownerId), {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: !done }),
+        body: { done: !done },
       });
-        if (!response.ok) return;
+      if (!res.ok) return;
       refreshData();
     } catch {
       // ignore
@@ -426,16 +440,18 @@ export default function ProjectsView() {
                 value={status}
                 onChange={(e) => {
                   setStatus(e.target.value);
-                  const p = STATUS_PRESETS.find(
-                    (item) => item.label === e.target.value,
+                  const preset = STATUS_PRESETS.find(
+                    (item) => item.key === e.target.value,
                   );
-                  if (p) setColor(p.color);
+                  if (preset) setColor(preset.color);
                 }}
                 className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#00C776]/40 cursor-pointer font-bold"
               >
-                {STATUS_PRESETS.map((p) => (
-                  <option key={text(p.label)} value={text(p.label)}>
-                    {text(p.label)}
+                {projectStatusOptions(
+                  projects.find((p) => p.id === editingId)?.status,
+                ).map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {displayProjectStatus(opt.value, tx)}
                   </option>
                 ))}
               </select>
@@ -514,7 +530,9 @@ export default function ProjectsView() {
         /* ════════════ 视图 1：项目卡片看板 (Grid Cards) ════════════ */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {projects.map((p) => {
-            const matched = STATUS_PRESETS.find((s) => s.label === p.status);
+            // 历史库可能存中文/英文/自定义变体，徽章必须按归一化后的规范键匹配
+            const statusKey = normalizeProjectStatus(p.status);
+            const matched = STATUS_PRESETS.find((s) => s.key === statusKey);
             const badgeStyle = matched
               ? matched.badge
               : "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400";
@@ -540,7 +558,7 @@ export default function ProjectsView() {
                       <span
                         className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold ${badgeStyle}`}
                       >
-                        {text(p.status || "进行中")}
+                        {displayProjectStatus(p.status, tx)}
                       </span>
                     </div>
 

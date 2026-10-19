@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useNavelixData } from "@/context/navelix-context";
+import { computeProjectMetrics } from "@/lib/dashboard-metrics";
 
 /** 首页小组件：今日摘要（待办完成度与项目进度概览） */
 export default function TodaySummaryWidget() {
@@ -9,11 +10,8 @@ export default function TodaySummaryWidget() {
   const { todos, projects } = useNavelixData();
 
   const done = todos.filter((t) => t.done).length;
-  const inProgress = projects.filter((p) =>
-    [tx("in_progress_760aa168"), tx("development_9ec42862"), tx("research_4ff0f1dd"), "progress"].some((k) =>
-      (p.status || "").toLowerCase().includes(k),
-    ),
-  ).length;
+  // 状态统计与看板共用同一口径，避免第三套包含匹配判定
+  const inProgress = computeProjectMetrics(projects).inProgress;
 
   const data = {
     totalTodos: todos.length,

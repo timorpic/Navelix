@@ -103,7 +103,7 @@ describe("computeTodoMetrics", () => {
 describe("computeProjectMetrics", () => {
   const project = (status: string) => ({ id: "p", name: "P", status }) as never;
 
-  it("按状态自由文本归类（包含匹配）", () => {
+  it("历史中文状态经归一化后归类", () => {
     const r = computeProjectMetrics([
       project("进行中"),
       project("开发中"),
@@ -116,10 +116,40 @@ describe("computeProjectMetrics", () => {
     assert.equal(r.research, 1);
     assert.equal(r.maintenance, 1);
     assert.equal(r.inProgress, 2, "「进行中」与「开发中」都算推进中");
+    assert.equal(r.other, 0);
   });
 
   it("英文 progress 也计入推进中", () => {
     assert.equal(computeProjectMetrics([project("In Progress")]).inProgress, 1);
+  });
+
+  it("规范键直接归类", () => {
+    const r = computeProjectMetrics([
+      project("in-progress"),
+      project("research"),
+      project("maintenance"),
+      project("completed"),
+    ]);
+    assert.deepEqual(
+      [r.inProgress, r.research, r.maintenance, r.completed, r.other],
+      [1, 1, 1, 1, 0],
+    );
+  });
+
+  it("分类互斥：复合状态只计一次（「已完成开发」不再同时算进行中）", () => {
+    const r = computeProjectMetrics([project("已完成开发"), project("finished")]);
+    assert.equal(r.completed, 2);
+    assert.equal(r.inProgress, 0, "旧实现的包含匹配会重复计数");
+  });
+
+  it("否定式状态不算已完成", () => {
+    const r = computeProjectMetrics([project("未完成"), project("未开始"), project("pending")]);
+    assert.equal(r.completed, 0);
+    assert.equal(r.inProgress, 3);
+  });
+
+  it("空状态按默认「进行中」处理", () => {
+    assert.equal(computeProjectMetrics([project("")]).inProgress, 1);
   });
 
   it("交付率四舍五入，无项目时为 0", () => {
@@ -127,10 +157,21 @@ describe("computeProjectMetrics", () => {
     assert.equal(computeProjectMetrics([]).deliveryRate, 0);
   });
 
-  it("未识别的状态不落入任何分类，但仍计入总数", () => {
+  it("未识别的自定义状态计入 other，不落入规范分类但仍计入总数", () => {
     const r = computeProjectMetrics([project("搁置")]);
     assert.equal(r.total, 1);
+    assert.equal(r.other, 1);
     assert.equal(r.inProgress + r.completed + r.research + r.maintenance, 0);
+  });
+
+  it("其余分类计数之和加上 other 等于总数", () => {
+    const r = computeProjectMetrics([
+      project("in-progress"),
+      project("已完成"),
+      project("搁置"),
+      project("调研"),
+    ]);
+    assert.equal(r.inProgress + r.completed + r.research + r.maintenance + r.other, r.total);
   });
 });
 

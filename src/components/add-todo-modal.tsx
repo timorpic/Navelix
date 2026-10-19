@@ -4,6 +4,7 @@ import { useText } from "@/hooks/use-text";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import Modal from "@/components/modal";
+import { useNavelixData } from "@/context/navelix-context";
 import { toLocalDateStr } from "@/lib/date-utils";
 
 interface AddTodoModalProps {
@@ -21,13 +22,15 @@ const PRIORITIES = [
 /**
  * 快速新建待办模态框。
  * 供 PWA 快捷方式（?action=quick-add-todo）等外部入口唤起；
- * 提交走 POST /api/todos，成功后派发 navelix-workspace-updated 触发全局刷新。
+ * 提交经 Provider 的 mutateWorkspace 写 POST /api/todos（携带 workspace revision），
+ * 成功后派发 navelix-workspace-updated 触发全局刷新。
  *
  * 表单状态在挂载时初始化；调用方通过变更 `key` 让每次打开都拿到全新表单。
  */
 export default function AddTodoModal({ open, onClose, onAdded }: AddTodoModalProps) {
   const text = useText();
   const tx = useTranslations();
+  const { mutateWorkspace } = useNavelixData();
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
   const [dueDate, setDueDate] = useState(() => toLocalDateStr());
@@ -42,14 +45,16 @@ export default function AddTodoModal({ open, onClose, onAdded }: AddTodoModalPro
     setSubmitting(true);
     setError("");
     try {
-      const res = await fetch("/api/todos", {
+      const res = await mutateWorkspace("/api/todos", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: trimmed, priority, dueDate }),
+        body: { title: trimmed, priority, dueDate },
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        setError(data?.error || tx("failed_to_create_try_again_2bd59cb7"));
+        setError(
+          res.conflict
+            ? tx("workspace_save_conflict")
+            : res.error || tx("failed_to_create_try_again_2bd59cb7"),
+        );
         return;
       }
       window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));

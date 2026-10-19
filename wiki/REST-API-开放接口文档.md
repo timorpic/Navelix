@@ -168,21 +168,25 @@ Content-Type: application/json
   "assigneeName": "DevOps 运维"
 }
 ```
+- **响应**: `{ "success": true, "todo": { "id": "…" }, "revision": "…" }`。
 
 ### 3.3 更新待办状态与信息
 - **请求方式**: `PATCH /api/todos/{id}?ownerId={任务创建者ID}`
 - `ownerId` 用于区分跨账号同 ID 待办；未指定时必须只有一个可访问目标。所有者和当前责任人可修改。
 - **请求头**: `Authorization: Bearer nvx_live_YOUR_TOKEN`
 - **请求体**: 支持更新任意字段（`done: true/false`, `title`, `priority`, `dueDate`, `assigneeId`, `assigneeName` 等）。
+- **并发控制**: 可选传入 `expectedRevision`（query 或 body），语义与项目写接口一致；成功响应包含新的 `revision`。被委托人（`ownerId` ≠ 当前登录用户）操作他人工作区待办时不做 revision 校验。
 
 ### 3.4 删除待办事项
 - **请求方式**: `DELETE /api/todos/{id}?ownerId={任务创建者ID}`
 - 仅创建者可删除，不能通过相同 ID 删除其他用户的待办。
+- 可选传入 `expectedRevision`；成功响应包含新的 `revision`。
 
 ### 3.5 逾期待办一键/定时顺延 (Rollover API)
 将当前所有已逾期未完成的待办事项自动延期。
 - **请求方式**: `POST /api/todos/rollover`
 - **请求头**: `Authorization: Bearer nvx_live_YOUR_TOKEN`
+- **并发控制**: 可选传入 `expectedRevision`；成功响应包含新的 `revision`。
 - **请求体**:
 | 字段 | 类型 | 必填 | 默认值 | 说明 |
 | :--- | :--- | :--- | :--- | :--- |
@@ -195,10 +199,11 @@ Content-Type: application/json
   "success": true,
   "count": 3,
   "action": "today",
+  "revision": "…",
   "message": "已成功将 3 项过期任务一键顺延至今日！"
 }
 ```
-无逾期项时返回 `{ "success": true, "count": 0, "message": "当前没有需要顺延的过期待办事项" }` —— **该分支不含 `action` 字段**。
+无逾期项时返回 `{ "success": true, "count": 0, "revision": "…", "message": "当前没有需要顺延的过期待办事项" }` —— **该分支不含 `action` 字段**。
 
 > ⚠️ **注意**：
 > - 响应字段名是 **`count`**（不是 `updatedCount`）。
@@ -239,6 +244,8 @@ Content-Type: application/json
 
 > **说明**：`color` / `statusColor` 为十六进制色值（未设置时默认 `#00C776`）。前端「四维指标」（进度 / 任务 / 风险 / 更新）是**由前端根据待办数据本地计算的**，不来自本接口，请勿在集成时依赖该接口返回指标字段。
 
+> **项目状态规范键（自 v2.10.22 起）**：`status` 写入与返回统一使用 4 个规范键 —— `in-progress`、`research`、`maintenance`、`completed`。写入时也接受历史中文/英文变体（如「进行中」「开发中」「In progress」「已完成开发」）并归一化为规范键；无法识别的自定义值原样保留，在统计中计入 `other`。
+
 ### 4.2 创建新项目 (支持原子化里程碑待办同步)
 - **请求方式**: `POST /api/projects`
 - **请求体**:
@@ -264,13 +271,17 @@ Content-Type: application/json
   ]
 }
 ```
+- **响应**: `{ "success": true, "project": {...}, "revision": "…" }`。`revision` 为该用户工作区的最新版本，可直接用于下一次写操作。
 
 ### 4.3 更新项目信息与里程碑清单
 - **请求方式**: `PATCH /api/projects/{id}`
 - **说明**: 传入 `todos` 数组将以 Diff 形式原子更新该项目关联的所有里程碑待办。
+- **并发控制**: 可选传入 `expectedRevision`（query 或 body）。携带时若工作区已被其他写操作更新，返回 `409` / `WORKSPACE_CONFLICT` 且不写入；不携带时跳过校验，保持对旧版 Token 客户端的兼容。成功响应包含新的 `revision`。
 
 ### 4.4 删除项目
 - **请求方式**: `DELETE /api/projects/{id}`
+- 关联的里程碑待办在同一事务内一并删除。
+- **并发控制**: 同 4.3，成功响应包含 `revision`；冲突时返回 `409` / `WORKSPACE_CONFLICT` 且不删除。
 
 ---
 
@@ -318,6 +329,8 @@ Content-Type: application/json
 > | `smart_rules_fallback` | 已配置 Key 但模型调用失败，回落至内置引擎 |
 >
 > `tasks[]` 的字段固定为 `title` / `priority` / `dueDate` / `assigneeId` / `assigneeName`，**没有 `daysOffset`**。
+>
+> **规则拆解的匹配方式（自 v2.10.22 起）**：`smart_rules` / `smart_rules_fallback` 会按项目名中的关键词加权选择模板（部署 / 重构 / 设计 / 通用）。英文关键词按整词匹配（`UI refresh` 命中设计，`Build pipeline` 不会因含 `ui` 误命中）；中文按子串匹配；同时命中多类时取总分最高者。响应额外携带 `matchedCategory` 与 `matchedKeywords` 便于排查。
 
 ### 5.2 AI 智能每日日程规划与建议
 - **请求方式**: `POST /api/ai/daily-schedule`
@@ -357,6 +370,17 @@ Content-Type: application/json
 ```
 
 > ⚠️ **注意**：本接口的响应结构与其它 AI 接口不同 —— **直接返回 `{ "text": "..." }`，没有 `success` / `source` / `tasks` 字段**；出错时同样返回 `{ "text": "错误说明" }` 而非 `{ "error": ... }`。客户端请以 `text` 是否存在来判断成败。
+
+> **删除确认（自 v2.10.22 起）**：模型发起删除待办/项目时，响应会额外携带 `deletions` 数组，需要用户在界面上显式确认后才会执行：
+```json
+{
+  "text": "……",
+  "deletions": [
+    { "pendingId": "3f2a…（32 位十六进制）", "targetName": "周报整理", "message": "⚠️ 删除操作需要您的确认：将删除「周报整理」。……" }
+  ]
+}
+```
+> 没有待确认删除时**不返回** `deletions` 字段。确认或取消请调用 `POST /api/ai/confirm-delete`，请求体为 `{ "pendingId": "…", "decision": "confirm" | "cancel" }`：服务端只接受枚举值、不解析自然语言；`pendingId` 不存在、已过期（5 分钟）或不属于当前用户时返回 404 `DELETE_CONFIRMATION_INVALID`；写入失败返回 409。成功返回 `{ "success": true, "message": "…" }`。待确认项保存在进程内，多副本部署需改造成持久化存储。
 
 ---
 
@@ -537,6 +561,7 @@ Content-Type: application/json
 | 方法 | 路径 | 说明 |
 | :--- | :--- | :--- |
 | `POST` | `/api/ai/summarize` | 传 `{ "url": "..." }`，服务端抓取网页并由 AI 生成摘要，响应形如 `{ notes, title, generated? }`（未配置 Key 时返回内置兜底笔记） |
+| `POST` | `/api/ai/confirm-delete` | 确认或取消 AI 发起的删除，传 `{ "pendingId": "…", "decision": "confirm" \| "cancel" }`；详见 §5.3 |
 
 ### 10.3 分享与订阅
 | 方法 | 路径 | 说明 |

@@ -11,7 +11,7 @@ import ConfirmDialog from "./confirm-dialog";
 
 export default function ScheduleAdminPanel() {
   const tx = useTranslations();
-  const { todos: schedules, projects, refreshData } = useNavelixData();
+  const { todos: schedules, projects, refreshData, mutateWorkspace } = useNavelixData();
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -58,15 +58,14 @@ export default function ScheduleAdminPanel() {
     try {
       if (editingSchedule) {
         // Edit Schedule
-        const res = await fetch(todoUrl(editingSchedule.id, editingSchedule.ownerId), {
+        const res = await mutateWorkspace(todoUrl(editingSchedule.id, editingSchedule.ownerId), {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          body: {
             title: formTitle.trim(),
             dueDate: formDueDate,
             priority: formPriority,
             projectId: formProjectId,
-          }),
+          },
         });
         if (res.ok) {
           setShowModal(false);
@@ -76,15 +75,14 @@ export default function ScheduleAdminPanel() {
         }
       } else {
         // Create Schedule
-        const res = await fetch("/api/todos", {
+        const res = await mutateWorkspace("/api/todos", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          body: {
             title: formTitle.trim(),
             dueDate: formDueDate,
             priority: formPriority,
             projectId: formProjectId,
-          }),
+          },
         });
         if (res.ok) {
           setShowModal(false);
@@ -101,12 +99,11 @@ export default function ScheduleAdminPanel() {
   // Toggle Schedule Done Status
   const handleToggleDone = async (item: TodoItem) => {
     try {
-      const response = await fetch(todoUrl(item.id, item.ownerId), {
+      const res = await mutateWorkspace(todoUrl(item.id, item.ownerId), {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: !item.done }),
+        body: { done: !item.done },
       });
-      if (!response.ok) return;
+      if (!res.ok) return;
       refreshData();
     } catch {
       // ignore
@@ -117,7 +114,7 @@ export default function ScheduleAdminPanel() {
   const handleDeleteConfirm = async () => {
     if (!scheduleToDelete) return;
     try {
-      const res = await fetch(todoUrl(scheduleToDelete.id, scheduleToDelete.ownerId), {
+      const res = await mutateWorkspace(todoUrl(scheduleToDelete.id, scheduleToDelete.ownerId), {
         method: "DELETE",
       });
       if (res.ok) {

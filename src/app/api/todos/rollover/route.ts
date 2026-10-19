@@ -4,6 +4,11 @@ import { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { toZonedLocalDateStr } from "@/lib/date-utils";
 import { rolloverOverdueTodos } from "@/lib/todos-projects";
+import {
+  readExpectedRevision,
+  withWorkspaceRevision,
+  WorkspaceConflictError,
+} from "@/lib/workspace-revision";
 
 async function POSTHandler(req: NextRequest) {
   const user = await getSessionUser();
@@ -19,12 +24,26 @@ async function POSTHandler(req: NextRequest) {
       ? String(body.today)
       : toZonedLocalDateStr(new Date(), "Asia/Shanghai");
 
-    const { count } = rolloverOverdueTodos(user.id, todayStr, action);
+    let count: number;
+    let revision: string;
+    try {
+      ({ result: { count }, revision } = withWorkspaceRevision(
+        user.id,
+        readExpectedRevision(req.nextUrl.searchParams, body),
+        () => rolloverOverdueTodos(user.id, todayStr, action),
+      ));
+    } catch (err) {
+      if (err instanceof WorkspaceConflictError) {
+        return localizedJson({ error: err.message, code: "WORKSPACE_CONFLICT" }, { status: 409 });
+      }
+      throw err;
+    }
 
     if (count === 0) {
       return localizedJson({
         success: true,
         count: 0,
+        revision,
         message: "当前没有需要顺延的过期待办事项",
       });
     }
@@ -32,6 +51,7 @@ async function POSTHandler(req: NextRequest) {
     return localizedJson({
       success: true,
       count,
+      revision,
       action,
       message:
         action === "today"

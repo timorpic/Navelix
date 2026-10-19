@@ -39,7 +39,7 @@ export default function CalendarView() {
     } catch {}
   };
 
-  const { todos, projects, refreshData, hydrated } = useNavelixData();
+  const { todos, projects, refreshData, hydrated, mutateWorkspace } = useNavelixData();
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
 
   // Quick add form state
@@ -91,17 +91,17 @@ export default function CalendarView() {
   const handleRollover = async (action: "today" | "week") => {
     setRollingOver(true);
     try {
-      const res = await fetch("/api/todos/rollover", {
+      const res = await mutateWorkspace("/api/todos/rollover", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, today: todayStr }),
+        body: { action, today: todayStr },
       });
-      const data = await res.json();
-      if (data.success) {
+      if (res.ok) {
         window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
         pushNotification(
           tx("schedule_rollover_completed_5ecd6101"),
-          data.message || tx("message_5dcab593f527", {v0: data.count}),
+          typeof res.data.message === "string"
+            ? res.data.message
+            : tx("message_5dcab593f527", { v0: Number(res.data.count) || 0 }),
           "calendar",
         );
         refreshData();
@@ -175,15 +175,14 @@ export default function CalendarView() {
     e.preventDefault();
     if (!newTitle.trim()) return;
     try {
-      const res = await fetch("/api/todos", {
+      const res = await mutateWorkspace("/api/todos", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           title: newTitle.trim(),
           priority: newPriority,
           dueDate: customDateStr || selectedDateStr,
           projectId: newProjectId,
-        }),
+        },
       });
       if (res.ok) {
         setNewTitle("");
@@ -198,12 +197,11 @@ export default function CalendarView() {
 
   const handleToggleTodo = async (id: string, done: boolean, ownerId?: string) => {
     try {
-      const response = await fetch(todoUrl(id, ownerId), {
+      const res = await mutateWorkspace(todoUrl(id, ownerId), {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: !done }),
+        body: { done: !done },
       });
-        if (!response.ok) return;
+      if (!res.ok) return;
       refreshData();
     } catch {
       // ignore
@@ -808,14 +806,13 @@ export default function CalendarView() {
                       setSelectedDate(new Date(dateStr + "T00:00:00"));
                       const input = prompt(tx("message_6a89d97f7657", {v0: dateStr}));
                       if (input?.trim()) {
-                        fetch("/api/todos", {
+                        void mutateWorkspace("/api/todos", {
                           method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
+                          body: {
                             title: input.trim(),
                             priority: "medium",
                             dueDate: dateStr,
-                          }),
+                          },
                         }).then(() => refreshData());
                       }
                     }}
@@ -943,6 +940,7 @@ export default function CalendarView() {
           defaultDateStr={selectedDateStr}
           onClose={() => setEditingSchedule(null)}
           onSaved={handleScheduleModalSaved}
+          mutateWorkspace={mutateWorkspace}
         />
       )}
     </div>

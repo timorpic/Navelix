@@ -34,36 +34,34 @@ export interface UseWorkspaceTodosResult {
 
 export function useWorkspaceTodos(): UseWorkspaceTodosResult {
   const tx = useTranslations();
-  const { refreshData } = useNavelixData();
+  const { refreshData, mutateWorkspace } = useNavelixData();
   const todayStr = toLocalDateStr();
 
   const toggleTodo = useCallback(
     async (id: string, done: boolean, ownerId?: string) => {
       try {
-        const response = await fetch(todoUrl(id, ownerId), {
+        const res = await mutateWorkspace(todoUrl(id, ownerId), {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ done: !done }),
+          body: { done: !done },
         });
-        if (!response.ok) throw new Error("Save failed");
+        if (!res.ok) throw new Error("Save failed");
         refreshData();
       } catch {
         pushNotification(tx("failed_to_save_try_again_f42a1238"), tx("network_error_try_again_later_c59e54b9"), "calendar");
       }
     },
-    [refreshData, tx],
+    [mutateWorkspace, refreshData, tx],
   );
 
   const postponeOneDay = useCallback(
     async (item: TodoItem) => {
       const newDueDate = addDaysLocal(item.dueDate || todayStr, 1);
       try {
-        const response = await fetch(todoUrl(item.id, item.ownerId), {
+        const res = await mutateWorkspace(todoUrl(item.id, item.ownerId), {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dueDate: newDueDate }),
+          body: { dueDate: newDueDate },
         });
-        if (!response.ok) throw new Error("Save failed");
+        if (!res.ok) throw new Error("Save failed");
         refreshData();
         pushNotification(
           tx("schedule_moved_forward_one_day_f019321c"),
@@ -74,7 +72,7 @@ export function useWorkspaceTodos(): UseWorkspaceTodosResult {
         pushNotification(tx("failed_to_save_try_again_f42a1238"), tx("network_error_try_again_later_c59e54b9"), "calendar");
       }
     },
-    [refreshData, todayStr, tx],
+    [mutateWorkspace, refreshData, todayStr, tx],
   );
 
   const quickAddTodo = useCallback(
@@ -86,14 +84,13 @@ export function useWorkspaceTodos(): UseWorkspaceTodosResult {
       const title = input.title.trim();
       if (!title) return false;
       try {
-        const res = await fetch("/api/todos", {
+        const res = await mutateWorkspace("/api/todos", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          body: {
             title,
             priority: input.priority,
             dueDate: input.dueDate,
-          }),
+          },
         });
         if (res.ok) {
           refreshData();
@@ -105,7 +102,7 @@ export function useWorkspaceTodos(): UseWorkspaceTodosResult {
       }
       return false;
     },
-    [refreshData, tx],
+    [mutateWorkspace, refreshData, tx],
   );
 
   return { todayStr, toggleTodo, postponeOneDay, quickAddTodo };

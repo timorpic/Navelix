@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { safeFetch } from "@/lib/ssrf";
 import { resolveAIConfig, validateAIBaseUrl } from "@/lib/ai-provider";
+import { projectStatusLabelZh } from "@/lib/project-status";
 import {
   executeAiTool,
   extractToolCalls,
@@ -101,7 +102,7 @@ function buildWorkspaceContext(userId: string): string {
 
     const projectLines = projects.length > 0
       ? projects.map((p) => {
-          return `- [${p.status || "状态未填"}] (id: ${p.id}) 项目名称：${p.name}${p.url ? ` (链接: ${p.url})` : ""}`;
+          return `- [${projectStatusLabelZh(p.status) || "状态未填"}] (id: ${p.id}) 项目名称：${p.name}${p.url ? ` (链接: ${p.url})` : ""}`;
         }).join("\n")
       : "（当前暂无项目数据）";
 
@@ -273,13 +274,15 @@ async function POSTHandler(req: Request) {
     const toolCalls = extractToolCalls(replyText);
     const cleanText = stripToolCalls(replyText);
     let toolReport = "";
+    const deletions: { pendingId: string; targetName: string; message: string }[] = [];
     if (toolCalls.length > 0) {
       const lines: string[] = [];
       for (const call of toolCalls) {
         if (isDestructiveTool(call.tool)) {
-          const result = conversationId ? stageDelete(user.id, call, conversationId) : { ok: false as const, error: "缺少对话标识，请刷新页面后重试" };
+          const result = stageDelete(user.id, call);
           if ("needsConfirmation" in result) {
             lines.push(`⚠️ ${text(result.message)}`);
+            deletions.push({ pendingId: result.pendingId, targetName: result.targetName, message: text(result.message) });
           } else if (result.ok) {
             lines.push(`✅ ${text(result.message)}`);
           } else {
@@ -295,6 +298,8 @@ async function POSTHandler(req: Request) {
 
     return localizedJson({
       text: `${cleanText || (toolReport ? text("已执行您的请求：") : text("未获取到有效的模型回复。"))}${toolReport}`,
+      // 供前端渲染确定性确认卡；没有待确认删除时不返回该字段
+      ...(deletions.length > 0 ? { deletions } : {}),
     });
   } catch (err) {
     return localizedJson(

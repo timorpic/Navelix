@@ -6,6 +6,7 @@ import type { Category, SiteLink } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
 import { useFocusTracker } from "@/hooks/use-focus-tracker";
 import { toLocalDateStr } from "@/lib/date-utils";
+import { computeProjectMetrics } from "@/lib/dashboard-metrics";
 import AddLinkModal from "./add-link-modal";
 import Overlay from "./overlay";
 
@@ -35,7 +36,7 @@ export default function TopStatsBar({
     return tx("unchanged_10ad8178");
   }, [todayFocusHours, yesterdayFocusHours, todayMinutes, tx]);
 
-  const { todos, projects, refreshData, addLink } = useNavelixData();
+  const { todos, projects, refreshData, addLink, mutateWorkspace } = useNavelixData();
   const [showAddLinkModal, setShowAddLinkModal] = useState(false);
 
   // Quick Action Modal States
@@ -48,14 +49,14 @@ export default function TopStatsBar({
   const [taskNotice, setTaskNotice] = useState("");
 
   // Derived metrics for Actionable Cockpit
+  // 项目状态统计统一走 normalizeProjectStatus（历史中文/英文/自定义变体都能归类）
+  const projectMetrics = useMemo(
+    () => computeProjectMetrics(projects),
+    [projects],
+  );
+
   // 1. 进行中项目数
-  const inProgressProjectsCount = useMemo(() => {
-    return projects.filter((p) => {
-      const status = (p.status || "").trim();
-      if (!status) return true;
-      return status.includes("进行") || status.includes("开发") || status.includes("研究") || status.toLowerCase().includes("progress");
-    }).length;
-  }, [projects]);
+  const inProgressProjectsCount = projectMetrics.inProgress;
 
   // 2. 待处理任务数
   const pendingTodosCount = useMemo(
@@ -66,11 +67,8 @@ export default function TopStatsBar({
   // 3. 本周已完成数 (已完成待办 + 已完成项目)
   const weeklyCompletedCount = useMemo(() => {
     const completedTodos = todos.filter((t) => t.done).length;
-    const completedProjects = projects.filter(
-      (p) => p.status === "已完成" || (p.status || "").includes("完成"),
-    ).length;
-    return completedTodos + completedProjects;
-  }, [todos, projects]);
+    return completedTodos + projectMetrics.completed;
+  }, [todos, projectMetrics]);
 
   // Quick Action Handlers
   const handleSaveQuickNote = (e: React.FormEvent) => {
@@ -96,14 +94,13 @@ export default function TopStatsBar({
     e.preventDefault();
     if (!taskTitle.trim()) return;
     try {
-      const res = await fetch("/api/todos", {
+      const res = await mutateWorkspace("/api/todos", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           title: taskTitle.trim(),
           priority: "medium",
           dueDate: toLocalDateStr(),
-        }),
+        },
       });
       if (res.ok) {
         setTaskNotice(tx("todo_created_1c68bdcd"));

@@ -1,4 +1,4 @@
-import { createHmac, hkdfSync } from "node:crypto";
+import { createHmac, hkdfSync, timingSafeEqual } from "node:crypto";
 import { db } from "./db.ts";
 import { getSecretKey } from "./secret.ts";
 import type { Category, SiteLink, Project } from "@/types";
@@ -63,7 +63,10 @@ export function verifyShareToken(token: string): {
     .update(base64Payload)
     .digest("hex");
 
-  if (expectedHmac !== signature) {
+  // 定长比较，避免按字节提前返回泄露签名前缀（与 password.ts 同一做法）
+  const expected = Buffer.from(expectedHmac);
+  const actual = Buffer.from(signature);
+  if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
     return { valid: false, error: "凭证签名校验失败或已被篡改" };
   }
 

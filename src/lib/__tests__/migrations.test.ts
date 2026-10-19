@@ -65,6 +65,22 @@ describe("Schema integrity after migrations", () => {
     }
   });
 
+  it("creates the workspace query indexes after migrations rebuild their tables", () => {
+    // v5 会 DROP + RENAME 重建这些表，索引若只在前置 ensureSchema 建，
+    // 全新库上会随之丢失 —— 本用例锁住「迁移后仍存在」这一契约。
+    const indexes = (db.prepare("SELECT name FROM sqlite_master WHERE type = ? AND name LIKE ?").all("index", "idx_%") as { name: string }[])
+      .map((r) => r.name);
+    for (const name of [
+      "idx_projects_user_sort",
+      "idx_user_todos_user_done_created",
+      "idx_user_todos_user_project",
+      "idx_user_links_user_category",
+      "idx_user_categories_user",
+    ]) {
+      assert.ok(indexes.includes(name), `${name} should exist after migrations`);
+    }
+  });
+
   it("should remove the retired analytics table", () => {
     assert.deepEqual(tableColumns("analytics_events"), []);
   });

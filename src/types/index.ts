@@ -30,6 +30,10 @@ export interface AIChatMessage {
   id: string;
   sender: "user" | "ai";
   text: string;
+  /** AI 暂存待确认的删除请求：存在时渲染确认卡而不是纯文本 */
+  deletions?: { pendingId: string; targetName: string; message: string }[];
+  /** 确认卡已处理（确认或取消）后置为 false，避免重复提交 */
+  deletionPending?: boolean;
 }
 
 export interface TodoItem {

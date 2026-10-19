@@ -54,6 +54,16 @@ export default function WorkspaceAssistant({ assistant }: { assistant: Workspace
           {messages.map(message => <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[92%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-6 ${message.sender === "user" ? "rounded-br-md bg-[#00C776] text-white" : "rounded-bl-md bg-gray-50 text-gray-800 dark:bg-slate-800 dark:text-slate-100"}`}>
               <span className="sr-only">{t(message.sender === "user" ? "assistant_you" : "ai_assistant_1b0049fc")}: </span>{message.text}
+              {message.deletions?.map(deletion => <div key={deletion.pendingId} className="mt-3 flex gap-2">
+                <button type="button" disabled={!message.deletionPending} onClick={() => void assistant.decideDeletion(message.id, deletion.pendingId, "confirm")}
+                  className="min-h-10 rounded-xl bg-rose-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-rose-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 disabled:cursor-not-allowed disabled:opacity-40">
+                  {t("confirm_delete_a3ea3c17")}
+                </button>
+                <button type="button" disabled={!message.deletionPending} onClick={() => void assistant.decideDeletion(message.id, deletion.pendingId, "cancel")}
+                  className="min-h-10 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00C776] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-700">
+                  {t("cancel_2cd0f3be")}
+                </button>
+              </div>)}
             </div>
           </div>)}
           {pending && <p role="status" className="text-sm text-gray-500 dark:text-slate-400">{t("ai_is_thinking_b67cf8f5")}</p>}
