@@ -4,7 +4,6 @@ import { useTranslations } from "next-intl";
 import React, { useState, useMemo } from "react";
 import type { Category, SiteLink } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
-import { useFocusTracker } from "@/hooks/use-focus-tracker";
 import { toLocalDateStr } from "@/lib/date-utils";
 import { computeProjectMetrics } from "@/lib/dashboard-metrics";
 import AddLinkModal from "./add-link-modal";
@@ -23,26 +22,8 @@ export default function TopStatsBar({
   onSelectCategory,
 }: TopStatsBarProps) {
   const tx = useTranslations();
-  const { weeklyData, todayMinutes } = useFocusTracker();
-  const currentDayIdx = (new Date().getDay() + 6) % 7;
-  const todayFocusHours = weeklyData[currentDayIdx] || 0;
-  const yesterdayFocusHours = weeklyData[(currentDayIdx + 6) % 7] || 0;
-
-  const focusTrend = useMemo(() => {
-    if (yesterdayFocusHours === 0) return todayMinutes > 0 ? tx("on_track_f9de9a02") : tx("not_started_a00d8da6");
-    const diff = ((todayFocusHours - yesterdayFocusHours) / yesterdayFocusHours) * 100;
-    if (diff > 0) return `↑ ${Math.round(diff)}%`;
-    if (diff < 0) return `↓ ${Math.abs(Math.round(diff))}%`;
-    return tx("unchanged_10ad8178");
-  }, [todayFocusHours, yesterdayFocusHours, todayMinutes, tx]);
-
   const { todos, projects, refreshData, addLink, mutateWorkspace } = useNavelixData();
   const [showAddLinkModal, setShowAddLinkModal] = useState(false);
-
-  // Quick Action Modal States
-  const [showQuickNoteModal, setShowQuickNoteModal] = useState(false);
-  const [quickNote, setQuickNote] = useState("");
-  const [noteNotice, setNoteNotice] = useState("");
 
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
@@ -71,25 +52,6 @@ export default function TopStatsBar({
   }, [todos, projectMetrics]);
 
   // Quick Action Handlers
-  const handleSaveQuickNote = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!quickNote.trim()) return;
-    try {
-      const existing = localStorage.getItem("navelix.quick.notes") || "[]";
-      const list = JSON.parse(existing);
-      list.push({ text: quickNote, time: Date.now() });
-      localStorage.setItem("navelix.quick.notes", JSON.stringify(list));
-      setNoteNotice(tx("note_saved_3497f59a"));
-      setQuickNote("");
-      setTimeout(() => {
-        setNoteNotice("");
-        setShowQuickNoteModal(false);
-      }, 1200);
-    } catch {
-      setNoteNotice(tx("failed_to_save_6309a3bb"));
-    }
-  };
-
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskTitle.trim()) return;
@@ -118,32 +80,8 @@ export default function TopStatsBar({
 
   return (
     <div className="flex flex-col gap-2 mb-0">
-      {/* 5 Column Grid Top Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-3">
-        {/* 卡片 1：🎯 今日专注 */}
-        <div className="lg:col-span-2 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-              <span className="p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                🎯
-              </span>
-              <span>{tx("focus_today_4372b8b6")}</span>
-            </div>
-            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded">
-              {focusTrend}
-            </span>
-          </div>
-          <div className="my-1">
-            <span className="text-xl font-extrabold text-gray-900 dark:text-white">
-              {todayMinutes}
-            </span>
-            <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400 ml-1">
-              {tx("minutes_bd957bc4")}</span>
-          </div>
-          <p className="text-[10px] text-gray-400 dark:text-slate-500">
-            {tx("focus_time_today_4a45ac8c")}</p>
-        </div>
-
+      {/* 项目、任务、完成统计与快速操作 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-3">
         {/* 卡片 2：⚡ 进行中项目 */}
         <div
           onClick={() => onSelectCategory && onSelectCategory("feature-projects")}
@@ -229,7 +167,7 @@ export default function TopStatsBar({
             <span>{tx("quick_actions_2cf085b4")}</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-2 gap-1.5">
             <button
               onClick={() => setShowAddLinkModal(true)}
               className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
@@ -238,21 +176,7 @@ export default function TopStatsBar({
               <span className="truncate">{tx("new_bookmark_56c28f8d")}</span>
             </button>
 
-            <button
-              onClick={() => setShowQuickNoteModal(true)}
-              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
-            >
-              <span>💡</span>
-              <span className="truncate">{tx("capture_idea_e3097d3e")}</span>
-            </button>
 
-            <button
-              onClick={() => setShowAddLinkModal(true)}
-              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 hover:border-[#00C776] hover:bg-[#00C776]/10 text-gray-700 dark:text-slate-200 text-[11px] font-semibold transition-all cursor-pointer truncate"
-            >
-              <span>📤</span>
-              <span className="truncate">{tx("upload_file_bb5caa9c")}</span>
-            </button>
 
             <button
               onClick={() => setShowTaskModal(true)}
@@ -291,42 +215,6 @@ export default function TopStatsBar({
           setShowAddLinkModal(false);
         }}
       />
-
-      {/* Quick Note Modal */}
-      {showQuickNoteModal && (
-        <Overlay>
-          <div className="w-full max-w-sm rounded-xl bg-white dark:bg-slate-900 p-4 shadow-xl border border-gray-100 dark:border-slate-800">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">
-              {tx("capture_an_idea_note_013680b3")}</h3>
-            <form onSubmit={handleSaveQuickNote} className="space-y-3">
-              <textarea
-                name="quickNote"
-                value={quickNote}
-                onChange={(e) => setQuickNote(e.target.value)}
-                placeholder={tx("quickly_jot_down_thoughts_ideas_or_reminders_ff82d5ee")}
-                rows={3}
-                className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#00C776]"
-              />
-              {noteNotice && (
-                <p className="text-[11px] text-[#00C776]">{noteNotice}</p>
-              )}
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowQuickNoteModal(false)}
-                  className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700"
-                >
-                  {tx("cancel_2cd0f3be")}</button>
-                <button
-                  type="submit"
-                  className="px-3 py-1 bg-[#00C776] text-white text-xs font-bold rounded-lg hover:bg-[#00B068]"
-                >
-                  {tx("save_a3030bf8")}</button>
-              </div>
-            </form>
-          </div>
-        </Overlay>
-      )}
 
       {/* Create Task Modal */}
       {showTaskModal && (

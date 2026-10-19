@@ -14,7 +14,7 @@ async function write(page: Page, url: string, body: unknown) {
   }, { url, body });
 }
 
-test("助手覆盖主内容，快捷操作与悬浮入口共用会话，旧展开偏好不自动打开", async ({ page }) => {
+test("助手覆盖主内容，快捷操作与搜索栏入口共用会话，旧展开偏好不自动打开", async ({ page }) => {
   await login(page);
   await page.evaluate(() => { localStorage.setItem("navelix_sidebar_right", "false"); document.cookie = "navelix_sidebar_right=0;path=/"; });
   await page.reload();
@@ -26,7 +26,7 @@ test("助手覆盖主内容，快捷操作与悬浮入口共用会话，旧展�
     requests.push(route.request().postDataJSON());
     await route.fulfill({ json: { text: `已收到你的安排请求 ${requests.length}` } });
   });
-  const launcher = page.getByRole("button", { name: "AI 助手", exact: true }).last();
+  const launcher = page.getByRole("button", { name: "AI 助手", exact: true }).first();
   await launcher.click();
   await expect(drawer).toBeVisible();
   expect(await page.locator("main").evaluate(element => element.getBoundingClientRect().width)).toBe(width);
@@ -36,7 +36,7 @@ test("助手覆盖主内容，快捷操作与悬浮入口共用会话，旧展�
   await expect(drawer.getByText("已收到你的安排请求 1", { exact: false })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(drawer).toBeHidden(); await expect(launcher).toBeFocused();
-  const quickAction = page.locator("main").getByRole("button", { name: /AI 助手/ });
+  const quickAction = page.locator("main").getByRole("button", { name: /AI 助手/ }).last();
   await quickAction.click();
   await expect(drawer.getByText("已收到你的安排请求 1", { exact: false })).toBeVisible();
   await input.fill("继续"); await input.press("Enter");
@@ -77,36 +77,25 @@ test("AI 删除确认卡：按钮走确定性接口，取消后数据仍在", as
   expect(todos.some(todo => todo.title === title)).toBe(true);
 });
 
-test("首页不显示动态，顶部通知保留已读、待办与完整记录入口", async ({ page }) => {
+test("首页精简入口，专注归入日程概览，通知记录仍可从消息页查看", async ({ page }) => {
   await login(page);
-  expect(await write(page, "/api/user/data", { config: { pendingRemindersEnabled: true, todayActivityEnabled: true } })).toBe(200);
-  expect(await write(page, "/api/notifications", { title: "布局回归通知", content: "顶部通知保留完整记录入口" })).toBe(201);
-  expect(await write(page, "/api/todos", { title: "需要保留的未完成待办", priority: "high" })).toBe(200);
+  expect(await write(page, "/api/notifications", { title: "布局回归通知", content: "消息页面保留完整记录" })).toBe(201);
   await page.reload();
   await expect(page.getByRole("region", { name: "最近动态" })).toHaveCount(0);
-  const bell = page.getByRole("button", { name: "提醒与通知", exact: true });
-  await bell.click();
-  const popover = page.getByRole("region", { name: "提醒与通知", exact: true });
-  await expect(popover.getByText("布局回归通知")).toBeVisible();
-  await expect(popover.getByText("需要保留的未完成待办")).toBeVisible();
-  const [readResponse] = await Promise.all([
-    page.waitForResponse(response => response.url().endsWith("/api/notifications/read") && response.request().method() === "POST"),
-    popover.getByRole("button", { name: "通知全部已读" }).click(),
-  ]);
-  expect(readResponse.ok()).toBe(true);
-  await expect(popover.getByRole("button", { name: "通知全部已读" })).toBeDisabled();
-  await expect.poll(() => page.evaluate(async () => (await (await fetch("/api/notifications")).json()).unreadCount), { timeout: 15_000 }).toBe(0);
-  await expect(popover.getByText("需要保留的未完成待办")).toBeVisible();
-  await page.keyboard.press("Escape"); await expect(popover).toBeHidden(); await expect(bell).toBeFocused();
-  await bell.click(); await popover.getByRole("button", { name: "查看全部", exact: false }).click();
+  await expect(page.getByRole("button", { name: "提醒与通知", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "记录想法", exact: false })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "上传文件", exact: false })).toHaveCount(0);
+  const schedule = page.locator("div").filter({ has: page.getByRole("heading", { name: "日程概览", exact: true }) }).filter({ hasText: "今日专注" });
+  await expect(schedule.last().getByText("今日专注", { exact: true })).toBeVisible();
+  await expect(page.getByText("今日专注", { exact: true })).toHaveCount(1);
+  await page.getByRole("button", { name: /消息通知/ }).click();
   await expect(page.getByRole("heading", { name: /消息通知与活动动态/ })).toBeVisible();
-  const record = page.getByRole("row").filter({ hasText: "顶部通知保留完整记录入口" });
+  await expect(page.getByRole("button", { name: "提醒与通知", exact: true })).toHaveCount(0);
+  const record = page.getByRole("row").filter({ hasText: "消息页面保留完整记录" });
+  await expect(record).toBeVisible();
   await record.getByTitle("删除此记录").click();
   await page.getByRole("dialog").getByRole("button", { name: "删除", exact: true }).click();
   await expect(record).toHaveCount(0);
-  await bell.click();
-  await expect(popover.getByText("布局回归通知")).toHaveCount(0);
-  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: /首页总览/ }).click();
   await expect(page.getByRole("region", { name: "最近动态" })).toHaveCount(0);
 });

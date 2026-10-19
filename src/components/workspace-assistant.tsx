@@ -23,7 +23,7 @@ export default function WorkspaceAssistant({ assistant }: { assistant: Workspace
   if (!enabled) return null;
   return <>
     <button hidden={open} type="button" onClick={assistant.show} aria-haspopup="dialog" aria-expanded={false} aria-controls={id}
-      className="fixed bottom-5 right-5 z-30 flex min-h-12 items-center gap-2 rounded-2xl bg-[#00C776] px-5 font-semibold text-white shadow-lg shadow-emerald-900/15 transition-colors hover:bg-[#00B068] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#00C776] sm:bottom-6 sm:right-6">
+      className="flex h-11 shrink-0 items-center gap-2 rounded-xl bg-[#00C776] px-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/15 transition-colors hover:bg-[#00B068] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#00C776]">
       <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 2.8 7.2L22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8L12 2Z" /></svg>{t("ai_assistant_1b0049fc")}
     </button>
     <dialog ref={dialog} id={id} aria-labelledby={`${id}-title`} onClose={close}
