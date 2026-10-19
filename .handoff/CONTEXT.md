@@ -2,24 +2,44 @@
 
 - schema_version: 1
 - project_id: Navelix
-- task_id: release-launch-hardening-20261018
-- context_revision: 4
-- updated_at: 2026-10-18T23:43:35+08:00
-- status: completed
+- task_id: weak-code-remediation-20261019
+- context_revision: 1
+- updated_at: 2026-10-19T21:19:00+08:00
+- status: active
 
 ## 已授权目标
 
-上线评审后的全面修复、提交、推送及 Release；用户生产已部署 v2.10.19，要求保持 latest 和原有使用方式，Docker 构建全部在 GitHub Actions。用户随后要求处理 main 未保护，并明确选择个人维护的 PR + CI、审批人数 0。直接生产部署未授权且未执行。
+用户对 Navelix 完成弱代码评审后，明确指示「按方案先执行修复，然后推送发 Release」。执行范围以 `/tmp/plan.md`（509 行修复方案）的 P0/P1/P2/P3 项为准：项目状态规范键、实体写接口接入工作区 revision、AI 删除确认状态机、全局搜索 T0、工作区索引、项目拆解打分、请求体上限与批量小修，随后提交、推送并发版 v2.10.22。
 
-## 完成结果
+用户已明确**本项目不接入 TypeSafe/Jev**，所有相关提案不得再提出。
 
-- 加固与发布修复已通过 PR #21 合并，v2.10.21 Tag 指向 f020f13，正式 Release 与 GHCR / Docker Hub 稳定镜像均已完成。
-- main 保护已生效并经真实 PR 流程验证，不再直接推送 main。
-- v2.10.20 镜像失败版本保留 Tag 并标为预发布，未覆盖历史 Tag；后续修复按新版本交付。
-- 来源、run ID、digest 和验证范围见 CHECKPOINT.md；正式发布说明以 CHANGELOG 与 GitHub Release 为准。
+## 范围与非目标
 
-## 遗留验收与资料
+- 本轮交付：代码修复 + 测试 + 文档 + `v2.10.22` 发版。
+- 明确不做：P2-6 巨型组件拆分、v22 数据迁移（方案阶段 B）。这两项留待后续独立排期。
+- 不直接部署生产、不修改生产数据；镜像构建在 GitHub Actions 完成。
 
-生产真实 HTTPS、云服务、恢复时间与容量验证仍由维护者在独立环境执行；Computer Use 当前不可用。镜像 CI 通过不等同于这些现场验收通过。
+## 验收标准
 
-规范：docs/DEVELOPMENT.md、docs/REGISTRY.md；生产手册：docs/PRODUCTION-ACCEPTANCE.md、docs/DEPLOYMENT.md。旧执行现场已按协议保留，不从旧检查点的待办继续发布。
+- `pnpm typecheck && pnpm lint && pnpm test && pnpm test:coverage && pnpm build && pnpm test:e2e` 全部通过。
+- 覆盖率不低于门槛（行 60% / 函数 55%）；本轮实测行 89.21 / 分支 82.96 / 函数 81.61。
+- main 保护下的 PR 走完两个必需检查后合并；`v2.10.22` Tag、Release 与镜像稳定标签均完成并回读。
+
+## 关键约束
+
+- main 受保护：必须经 PR + `Lint, Test & Build` 与 `Playwright E2E (Core UI Flow)` 两个必需检查，strict，审批人数 0。
+- 提交信息中文、`<type>(<scope>): 说明`，不加任何工具署名或 Co-Authored-By。
+- 仓库为 PUBLIC：推送前扫描工作区，确认无密钥、真实凭据或隐私数据。
+- 测试必须经 `scripts/run-isolated.mjs` 使用一次性 `NAVELIX_DATA_DIR`；E2E 使用独立 `E2E_DATA_DIR`。
+- 长期约定见 MEMORY.md；更早会话曾因打印 API key 字节被权限分类器拒绝，此后只做存在性确认。
+
+## 当前工作项
+
+1. 提交并推送当前改动到分支，创建 PR，等待必需检查。
+2. 合并到 main。
+3. `git tag v2.10.22` 并推送，执行 `node scripts/sync-changelog.mjs --publish`。
+4. 验证 Release 与 Docker 工作流结果。
+
+## 检查点位置
+
+`.handoff/CHECKPOINT.md`（本任务），上一任务已归档至 `.handoff/archive/release-launch-hardening-20261018/`。

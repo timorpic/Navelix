@@ -29,9 +29,23 @@ export function recordAuditLog(params: {
   operationId?: string;
 }): void {
   let details = safeText(params.details ?? "", 4000);
-  try { const parsed: unknown = JSON.parse(params.details ?? ""); if (Array.isArray(parsed)) details = JSON.stringify(sanitizeChanges(parsed)); } catch { /* Legacy plain text. */ }
+  // 解析失败时保留原文（包成 { text }），不再静默退化成 []：
+  // 旧版把无法解析的 details 一律记为「无变更」，审计证据被悄悄丢掉。
+  let changeDetails: unknown = [];
+  try {
+    const parsed: unknown = JSON.parse(params.details ?? "");
+    if (Array.isArray(parsed)) {
+      details = JSON.stringify(sanitizeChanges(parsed));
+      changeDetails = JSON.parse(details);
+    } else {
+      changeDetails = { text: details };
+    }
+  } catch {
+    // 历史明文 details：原文保留
+    changeDetails = params.details ? { text: details } : [];
+  }
   const event = createLogEvent({ category: params.target === "user_notification_settings" ? "notification" : categoryForEvent(params.action), event: params.action, kind: "audit", actorId: params.userId, actorType: params.userId === "system" ? "system" : params.userId ? "user" : "anonymous", level: params.outcome === "failed" ? "warn" : "info",
-    subjectId: params.target, outcome: params.outcome ?? "succeeded", operationId: params.operationId, details: { changes: (() => { try { return JSON.parse(details); } catch { return []; } })() } });
+    subjectId: params.target, outcome: params.outcome ?? "succeeded", operationId: params.operationId, details: { changes: changeDetails } });
   const id = `aud-${Date.now()}-${randomBytes(4).toString("hex")}`;
     db.prepare(`
       INSERT INTO audit_logs (id, user_id, action, target, ip, details, created_at, category, event_json)

@@ -2,53 +2,56 @@
 
 - schema_version: 1
 - project_id: Navelix
-- task_id: release-launch-hardening-20261018
-- context_revision: 4
-- checkpoint_seq: 6
-- updated_at: 2026-10-18T23:43:35+08:00
-- owner: Codex
-- status: completed
-- current_step: 上线加固已发布 v2.10.21、稳定镜像已更新，main 保护验证完成
+- task_id: weak-code-remediation-20261019
+- context_revision: 1
+- checkpoint_seq: 1
+- updated_at: 2026-10-19T21:19:00+08:00
+- owner: Claude Code
+- status: active
+- current_step: 全部代码修复与验证完成，准备提交、推送并发版 v2.10.22
 
 ## 工作区与记录边界
 
-采集现场：仓库根目录 /root/Navelix，分支 codex/release-2.10.21-verification，HEAD 为 cc4c75c6773fbe08f6cbf25d5ddf1096e1703fa7，与远程同名分支同步。采集时暂存路径：无；未暂存路径：无；未跟踪路径：无，git status --short 为空。
+采集现场：仓库根目录 `/root/Navelix`，分支 `main`，HEAD `7e29ad6fe06f38feb7dfdcb48751be3d2252ccff`。暂存路径：无。未暂存：54 个文件、1354 增 / 502 删，另有多份新建文件（删除确认接口、搜索/项目状态/拆解模块及其测试）。未跟踪见 `git status --short`。
 
-本次采集后的预定修改仅为 .handoff/CHECKPOINT.md，用于补全上述现场清单；不含业务代码变更。该记录提交后的 HEAD、推送与 PR #22 合并状态以 git status、git log 与对应 PR 的实时结果为准；上述哈希表示采集基点，不表示包含本记录的提交。
+忽略路径（仅记名称）：`.claude/`、`.next/`、`.pnpm-store/`、`coverage/`、`data/`、`ee/`、`next-env.d.ts`、`node_modules/`、`test-results/`、`tsconfig.tsbuildinfo`。
 
-忽略路径清单（仅记录名称，不读取敏感内容）：.claude/、.next/、.pnpm-store/、coverage/、data/、ee/、next-env.d.ts、node_modules/、test-results/、tsconfig.tsbuildinfo。它们未纳入本次提交或发布凭据；生产与远程发布状态见下方证据。
+`public/screenshots/sun-panel-import-*.png` 是 E2E 每次运行重写的产物，本轮已 `git checkout` 还原，不带入发布 PR。
 
-发布代码提交为 f020f13d2ed73162aaf6552780433a233c9d127b，合并自 PR #21；Tag v2.10.21 固定指向该提交。后续仅文档记录提交不改变该发布基线。
+## 本轮已完成
 
-## 已完成与验证证据
+代码修复（对应 `/tmp/plan.md`）：
 
-- PR #21 已在必需 CI 全成功、review 线程解决后正常 squash 合并，未使用 admin bypass。合并前后文件树一致。
-- PR CI 39140665239、main CI 39140876377 成功，均包括类型、lint、覆盖率、生产构建和生产 E2E。
-- v2.10.21 正式 Release：https://github.com/timorpic/Navelix/releases/tag/v2.10.21。
-- Docker GitHub Actions run 39141084086 成功：https://github.com/timorpic/Navelix/actions/runs/39141084086。
-- 该 run 的源码质量、候选镜像构建、基础 CRUD/鉴权/敏感字段/非 root 冒烟、历史 v20 升级、生产镜像 UI（30 passed）、稳定标签提升与 digest 核验、发布通知均成功。
-- GHCR / Docker Hub 的 latest、v2.10.21、2.10.21 已由提升任务核对同一被测 digest：`sha256:5bb021fbd288af45dc33de4f161b9d2c3d047d02840d2d3b9185c25eed67c3d7`。
-- 另通过 Docker Hub 公共 API 独立回读三个标签，digest 均与 UI 被测镜像一致；latest 已从 2026-10-15 的旧 digest 更新到本次镜像。
-- Docker 镜像的构建、运行验证和推送全部在 GitHub Actions，本地未执行 Docker build/run。
+- P0-2 项目状态规范键：新增 `src/lib/project-status.ts`，读写两侧归一化，看板与统计复用 `computeProjectMetrics`。
+- P0-1 实体写 revision：新增 `src/lib/workspace-revision.ts`（`readExpectedRevision` / `guardWorkspaceRevision` / `requireWorkspaceRevision` / `withWorkspaceRevision`），接入 projects、todos、rollover 路由；Provider 新增 `mutateWorkspace` 统一注入与 409 处理。
+- P1-2 删除确认：`src/lib/ai-tools.ts` 状态机 + 新建 `src/app/api/ai/confirm-delete/route.ts` + 前端确认卡双按钮 + E2E 用例。
+- P1-4 索引：`WORKSPACE_INDEXES_SQL` 5 个索引，`ensureSchema` 与 `ensureSchemaPostMigrations` 各执行一次。
+- P1-1 搜索 T0：新增 `src/lib/search.ts`（NFKC、2-gram、加权打分、使用频次加成）。
+- P1-3 拆解：新增 `src/lib/project-breakdown.ts`（带权关键词打分）。
+- P2/P3：告警分类、审计原文保留、`timingSafeEqual`、里程碑一次 DELETE、`readLimitedJson` 体积上限、schema 列对齐、UUID 替换 `Date.now()+Math.random()`。
+- i18n：补 13 条接口错误中英文文案，新增 `ai_delete_confirmation_invalid`，删除无引用 key，加静态扫描测试。
+- 文档：`wiki/REST-API-开放接口文档.md` 补齐删除确认、revision、级联删除与 409 语义。
 
-## main 保护与流程
+验证（均在本次改动后执行）：
 
-已通过 API 应用并回读 protected=true：必需 PR；两个 required checks 绑定 github-actions app 15368（Lint, Test & Build / Playwright E2E (Core UI Flow)）；strict=true；审批人数 0；要求解决讨论；管理员同样受约束；禁止 force/delete。
+- `pnpm typecheck` 通过。
+- `pnpm lint` 通过。
+- `pnpm test`：645 tests / 175 suites，全部通过，0 失败。
+- `pnpm test:coverage`：退出码 0，all files 89.21 / 82.96 / 81.61。
+- `pnpm build`：退出码 0，路由表含 `/api/ai/confirm-delete`。
+- `pnpm test:e2e`：31 passed。
 
-用户明确选择个人维护模式，不强制另一人批准。PR #21 实际验证了 CI/未解决讨论会阻止合并，条件满足后可正常合并。截图中的其他 Issue / PR 没有被批量关闭或合并。
+## 修复过程中发现并解决的两个回归
 
-## 失败处理与历史
+首次全量 E2E 有 2 个用例超时（`i18n.spec.ts:52`、`personal-schedule.spec.ts:11`），根因同一处：`mutateWorkspace` 对带 body 的写请求也在 URL 上追加 `?expectedRevision=`，而测试用 `response.url().endsWith("/api/todos")` 精确匹配，导致 `waitForResponse` 永不命中。已改为只在无 body 的 DELETE 使用查询参数，带 body 的写请求仍放在 body 里（与 `workspace-revision.ts` 文档约定一致）。修复后单跑两用例 5 passed，全量 31 passed。
 
-v2.10.20 的镜像 run 39139772662 失败：跨 job 仓库名输出被 Actions Secret masking 屏蔽，UI 容器地址为空，稳定标签提升被跳过，未覆盖旧 latest。保留原 Tag 并将 Release 标为预发布，说明交付失败；没有移动或复用已发布 Tag。修复由 v2.10.21 交付：镜像地址在各 job 内从官方上下文构造，仅跨 job 传 digest，增加输入校验与回归用例，保留全部门禁。
+## 未完成
 
-已修复 PR review 指出的检查点旧状态冲突：完整旧现场保存在 previous/，当前文件改写为有效状态，不追加过时待办。上一版现场见 .handoff/previous/CHECKPOINT.release-launch.seq5.md。
+- 提交、推送、PR、合并 main。
+- Tag `v2.10.22`、Release 发布与镜像工作流核验。
 
-## 生产边界与限制
+## 外部操作台账
 
-用户生产已部署 v2.10.19，本次提供原地升级镜像：继续使用 latest，保留原数据卷与环境变量。升级前保留可恢复快照和原 .app_secret / APP_SECRET；正常实例无需执行旧密钥迁移工具。未直接部署或修改生产数据；真实 HTTPS、云服务、RPO/RTO、容量与 Computer Use 验收未在本轮执行，不能以 CI / 镜像冒烟替代这些证据。
-
-Computer Use / OpenMemory unavailable；无共享记忆条目采用或 retain。本地长期约定已更新，发布过程与原始日志不写入 MEMORY。
-
-## 交付
-
-发布和仓库保护目标已完成。生产升级由用户按 docs/PRODUCTION-ACCEPTANCE.md 与 docs/DEPLOYMENT.md 执行；未来代码变更继续走分支、PR、必需 CI 与 release 门禁。
+- 已执行 `node scripts/sync-version.mjs 2.10.22`：package.json、Dockerfile、`build-info.ts`、`admin-system.ts` 已改为 2.10.22。
+- 已执行 `node scripts/sync-changelog.mjs` 校验：通过。
+- 尚未推送、未打 Tag、未创建 Release、未触发镜像构建。

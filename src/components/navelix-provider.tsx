@@ -7,6 +7,7 @@ import {
   defaultConfig,
   type NavelixConfigApi,
   type NavelixDataApi,
+  type WorkspaceMutationResult,
   NavelixConfigContext,
   NavelixDataContext,
 } from "@/context/navelix-context";
@@ -519,6 +520,69 @@ export function NavelixProvider({
     saveSnapshot({ projects: nextProjects });
   }, [saveSnapshot]);
 
+  /**
+   * 实体写操作（项目/待办的新建、修改、删除）的统一入口。
+   *
+   * 这些接口此前完全绕过 workspace revision：写成功但本地 revision 过期，
+   * 用户下一次保存书签就会 409 并丢掉那次编辑。此处三件事一次做完：
+   * 1. 注入 `expectedRevision`，让服务端在同一事务里校验；
+   * 2. 复用 `saveQueue` 串行化，避免同页连续两次写互相踩；DELETE 用查询参数
+   *    携带 revision（没有 body）；
+   * 3. 成功后同步新 revision；409 时刷新数据并返回 `conflict`，由调用方保留草稿。
+   */
+  const mutateWorkspace = useCallback(
+    (
+      url: string,
+      init: { method: "POST" | "PATCH" | "DELETE"; body?: unknown },
+    ): Promise<WorkspaceMutationResult> => {
+      const operation = saveQueue.current.then(async () => {
+        const revision = revisionRef.current;
+        const hasBody = init.method !== "DELETE";
+        // 带 body 的写请求把 revision 放在 body 里（与 REST 文档一致）；只有
+        // 没有 body 的 DELETE 才用查询参数。不要两处都加——URL 上的额外查询串
+        // 会让按路径精确匹配响应的调用方（含 E2E）漏掉该请求。
+        const target =
+          !hasBody && revision
+            ? `${url}${url.includes("?") ? "&" : "?"}expectedRevision=${encodeURIComponent(revision)}`
+            : url;
+        const response = await fetch(target, {
+          method: init.method,
+          ...(hasBody
+            ? {
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...(init.body as Record<string, unknown> | undefined), expectedRevision: revision }),
+              }
+            : {}),
+        });
+        const data: unknown = await response.json().catch(() => null);
+        const body = data && typeof data === "object" ? (data as Record<string, unknown>) : {};
+        if (response.ok) {
+          if (typeof body.revision === "string") revisionRef.current = body.revision;
+          return { ok: true as const, data: body };
+        }
+        if (response.status === 409) {
+          loadData();
+          return {
+            ok: false as const,
+            conflict: true,
+            status: 409,
+            error: typeof body.error === "string" ? body.error : "",
+          };
+        }
+        return {
+          ok: false as const,
+          conflict: false,
+          status: response.status,
+          error: typeof body.error === "string" ? body.error : "",
+        };
+      });
+      // 队列只关心顺序，不传播结果（与 saveSnapshot 的用法一致）
+      saveQueue.current = operation.then(() => {}, () => {});
+      return operation;
+    },
+    [loadData],
+  );
+
   const dataApi: NavelixDataApi = {
     user,
     categories,
@@ -527,6 +591,7 @@ export function NavelixProvider({
     todos,
     hydrated,
     refreshData,
+    mutateWorkspace,
     saveProjects,
     addCategory,
     deleteCategory,

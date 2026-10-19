@@ -1,7 +1,9 @@
+import { randomUUID } from "node:crypto";
 import { writeLog } from "./logging/events.ts";
 import { captureTaskAssignments, enqueueChangedAssignments } from "./personal-telegram.ts";
 import { db } from "./db.ts";
 import { addDaysLocal } from "./date-utils.ts";
+import { toStoredStatus } from "./project-status.ts";
 
 /**
  * 待办与项目的领域写操作（下沉自 api/todos/[id] 与 api/projects/[id] 路由）。
@@ -23,6 +25,26 @@ export interface TodoPatchInput {
 }
 
 /**
+ * 领域写事务。
+ *
+ * 已在事务内时降级为 SAVEPOINT（与 v16 迁移、`saveTelegramSettings` 同一范式），
+ * 让这些函数既能独占事务直接调用，也能被 `withWorkspaceRevision()` 等外层
+ * 事务包裹 —— revision 校验与写入必须处于同一次写锁内。
+ */
+function runInTransaction<T>(name: string, task: () => T): T {
+  const nested = db.isTransaction;
+  db.exec(nested ? `SAVEPOINT ${name}` : "BEGIN IMMEDIATE");
+  try {
+    const result = task();
+    db.exec(nested ? `RELEASE ${name}` : "COMMIT");
+    return result;
+  } catch (error) {
+    db.exec(nested ? `ROLLBACK TO ${name}; RELEASE ${name}` : "ROLLBACK");
+    throw error;
+  }
+}
+
+/**
  * 更新待办字段，并在关联项目变化时同步两端的 `updated_at`。
  *
  * 修正了一处真实缺陷：原实现只在 `todoRow.project_id`（**旧**项目）非空时
@@ -36,7 +58,6 @@ export function updateTodoFields(id: string, userId: string, input: TodoPatchInp
   const fields: string[] = [];
   const vals: (string | number)[] = [];
   const changed: string[] = [];
-
   if (input.done !== undefined) {
     fields.push("done = ?");
     vals.push(input.done ? 1 : 0);
@@ -85,8 +106,7 @@ export function updateTodoFields(id: string, userId: string, input: TodoPatchInp
 
   vals.push(id, userId);
 
-  db.exec("BEGIN IMMEDIATE;");
-  try {
+  return runInTransaction("todo_update", () => {
     const assignmentsBefore = captureTaskAssignments({ ownerId: userId, todoId: id });
     // 必须在 UPDATE 之前读取：更新后这一列已是新值，就拿不到「源项目」了
     const before = db
@@ -108,14 +128,9 @@ export function updateTodoFields(id: string, userId: string, input: TodoPatchInp
     }
 
     enqueueChangedAssignments(assignmentsBefore);
-    db.exec("COMMIT;");
     writeLog({ category: "workspace", event: "todo.updated", kind: "business", actorId: userId, subjectId: id, details: { fieldNames: changed } });
-  } catch (e) {
-    db.exec("ROLLBACK;");
-    throw e;
-  }
-
-  return changed;
+    return changed;
+  });
 }
 
 /**
@@ -125,8 +140,7 @@ export function updateTodoFields(id: string, userId: string, input: TodoPatchInp
  * 的半删状态。
  */
 export function deleteProjectCascade(projectId: string, userId: string): void {
-  db.exec("BEGIN IMMEDIATE;");
-  try {
+  runInTransaction("project_cascade_delete", () => {
     db.prepare("DELETE FROM user_todos WHERE project_id = ? AND user_id = ?").run(
       projectId,
       userId,
@@ -135,12 +149,8 @@ export function deleteProjectCascade(projectId: string, userId: string): void {
       projectId,
       userId,
     );
-    db.exec("COMMIT;");
     writeLog({ category: "workspace", event: "project.deleted", kind: "business", actorId: userId, subjectId: projectId, details: {} });
-  } catch (e) {
-    db.exec("ROLLBACK;");
-    throw e;
-  }
+  });
 }
 
 export interface ProjectMilestoneInput {
@@ -163,17 +173,12 @@ export function syncProjectMilestones(
   userId: string,
   todos: ProjectMilestoneInput[],
 ): void {
-  db.exec("BEGIN IMMEDIATE;");
-  try {
+  runInTransaction("project_milestones_sync", () => {
     const assignmentsBefore = captureTaskAssignments({ ownerId: userId });
     syncProjectMilestonesInTransaction(projectId, userId, todos);
     enqueueChangedAssignments(assignmentsBefore);
-    db.exec("COMMIT;");
     writeLog({ category: "workspace", event: "project.milestones.updated", kind: "business", actorId: userId, subjectId: projectId, details: {} });
-  } catch (e) {
-    db.exec("ROLLBACK;");
-    throw e;
-  }
+  });
 }
 
 /**
@@ -233,7 +238,7 @@ function syncProjectMilestonesInTransaction(
         const newId =
           t.id && !t.id.startsWith("temp-")
             ? t.id
-            : `todo-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`;
+            : `todo-${randomUUID()}`;
         incomingIds.add(newId);
         insertStmt.run(
           newId,
@@ -251,16 +256,17 @@ function syncProjectMilestonesInTransaction(
       }
     });
 
-    // 删除已被用户在编辑界面中移除的旧任务
-    const deleteStmt = db.prepare(
-      "DELETE FROM user_todos WHERE id = ? AND user_id = ?",
-    );
-    for (const oldId of existingIds) {
-      if (!incomingIds.has(oldId)) {
-        deleteStmt.run(oldId, userId);
-      }
+    // 删除已被用户在编辑界面中移除的旧任务：一条 DELETE 完成，避免按行循环
+    const keptIds = [...incomingIds];
+    if (keptIds.length === 0) {
+      db.prepare("DELETE FROM user_todos WHERE project_id = ? AND user_id = ?").run(projectId, userId);
+    } else {
+      db.prepare(
+        `DELETE FROM user_todos
+         WHERE project_id = ? AND user_id = ?
+           AND id NOT IN (${keptIds.map(() => "?").join(", ")})`,
+      ).run(projectId, userId, ...keptIds);
     }
-
 }
 
 export type RolloverMode = "today" | "week";
@@ -296,8 +302,7 @@ export function rolloverOverdueTodos(
     return { count: 0, mode };
   }
 
-  db.exec("BEGIN IMMEDIATE;");
-  try {
+  runInTransaction("todos_rollover", () => {
     const updateStmt = db.prepare(
       "UPDATE user_todos SET due_date = ? WHERE id = ? AND user_id = ?",
     );
@@ -321,12 +326,8 @@ export function rolloverOverdueTodos(
       });
     }
 
-    db.exec("COMMIT;");
     writeLog({ category: "workspace", event: "calendar.todos.rolled_over", kind: "business", actorId: userId, subjectId: undefined, details: { count: overdueTodos.length } });
-  } catch (e) {
-    db.exec("ROLLBACK;");
-    throw e;
-  }
+  });
 
   return { count: overdueTodos.length, mode };
 }
@@ -347,7 +348,7 @@ export interface CreateTodoInput {
  * 无事务；中途失败会留下已插入但项目时间戳未更新的状态。下沉后包入事务。
  */
 export function createTodo(userId: string, input: CreateTodoInput): string {
-  const id = `todo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const id = `todo-${randomUUID()}`;
   const title = String(input.title || "").trim();
   const priority =
     input.priority === "high" || input.priority === "low" ? input.priority : "medium";
@@ -356,19 +357,16 @@ export function createTodo(userId: string, input: CreateTodoInput): string {
   const assigneeId = input.assigneeId ? String(input.assigneeId).trim() : "";
   const assigneeName = input.assigneeName ? String(input.assigneeName).trim() : "";
 
-  db.exec("BEGIN IMMEDIATE;");
-  try {
+  runInTransaction("todo_create", () => {
     const assignmentsBefore = captureTaskAssignments({ ownerId: userId });
-    const maxSort = db
-      .prepare(
-        "SELECT COALESCE(MAX(sort_order), -1) AS m FROM user_todos WHERE user_id = ? AND done = 0",
-      )
-      .get(userId) as { m: number };
-
+    // sort_order 用子查询在 INSERT 内一次性取得，避免 MAX+1 与插入分两步
     db.prepare(
       `INSERT INTO user_todos (
         id, user_id, title, priority, done, due_date, project_id, assigned_to, assignee_id, assignee_name, created_at, sort_order
-      ) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (
+        ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?,
+        (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM user_todos WHERE user_id = ? AND done = 0)
+      )`,
     ).run(
       id,
       userId,
@@ -381,7 +379,7 @@ export function createTodo(userId: string, input: CreateTodoInput): string {
       assigneeId,
       assigneeName,
       Date.now(),
-      maxSort.m + 1,
+      userId,
     );
 
     if (projectId) {
@@ -389,12 +387,8 @@ export function createTodo(userId: string, input: CreateTodoInput): string {
     }
 
     enqueueChangedAssignments(assignmentsBefore);
-    db.exec("COMMIT;");
     writeLog({ category: "workspace", event: "todo.created", kind: "business", actorId: userId, subjectId: id, details: {} });
-  } catch (e) {
-    db.exec("ROLLBACK;");
-    throw e;
-  }
+  });
 
   return id;
 }
@@ -428,18 +422,17 @@ export interface CreatedProject {
  * 中途失败会留下没有里程碑的项目 —— 而这条路径正是「AI 拆解后一键创建」的落点。
  */
 export function createProject(userId: string, input: CreateProjectInput): CreatedProject {
-  const id = `proj-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const id = `proj-${randomUUID()}`;
   const name = String(input.name || "").trim();
   const description = input.description ? String(input.description).trim() : "";
-  const status = String(input.status || "进行中").trim();
+  const status = toStoredStatus(input.status);
   const color = String(input.color || input.statusColor || "#00C776").trim();
   const url = input.url ? String(input.url).trim() : "";
   const now = Date.now();
 
   let sortOrder = 0;
 
-  db.exec("BEGIN IMMEDIATE;");
-  try {
+  runInTransaction("project_create", () => {
     const assignmentsBefore = captureTaskAssignments({ ownerId: userId });
     const maxSort = db
       .prepare("SELECT COALESCE(MAX(sort_order), -1) AS m FROM projects WHERE user_id = ?")
@@ -458,7 +451,7 @@ export function createProject(userId: string, input: CreateProjectInput): Create
       input.todos.forEach((t, idx) => {
         const tTitle = String(t.title || "").trim();
         if (!tTitle) return; // 标题为空的行跳过（与原实现一致）
-        const tId = `todo-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`;
+        const tId = `todo-${randomUUID()}`;
         const tPriority =
           t.priority === "high" || t.priority === "low" ? t.priority : "medium";
         insertTodo.run(
@@ -478,12 +471,8 @@ export function createProject(userId: string, input: CreateProjectInput): Create
     }
 
     enqueueChangedAssignments(assignmentsBefore);
-    db.exec("COMMIT;");
     writeLog({ category: "workspace", event: "project.created", kind: "business", actorId: userId, subjectId: id, details: {} });
-  } catch (e) {
-    db.exec("ROLLBACK;");
-    throw e;
-  }
+  });
 
   return {
     id,
@@ -531,7 +520,7 @@ export function updateProject(projectId: string, userId: string, input: ProjectP
   }
   if (input.status !== undefined) {
     fields.push("status = ?");
-    vals.push(String(input.status).trim());
+    vals.push(toStoredStatus(input.status));
   }
   if (input.color !== undefined || input.statusColor !== undefined) {
     fields.push("status_color = ?");
@@ -551,8 +540,7 @@ export function updateProject(projectId: string, userId: string, input: ProjectP
   vals.push(Date.now());
   vals.push(projectId, userId);
 
-  db.exec("BEGIN IMMEDIATE;");
-  try {
+  runInTransaction("project_update", () => {
     const assignmentsBefore = captureTaskAssignments({ ownerId: userId });
     db.prepare(`UPDATE projects SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`).run(
       ...vals,
@@ -561,10 +549,6 @@ export function updateProject(projectId: string, userId: string, input: ProjectP
       syncProjectMilestonesInTransaction(projectId, userId, input.todos);
     }
     enqueueChangedAssignments(assignmentsBefore);
-    db.exec("COMMIT;");
     writeLog({ category: "workspace", event: "project.updated", kind: "business", actorId: userId, subjectId: projectId, details: {} });
-  } catch (e) {
-    db.exec("ROLLBACK;");
-    throw e;
-  }
+  });
 }

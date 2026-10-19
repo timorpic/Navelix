@@ -1,8 +1,9 @@
 import { writeLog } from "./logging/events.ts";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { deleteProjectCascade } from "./todos-projects.ts";
 import { db } from "./db.ts";
 import { emitUserEvent } from "./events.ts";
+import { projectStatusLabelZh, toStoredStatus } from "./project-status.ts";
 
 /**
  * AI Copilot 工具调用执行器。
@@ -18,19 +19,33 @@ export interface AiToolCall {
 export type AiToolResult =
   | { ok: true; message: string }
   | { ok: false; error: string }
-  | { needsConfirmation: true; message: string };
+  | {
+      needsConfirmation: true;
+      message: string;
+      /** 确认卡与按钮路径使用的不可猜测标识符 */
+      pendingId: string;
+      /** 将被删除的目标名称，供前端展示确认卡 */
+      targetName: string;
+    };
 
 /** 已确认执行的删除结果：只可能是成功或失败，不可能是待确认 */
 export type AiToolExecResult =
   | { ok: true; message: string }
   | { ok: false; error: string };
 
+/**
+ * 生成实体 ID。
+ *
+ * 原实现是 `todo-${Date.now()}-${Math.random()...}`：时间戳 + 36 进制随机后缀，
+ * 同一毫秒内的并发创建可能碰撞，且 Math.random 不是安全随机源。改用 UUID，
+ * 保留既有 `todo-` / `proj-` 前缀（`todos-projects.ts` 存在基于前缀的兼容判断）。
+ */
 function todoId(): string {
-  return `todo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return `todo-${randomUUID()}`;
 }
 
 function projectId(): string {
-  return `proj-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  return `proj-${randomUUID()}`;
 }
 
 function normalizePriority(v: unknown): string {
@@ -140,7 +155,7 @@ function runCreateProject(userId: string, args: Record<string, unknown>): AiTool
   if (!name) return { ok: false, error: "项目名称不能为空" };
 
   const id = projectId();
-  const status = str(args.status, "进行中");
+  const status = toStoredStatus(args.status);
   const color = str(args.color, "#00C776");
   const url = str(args.url);
   const description = str(args.description);
@@ -156,7 +171,7 @@ function runCreateProject(userId: string, args: Record<string, unknown>): AiTool
   ).run(id, userId, name, description, status, color, url, maxSort.m + 1, now, now);
 
   emitUserEvent(userId, "projects:change");
-  return { ok: true, message: `已创建项目「${name}」（状态：${status}）。` };
+  return { ok: true, message: `已创建项目「${name}」（状态：${projectStatusLabelZh(status)}）。` };
 }
 
 function runUpdateProject(userId: string, args: Record<string, unknown>): AiToolExecResult {
@@ -178,7 +193,7 @@ function runUpdateProject(userId: string, args: Record<string, unknown>): AiTool
   }
   if (args.status !== undefined) {
     fields.push("status = ?");
-    vals.push(str(args.status));
+    vals.push(toStoredStatus(args.status));
   }
   if (args.color !== undefined) {
     fields.push("status_color = ?");
@@ -239,7 +254,14 @@ function executeAiToolInternal(userId: string, call: AiToolCall): AiToolExecResu
 
 /**
  * 删除类工具必须二次确认：防止 Prompt Injection 诱导 AI 输出 <TOOL> 造成误删。
- * 流程：AI 请求删除 → stageDelete 暂存并提示用户 → 用户回复确认 → consumePendingDelete 真正执行。
+ *
+ * 流程分两条路径：
+ * - 主路径（确定性）：AI 请求删除 → stageDelete 暂存并返回 pendingId →
+ *   前端确认卡调用 POST /api/ai/confirm-delete（decision 为枚举）→ 服务端执行。
+ * - 兼容路径：用户在聊天框键入「确认删除 xxxxxxxx」或整句取消词，由
+ *   consumePendingDelete 消费。
+ *
+ * 待确认项存放在进程内 Map 中（单容器部署）。多副本部署时需迁到 SQLite 表。
  */
 const DESTRUCTIVE_TOOLS = new Set(["delete_todo", "delete_project"]);
 const PENDING_TTL_MS = 5 * 60 * 1000;
@@ -253,7 +275,15 @@ interface PendingDelete {
   confirmation: string;
 }
 
+/**
+ * 键为 `pendingId`（随机 nonce），值为待确认请求。
+ *
+ * 旧实现以 `(userId, conversationId)` 为键，同一会话里连续两次删除请求
+ * 会互相覆盖；改用 nonce 后，确认动作与「发起时的那一次请求」一一对应。
+ */
 const pendingDeletes = new Map<string, PendingDelete>();
+/** 每个用户的当前 pendingId，供文本确认路径定位（不含在键里，避免跨用户命中） */
+const pendingByUser = new Map<string, string>();
 
 /** 是否是删除类（需二次确认）工具 */
 export function isDestructiveTool(tool: string): boolean {
@@ -285,18 +315,26 @@ function runPendingDelete(pending: PendingDelete): AiToolExecResult {
   return runDeleteProject(pending.userId, pending.args);
 }
 
-/**
- * 暂存删除请求并提示用户确认（不立即执行）。
- * 返回 needsConfirmation 结果，由前端展示提示，等待用户回复确认。
- */
-export function stageDelete(userId: string, call: AiToolCall, conversationId: string): AiToolResult {
+/** 清理过期项（含用户索引） */
+function pruneExpiredPending(): void {
+  const now = Date.now();
+  for (const [pendingId, pending] of pendingDeletes) {
+    if (pending.expiresAt > now) continue;
+    pendingDeletes.delete(pendingId);
+    if (pendingByUser.get(pending.userId) === pendingId) pendingByUser.delete(pending.userId);
+  }
+}
+
+/** 暂存删除请求，返回确认卡数据；不立即执行。 */
+export function stageDelete(userId: string, call: AiToolCall): AiToolResult {
   const targetName = resolveDeleteTargetName(userId, call);
   if (targetName === null) {
     return { ok: false, error: `未找到要删除的目标，或无权删除` };
   }
-  for (const [key, pending] of pendingDeletes) if (pending.expiresAt <= Date.now()) pendingDeletes.delete(key);
+  pruneExpiredPending();
+  const pendingId = randomBytes(16).toString("hex");
   const confirmation = `确认删除 ${randomBytes(4).toString("hex")}`;
-  pendingDeletes.set(JSON.stringify([userId, conversationId]), {
+  pendingDeletes.set(pendingId, {
     userId,
     tool: call.tool as "delete_todo" | "delete_project",
     args: call.args,
@@ -304,40 +342,82 @@ export function stageDelete(userId: string, call: AiToolCall, conversationId: st
     expiresAt: Date.now() + PENDING_TTL_MS,
     confirmation,
   });
+  pendingByUser.set(userId, pendingId);
   return {
     needsConfirmation: true,
-    message: `⚠️ 删除操作需要您的确认：将删除「${targetName}」。\n请回复「${confirmation}」继续执行；若非本人操作，忽略此消息即可。`,
+    pendingId,
+    targetName,
+    message: `⚠️ 删除操作需要您的确认：将删除「${targetName}」。\n请点击上方按钮确认，或回复「${confirmation}」继续执行；若非本人操作，忽略此消息即可。`,
   };
 }
 
+function consumePending(userId: string, pendingId: string): AiToolExecResult {
+  const pending = pendingDeletes.get(pendingId);
+  // 归属校验：pendingId 泄漏时也不能被其他用户消费
+  if (!pending || pending.userId !== userId) return { ok: false, error: "确认请求不存在或已过期，请重新发起删除。" };
+  pendingDeletes.delete(pendingId);
+  if (pendingByUser.get(userId) === pendingId) pendingByUser.delete(userId);
+  if (Date.now() > pending.expiresAt) {
+    return { ok: false, error: "确认已过期，请重新发起删除。" };
+  }
+  const result = runPendingDelete(pending);
+  writeLog({ category: "ai", event: "ai.tool.delete.confirmed", actorId: userId, outcome: result.ok ? "succeeded" : "failed" });
+  return result;
+}
+
 /**
- * 尝试消费用户的删除确认消息：若存在待确认的删除请求且用户明确确认，则执行并返回结果。
- * 匹配到取消意图或未确认时返回 null，交由正常对话流程处理。
+ * 结构化确认（主路径）：`decision` 是枚举，不解析任何自然语言。
+ * 返回 null 表示 pendingId 无效/过期/不属于该用户。
+ */
+export function confirmPendingDelete(
+  userId: string,
+  pendingId: unknown,
+  decision: "confirm" | "cancel",
+): AiToolExecResult | null {
+  if (typeof pendingId !== "string" || !/^[a-f0-9]{32}$/.test(pendingId)) return null;
+  pruneExpiredPending();
+  const pending = pendingDeletes.get(pendingId);
+  if (!pending || pending.userId !== userId) return null;
+  if (decision === "cancel") {
+    pendingDeletes.delete(pendingId);
+    if (pendingByUser.get(userId) === pendingId) pendingByUser.delete(userId);
+    writeLog({ category: "ai", event: "ai.tool.delete.cancelled", outcome: "cancelled", actorId: userId });
+    return { ok: true, message: "已取消删除操作。" };
+  }
+  return consumePending(userId, pendingId);
+}
+
+/**
+ * 兼容路径：从聊天文本中消费确认。
+ *
+ * 顺序很重要：先比对精确确认串，再匹配**整句**取消词，其余一律视为未确认
+ * 并返回 null（交给正常对话）。旧实现先跑非锚定的取消正则，导致
+ * 「别的地方还有任务吗」这类追问会静默撤销待确认删除。
  */
 export function consumePendingDelete(
   userId: string,
   userPrompt: string,
   conversationId: string,
 ): AiToolExecResult | null {
-  const key = JSON.stringify([userId, conversationId]);
-  const pending = pendingDeletes.get(key);
-  if (!pending) return null;
-  if (Date.now() > pending.expiresAt) {
-    pendingDeletes.delete(key);
+  void conversationId; // 保留参数以兼容既有调用方；定位改由 pendingByUser 完成
+  pruneExpiredPending();
+  const pendingId = pendingByUser.get(userId);
+  if (!pendingId) return null;
+  const pending = pendingDeletes.get(pendingId);
+  if (!pending) {
+    pendingByUser.delete(userId);
     return null;
   }
 
   const prompt = userPrompt.trim();
-  if (/取消|不了|不要|别|撤销|cancel|\bno\b/i.test(prompt)) {
-    pendingDeletes.delete(key);
+  if (prompt === pending.confirmation) return consumePending(userId, pendingId);
+  if (/^(取消|不了|不用了|不要了|撤销|算了|cancel|no)[。！!.\s]*$/i.test(prompt)) {
+    pendingDeletes.delete(pendingId);
+    pendingByUser.delete(userId);
     writeLog({ category: "ai", event: "ai.tool.delete.cancelled", outcome: "cancelled", actorId: userId });
     return { ok: true, message: "已取消删除操作。" };
   }
-  if (prompt !== pending.confirmation) return null;
-  pendingDeletes.delete(key);
-  const result = runPendingDelete(pending);
-  writeLog({ category: "ai", event: "ai.tool.delete.confirmed", actorId: userId, outcome: result.ok ? "succeeded" : "failed" });
-  return result;
+  return null;
 }
 
 /** 从 AI 回复文本中解析 <TOOL>...</TOOL> 工具调用块（可多个） */

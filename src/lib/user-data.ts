@@ -1,6 +1,7 @@
 import { db, type PublicUser, type UserRow } from "./db.ts";
 import { getWorkspaceRevision } from "./workspace-revision.ts";
 import { getUserTodos } from "./todo-store.ts";
+import { toStoredStatus } from "./project-status.ts";
 import { toPublicUser } from "./auth/session.ts";
 import type { Category, Project, SiteLink, SystemConfig, TodoItem } from "@/types";
 import { validateConfigPatch } from "./config-validation.ts";
@@ -171,7 +172,8 @@ export function getUserData(userId: string): UserDataResult {
     id: p.id,
     name: p.name,
     description: p.description || "",
-    status: (p.status as Project["status"]) || "in-progress",
+    // 读取时归一化：历史中文值/英文值统一返回规范键，自定义状态原样保留。
+    status: toStoredStatus(p.status),
     color: p.status_color || "#00C776",
     statusColor: p.status_color || "#00C776",
     url: p.url || "",
@@ -359,7 +361,7 @@ export function saveUserProjects(userId: string, items: ProjectInput[]): void {
       userId,
       String(p.name || "未命名项目"),
       String(p.description || ""),
-      String(p.status || "in-progress"),
+      toStoredStatus(p.status),
       String(p.statusColor || p.color || "#00C776"),
       String(p.url || ""),
       typeof p.sortOrder === "number" ? p.sortOrder : index,

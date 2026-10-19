@@ -8,6 +8,7 @@ import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
 import type { NotificationItem } from "@/lib/client/notifications";
 import { formatRelativeTime } from "@/lib/client/notifications";
 import { toLocalDateStr } from "@/lib/date-utils";
+import { highlightTerms, parseSearchQuery, rankSearchItems } from "@/lib/search";
 
 interface GlobalSearchResultsProps {
   query: string;
@@ -17,12 +18,24 @@ interface GlobalSearchResultsProps {
 
 const MAX_PER_SECTION = 8;
 
-/** 多关键词 AND 匹配：每个关键词至少命中一个字段 */
-function matchText(keywords: string[], ...fields: string[]): boolean {
-  if (!keywords.length) return true;
-  return keywords.every((k) =>
-    fields.some((f) => f && f.toLowerCase().includes(k)),
-  );
+/**
+ * 使用频次加成：最近经常打开的书签排在同分结果前面。
+ * 分数上限 20，低于「标题 vs 描述」的字段差（100 vs 40），不会让权重倒挂。
+ */
+function usageBonus(linkId: string, usage: Record<string, { count: number; lastUsed: number }>): number {
+  const entry = usage[linkId];
+  if (!entry) return 0;
+  const recency = entry.lastUsed > 0 && Date.now() - entry.lastUsed < 7 * 24 * 60 * 60 * 1000 ? 8 : 0;
+  return Math.min(12, Math.log2(1 + entry.count) * 4) + recency;
+}
+
+function readLinkUsage(): Record<string, { count: number; lastUsed: number }> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem("navelix.link.usage");
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === "object" ? parsed as Record<string, { count: number; lastUsed: number }> : {};
+  } catch { return {}; }
 }
 
 /** 将命中的关键词高亮为 React 节点 */
@@ -130,15 +143,8 @@ export default function GlobalSearchResults({
     };
   }, [loadNotifications]);
 
-  const keywords = useMemo(
-    () =>
-      query
-        .trim()
-        .toLowerCase()
-        .split(/\s+/)
-        .filter(Boolean),
-    [query],
-  );
+  const keywords = useMemo(() => parseSearchQuery(query).map(term => term.raw), [query]);
+  const marks = useMemo(() => highlightTerms(query), [query]);
 
   // 查询变化时重置键盘选中
   const keywordKey = keywords.join(" ");
@@ -153,38 +159,55 @@ export default function GlobalSearchResults({
   }, [categories]);
 
   const matchedLinks = useMemo(() => {
-    if (!keywords.length) return [];
-    return links
-      .filter(
-        (l) =>
-          matchText(keywords, l.title, l.description, l.url, l.notes || "") ||
-          matchText(keywords, categoryNameMap.get(l.category) || ""),
-      )
-      .slice(0, MAX_PER_SECTION);
-  }, [links, keywords, categoryNameMap]);
+    // 使用频次保存在 localStorage，随 links 变化重读一次即可
+    const usage = readLinkUsage();
+    return rankSearchItems(links, {
+      query,
+      fields: (l) => [
+        { text: l.title, weight: 100 },
+        { text: categoryNameMap.get(l.category) || "", weight: 45 },
+        { text: l.description, weight: 40 },
+        { text: l.notes || "", weight: 25 },
+        { text: l.url, weight: 20 },
+      ],
+      bonus: (l) => usageBonus(l.id, usage),
+    }).slice(0, MAX_PER_SECTION);
+  }, [links, query, categoryNameMap]);
 
-  const matchedTodos = useMemo(() => {
-    if (!keywords.length) return [];
-    return todos
-      .filter((t) => matchText(keywords, t.title, t.assigneeName || ""))
-      .slice(0, MAX_PER_SECTION);
-  }, [todos, keywords]);
+  const matchedTodos = useMemo(
+    () => rankSearchItems(todos, {
+      query,
+      fields: (t) => [
+        { text: t.title, weight: 100 },
+        { text: t.assigneeName || "", weight: 45 },
+        { text: t.ownerName || "", weight: 35 },
+      ],
+    }).slice(0, MAX_PER_SECTION),
+    [todos, query],
+  );
 
-  const matchedProjects = useMemo(() => {
-    if (!keywords.length) return [];
-    return projects
-      .filter((p) =>
-        matchText(keywords, p.name, p.description || "", p.status || ""),
-      )
-      .slice(0, MAX_PER_SECTION);
-  }, [projects, keywords]);
+  const matchedProjects = useMemo(
+    () => rankSearchItems(projects, {
+      query,
+      fields: (p) => [
+        { text: p.name, weight: 100 },
+        { text: p.description || "", weight: 40 },
+        { text: p.status || "", weight: 30 },
+      ],
+    }).slice(0, MAX_PER_SECTION),
+    [projects, query],
+  );
 
-  const matchedNotifications = useMemo(() => {
-    if (!keywords.length) return [];
-    return notifications
-      .filter((n) => matchText(keywords, n.title, n.content))
-      .slice(0, MAX_PER_SECTION);
-  }, [notifications, keywords]);
+  const matchedNotifications = useMemo(
+    () => rankSearchItems(notifications, {
+      query,
+      fields: (n) => [
+        { text: n.title, weight: 100 },
+        { text: n.content, weight: 40 },
+      ],
+    }).slice(0, MAX_PER_SECTION),
+    [notifications, query],
+  );
 
   const totalCount =
     matchedLinks.length +
@@ -392,7 +415,7 @@ export default function GlobalSearchResults({
                       )}
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-semibold text-gray-800 dark:text-slate-200 group-hover:text-[#00C776] transition-colors">
-                          {highlight(l.title, keywords)}
+                          {highlight(l.title, marks)}
                         </span>
                         <span className="block truncate text-xs text-gray-400 dark:text-slate-500">
                           {l.url}
@@ -431,7 +454,7 @@ export default function GlobalSearchResults({
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-semibold text-gray-800 dark:text-slate-200 group-hover:text-[#00C776] transition-colors">
-                          {highlight(t.title, keywords)}
+                          {highlight(t.title, marks)}
                         </span>
                         <span className="block truncate text-xs text-gray-400 dark:text-slate-500">
                           {t.dueDate
@@ -472,7 +495,7 @@ export default function GlobalSearchResults({
                       />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-semibold text-gray-800 dark:text-slate-200 group-hover:text-[#00C776] transition-colors">
-                          {highlight(p.name, keywords)}
+                          {highlight(p.name, marks)}
                         </span>
                         <span className="block truncate text-xs text-gray-400 dark:text-slate-500">
                           {p.description || p.status || tx("no_description_4172af0c")}
@@ -515,7 +538,7 @@ export default function GlobalSearchResults({
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-semibold text-gray-800 dark:text-slate-200 group-hover:text-[#00C776] transition-colors">
-                          {highlight(n.title, keywords)}
+                          {highlight(n.title, marks)}
                         </span>
                         <span className="block truncate text-xs text-gray-400 dark:text-slate-500">
                           {n.content || formatRelativeTime(n.createdAt, { locale })}

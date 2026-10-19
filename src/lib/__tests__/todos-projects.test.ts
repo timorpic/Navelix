@@ -448,12 +448,26 @@ describe("createProject", () => {
     assert.equal(p.color, "#ABCDEF");
   });
 
-  it("缺省值：状态「进行中」、颜色 #00C776、url 空", () => {
+  it("缺省值：状态规范键 in-progress、颜色 #00C776、url 空", () => {
     const uid = seedUser();
     const p = createProject(uid, { name: "P" });
-    assert.equal(p.status, "进行中");
+    assert.equal(p.status, "in-progress");
     assert.equal(p.color, "#00C776");
     assert.equal(p.url, "");
+  });
+
+  it("历史中文/英文状态写入时归一化为规范键", () => {
+    const uid = seedUser();
+    const zh = createProject(uid, { name: "中文", status: "进行中" });
+    const en = createProject(uid, { name: "英文", status: "In Progress" });
+    assert.equal(zh.status, "in-progress");
+    assert.equal(en.status, "in-progress");
+  });
+
+  it("自定义状态原样保留", () => {
+    const uid = seedUser();
+    const p = createProject(uid, { name: "自定义", status: "搁置" });
+    assert.equal(p.status, "搁置");
   });
 
   it("sort_order 递增", () => {
@@ -512,8 +526,18 @@ describe("updateProject", () => {
       .prepare("SELECT name, status, updated_at FROM projects WHERE id = ?")
       .get(pid) as { name: string; status: string; updated_at: number };
     assert.equal(row.name, "改名后");
-    assert.equal(row.status, "维护中");
+    assert.equal(row.status, "maintenance", "写入时归一化为规范键");
     assert.ok(row.updated_at > 0);
+  });
+
+  it("更新为自定义状态时原样写入", () => {
+    const uid = seedUser();
+    const pid = seedProject(uid);
+    updateProject(pid, uid, { status: "搁置" });
+    const row = db.prepare("SELECT status FROM projects WHERE id = ?").get(pid) as {
+      status: string;
+    };
+    assert.equal(row.status, "搁置");
   });
 
   it("不传字段时也刷新 updated_at（与原实现一致）", () => {

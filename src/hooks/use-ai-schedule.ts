@@ -41,7 +41,7 @@ export interface UseAiScheduleResult {
 
 export function useAiSchedule(): UseAiScheduleResult {
   const tx = useTranslations();
-  const { refreshData } = useNavelixData();
+  const { refreshData, mutateWorkspace } = useNavelixData();
   const [open, setOpen] = useState(false);
   const [advice, setAdvice] = useState("");
   const [tasks, setTasks] = useState<AiScheduledTask[]>([]);
@@ -144,19 +144,23 @@ export function useAiSchedule(): UseAiScheduleResult {
       setWarning("");
       setApplying(true);
       try {
-        await Promise.all(
+        // mutateWorkspace 内部复用同一条串行队列：逐个写入并推进 revision，
+        // 避免并发 POST 各自携带同一个（写过一次即过期的）revision。
+        const results = await Promise.all(
           tasksToWrite.map((t) =>
-            fetch("/api/todos", {
+            mutateWorkspace("/api/todos", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
+              body: {
                 title: t.title,
                 priority: t.priority,
                 dueDate: t.dueDate || dateStr,
-              }),
+              },
             }),
           ),
         );
+        if (results.some((r) => !r.ok)) {
+          throw new Error("apply failed");
+        }
 
         window.dispatchEvent(new CustomEvent("navelix-workspace-updated"));
         pushNotification(
@@ -173,7 +177,7 @@ export function useAiSchedule(): UseAiScheduleResult {
         setApplying(false);
       }
     },
-    [tasks, selectedIndices, refreshData, tx],
+    [tasks, selectedIndices, mutateWorkspace, refreshData, tx],
   );
 
   return {

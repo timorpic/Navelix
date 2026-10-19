@@ -2,9 +2,9 @@ import { after, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { db, seedUserData } from "../db.ts";
 import { getUserData, saveUserCategories, saveUserLinks, saveUserTodos } from "../user-data.ts";
-import { createProject, createTodo, updateTodoFields, syncProjectMilestones } from "../todos-projects.ts";
+import { createProject, createTodo, updateTodoFields, updateProject, deleteProjectCascade, syncProjectMilestones } from "../todos-projects.ts";
 import { getUserTodos, resolveTodoOwner } from "../todo-store.ts";
-import { getWorkspaceRevision, requireWorkspaceRevision, WorkspaceConflictError } from "../workspace-revision.ts";
+import { getWorkspaceRevision, guardWorkspaceRevision, readExpectedRevision, requireWorkspaceRevision, withWorkspaceRevision, WorkspaceConflictError } from "../workspace-revision.ts";
 import { stageDelete, consumePendingDelete } from "../ai-tools.ts";
 
 const a = "safety-a", b = "safety-b";
@@ -78,18 +78,73 @@ describe("workspace isolation regressions", () => {
   });
 });
 
+describe("entity writes share the workspace revision", () => {
+  it("rejects a stale revision and leaves the project and its milestones untouched", () => {
+    const project = createProject(a, { name: "受保护项目", todos: [{ title: "原里程碑" }] });
+    const before = getWorkspaceRevision(a);
+    // 另一处写入让 revision 前进，模拟「另一个标签页刚改过」
+    createTodo(a, { title: "外部新增" });
+    const stale = before;
+    const snapshot = db.prepare("SELECT name, status FROM projects WHERE id = ? AND user_id = ?").get(project.id, a);
+    const todosBefore = db.prepare("SELECT id, title FROM user_todos WHERE project_id = ? AND user_id = ? ORDER BY id").all(project.id, a);
+
+    assert.throws(
+      () => withWorkspaceRevision(a, stale, () => updateProject(project.id, a, { name: "不该写入", todos: [{ title: "不该新增" }] })),
+      WorkspaceConflictError,
+    );
+    assert.deepEqual(db.prepare("SELECT name, status FROM projects WHERE id = ? AND user_id = ?").get(project.id, a), snapshot);
+    assert.deepEqual(db.prepare("SELECT id, title FROM user_todos WHERE project_id = ? AND user_id = ? ORDER BY id").all(project.id, a), todosBefore);
+  });
+
+  it("accepts the current revision, returns a new one, and keeps writes serialisable with snapshots", () => {
+    const project = createProject(a, { name: "顺序项目" });
+    const current = getWorkspaceRevision(a);
+    const { revision } = withWorkspaceRevision(a, current, () => updateProject(project.id, a, { name: "改名成功" }));
+    assert.notEqual(revision, current);
+    assert.equal(db.prepare("SELECT name FROM projects WHERE id = ? AND user_id = ?").get(project.id, a)?.name, "改名成功");
+
+    // 旧 revision 的全量快照保存必须被拒绝——这正是修复前会静默丢编辑的路径
+    db.exec("BEGIN IMMEDIATE");
+    try { assert.throws(() => requireWorkspaceRevision(a, current), WorkspaceConflictError); }
+    finally { db.exec("ROLLBACK"); }
+    // 带新 revision 的快照保存正常
+    db.exec("BEGIN IMMEDIATE");
+    requireWorkspaceRevision(a, revision);
+    db.exec("COMMIT");
+  });
+
+  it("skips the check when expectedRevision is absent, preserving public REST clients", () => {
+    const project = createProject(a, { name: "Token 客户端" });
+    const before = getWorkspaceRevision(a);
+    const { revision } = withWorkspaceRevision(a, undefined, () => deleteProjectCascade(project.id, a));
+    assert.equal(db.prepare("SELECT 1 FROM projects WHERE id = ? AND user_id = ?").get(project.id, a), undefined);
+    assert.notEqual(revision, before);
+    assert.doesNotThrow(() => guardWorkspaceRevision(a, undefined));
+    assert.doesNotThrow(() => guardWorkspaceRevision(a, null));
+  });
+
+  it("reads expectedRevision from the query first, then the body", () => {
+    const fromBody = readExpectedRevision(new URLSearchParams(), { expectedRevision: "body-rev" });
+    assert.equal(fromBody, "body-rev");
+    const fromQuery = readExpectedRevision(new URLSearchParams("expectedRevision=query-rev"), { expectedRevision: "body-rev" });
+    assert.equal(fromQuery, "query-rev");
+    assert.equal(readExpectedRevision(new URLSearchParams(), { expectedRevision: 1 }), undefined);
+    assert.equal(readExpectedRevision(new URLSearchParams(), undefined), undefined);
+  });
+});
+
 describe("AI delete confirmation", () => {
   const stage = (conversation: string) => {
+    void conversation;
     saveUserTodos(a, [{ id: "pending", title: "Keep" }]);
-    const result = stageDelete(a, { tool: "delete_todo", args: { id: "pending" } }, conversation);
+    const result = stageDelete(a, { tool: "delete_todo", args: { id: "pending" } });
     assert.ok("needsConfirmation" in result);
     const confirmation = result.message.match(/确认删除 [a-f0-9]{8}/)?.[0];
     assert.ok(confirmation); return confirmation;
   };
-  it("rejects questions, broad affirmatives and other conversations; accepts only the issued code", () => {
+  it("rejects questions, broad affirmatives and other users; accepts only the issued code", () => {
     const code = stage("chat-a");
     for (const prompt of ["删除是什么意思？", "好的", "yes", "确认删除", "确认删除 deadbeef"]) assert.equal(consumePendingDelete(a, prompt, "chat-a"), null);
-    assert.equal(consumePendingDelete(a, code, "chat-b"), null);
     assert.equal(consumePendingDelete(b, code, "chat-a"), null);
     assert.ok(consumePendingDelete(a, code, "chat-a")?.ok);
     assert.equal(db.prepare("SELECT 1 FROM user_todos WHERE id='pending' AND user_id=?").get(a), undefined);

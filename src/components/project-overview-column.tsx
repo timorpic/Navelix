@@ -6,6 +6,7 @@ import type { SiteLink } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
 import { addDaysLocal } from "@/lib/date-utils";
 import { useWorkspaceTodos } from "@/hooks/use-workspace-todos";
+import { isCompletedStatus } from "@/lib/project-status";
 
 /**
  * 栏目 1：项目概览与全维度指标中心 (Project Intelligence Hub)。
@@ -45,7 +46,7 @@ const activeProjectAnalysis = useMemo(() => {
   const pTodos = todos.filter((t) => !t.isDelegated && t.projectId === p.id);
   const done = pTodos.filter((t) => t.done).length;
   const total = pTodos.length;
-  const progress = total > 0 ? Math.round((done / total) * 100) : p.status === "已完成" ? 100 : 0;
+  const progress = total > 0 ? Math.round((done / total) * 100) : isCompletedStatus(p.status) ? 100 : 0;
 
   // 风险评估
   const overdueList = pTodos.filter((t) => !t.done && t.dueDate && t.dueDate < todayStr);

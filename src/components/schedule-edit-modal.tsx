@@ -5,6 +5,7 @@ import { todoUrl } from "@/lib/todo-url";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { TodoItem, WorkspaceMember } from "@/types";
+import type { NavelixDataApi } from "@/context/navelix-context";
 import Overlay from "./overlay";
 
 /**
@@ -21,6 +22,7 @@ export default function ScheduleEditModal({
   defaultDateStr,
   onClose,
   onSaved,
+  mutateWorkspace,
 }: {
   item: TodoItem;
   projects: { id: string; name: string }[];
@@ -29,6 +31,11 @@ export default function ScheduleEditModal({
   onClose: () => void;
   /** 保存或删除成功后回调，由父组件负责刷新工作区数据 */
   onSaved: () => void;
+  /**
+   * 工作区写入口由父组件注入（本组件不直接依赖 Provider）：
+   * 渲染测试可在无 Provider 环境下挂载，写操作仍统一携带 expectedRevision。
+   */
+  mutateWorkspace: NavelixDataApi["mutateWorkspace"];
 }) {
   const tx = useTranslations();
   const [title, setTitle] = useState(item.title);
@@ -38,16 +45,16 @@ export default function ScheduleEditModal({
   );
   const [projectId, setProjectId] = useState(item.projectId || "");
   const [assigneeId, setAssigneeId] = useState(item.assigneeId || "");
+  const [error, setError] = useState("");
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
     try {
       const matchedMember = members.find((m) => m.id === assigneeId);
-      const res = await fetch(todoUrl(item.id, item.ownerId), {
+      const res = await mutateWorkspace(todoUrl(item.id, item.ownerId), {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           title: title.trim(),
           dueDate,
           priority,
@@ -56,25 +63,31 @@ export default function ScheduleEditModal({
           assigneeName: matchedMember
             ? matchedMember.displayName || matchedMember.username
             : "",
-        }),
+        },
       });
       if (res.ok) {
         onClose();
         onSaved();
+        return;
       }
+      // 冲突时保留表单内容，只提示重新提交（Provider 已刷新数据）
+      setError(res.conflict ? tx("workspace_save_conflict") : tx("failed_to_save_6309a3bb"));
     } catch {
-      // ignore
+      setError(tx("failed_to_save_6309a3bb"));
     }
   };
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(todoUrl(item.id, item.ownerId), { method: "DELETE" });
-      if (!response.ok) return;
+      const res = await mutateWorkspace(todoUrl(item.id, item.ownerId), { method: "DELETE" });
+      if (!res.ok) {
+        setError(res.conflict ? tx("workspace_save_conflict") : tx("failed_to_save_6309a3bb"));
+        return;
+      }
       onClose();
       onSaved();
     } catch {
-      // ignore
+      setError(tx("failed_to_save_6309a3bb"));
     }
   };
 
@@ -174,6 +187,8 @@ export default function ScheduleEditModal({
               </select>
             </div>
           </div>
+
+          {error && <p className="text-[11px] text-rose-500">{error}</p>}
 
           <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-slate-800">
             <button

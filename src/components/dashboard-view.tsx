@@ -40,7 +40,7 @@ export default function DashboardView({
   const maxWeeklyHours = Math.max(...weeklyData, 4);
 
   // 2. 项目与待办数据 (Projects & Todos) — 从 NavelixProvider 统一读取
-  const { projects, todos, refreshData } = useNavelixData();
+  const { projects, todos, refreshData, mutateWorkspace } = useNavelixData();
 
   // 3. 链路探针与服务健康度检测 (Link Status & Services)
   // statuses 由 page.tsx 统一实例化 useLinkStatus 并通过 props 注入，
@@ -80,12 +80,11 @@ export default function DashboardView({
   // 切换待办完成状态
   const handleToggleTodo = async (id: string, done: boolean, ownerId?: string) => {
     try {
-      const response = await fetch(todoUrl(id, ownerId), {
+      const res = await mutateWorkspace(todoUrl(id, ownerId), {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: !done }),
+        body: { done: !done },
       });
-        if (!response.ok) return;
+      if (!res.ok) return;
       refreshData();
     } catch {
       // ignore

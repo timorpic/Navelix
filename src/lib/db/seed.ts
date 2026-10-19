@@ -68,7 +68,7 @@ export function seedInitialUserData(db: DatabaseSync, userId: string) {
     {
       id: "p1",
       name: "IT 运维管家官网",
-      status: "进行中",
+      status: "in-progress",
       statusColor:
         "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900",
       url: "",
@@ -76,7 +76,7 @@ export function seedInitialUserData(db: DatabaseSync, userId: string) {
     {
       id: "p2",
       name: "AI Memory Architecture",
-      status: "研究中",
+      status: "research",
       statusColor:
         "bg-sky-50 text-sky-600 border border-sky-200 dark:bg-sky-950/50 dark:text-sky-400 dark:border-sky-900",
       url: "",
@@ -84,7 +84,7 @@ export function seedInitialUserData(db: DatabaseSync, userId: string) {
     {
       id: "p3",
       name: "Personal Knowledge Base",
-      status: "维护中",
+      status: "maintenance",
       statusColor:
         "bg-teal-50 text-teal-600 border border-teal-200 dark:bg-teal-950/50 dark:text-teal-400 dark:border-teal-900",
       url: "",

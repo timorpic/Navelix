@@ -1,24 +1,30 @@
 "use client";
 
-import { useText } from "@/hooks/use-text";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { Project } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
+import {
+  DEFAULT_PROJECT_STATUS,
+  displayProjectStatus,
+  normalizeProjectStatus,
+  projectStatusOptions,
+  toStoredStatus,
+} from "@/lib/project-status";
 
+// 规范键是存储契约；展示文案由 displayProjectStatus 走字典翻译
 const STATUS_OPTIONS = [
-  { label: "进行中", color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400" },
-  { label: "研究中", color: "bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400" },
-  { label: "维护中", color: "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400" },
-  { label: "已完成", color: "bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400" },
+  { key: "in-progress", color: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400" },
+  { key: "research", color: "bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400" },
+  { key: "maintenance", color: "bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400" },
+  { key: "completed", color: "bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400" },
 ];
 
 export default function ProjectAdminPanel() {
-  const text = useText();
   const tx = useTranslations();
-  const { projects, todos, refreshData } = useNavelixData();
+  const { projects, todos, refreshData, mutateWorkspace } = useNavelixData();
   const [name, setName] = useState("");
-  const [status, setStatus] = useState("进行中");
+  const [status, setStatus] = useState<string>(DEFAULT_PROJECT_STATUS);
   const [url, setUrl] = useState("");
   const [color, setColor] = useState("#00C776");
   const [editing, setEditing] = useState<Project | null>(null);
@@ -26,7 +32,7 @@ export default function ProjectAdminPanel() {
 
   const resetForm = () => {
     setName("");
-    setStatus("进行中");
+    setStatus(DEFAULT_PROJECT_STATUS);
     setUrl("");
     setColor("#00C776");
     setEditing(null);
@@ -37,18 +43,19 @@ export default function ProjectAdminPanel() {
     const n = name.trim();
     if (!n) { setError(tx("enter_a_project_name_0fb3237e")); return; }
     try {
-      if (editing) {
-        await fetch(`/api/projects/${editing.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: n, status, color, url }),
-        });
-      } else {
-        await fetch("/api/projects", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: n, status, color, url }),
-        });
+      // 冲突时不 resetForm：保留用户已输入的字段，仅提示重新提交
+      const res = editing
+        ? await mutateWorkspace(`/api/projects/${editing.id}`, {
+            method: "PATCH",
+            body: { name: n, status, color, url },
+          })
+        : await mutateWorkspace("/api/projects", {
+            method: "POST",
+            body: { name: n, status, color, url },
+          });
+      if (!res.ok) {
+        setError(res.conflict ? tx("workspace_save_conflict") : tx("failed_to_save_6309a3bb"));
+        return;
       }
       resetForm();
       refreshData();
@@ -58,14 +65,15 @@ export default function ProjectAdminPanel() {
   };
 
   const remove = async (id: string) => {
-    await fetch(`/api/projects/${id}`, { method: "DELETE" });
+    const res = await mutateWorkspace(`/api/projects/${id}`, { method: "DELETE" });
+    if (!res.ok && res.conflict) setError(tx("workspace_save_conflict"));
     refreshData();
   };
 
   const startEdit = (p: Project) => {
     setEditing(p);
     setName(p.name);
-    setStatus(p.status || "进行中");
+    setStatus(toStoredStatus(p.status));
     setUrl(p.url || "");
     setColor(p.color || p.statusColor || "#00C776");
     setError("");
@@ -152,9 +160,9 @@ export default function ProjectAdminPanel() {
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full h-9 rounded-lg border border-gray-200 dark:border-slate-700 px-2 text-xs bg-white dark:bg-slate-900 text-gray-900 dark:text-white cursor-pointer"
               >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={text(opt.label)} value={text(opt.label)}>
-                    {text(opt.label)}
+                {projectStatusOptions(editing?.status).map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {displayProjectStatus(opt.value, tx)}
                   </option>
                 ))}
               </select>
@@ -184,16 +192,16 @@ export default function ProjectAdminPanel() {
             <span className="text-[10px] text-gray-400 dark:text-slate-400">{tx("quick_status_9411738e")}</span>
             {STATUS_OPTIONS.map((opt) => (
               <button
-                key={text(opt.label)}
+                key={opt.key}
                 type="button"
-                onClick={() => setStatus(opt.label)}
+                onClick={() => setStatus(opt.key)}
                 className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all cursor-pointer ${
-                  status === opt.label
+                  normalizeProjectStatus(status) === opt.key
                     ? "ring-1 ring-[#00C776] font-bold"
                     : "opacity-60 hover:opacity-100"
                 } ${opt.color}`}
               >
-                {text(opt.label)}
+                {displayProjectStatus(opt.key, tx)}
               </button>
             ))}
           </div>
@@ -217,7 +225,9 @@ export default function ProjectAdminPanel() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {projects.map((p) => {
-              const matchedOpt = STATUS_OPTIONS.find((s) => s.label === p.status);
+              // 历史库可能存中文/英文/自定义变体，徽章必须按归一化后的规范键匹配
+              const statusKey = normalizeProjectStatus(p.status);
+              const matchedOpt = STATUS_OPTIONS.find((s) => s.key === statusKey);
               const badgeClass = matchedOpt
                 ? matchedOpt.color
                 : "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400";
@@ -257,7 +267,7 @@ export default function ProjectAdminPanel() {
 
                   <div className="flex items-center justify-between text-xs">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${badgeClass}`}>
-                      {text(p.status || "进行中")}
+                      {displayProjectStatus(p.status, tx)}
                     </span>
                     {p.url && (
                       <a

@@ -1,5 +1,6 @@
 import type { Project, SiteLink, TodoItem } from "@/types";
 import { toLocalDateStr } from "./date-utils.ts";
+import { normalizeProjectStatus } from "./project-status.ts";
 
 /**
  * 数据看板的纯派生计算。
@@ -100,6 +101,8 @@ export interface ProjectMetrics {
   completed: number;
   research: number;
   maintenance: number;
+  /** 自定义状态（无法归一化）的项目数，仍计入 total */
+  other: number;
   /** 交付率（%），无项目时按 0 计 */
   deliveryRate: number;
 }
@@ -107,27 +110,28 @@ export interface ProjectMetrics {
 /**
  * 项目生命周期分布。
  *
- * 状态是自由文本（用户可自定义），因此每类都用「包含」而非相等匹配；
- * 已完成额外接受精确的「已完成」。注意这几个判定存在重叠可能
- * （如「已完成开发」会同时命中 inProgress 与 completed），此处保留原行为。
+ * 状态经 `normalizeProjectStatus` 归一化后按规范键计数 —— 历史库里的中文值、
+ * 英文值以及界面曾写入的翻译文案都能正确归类。无法识别的自定义状态计入
+ * `other`，不再像旧实现那样按「包含」猜测，也不会互相重叠
+ * （旧实现中「已完成开发」会同时计为进行中和已完成）。
  */
 export function computeProjectMetrics(projects: Project[]): ProjectMetrics {
   const total = projects.length || 1;
-  const inProgress = projects.filter(
-    (p) =>
-      (p.status || "").includes("进行") ||
-      (p.status || "").includes("开发") ||
-      (p.status || "").toLowerCase().includes("progress"),
-  ).length;
-  const completed = projects.filter(
-    (p) => p.status === "已完成" || (p.status || "").includes("完成"),
-  ).length;
-  const research = projects.filter(
-    (p) => p.status === "研究中" || (p.status || "").includes("研究"),
-  ).length;
-  const maintenance = projects.filter(
-    (p) => p.status === "维护中" || (p.status || "").includes("维护"),
-  ).length;
+  let inProgress = 0;
+  let completed = 0;
+  let research = 0;
+  let maintenance = 0;
+  let other = 0;
+
+  for (const project of projects) {
+    switch (normalizeProjectStatus(project.status)) {
+      case "in-progress": inProgress++; break;
+      case "completed": completed++; break;
+      case "research": research++; break;
+      case "maintenance": maintenance++; break;
+      default: other++;
+    }
+  }
 
   return {
     total: projects.length,
@@ -135,6 +139,7 @@ export function computeProjectMetrics(projects: Project[]): ProjectMetrics {
     completed,
     research,
     maintenance,
+    other,
     deliveryRate: Math.round((completed / total) * 100),
   };
 }

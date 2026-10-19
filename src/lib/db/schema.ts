@@ -4,6 +4,7 @@ import { createUserConfigsTableSql } from "../user-config-columns.ts";
 import {
   API_TOKENS_TABLE_SQL,
   CATEGORY_SUBSCRIPTIONS_TABLE_SQL,
+  WORKSPACE_INDEXES_SQL,
 } from "../migrations/schema.ts";
 
 /**
@@ -88,10 +89,13 @@ export function initSchema(db: DatabaseSync): void {
       id TEXT NOT NULL,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
       status TEXT NOT NULL,
       status_color TEXT NOT NULL DEFAULT '',
       url TEXT NOT NULL DEFAULT '',
       sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL DEFAULT 0,
+      updated_at INTEGER NOT NULL DEFAULT 0,
       PRIMARY KEY (id, user_id)
     );
 
@@ -102,12 +106,16 @@ export function initSchema(db: DatabaseSync): void {
       priority TEXT NOT NULL DEFAULT 'medium',
       done INTEGER NOT NULL DEFAULT 0,
       due_date TEXT NOT NULL DEFAULT '',
+      project_id TEXT NOT NULL DEFAULT '',
       assigned_to TEXT NOT NULL DEFAULT '',
+      assignee_id TEXT NOT NULL DEFAULT '',
       assignee_name TEXT NOT NULL DEFAULT '',
       created_at INTEGER NOT NULL,
       sort_order INTEGER NOT NULL DEFAULT 0,
       PRIMARY KEY (id, user_id)
     );
+
+    ${WORKSPACE_INDEXES_SQL}
 
     CREATE TABLE IF NOT EXISTS audit_logs (
       id TEXT PRIMARY KEY,
