@@ -5,10 +5,10 @@
 - task_id: weak-code-remediation-20261019
 - context_revision: 1
 - checkpoint_seq: 1
-- updated_at: 2026-10-19T21:19:00+08:00
+- updated_at: 2026-10-19T21:36:00+08:00
 - owner: Claude Code
-- status: active
-- current_step: 全部代码修复与验证完成，准备提交、推送并发版 v2.10.22
+- status: completed
+- current_step: v2.10.22 已发布，main CI 与镜像流水线全部成功，稳定标签 digest 已回读一致
 
 ## 工作区与记录边界
 
@@ -47,11 +47,15 @@
 
 ## 未完成
 
-- 提交、推送、PR、合并 main。
-- Tag `v2.10.22`、Release 发布与镜像工作流核验。
+无。本轮任务的全部实现、验证与发布均已完成。
 
 ## 外部操作台账
 
-- 已执行 `node scripts/sync-version.mjs 2.10.22`：package.json、Dockerfile、`build-info.ts`、`admin-system.ts` 已改为 2.10.22。
-- 已执行 `node scripts/sync-changelog.mjs` 校验：通过。
-- 尚未推送、未打 Tag、未创建 Release、未触发镜像构建。
+- 分支 `fix/weak-code-remediation-2.10.22` 推送后创建 PR #23，两项必需检查（`Lint, Test & Build` 1m46s、`Playwright E2E (Core UI Flow)` 2m20s）均通过，已 squash 合并到 main，合并提交 `7cb8e6fe0785ac679f3426d93492a6d9b585bc3c`。
+- `node scripts/sync-version.mjs 2.10.22`：package.json、Dockerfile、`build-info.ts`、`admin-system.ts` 已改为 2.10.22。
+- `node scripts/sync-changelog.mjs` 校验通过；整理后章节更名为 `[2.10.22] - 2026-10-19`。
+- 附注 Tag `v2.10.22`（对象 `5cbfeabc…`，指向 `7cb8e6f`）已推送。
+- `node scripts/sync-changelog.mjs --publish` 已创建正式 Release（非草稿、非预发布）：https://github.com/timorpic/Navelix/releases/tag/v2.10.22
+- main CI `39259800243`：success。
+- 镜像工作流 `39259991781`：success。quality（lint/test/build/E2E）、候选镜像构建、冒烟（健康、CRUD、敏感字段、非 root、历史 v20 升级、生产镜像 31 项 E2E）、稳定标签提升、通知全部通过。
+- 被测与提升 digest 一致：`sha256:c0f0dcb611906425d9d94d94bf10c596587b5bcba9d1067c6b9ed1e7c0f8d2f8`。GHCR 与 Docker Hub 的 `latest`、`v2.10.22`、`2.10.22` 六个标签独立回读均为该 digest。
