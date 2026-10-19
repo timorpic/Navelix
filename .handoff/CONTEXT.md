@@ -4,8 +4,8 @@
 - project_id: Navelix
 - task_id: assistant-header-row-20261019
 - context_revision: 8
-- updated_at: 2026-10-19T22:14:01+08:00
-- status: active
+- updated_at: 2026-10-19T22:26:33+08:00
+- status: completed
 
 ## 用户目标与授权
 
@@ -15,8 +15,12 @@
 
 ## 验收与发布
 
-目标版本 v2.10.23：已查询远程 Tag 与 Release，最新为 v2.10.22。版本脚本同步四个版本位置，CHANGELOG 真源。按 main 分支保护，经 PR 的 Lint, Test & Build 与 Playwright E2E (Core UI Flow) 必需检查通过后合并，再推送 Tag、发布 Release，并等待镜像质量/候选/冒烟/稳定标签提升成功。
+本轮发布版本为 v2.10.23；发版前查询远程 Tag 与 Release，当时最新为 v2.10.22。版本脚本同步四个版本位置，CHANGELOG 真源。按 main 分支保护，经 PR 的 Lint, Test & Build 与 Playwright E2E (Core UI Flow) 必需检查通过后合并，再推送 Tag、发布 Release，并等待镜像质量/候选/冒烟/稳定标签提升成功。
 
 ## 约束与入口
 
 依据 AGENTS.md、docs/AGENT-RULES.md 第 18 节、docs/DEVELOPMENT.md、docs/DEPLOYMENT.md、DESIGN.md、MEMORY.md。本地无 Computer Use，已向用户提供隔离演示页并按反馈迭代；自动回归测试依照仓库 CI 门禁执行。真实业务库不得用于验证，Docker 只在 GitHub Actions 构建。现场见 CHECKPOINT.md。
+
+## 交付结果
+
+v2.10.23 已发布，PR #25 合并，main CI 与镜像流水线成功，六个稳定镜像标签摘要回读一致。预览服务已关闭。完整证据见 CHECKPOINT.md。
