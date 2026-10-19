@@ -10,10 +10,8 @@ import HeroBanner from "@/components/hero-banner";
 import QuickAccess from "@/components/quick-access";
 import TopStatsBar from "@/components/top-stats-bar";
 import WorkspaceAssistant from "@/components/workspace-assistant";
-import WorkspaceNotifications from "@/components/workspace-notifications";
 import TodaySummaryWidget from "@/components/today-summary-widget";
 import { useWorkspaceAssistant } from "@/hooks/use-workspace-assistant";
-import { useWorkspaceNotifications } from "@/hooks/use-workspace-notifications";
 import CardGrid from "@/components/card-grid";
 import WorkspaceOverviewColumns from "@/components/workspace-overview-columns";
 import RecentActivitiesCard from "@/components/recent-activities-card";
@@ -32,10 +30,9 @@ import { copyShareLink } from "@/lib/share-link";
 function HomeContent() {
   const tx = useTranslations();
   const text = useText();
-  const { categories, links, hydrated, addLink, user } = useNavelixData();
+  const { categories, links, hydrated, addLink } = useNavelixData();
   const { config, updateConfig } = useNavelixConfig();
   const assistant = useWorkspaceAssistant();
-  const notifications = useWorkspaceNotifications(user?.id);
   const searchParams = useSearchParams();
   const tabFromUrl = searchParams.get("tab") || searchParams.get("category");
 
@@ -183,7 +180,7 @@ function HomeContent() {
       />
 
       {/* 2. Center Workspace Main Area */}
-      <main className="relative z-10 flex-1 min-w-0 overflow-y-auto p-4 pb-24 sm:p-6 sm:pb-24 lg:p-6 lg:pb-24">
+      <main className="relative z-10 flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-6">
         <div className={`${maxWidthClass} mx-auto flex flex-col gap-3.5`}>
           <Toast message={actionNotice} className="mb-1" />
           {notice && (
@@ -204,7 +201,7 @@ function HomeContent() {
           {/* 首次登录安全设置引导横幅（仅管理员且未完成时展示） */}
           <SecuritySetupBanner />
 
-          {isFeatureView && <div className="flex justify-end"><WorkspaceNotifications feed={notifications} onNavigate={handleSelectCategory} /></div>}
+          {isFeatureView && <div className="flex items-center justify-end gap-2"><WorkspaceAssistant assistant={assistant} /></div>}
 
           {/* Feature Pages (日历日程、项目管理、数据看板、消息通知等独立全景页面不展示 HeroBanner) */}
           {activeCategory === "feature-calendar" ? (
@@ -224,7 +221,7 @@ function HomeContent() {
             <>
               {/* Top Hero Banner 仅在主工作台与书签视图展示 */}
               <HeroBanner
-                actions={<WorkspaceNotifications feed={notifications} onNavigate={handleSelectCategory} />}
+                actions={<WorkspaceAssistant assistant={assistant} />}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 onSelectCategory={handleSelectCategory}
@@ -281,7 +278,7 @@ function HomeContent() {
                 <>
                   <MigrationOnboarding />
 
-                  {/* 顶部五卡片：今日专注、待办任务、知识笔记、项目进度、快速操作 */}
+                  {/* 顶部统计：进行中项目、待处理任务、本周完成与快速操作 */}
                   <TopStatsBar
                     onOpenAssistant={assistant.enabled ? assistant.show : undefined}
                     categories={categories}
@@ -305,8 +302,6 @@ function HomeContent() {
           )}
         </div>
       </main>
-
-      <WorkspaceAssistant assistant={assistant} />
 
       {/* 4. 自定义 CSS 与统计探针代码注入 */}
       {config.customCss && (

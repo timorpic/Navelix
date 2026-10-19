@@ -49,17 +49,19 @@ export default function HeroBanner({
 
   return (
     <div className="relative">
-      <div className="relative overflow-hidden rounded-2xl bg-white/90 dark:bg-slate-900/80 backdrop-blur-md p-5 sm:p-7 border border-gray-200/80 dark:border-slate-800 shadow-2xs transition-colors">
+      <div className="relative rounded-2xl bg-white/90 dark:bg-slate-900/80 backdrop-blur-md p-5 sm:p-7 border border-gray-200/80 dark:border-slate-800 shadow-2xs transition-colors">
         {/* Background Accent Gradients */}
-        <div className="absolute -right-20 -top-20 w-80 h-80 bg-[#00C776]/10 dark:bg-[#00C776]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -left-20 -bottom-20 w-60 h-60 bg-teal-500/10 dark:bg-teal-500/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+          <div className="absolute -right-20 -top-20 w-80 h-80 bg-[#00C776]/10 dark:bg-[#00C776]/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -left-20 -bottom-20 w-60 h-60 bg-teal-500/10 dark:bg-teal-500/15 rounded-full blur-2xl pointer-events-none" />
+        </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
           {/* ── Left / Main Content: 问候语 + 当前状态 + 搜索栏 ── */}
-          <div className="flex-1 w-full space-y-3.5">
+          <div className="min-w-0 flex-1 w-full space-y-3.5">
             <div>
               {/* Greeting Header */}
-              <div className="flex items-center gap-2.5 mb-1.5 pr-12">
+              <div className="flex items-center gap-2.5 mb-1.5">
                 <span className="text-2xl animate-bounce">👋</span>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
                   {greeting}，{userName}
@@ -80,10 +82,14 @@ export default function HeroBanner({
                 {tx("ready_to_go_f3aaaeaf")}</span>
             </div>
 
-            {/* 搜索栏（如果用户启用了搜索栏配置） */}
-            {config.showSearchBar && (
-              <div className="pt-2 max-w-xl">
-                <SearchBar value={searchQuery} onChange={onSearchChange} />
+            {(config.showSearchBar || actions) && (
+              <div className="relative z-20 flex flex-wrap items-center gap-3 pt-2">
+                {config.showSearchBar && (
+                  <div className="min-w-0 max-w-xl basis-64 flex-1">
+                    <SearchBar value={searchQuery} onChange={onSearchChange} />
+                  </div>
+                )}
+                {actions && <div className="flex shrink-0 items-center gap-3">{actions}</div>}
               </div>
             )}
           </div>
@@ -108,7 +114,6 @@ export default function HeroBanner({
           </div>
         </div>
       </div>
-    {actions && <div className="absolute right-4 top-4 z-20">{actions}</div>}
     </div>
   );
 }

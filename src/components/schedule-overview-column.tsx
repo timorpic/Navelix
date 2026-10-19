@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { useNavelixData } from "@/context/navelix-context";
+import { useFocusTracker } from "@/hooks/use-focus-tracker";
 import { useWorkspaceTodos } from "@/hooks/use-workspace-todos";
 import { addDaysLocal, toLocalDateStr } from "@/lib/date-utils";
 
@@ -20,6 +21,19 @@ export default function ScheduleOverviewColumn({
   onSelectCategory: (id: string) => void;
 }) {
   const tx = useTranslations();
+  const { weeklyData, todayMinutes } = useFocusTracker();
+  const currentDayIdx = (new Date().getDay() + 6) % 7;
+  const todayFocusHours = weeklyData[currentDayIdx] || 0;
+  const yesterdayFocusHours = weeklyData[(currentDayIdx + 6) % 7] || 0;
+
+  const focusTrend = useMemo(() => {
+    if (yesterdayFocusHours === 0) return todayMinutes > 0 ? tx("on_track_f9de9a02") : tx("not_started_a00d8da6");
+    const diff = ((todayFocusHours - yesterdayFocusHours) / yesterdayFocusHours) * 100;
+    if (diff > 0) return `↑ ${Math.round(diff)}%`;
+    if (diff < 0) return `↓ ${Math.abs(Math.round(diff))}%`;
+    return tx("unchanged_10ad8178");
+  }, [todayFocusHours, yesterdayFocusHours, todayMinutes, tx]);
+
   const { projects, todos, hydrated } = useNavelixData();
   const todosLoading = !hydrated;
   const { todayStr, toggleTodo: handleToggleTodo, postponeOneDay: handlePostponeOneDay, quickAddTodo } = useWorkspaceTodos();
@@ -171,6 +185,17 @@ const getProjectName = (pid?: string) => {
         <span>→</span>
       </button>
     </div>
+  </div>
+
+  {/* 今日专注 */}
+  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-3 dark:border-emerald-900/60 dark:bg-emerald-950/30">
+    <div className="flex items-center gap-2">
+      <span aria-hidden="true">🎯</span>
+      <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">{tx("focus_today_4372b8b6")}</span>
+      <span className="text-xl font-extrabold text-gray-900 dark:text-white">{todayMinutes}</span>
+      <span className="text-xs text-gray-500 dark:text-slate-400">{tx("minutes_bd957bc4")}</span>
+    </div>
+    <span className="rounded bg-emerald-100/70 px-2 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">{focusTrend}</span>
   </div>
 
   {/* 7 日迷你快捷日期条 (周一 ~ 周日) */}

@@ -392,7 +392,6 @@ export default function Sidebar({
                   <span>⚙️</span>
                   <span>{tx("administration_41119eca")}</span>
                 </Link>
-                <AccountSocialLinks config={config} />
                 <div className="my-0.5 border-t border-gray-100 dark:border-slate-700" />
                 <button
                   onClick={() => {
