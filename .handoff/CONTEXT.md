@@ -4,8 +4,8 @@
 - project_id: Navelix
 - task_id: weak-code-remediation-20261019
 - context_revision: 1
-- updated_at: 2026-10-19T21:19:00+08:00
-- status: active
+- updated_at: 2026-10-19T21:36:00+08:00
+- status: completed
 
 ## 已授权目标
 
@@ -35,10 +35,7 @@
 
 ## 当前工作项
 
-1. 提交并推送当前改动到分支，创建 PR，等待必需检查。
-2. 合并到 main。
-3. `git tag v2.10.22` 并推送，执行 `node scripts/sync-changelog.mjs --publish`。
-4. 验证 Release 与 Docker 工作流结果。
+已完成。PR #23 合并到 main，Tag `v2.10.22` 与正式 Release 已发布，main CI 与镜像流水线全部成功，六个稳定标签 digest 一致。
 
 ## 检查点位置
 
