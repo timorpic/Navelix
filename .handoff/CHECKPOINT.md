@@ -4,11 +4,11 @@
 - project_id: Navelix
 - task_id: handoff-helper-adoption-20261020
 - context_revision: 2
-- checkpoint_seq: 12
-- updated_at: 2026-10-20T10:57:42.034Z
+- checkpoint_seq: 13
+- updated_at: 2026-10-20T11:02:07.318Z
 - owner: claude-code-eb4f60ef
 - status: active
-- current_step: 全部实现与验证完成，已在 feat/handoff-helper 分支上完成提交前核验；等待提交、推送并创建 PR
+- current_step: 已提交、推送并创建 PR #33；针对提交 37c789b 的 CI 全部通过，等待审查与合并
 - single_writer_confirmed: 操作者已声明旧写入者及派生任务停止；助手不提供锁
 - owner_lease_id: d05eb39e-def9-4652-8061-276fcb08ef59
 - leased_at: 2026-10-20T10:54:07.107Z
@@ -17,23 +17,14 @@
 ## 现场
 - repo_root: /root/Navelix
 - branch: feat/handoff-helper
-- HEAD: 14bb61288c64c5bc84b93861929f8699f3d8c2c7
+- HEAD: 37c789b03982397d9bc273ffd5a91589b1bf804c
 - context_path: .handoff/CONTEXT.md
 - 上下文版本核对：已核对身份与修订；需求/授权内容仍由执行工具核实。
 
 ## 实际修改现场
 | 路径 | staged/unstaged/untracked | 修改意图 | 来源/归属 | 保存与恢复注意 |
 | --- | --- | --- | --- | --- |
-| AGENTS.md |  M | 待按需求核对 | 未知/保留原状 | 不自动覆盖 |
-| HANDOFF.md |  M | 待按需求核对 | 未知/保留原状 | 不自动覆盖 |
-| MEMORY.md |  M | 待按需求核对 | 未知/保留原状 | 不自动覆盖 |
-| PROMPTS.md |  M | 待按需求核对 | 未知/保留原状 | 不自动覆盖 |
-| README.md |  M | 待按需求核对 | 未知/保留原状 | 不自动覆盖 |
-| docs/AGENT-RULES.md |  M | 待按需求核对 | 未知/保留原状 | 不自动覆盖 |
-| docs/INITIALIZATION.md |  M | 待按需求核对 | 未知/保留原状 | 不自动覆盖 |
-| docs/HANDOFF-HELPER.md | ?? | 待按需求核对 | 未知/保留原状 | 不自动覆盖 |
-| scripts/handoff.mjs | ?? | 待按需求核对 | 未知/保留原状 | 不自动覆盖 |
-| src/lib/__tests__/handoff-helper.test.ts | ?? | 待按需求核对 | 未知/保留原状 | 不自动覆盖 |
+| 无 | 无 | 无 | 无 | 无 |
 
 - 文件状态使用 Git XY 标记：第一列为暂存状态、第二列为工作区状态，?? 为未跟踪。
 - 依赖的 ignored 文件、未保存缓冲区、后台进程与外部资源：助手无法确认，接手者须核对。
@@ -49,33 +40,35 @@
 - 补充备份累积说明：助手不自动删除历史备份，清理须人工确认并保留 .previous 与最近可用备份
 - 修正归档归属：.handoff/archive/cleanup-invalid-refs-20261020 改回 remove-home-greeting-20261020，本任务归档为 cleanup-invalid-refs-20261020
 - 按用户 rev 2 指令更新 CONTEXT：授权提交、推送与创建 PR（不含合并、发版、部署）
+- 提交 37c789b 已推送到 origin/feat/handoff-helper，含 18 份 .handoff/previous/ 备份与验证证据
+- PR #33 已创建；针对 37c789b 的 CI 两项均通过：Lint/Test/Build 1m34s、Playwright E2E 2m0s
 
 ## 验证记录
 | 验收项 | 命令/操作与目录 | 时间与环境摘要 | 被测提交/相关文件状态 | 结果 | 证据位置 | 此后相关改动 |
 | --- | --- | --- | --- | --- | --- | --- |
-| AC-05 类型与 lint | pnpm typecheck && pnpm lint（仓库根） | 2026-10-20T10:57:42.034Z; Node v24.21.0；pnpm 11.16.0；Linux；分支 feat/handoff-helper | 14bb61288c64c5bc84b93861929f8699f3d8c2c7; 指纹 c4b795f05fbf15efac8e32a73630103e3bfca195289ed1b892c273f99a8e5148 | passed | .handoff/evidence/handoff-helper-20261020.txt; SHA-256 09ae263ad23d561b8a73f39d76d232f504d4a0243a0371cf855cb58020cf914e | 保存时无后续改动 |
-| AC-04 回归测试随 pnpm test 执行 | pnpm test（664 tests，fail 0；其中助手测试 20 个）（仓库根） | 2026-10-20T10:57:42.034Z; Node v24.21.0；pnpm 11.16.0；Linux；分支 feat/handoff-helper | 14bb61288c64c5bc84b93861929f8699f3d8c2c7; 指纹 c4b795f05fbf15efac8e32a73630103e3bfca195289ed1b892c273f99a8e5148 | passed | .handoff/evidence/handoff-helper-20261020.txt; SHA-256 09ae263ad23d561b8a73f39d76d232f504d4a0243a0371cf855cb58020cf914e | 保存时无后续改动 |
-| 覆盖率门禁 | pnpm test:coverage（exit 0；lines 84.95 / branches 82.75 / functions 78.86）（仓库根） | 2026-10-20T10:57:42.034Z; Node v24.21.0；pnpm 11.16.0；Linux；分支 feat/handoff-helper | 14bb61288c64c5bc84b93861929f8699f3d8c2c7; 指纹 c4b795f05fbf15efac8e32a73630103e3bfca195289ed1b892c273f99a8e5148 | passed | .handoff/evidence/handoff-helper-20261020.txt; SHA-256 09ae263ad23d561b8a73f39d76d232f504d4a0243a0371cf855cb58020cf914e | 保存时无后续改动 |
-| 生产构建 | pnpm build（exit 0）（仓库根） | 2026-10-20T10:57:42.034Z; Node v24.21.0；pnpm 11.16.0；Linux；分支 feat/handoff-helper | 14bb61288c64c5bc84b93861929f8699f3d8c2c7; 指纹 c4b795f05fbf15efac8e32a73630103e3bfca195289ed1b892c273f99a8e5148 | passed | .handoff/evidence/handoff-helper-20261020.txt; SHA-256 09ae263ad23d561b8a73f39d76d232f504d4a0243a0371cf855cb58020cf914e | 保存时无后续改动 |
+| AC-05 类型与 lint | pnpm typecheck && pnpm lint（仓库根） | 2026-10-20T11:02:07.318Z; Node v24.21.0；pnpm 11.16.0；Linux；分支 feat/handoff-helper；CI ubuntu-latest / Node 24 | 37c789b03982397d9bc273ffd5a91589b1bf804c; 指纹 418167bcb9a587c7c033b3462edc42e16d20fff458779776ed02073788d3db7d | passed | .handoff/evidence/handoff-helper-20261020.txt; SHA-256 09ae263ad23d561b8a73f39d76d232f504d4a0243a0371cf855cb58020cf914e | 保存时无后续改动 |
+| AC-04 回归测试随 pnpm test 执行 | pnpm test（664 tests，fail 0；其中助手测试 20 个）（仓库根） | 2026-10-20T11:02:07.318Z; Node v24.21.0；pnpm 11.16.0；Linux；分支 feat/handoff-helper；CI ubuntu-latest / Node 24 | 37c789b03982397d9bc273ffd5a91589b1bf804c; 指纹 418167bcb9a587c7c033b3462edc42e16d20fff458779776ed02073788d3db7d | passed | .handoff/evidence/handoff-helper-20261020.txt; SHA-256 09ae263ad23d561b8a73f39d76d232f504d4a0243a0371cf855cb58020cf914e | 保存时无后续改动 |
+| 覆盖率门禁 | pnpm test:coverage（exit 0；lines 84.95 / branches 82.75 / functions 78.86）（仓库根） | 2026-10-20T11:02:07.318Z; Node v24.21.0；pnpm 11.16.0；Linux；分支 feat/handoff-helper；CI ubuntu-latest / Node 24 | 37c789b03982397d9bc273ffd5a91589b1bf804c; 指纹 418167bcb9a587c7c033b3462edc42e16d20fff458779776ed02073788d3db7d | passed | .handoff/evidence/handoff-helper-20261020.txt; SHA-256 09ae263ad23d561b8a73f39d76d232f504d4a0243a0371cf855cb58020cf914e | 保存时无后续改动 |
+| 生产构建 | pnpm build（exit 0）（仓库根） | 2026-10-20T11:02:07.318Z; Node v24.21.0；pnpm 11.16.0；Linux；分支 feat/handoff-helper；CI ubuntu-latest / Node 24 | 37c789b03982397d9bc273ffd5a91589b1bf804c; 指纹 418167bcb9a587c7c033b3462edc42e16d20fff458779776ed02073788d3db7d | passed | .handoff/evidence/handoff-helper-20261020.txt; SHA-256 09ae263ad23d561b8a73f39d76d232f504d4a0243a0371cf855cb58020cf914e | 保存时无后续改动 |
+| PR CI（Lint/Test/Build 与 Playwright E2E） | gh pr checks 33（提交 37c789b，run 39411734110）（仓库根） | 2026-10-20T11:02:07.318Z; Node v24.21.0；pnpm 11.16.0；Linux；分支 feat/handoff-helper；CI ubuntu-latest / Node 24 | 37c789b03982397d9bc273ffd5a91589b1bf804c; 指纹 418167bcb9a587c7c033b3462edc42e16d20fff458779776ed02073788d3db7d | passed | .handoff/evidence/handoff-helper-20261020.txt; SHA-256 09ae263ad23d561b8a73f39d76d232f504d4a0243a0371cf855cb58020cf914e | 保存时无后续改动 |
 
 验证结论由执行工具提供；助手仅验证记录与证据位置，不执行命令或证明日志真实性。
 
 ## 外部副作用台账
 | 操作 | 当前状态 | 核验及恢复办法 |
 | --- | --- | --- |
-| 提交并推送 feat/handoff-helper，创建 PR 到 main | prepared | 核对 origin 分支与 PR 页面实际状态；未合并前可关闭 PR 或删除远端分支；合并、发版与部署不在本次授权内 |
+| 推送 feat/handoff-helper 并创建 PR #33（https://github.com/timorpic/Navelix/pull/33） | succeeded | 已核对 origin/feat/handoff-helper 实际内容（32 个 previous 文件与三个新增核心文件均在）。未合并前可关闭 PR 或删除远端分支；合并与部署未授权 |
 
 ## 本轮结果摘要
-- 已完成：新增 scripts/handoff.mjs：inspect/prompt 只读，claim 要求精确任务/修订/交接 ID 与 --source-stopped，save 生成检查点并备份到 .handoff/previous/；新增 docs/HANDOFF-HELPER.md（HH-01..HH-06、结果 JSON 格式、保存边界）；新增 src/lib/__tests__/handoff-helper.test.ts，20 个用例随 pnpm test 执行；修正备份命名：旧检查点按其自身 task_id 与 checkpoint_seq 命名，接管上一任务时不再错标为新任务，并新增回归测试；同步 HANDOFF.md、PROMPTS.md、AGENTS.md、docs/AGENT-RULES.md 第 19 节、docs/INITIALIZATION.md、README.md；MEMORY.md 新增 DEC-004；修正文档命令示例：补齐 --agent/--task/--revision，并说明 --recover 仍需精确 --handoff-id；补充备份累积说明：助手不自动删除历史备份，清理须人工确认并保留 .previous 与最近可用备份；修正归档归属：.handoff/archive/cleanup-invalid-refs-20261020 改回 remove-home-greeting-20261020，本任务归档为 cleanup-invalid-refs-20261020；按用户 rev 2 指令更新 CONTEXT：授权提交、推送与创建 PR（不含合并、发版、部署）。
-- 未完成：提交、推送 feat/handoff-helper 并创建 PR。
-- 未验证：跨客户端接管（Codex/Antigravity）未实际执行；PR 合并后的 CI 结果未观测。
+- 已完成：新增 scripts/handoff.mjs：inspect/prompt 只读，claim 要求精确任务/修订/交接 ID 与 --source-stopped，save 生成检查点并备份到 .handoff/previous/；新增 docs/HANDOFF-HELPER.md（HH-01..HH-06、结果 JSON 格式、保存边界）；新增 src/lib/__tests__/handoff-helper.test.ts，20 个用例随 pnpm test 执行；修正备份命名：旧检查点按其自身 task_id 与 checkpoint_seq 命名，接管上一任务时不再错标为新任务，并新增回归测试；同步 HANDOFF.md、PROMPTS.md、AGENTS.md、docs/AGENT-RULES.md 第 19 节、docs/INITIALIZATION.md、README.md；MEMORY.md 新增 DEC-004；修正文档命令示例：补齐 --agent/--task/--revision，并说明 --recover 仍需精确 --handoff-id；补充备份累积说明：助手不自动删除历史备份，清理须人工确认并保留 .previous 与最近可用备份；修正归档归属：.handoff/archive/cleanup-invalid-refs-20261020 改回 remove-home-greeting-20261020，本任务归档为 cleanup-invalid-refs-20261020；按用户 rev 2 指令更新 CONTEXT：授权提交、推送与创建 PR（不含合并、发版、部署）；提交 37c789b 已推送到 origin/feat/handoff-helper，含 18 份 .handoff/previous/ 备份与验证证据；PR #33 已创建；针对 37c789b 的 CI 两项均通过：Lint/Test/Build 1m34s、Playwright E2E 2m0s。
+- 未完成：PR #33 的审查与合并需用户决定；合并、发版与部署不在本次授权内。
+- 未验证：跨客户端接管（Codex/Antigravity）未实际执行；后续仅含记录更新的提交会再次触发 CI，其结果不影响 37c789b 的结论。
 - 阻塞及解除条件：无。
 - 是否满足任务完成标准：尚未宣告完成。
 
 ## 下一步（最多三项）
-1. 在 feat/handoff-helper 上提交全部改动（含 .handoff/previous/ 新增备份）并推送
-2. 用 gh 创建 PR 到 main，说明授权变更与备份入库理由
-3. PR 创建后核对 CI 结果
+1. 等待用户决定是否合并 PR #33
+2. 合并后按分支清理流程核对并删除 feat/handoff-helper
 
 ## 本地长期知识核对
 - 主记录：MEMORY.md 与正式需求；助手只核对项目身份，不自动写入长期事实。
@@ -90,10 +83,10 @@
 | claimed_by / claimed_at | 无 |
 
 ## 接管/恢复记录
-- 完整上一版检查点：.handoff/previous/CHECKPOINT.handoff-helper-adoption-20261020.seq11.ffe32e95.md。
+- 完整上一版检查点：.handoff/previous/CHECKPOINT.handoff-helper-adoption-20261020.seq12.d68b0d5c.md。
 - 直接前一版：.handoff/CHECKPOINT.md.previous。
 - 旧进度、验证、外部副作用和未记录信息须从完整备份与实际现场核对，不能推定成功。
-- 差异：{"head_changed":false,"branch_changed":false,"index_changed":false,"files_changed":[]}。
+- 差异：{"head_changed":true,"branch_changed":false,"index_changed":true,"files_changed":[]}。
 - owner 与 lease 只作声明，不构成互斥；文件记录不产生新授权。
 
 <!-- handoff-helper-state
@@ -104,55 +97,14 @@
     "lease": "d05eb39e-def9-4652-8061-276fcb08ef59",
     "claimed_at": "2026-10-20T10:54:07.107Z"
   },
-  "context_hash": "07ca5a969f8e935937e2fcf154805376b24854e13e4cd4470ecc1027b14cc6ef",
+  "context_hash": "b3aec1f25ca83fb71da68b93b299deaed656909a2e52e755ed1c9a33434aa279",
   "handoff_history": [],
   "snapshot": {
     "repo_root": "/root/Navelix",
-    "head": "14bb61288c64c5bc84b93861929f8699f3d8c2c7",
+    "head": "37c789b03982397d9bc273ffd5a91589b1bf804c",
     "branch": "feat/handoff-helper",
-    "index": "2786c686e6639573874c34895c440918bcccff6a601f8d742f57dc7d5517de5f",
-    "changes": [
-      {
-        "status": " M",
-        "path": "AGENTS.md"
-      },
-      {
-        "status": " M",
-        "path": "HANDOFF.md"
-      },
-      {
-        "status": " M",
-        "path": "MEMORY.md"
-      },
-      {
-        "status": " M",
-        "path": "PROMPTS.md"
-      },
-      {
-        "status": " M",
-        "path": "README.md"
-      },
-      {
-        "status": " M",
-        "path": "docs/AGENT-RULES.md"
-      },
-      {
-        "status": " M",
-        "path": "docs/INITIALIZATION.md"
-      },
-      {
-        "status": "??",
-        "path": "docs/HANDOFF-HELPER.md"
-      },
-      {
-        "status": "??",
-        "path": "scripts/handoff.mjs"
-      },
-      {
-        "status": "??",
-        "path": "src/lib/__tests__/handoff-helper.test.ts"
-      }
-    ],
+    "index": "21e60e9ea78c355a3d31d15f5be2b6eebac1770f6a617422f7d5f655205474e9",
+    "changes": [],
     "files": {
       ".dockerignore": "420:e4f9e24c0a6c2e84dac0c89d26738773aa84c1153a9561f0a7e2e249e256cc8c",
       ".env.example": "sensitive:omitted",
@@ -694,12 +646,16 @@
       "wiki/_Sidebar.md": "420:f9580e9a0b1539040117334ce720ec37e6e8ba55300e1ee3b3cdac49ba6cce12",
       "wiki/logo.svg": "420:515f1bb9aea6d5c04b08247ff90f29815c7ee71a95b1537a5c5ca38ee54540fe"
     },
-    "fingerprint": "c4b795f05fbf15efac8e32a73630103e3bfca195289ed1b892c273f99a8e5148",
+    "fingerprint": "418167bcb9a587c7c033b3462edc42e16d20fff458779776ed02073788d3db7d",
     "omitted": [
       ".env.example"
     ]
   },
   "verifications": [
+    {
+      "evidence": ".handoff/evidence/handoff-helper-20261020.txt",
+      "evidence_hash": "09ae263ad23d561b8a73f39d76d232f504d4a0243a0371cf855cb58020cf914e"
+    },
     {
       "evidence": ".handoff/evidence/handoff-helper-20261020.txt",
       "evidence_hash": "09ae263ad23d561b8a73f39d76d232f504d4a0243a0371cf855cb58020cf914e"
