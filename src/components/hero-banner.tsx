@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, type ReactNode } from "react";
-import { useNavelixConfig, useNavelixData } from "@/context/navelix-context";
+import { useNavelixConfig } from "@/context/navelix-context";
 import SearchBar from "./search-bar";
 import LogoMark from "./logo-mark";
 
@@ -21,28 +21,14 @@ export default function HeroBanner({
   const tx = useTranslations();
   const locale = useLocale();
   const { config } = useNavelixConfig();
-  const { user } = useNavelixData();
-
-  // 1. 直接同步使用 SSR / 响应式注入的用户昵称，杜绝任何假名或旧名一闪而过
-  const userName = user?.displayName || user?.username || config.logoText || tx("friend_677aad1a");
-
-  // 3. 计算时间与动态问候语
-  const { greeting, dateString } = useMemo(() => {
+  const { dateString } = useMemo(() => {
     const now = new Date();
-    const hour = now.getHours();
-    let greet = tx("hello_670d9743");
-    if (hour >= 5 && hour < 12) greet = tx("good_morning_3cc2e31e");
-    else if (hour >= 12 && hour < 14) greet = tx("good_afternoon_fceb1962");
-    else if (hour >= 14 && hour < 19) greet = tx("good_afternoon_552594ef");
-    else greet = tx("good_evening_d8e9a7fa");
-
     const month = now.getMonth() + 1;
     const day = now.getDate();
     const weekdays = [tx("sunday_7e06f314"), tx("monday_56451fdf"), tx("tuesday_8621c00d"), tx("wednesday_23ae0a11"), tx("thursday_478911d2"), tx("friday_6e5969e5"), tx("saturday_7bb2f5ec")];
     const weekday = weekdays[now.getDay()];
 
     return {
-      greeting: greet,
       dateString: locale === "en" ? now.toLocaleDateString("en", { weekday: "long", month: "long", day: "numeric" }) : tx("message_fc8f0f8cce57", {v0: month, v1: day, v2: weekday}),
     };
   }, [tx, locale]);
@@ -57,17 +43,9 @@ export default function HeroBanner({
         </div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-          {/* ── Left / Main Content: 问候语 + 当前状态 + 搜索栏 ── */}
+          {/* ── Left / Main Content: 日期 + 当前状态 + 搜索栏 ── */}
           <div className="min-w-0 flex-1 w-full space-y-3.5">
             <div>
-              {/* Greeting Header */}
-              <div className="flex items-center gap-2.5 mb-1.5">
-                <span className="text-2xl animate-bounce">👋</span>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                  {greeting}，{userName}
-                </h1>
-              </div>
-
               {/* Date Subtitle */}
               <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-slate-400">
                 {dateString}

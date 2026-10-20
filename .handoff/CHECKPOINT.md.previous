@@ -2,36 +2,37 @@
 
 - schema_version: 1
 - project_id: Navelix
-- task_id: assistant-header-row-20261019
-- context_revision: 8
-- checkpoint_seq: 8
-- updated_at: 2026-10-19T22:14:01+08:00
+- task_id: remove-home-greeting-20261020
+- context_revision: 1
+- checkpoint_seq: 1
+- updated_at: 2026-10-20T08:55:48+08:00
 - owner: Codex
 - status: active
-- current_step: v2.10.23 版本与回归用例已整理，本地类型、全量 lint 与隔离构建通过，准备提交推送并创建 PR
+- current_step: 实现完成，静态检查通过；Computer Use 验证受阻
 
-## 工作区
+## 现场与范围
 
 - repo_root: /root/Navelix
-- branch: codex/workspace-ui-2.10.23
-- 基线 HEAD: 2718192cc91fdca272c886f4e5b229ed6da7700a；origin/main 已 fetch 且与基线一致。
-- staged: 无；本次代码、版本、DESIGN、CHANGELOG、E2E 及接力记录待提交。修改均来自当前会话。
-- 前任务记录归档: archive/remove-account-menu-social-20261019/、archive/weak-code-remediation-20261019/。
-- .previous 为本会话生成的本地恢复备份，不纳入发布提交。
+- branch: main
+- HEAD: 77be039cbde06c30a85d7c268834bfcd80a29905
+- 开始时工作区干净。检测到同仓库旧 Claude 进程处于等待状态，连续核对 CPU 时间未增长，无构建或开发服务器在运行；本轮未启动其他 Agent。
+- 本轮修改 src/components/hero-banner.tsx、DESIGN.md、CHANGELOG.md 与接力文件；均为本轮工作，未暂存或提交。实际状态以 git status 为准。
+- 移除问候整行与其专用用户名读取、时段计算；其余欢迎卡片内容保留。
+- 未读取真实业务库，无外部写入操作。用户追加要求预览，已复用上轮独立演示目录 /tmp/navelix-ui-preview-sm5j5nua 启动开发预览，端口 3723，exec session 86834；关闭时终止该会话。
 
-## 已完成
+## 验证与限制
 
-- 全部用户确认的界面调整见 CONTEXT.md 与 CHANGELOG v2.10.23。
-- 今日专注的 useFocusTracker 从统计栏移至日程概览，无重复计时器；顶部网格同步缩至 10 列。
-- 现有 E2E 更新为搜索旁助手与快捷操作共享会话、前台无铃铛且消息页面保留通知记录、专注在日程内、移除的快捷菜单不存在。
-- 预览进程组已按 PID 与启动参数核实后终止，未停止其他进程。隔离演示数据保留，不触碰真实业务库。
-- 已核实远程最新 Tag/Release 为 v2.10.22，分支保护两项 required checks。
-- 版本同步与日志校验完成，目标 v2.10.23。
-- 本地 pnpm typecheck、pnpm lint、pnpm build 与 git diff --check 均通过。隔离构建正常退出，自动测试与覆盖率等待 PR CI。
-- Computer Use unavailable，用户已通过预览截图反馈迭代；不宣称本地浏览器自动验收通过。OpenMemory unavailable，依据本地资料。
+- pnpm typecheck 通过。
+- pnpm lint 通过。
+- git diff --check 通过，代码 diff 已核对删除范围。
+- Computer Use unavailable，未执行浏览器人工验证或自动测试；实现完成，视觉验收受阻。
+- OpenMemory unavailable，本轮以本地文档与代码为依据，无召回条目或新增长期事实。
 
-## 运行与下一步
+## 预览
 
-- 本地构建输出 /tmp/navelix-ui-release-build.log；使用 pnpm build 的一次性数据隔离，不使用生产密钥。
-- 待 lint/build 完成，检查差异和敏感路径后提交推送创建 PR，等待 CI，再合并发版。
-- 外部副作用：目前仅 fetch 查询；未推送、未建 PR、未创建新 Tag/Release。
+- http://localhost:3723 返回 HTTP 200，服务报告 Ready；已调用 Codex 浏览器打开工具（queued）。
+- 未执行 Computer Use 视觉验收，供用户查看效果。
+
+## 下一步
+
+实现与静态检查完成；工具可用时使用 Computer Use 核对首页显示。
