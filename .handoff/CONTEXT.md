@@ -3,8 +3,8 @@
 - schema_version: 1
 - project_id: Navelix
 - task_id: cleanup-invalid-refs-20261020
-- context_revision: 2
-- updated_at: 2026-10-20T16:12:00+08:00
+- context_revision: 3
+- updated_at: 2026-10-20T17:05:00+08:00
 - release_version: 2.10.25
 - status: completed
 
@@ -45,4 +45,4 @@
 ## 遗留
 
 - `e2e/sun-panel-migration.spec.ts` 直接改写仓库内受版本控制的截图，本地跑会污染工作区，建议后续单独处理。
-- `wiki/` 本次改动 7 个文件；线上 wiki 停在 v2.9.5，逐文件比对后有 8 个文件与仓库不同，尚未同步到线上 GitHub wiki，需手工同步。
+- `wiki/` 本次改动 7 个文件；线上此前停在 `9a1ebd1`（2026-10-13），已于本次同步（`3fae1fa`，8 个文件），现线上与仓库 `wiki/` 一致。
