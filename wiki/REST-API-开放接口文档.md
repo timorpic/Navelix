@@ -143,7 +143,7 @@ Content-Type: application/json
 
 > **字段说明**：
 > - `done` 为 **布尔值**（`true` / `false`），不是 0/1。
-> - `id` 形如 `todo-<时间戳>-<6位随机串>`；`dueDate` / `projectId` / `assigneeId` / `assigneeName` 在未设置时**不出现**（而非 `null`）。
+> - `id` 形如 `todo-<UUID v4>`（如 `todo-3f2a…`）；`dueDate` / `projectId` / `assigneeId` / `assigneeName` 在未设置时**不出现**（而非 `null`）。
 > - `ownerId` / `ownerName` 为待办的**创建者**；`isDelegated` 表示该条是他人指派给你的。
 > - 该接口返回的是「自己创建的 + 他人指派给自己的」**并集**，请按 `isDelegated` 区分归属。
 
@@ -254,7 +254,7 @@ Content-Type: application/json
   "name": "官网改版项目",
   "description": "全新 UI 与品牌升级",
   "status": "in-progress",
-  "color": "sky",
+  "color": "#0284C7",
   "todos": [
     {
       "title": "确定设计主色调与视觉风格",
@@ -594,7 +594,7 @@ Content-Type: application/json
 
 ---
 
-*文档版本: 2.0 · 对应 Navelix v2.9.5 | Navelix 遵循**自定义许可证**（详见 [LICENSE](https://github.com/timorpic/Navelix/blob/main/LICENSE)）*
+*文档版本: 2.0 · 对应 Navelix v2.10.24 | Navelix 遵循**自定义许可证**（详见 [LICENSE](https://github.com/timorpic/Navelix/blob/main/LICENSE)）*
 
 
 ### 配置作用域与个人通知（Schema v16／v17）

@@ -20,12 +20,12 @@
 | 快捷方式 | 行为 |
 | --- | --- |
 | **存书签** | 打开应用并自动弹出「添加书签」弹窗（`?action=quick-add-bookmark`） |
-| **快速记待办** | ⚠️ 当前版本**尚未接线**：manifest 已声明 `?action=quick-add-todo`，但前端没有对应处理分支，点击后只会打开首页、不弹任何窗口。录入待办请改用 [§3.1 的 iOS 快捷指令](#31-快捷记待办1-个-http-动作)。 |
+| **快速记待办** | 打开应用并自动弹出「新增待办」弹窗（`?action=quick-add-todo`）；如需一步到位录入内容，可改用 [§3.1 的 iOS 快捷指令](#31-快捷记待办1-个-http-动作)。 |
 
 ## 3. 🍎 iOS 快捷指令（Shortcuts）模板
 
 需要一个 **Personal Access Token**（API Token）：
-`后台 → API 令牌 → 新建`，得到形如 `nvx_live_xxx` 的令牌。
+`后台 → 用户设置 → 账号与数据 → 个人 API Access Token → 新建`，得到形如 `nvx_live_xxx` 的令牌。
 
 > 令牌 = 你的密码，切勿分享。以下以你的实例地址 `<BASE>`（如 `https://navelix.example.com`）为例。
 
