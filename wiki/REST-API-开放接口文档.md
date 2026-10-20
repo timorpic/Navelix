@@ -123,7 +123,7 @@ Content-Type: application/json
 {
   "todos": [
     {
-      "id": "todo-1786682000000-a1b2c3",
+      "id": "todo-3f2a1c4b-8d7e-4a91-b6c2-5e8f0d3a7b14",
       "title": "完成 API 开放接口文档升级",
       "priority": "high",
       "done": false,
