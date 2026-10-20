@@ -284,8 +284,8 @@ function HomeContent() {
                     onSelectCategory={handleSelectCategory}
                   />
 
-                  {/* Quick Access Section */}
-                  <QuickAccess links={quickAccessLinks} />
+                  {/* Quick Access Section（后台「工作区组件」可关闭，缺省显示） */}
+                  {config.recentVisitsEnabled !== false && <QuickAccess links={quickAccessLinks} />}
 
                   {/* 首页工作空间概览：项目概览、日程概览 */}
                   <WorkspaceOverviewColumns
