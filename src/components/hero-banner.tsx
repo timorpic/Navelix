@@ -35,6 +35,7 @@ export default function HeroBanner({
 
   return (
     <div className="relative">
+      <h1 className="sr-only">{tx("workspace_6fed7e86")}</h1>
       <div className="relative rounded-2xl bg-white/90 dark:bg-slate-900/80 backdrop-blur-md p-5 sm:p-7 border border-gray-200/80 dark:border-slate-800 shadow-2xs transition-colors">
         {/* Background Accent Gradients */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">

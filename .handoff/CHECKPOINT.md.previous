@@ -3,36 +3,30 @@
 - schema_version: 1
 - project_id: Navelix
 - task_id: remove-home-greeting-20261020
-- context_revision: 1
-- checkpoint_seq: 1
-- updated_at: 2026-10-20T08:55:48+08:00
+- context_revision: 2
+- checkpoint_seq: 2
+- updated_at: 2026-10-20T08:58:08+08:00
 - owner: Codex
 - status: active
-- current_step: 实现完成，静态检查通过；Computer Use 验证受阻
+- current_step: 准备 v2.10.24 发布 PR
 
-## 现场与范围
+## 现场与交付
 
 - repo_root: /root/Navelix
-- branch: main
-- HEAD: 77be039cbde06c30a85d7c268834bfcd80a29905
-- 开始时工作区干净。检测到同仓库旧 Claude 进程处于等待状态，连续核对 CPU 时间未增长，无构建或开发服务器在运行；本轮未启动其他 Agent。
-- 本轮修改 src/components/hero-banner.tsx、DESIGN.md、CHANGELOG.md 与接力文件；均为本轮工作，未暂存或提交。实际状态以 git status 为准。
-- 移除问候整行与其专用用户名读取、时段计算；其余欢迎卡片内容保留。
-- 未读取真实业务库，无外部写入操作。用户追加要求预览，已复用上轮独立演示目录 /tmp/navelix-ui-preview-sm5j5nua 启动开发预览，端口 3723，exec session 86834；关闭时终止该会话。
+- branch: codex/remove-home-greeting-2.10.24
+- base_HEAD: 77be039cbde06c30a85d7c268834bfcd80a29905
+- 移除首页欢迎卡片挥手图标、时段问候语、用户名及专用计算，保留日期与操作区；同步 DESIGN 和 CHANGELOG。
+- 远程 Tag / Release 最新为 v2.10.23，已核对当月序号，脚本同步四处版本至 2.10.24。
+- 本轮全部未提交差异归属当前任务：上述实现、版本文件、接力及上一任务归档；无其他用户修改。
+- 用户已授权发布，按 main 保护创建 PR，检查成功后合并，再推送 Tag 与发布 Release，等待镜像验收提升。未直接操作生产数据或手工部署。
 
 ## 验证与限制
 
-- pnpm typecheck 通过。
-- pnpm lint 通过。
-- git diff --check 通过，代码 diff 已核对删除范围。
-- Computer Use unavailable，未执行浏览器人工验证或自动测试；实现完成，视觉验收受阻。
-- OpenMemory unavailable，本轮以本地文档与代码为依据，无召回条目或新增长期事实。
+- pnpm typecheck、pnpm lint、git diff --check、版本及 CHANGELOG 校验通过；隔离生产构建通过。
+- Computer Use unavailable，未运行本地浏览器自动测试；用户已查看预览后要求发布，CI 仍须执行覆盖率与 E2E 必需检查。
+- 演示预览 3723 已停止（exec session 86834 exit 130），未访问真实业务库。
+- OpenMemory unavailable；无本轮共享记忆条目，继续依据本地规则与代码。
 
-## 预览
+## 外部操作台账与下一步
 
-- http://localhost:3723 返回 HTTP 200，服务报告 Ready；已调用 Codex 浏览器打开工具（queued）。
-- 未执行 Computer Use 视觉验收，供用户查看效果。
-
-## 下一步
-
-实现与静态检查完成；工具可用时使用 Computer Use 核对首页显示。
+尚未推送、合并、创建 Tag 或 Release。下一步完成构建后提交并创建 PR，记录 URL 和检查结果；只有成功后发布。

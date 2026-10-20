@@ -4,11 +4,11 @@
 - project_id: Navelix
 - task_id: remove-home-greeting-20261020
 - context_revision: 2
-- checkpoint_seq: 2
+- checkpoint_seq: 3
 - updated_at: 2026-10-20T08:58:08+08:00
 - owner: Codex
 - status: active
-- current_step: 准备 v2.10.24 发布 PR
+- current_step: 补充无障碍一级标题后重新验证
 
 ## 现场与交付
 
@@ -29,4 +29,8 @@
 
 ## 外部操作台账与下一步
 
-尚未推送、合并、创建 Tag 或 Release。下一步完成构建后提交并创建 PR，记录 URL 和检查结果；只有成功后发布。
+发布提交 89fc25dfedc0a46f21a105d27f0b746e0b9689b8 已推送至 origin/codex/remove-home-greeting-2.10.24。
+
+PR: https://github.com/timorpic/Navelix/pull/27
+
+CI run 39350832734 两项检查通过，但自动审查指出首页失去唯一 h1；已添加 sr-only「工作空间」一级标题，保持可见文案移除。合并未发生，需新提交 CI 通过并解决该审查讨论后继续。
