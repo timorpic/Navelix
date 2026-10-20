@@ -1041,7 +1041,7 @@
   "clear_search_b6f00afa": "清空搜索",
   "first_time_security_setup_7fe8d823": "首次使用安全设置引导",
   "public_access_and_self_registration_are_disabled_c6e3fe16": "为确保安全，新部署默认已关闭「未登录公开访问」与「新用户注册」。 建议你按以下两步完成初始安全配置：",
-  "change_the_initial_password_in_account_security_83f3d3ec": "前往「个人与偏好」修改初始登录密码",
+  "change_the_initial_password_in_account_security_83f3d3ec": "前往「账号与数据」修改初始登录密码",
   "enable_public_access_or_registration_in_system_s_0041ae1d": "前往「访问与安全」按需开启公开访问或开放注册",
   "change_initial_password_bbd31e1f": "修改初始密码",
   "configure_access_policies_f4073329": "配置访问策略",
