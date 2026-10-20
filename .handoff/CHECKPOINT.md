@@ -2,45 +2,35 @@
 
 - schema_version: 1
 - project_id: Navelix
-- task_id: assistant-header-row-20261019
-- context_revision: 8
-- checkpoint_seq: 9
-- updated_at: 2026-10-19T22:26:33+08:00
+- task_id: remove-home-greeting-20261020
+- context_revision: 2
+- checkpoint_seq: 3
+- updated_at: 2026-10-20T08:58:08+08:00
 - owner: Codex
-- status: completed
-- current_step: v2.10.23 已发布，代码及镜像验收完成，预览已关闭
+- status: active
+- current_step: 补充无障碍一级标题后重新验证
 
-## 工作区与记录边界
+## 现场与交付
 
 - repo_root: /root/Navelix
-- 采集时分支: main（发版验收现场，采集时间见 updated_at）。
-- 采集/应用发布基线: 9478bb71971c24ef6b490058346edd5e65d22147，即 v2.10.23 Tag 对应提交；采集时与 origin/main 一致。后续文档提交的实际 HEAD 与分支以 Git 为准。
-- 业务代码、版本、DESIGN、CHANGELOG、E2E 及前任务归档均已提交推送并经 PR #25 合并。
-- 发布证据文档与 .previous 恢复备份随本次文档提交纳入版本控制；提交后的实际 staged / unstaged 状态以 git status 为准，不能由检查点自指地断言。备份不属于应用产物。
-- 原始演示预览进程组已停止，3723 端口不再监听；演示数据保留于独立临时目录，真实业务库未访问。
+- branch: codex/remove-home-greeting-2.10.24
+- base_HEAD: 77be039cbde06c30a85d7c268834bfcd80a29905
+- 移除首页欢迎卡片挥手图标、时段问候语、用户名及专用计算，保留日期与操作区；同步 DESIGN 和 CHANGELOG。
+- 远程 Tag / Release 最新为 v2.10.23，已核对当月序号，脚本同步四处版本至 2.10.24。
+- 本轮全部未提交差异归属当前任务：上述实现、版本文件、接力及上一任务归档；无其他用户修改。
+- 用户已授权发布，按 main 保护创建 PR，检查成功后合并，再推送 Tag 与发布 Release，等待镜像验收提升。未直接操作生产数据或手工部署。
 
-## 交付范围
+## 验证与限制
 
-侧栏账户菜单移除社交区域；AI 助手移到搜索框右侧，功能页保留顶部入口，前台通知铃铛移除；移除原悬浮按钮底部留白；快速操作去除上传文件与记录想法，剩余入口两列排列；今日专注移入日程概览标题下方，保留分钟数及趋势。版本真源与发布说明同步至 2.10.23，无 Schema 或部署方式变化。
+- pnpm typecheck、pnpm lint、git diff --check、版本及 CHANGELOG 校验通过；隔离生产构建通过。
+- Computer Use unavailable，未运行本地浏览器自动测试；用户已查看预览后要求发布，CI 仍须执行覆盖率与 E2E 必需检查。
+- 演示预览 3723 已停止（exec session 86834 exit 130），未访问真实业务库。
+- OpenMemory unavailable；无本轮共享记忆条目，继续依据本地规则与代码。
 
-## 验证证据
+## 外部操作台账与下一步
 
-- 本地 pnpm typecheck、pnpm lint、pnpm build、git diff --check 通过；构建经项目脚本一次性目录隔离。
-- PR CI run 39267241313 success：645 tests / 175 suites，行覆盖率 90.81%、函数 85.31%，31 项 Playwright E2E 通过。
-- main CI run 39267625560 success。
-- 镜像流水线 run 39267733564 success：源码质量、候选镜像构建、运行冒烟、历史库升级、生产候选镜像 UI、稳定标签提升与结果通知全部成功。
-- Computer Use unavailable，未声称本地人工浏览器操作验证完成；布局由用户预览反馈确认并调整，自动验证为仓库 CI。
-- OpenMemory unavailable，无新增共享条目；以本地记录为依据。
+发布提交 89fc25dfedc0a46f21a105d27f0b746e0b9689b8 已推送至 origin/codex/remove-home-greeting-2.10.24。
 
-## 外部操作台账
+PR: https://github.com/timorpic/Navelix/pull/27
 
-- 发布分支 codex/workspace-ui-2.10.23，发布提交 681f99f3d1154fa340d3a78af13ddf1a7d94088b。
-- PR #25: https://github.com/timorpic/Navelix/pull/25 ，两项 required checks 通过后 squash 合并，应用发布提交见上述采集/应用发布基线。
-- 附注 Tag v2.10.23 已推送，指向上述 main 提交。
-- 正式 Release（非草稿、非预发布）：https://github.com/timorpic/Navelix/releases/tag/v2.10.23 。
-- GHCR 与 Docker Hub 的 latest、v2.10.23、2.10.23 六个标签分别回读均为 sha256:900070ce9dfe2522393c52fe5c017ef4b7024841219e709a539cb834048a93d4，与流水线被测/提升摘要一致。
-- 未直接操作生产数据库或执行手工生产部署；既有 Watchtower 更新方式保持不变。
-
-## 后续
-
-本轮用户授权的界面修改、关闭预览、提交推送及应用 Release 与镜像发布均完成。最终接力证据随文档提交保存，不包含待发布应用代码；本文档自身的提交与合并状态以 Git 和对应 PR 为准。
+CI run 39350832734 两项检查通过，但自动审查指出首页失去唯一 h1；已添加 sr-only「工作空间」一级标题，保持可见文案移除。合并未发生，需新提交 CI 通过并解决该审查讨论后继续。
