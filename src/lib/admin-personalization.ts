@@ -4,8 +4,8 @@ import type { SystemConfig } from "@/types";
  * 界面偏好页的纯派生逻辑。
  *
  * 从 `admin-personalization-tab.tsx`（原 532 行）抽出 —— 预览宽度映射、
- * 状态文案与 6 个侧边栏组件开关此前与 JSX 混在一起。抽出的价值主要在于
- * 「开关默认值」这一约定：6 个开关都用 `!== false` 判定（缺省即开启），
+ * 状态文案与工作区组件开关此前与 JSX 混在一起。抽出的价值主要在于
+ * 「开关默认值」这一约定：每个开关都用 `!== false` 判定（缺省即开启），
  * 写成纯函数后才有地方把这条约定固定下来。
  */
 
@@ -61,7 +61,7 @@ export interface WidgetToggle {
 }
 
 /**
- * 工作区组件开关（首页、通知与按需助手）。
+ * 工作区组件开关（首页与按需助手）。
  *
  * 注意 `config.xxxEnabled !== false` 这一判定：配置缺省（老库没有该列）时
  * 视为**开启**，只有显式存了 `false` 才隐藏。写成纯函数后这层默认值语义
@@ -91,12 +91,5 @@ export function buildWidgetToggles(config: Partial<SystemConfig>): WidgetToggle[
     mk("aiCopilot", "AI Copilot", "智能助手状态面板", "🤖", "aiCopilotEnabled"),
     mk("linkStatus", "连接状态", "第三方服务连接状态", "🔗", "linkStatusEnabled"),
     mk("quickAccess", "快捷访问", "常用快捷链接访问", "⭐", "recentVisitsEnabled"),
-    mk(
-      "pendingReminders",
-      "待处理提醒",
-      "待办事项与提醒",
-      "🔔",
-      "pendingRemindersEnabled",
-    ),
   ];
 }

@@ -132,6 +132,7 @@ export interface SystemConfig {
   /** @deprecated 兼容历史配置；首页已移除动态组件。 */
   todayActivityEnabled?: boolean;
   recentVisitsEnabled?: boolean;
+  /** @deprecated 兼容历史配置；前台通知铃铛已移除，该开关不再影响显示。 */
   pendingRemindersEnabled?: boolean;
   todaySummaryEnabled?: boolean;
   socialLinksEnabled?: boolean;

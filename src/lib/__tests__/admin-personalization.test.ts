@@ -12,7 +12,7 @@ import {
 /**
  * 界面偏好页派生逻辑单测。
  *
- * 重点是把「缺省即开启」这条约定固定下来：6 个侧边栏组件开关都用
+ * 重点是把「缺省即开启」这条约定固定下来：每个工作区组件开关都用
  * `!== false` 判定，老库缺列时必须是「显示」而非「隐藏」。
  */
 
@@ -66,7 +66,7 @@ describe("状态文案", () => {
 });
 
 describe("buildWidgetToggles", () => {
-  it("固定 4 项，顺序与 id 稳定", () => {
+  it("固定 3 项，顺序与 id 稳定", () => {
     const toggles = buildWidgetToggles({});
     assert.deepEqual(
       toggles.map((t) => t.id),
@@ -74,7 +74,6 @@ describe("buildWidgetToggles", () => {
         "aiCopilot",
         "linkStatus",
         "quickAccess",
-        "pendingReminders",
       ],
     );
     assert.deepEqual(
@@ -83,12 +82,11 @@ describe("buildWidgetToggles", () => {
         "aiCopilotEnabled",
         "linkStatusEnabled",
         "recentVisitsEnabled",
-        "pendingRemindersEnabled",
       ],
     );
   });
 
-  it("空配置下 4 项全部为显示（缺省即开启）", () => {
+  it("空配置下 3 项全部为显示（缺省即开启）", () => {
     for (const t of buildWidgetToggles({})) {
       assert.equal(t.enabled, true, `${t.id} 缺省应为显示`);
       assert.equal(t.toggleValue, false, `${t.id} 点击后应切到隐藏`);
