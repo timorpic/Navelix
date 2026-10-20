@@ -8,7 +8,7 @@ const SAFE_FIELDS = new Set([
 ]);
 const SAFE_CONFIG_VALUES = new Set([
   "allowPublicAccess", "allowRegistration", "showProMenus", "theme", "language", "maxWidth",
-  "sidebarDefaultState", "sidebarRightDefaultState", "level", "auditRetentionDays", "runtimeRetentionDays",
+  "sidebarDefaultState", "level", "auditRetentionDays", "runtimeRetentionDays",
   "businessRetentionDays", "maxFileBytes", "maxTotalBytes", "frontendEnabled", "alertsEnabled",
 ]);
 const SENSITIVE = /password|passwd|secret|token|cookie|authorization|api.?key|credential|bot.?token|chat.?id|license|prompt|content|body|script|signature/i;

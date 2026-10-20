@@ -49,7 +49,7 @@ export default function Sidebar({
     queueMicrotask(() => setMounted(true));
   }, []);
 
-  // 2. Modals & Menu State
+  // Modals & Menu State
   const [showProfileModal, setShowProfileModal] = useState(false);
   const { notice, flash } = useToast();
   const [showUserMenu, setShowUserMenu] = useState(false);

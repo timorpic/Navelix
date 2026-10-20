@@ -5,7 +5,7 @@ import { formatBackupSize, formatBackupTime } from "@/lib/admin-pro";
 import type { RemoteBackupItem } from "@/lib/storage-provider";
 
 /**
- * 「Pro 商业授权」Tab 的弹窗 2：📋 云端快照列表与一键还原弹窗。
+ * 「系统设置 → 系统功能」的云快照列表与一键还原弹窗。
  *
  * 从 `admin-pro-tab.tsx`（原 1018 行）抽出 —— 列表拉取与还原操作
  * （含二次确认、还原成功后的 alert + 整页刷新）全部来自

@@ -224,7 +224,6 @@ function HomeContent() {
                 actions={<WorkspaceAssistant assistant={assistant} />}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
-                onSelectCategory={handleSelectCategory}
               />
 
               {searchQuery.trim() ? (
@@ -282,7 +281,6 @@ function HomeContent() {
                   <TopStatsBar
                     onOpenAssistant={assistant.enabled ? assistant.show : undefined}
                     categories={categories}
-                    links={links}
                     onSelectCategory={handleSelectCategory}
                   />
 
@@ -303,7 +301,7 @@ function HomeContent() {
         </div>
       </main>
 
-      {/* 4. 自定义 CSS 与统计探针代码注入 */}
+      {/* 3. 自定义 CSS 与统计探针代码注入 */}
       {config.customCss && (
         <style dangerouslySetInnerHTML={{ __html: config.customCss }} />
       )}

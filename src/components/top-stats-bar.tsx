@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import React, { useState, useMemo } from "react";
-import type { Category, SiteLink } from "@/types";
+import type { Category } from "@/types";
 import { useNavelixData } from "@/context/navelix-context";
 import { toLocalDateStr } from "@/lib/date-utils";
 import { computeProjectMetrics } from "@/lib/dashboard-metrics";
@@ -12,7 +12,6 @@ import Overlay from "./overlay";
 interface TopStatsBarProps {
   onOpenAssistant?: () => void;
   categories: Category[];
-  links: SiteLink[];
   onSelectCategory?: (id: string) => void;
 }
 
@@ -82,7 +81,7 @@ export default function TopStatsBar({
     <div className="flex flex-col gap-2 mb-0">
       {/* 项目、任务、完成统计与快速操作 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-3">
-        {/* 卡片 2：⚡ 进行中项目 */}
+        {/* 卡片 1：⚡ 进行中项目 */}
         <div
           onClick={() => onSelectCategory && onSelectCategory("feature-projects")}
           className="lg:col-span-2 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
@@ -108,7 +107,7 @@ export default function TopStatsBar({
             {tx("active_work_e697b419")}</p>
         </div>
 
-        {/* 卡片 3：📋 待处理任务 */}
+        {/* 卡片 2：📋 待处理任务 */}
         <div
           onClick={() => onSelectCategory && onSelectCategory("feature-calendar")}
           className="lg:col-span-2 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
@@ -134,7 +133,7 @@ export default function TopStatsBar({
             {tx("pending_actions_8d98dca6")}</p>
         </div>
 
-        {/* 卡片 4：✅ 本周完成 */}
+        {/* 卡片 3：✅ 本周完成 */}
         <div
           onClick={() => onSelectCategory && onSelectCategory("feature-activities")}
           className="lg:col-span-2 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
@@ -160,7 +159,7 @@ export default function TopStatsBar({
             {tx("work_completed_413a7eb0")}</p>
         </div>
 
-        {/* 卡片 5：⚡ 快速操作 (Quick Actions 4 cols) */}
+        {/* 卡片 4：⚡ 快速操作 (Quick Actions 4 cols) */}
         <div className="lg:col-span-4 flex flex-col justify-between p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-gray-100/90 dark:border-slate-700 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-500 mb-1.5">
             <span className="p-0.5 rounded bg-amber-50 dark:bg-amber-950/60">⚡</span>

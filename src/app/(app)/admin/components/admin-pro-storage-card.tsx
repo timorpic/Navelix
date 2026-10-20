@@ -6,7 +6,7 @@ import type { LicenseStatus } from "@/lib/admin-pro";
 import type { CloudStorageConfig } from "@/lib/storage-provider";
 
 /**
- * 「系统设置 → 云容灾备份」的 S3 / WebDAV 异地备份与一键还原卡片。
+ * 「系统设置 → 系统功能」的卡片 2：S3 / WebDAV 异地备份与一键还原卡片。
  *
  * 从 `admin-pro-tab.tsx`（原 1018 行）抽出 —— 该文件把商业授权、云存储备份、
  * 书签探针、品牌 LOGO 与代码注入五块设置塞在一起。本组件只负责渲染：

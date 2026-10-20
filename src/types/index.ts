@@ -105,7 +105,6 @@ export interface SystemConfig {
   showProMenus?: boolean; // 全站后台 Pro 子菜单显示，一级 Pro 入口始终保留
   linkStatusEnabled?: boolean;
   enableLinkProbe?: boolean;
-  showLinkLatency?: boolean;
   linkStatusInterval?: number;
   socialGithub?: string;
   socialX?: string;
@@ -124,8 +123,6 @@ export interface SystemConfig {
   customWallpaperUrl?: string;
   glassmorphism?: boolean;
   sidebarDefaultState?: "expanded" | "collapsed";
-  /** @deprecated 历史配置兼容；按需助手始终默认关闭。 */
-  sidebarRightDefaultState?: "expanded" | "collapsed";
   clockWidgetMode?: "time" | "weather" | "analog";
   // 前台工作区组件显示开关（管理后台「界面与功能偏好」可切换）
   aiCopilotEnabled?: boolean;

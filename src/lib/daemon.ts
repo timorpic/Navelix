@@ -16,6 +16,7 @@ import { runCloudBackupSchedule } from "./daemon/cloud-backup.ts";
  *
  * 各任务实现已按类型拆分至 `./daemon/` 子目录：
  * - maintenance.ts   数据库自维护（清理过期会话）
+ * - log-maintenance.ts  日志保留期清理与归档
  * - cloud-backup.ts  Pro 授权下的每日异地云备份
  * - disk.ts          磁盘占用与 WAL 膨胀阈值告警
  *

@@ -421,7 +421,7 @@ export default function AdminPersonalizationTab() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-          通栏卡片 3：工作区组件
+          通栏卡片 2：工作区组件
          ═══════════════════════════════════════════════════════════════ */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-gray-100/90 dark:border-slate-800 shadow-2xs transition-colors space-y-5">
         <div className="flex items-start gap-3">
