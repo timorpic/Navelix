@@ -43,7 +43,7 @@ export default function SecuritySetupBanner() {
           >
             {tx("change_initial_password_bbd31e1f")}</Link>
           <Link
-            href="/admin?tab=system"
+            href="/admin?tab=access"
             className="rounded-xl bg-[#00C776] px-4 py-2 text-xs font-bold text-white shadow-2xs transition-colors hover:bg-[#009a5a] cursor-pointer"
           >
             {tx("configure_access_policies_f4073329")}</Link>
