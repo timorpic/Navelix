@@ -3,9 +3,9 @@
 - schema_version: 1
 - project_id: Navelix
 - task_id: cleanup-invalid-refs-20261020
-- context_revision: 2
-- checkpoint_seq: 2
-- updated_at: 2026-10-20T16:12:00+08:00
+- context_revision: 3
+- checkpoint_seq: 3
+- updated_at: 2026-10-20T17:05:00+08:00
 - owner: Claude Code（会话 d8bf7d8a）
 - status: completed
 - current_step: 已合并、已清理分支、已发布 v2.10.25 并通过 Docker 构建

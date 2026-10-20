@@ -3,8 +3,8 @@
 - schema_version: 1
 - project_id: Navelix
 - task_id: cleanup-invalid-refs-20261020
-- context_revision: 2
-- updated_at: 2026-10-20T16:12:00+08:00
+- context_revision: 3
+- updated_at: 2026-10-20T17:05:00+08:00
 - release_version: 2.10.25
 - status: completed
 
