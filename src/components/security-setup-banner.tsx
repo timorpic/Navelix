@@ -38,12 +38,12 @@ export default function SecuritySetupBanner() {
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Link
-            href="/admin?tab=profile"
+            href="/admin?tab=account"
             className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white shadow-2xs transition-colors hover:bg-amber-600 cursor-pointer"
           >
             {tx("change_initial_password_bbd31e1f")}</Link>
           <Link
-            href="/admin?tab=system"
+            href="/admin?tab=access"
             className="rounded-xl bg-[#00C776] px-4 py-2 text-xs font-bold text-white shadow-2xs transition-colors hover:bg-[#009a5a] cursor-pointer"
           >
             {tx("configure_access_policies_f4073329")}</Link>

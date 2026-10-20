@@ -5,7 +5,7 @@ import { useNavelixConfig } from "@/context/navelix-context";
 import type { LicenseStatus } from "@/lib/admin-pro";
 
 /**
- * 「Pro 商业授权」Tab 的卡片 5：⚡ 自定义代码与统计探针注入。
+ * 「系统设置 → 系统功能」的卡片 3：⚡ 自定义代码与统计探针注入。
  *
  * 从 `admin-pro-tab.tsx`（原 1018 行）抽出 —— 该文件把商业授权、云存储备份、
  * 书签探针、品牌 LOGO 与代码注入五块设置塞在一起。本组件只渲染两个

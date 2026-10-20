@@ -118,3 +118,23 @@ test("手机抽屉适配视口、展示服务端错误；禁用后两个入口�
   await expect(page.getByRole("button", { name: "AI 助手", exact: true })).toHaveCount(0);
   expect(await write(page, "/api/user/data", { config: { aiCopilotEnabled: true } })).toBe(200);
 });
+
+test("工作区组件的快捷访问开关真正控制首页显示", async ({ page }) => {
+  await login(page);
+  // 前序用例（如 sun-panel 迁移）可能已清空工作区，种子数据只在建号时播种一次，
+  // 因此这里自建一条置顶链接，不依赖执行顺序。同时先把开关置回缺省值，
+  // 保证上次运行崩在关闭状态时重试仍能从「显示」开始。
+  expect(await write(page, "/api/user/data", { config: { recentVisitsEnabled: true } })).toBe(200);
+  // 该接口按 URL 幂等：重试时链接已存在会返回 200 而非 201（置顶标志保持不变）。
+  expect([200, 201]).toContain(
+    await write(page, "/api/links", { title: "快捷访问开关回归", url: "https://example.com/quick-access-toggle", isQuickAccess: true }),
+  );
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "快捷访问", exact: true })).toBeVisible();
+  expect(await write(page, "/api/user/data", { config: { recentVisitsEnabled: false } })).toBe(200);
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "快捷访问", exact: true })).toHaveCount(0);
+  expect(await write(page, "/api/user/data", { config: { recentVisitsEnabled: true } })).toBe(200);
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "快捷访问", exact: true })).toBeVisible();
+});

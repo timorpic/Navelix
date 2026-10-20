@@ -16,6 +16,7 @@ import { runCloudBackupSchedule } from "./daemon/cloud-backup.ts";
  *
  * 各任务实现已按类型拆分至 `./daemon/` 子目录：
  * - maintenance.ts   数据库自维护（清理过期会话）
+ * - log-maintenance.ts  日志保留期清理与归档
  * - cloud-backup.ts  Pro 授权下的每日异地云备份
  * - disk.ts          磁盘占用与 WAL 膨胀阈值告警
  *
@@ -116,12 +117,12 @@ export function startBackgroundDaemon(): void {
   }, 90_000);
   globalThis.__navelix_daemon_timers__.push(autoBackupInit);
 
-  // 6. 磁盘占用检查（每 6 小时）
+  // 5. 磁盘占用检查（每 6 小时）
   globalThis.__navelix_daemon_timers__.push(
     scheduleTask(() => checkDiskUsage(), 6 * 60 * 60 * 1000),
   );
 
-  // 7. SQLite WAL 文件膨胀检查（每 1 小时）
+  // 6. SQLite WAL 文件膨胀检查（每 1 小时）
   globalThis.__navelix_daemon_timers__.push(
     scheduleTask(() => checkWalSize(), 60 * 60 * 1000),
   );

@@ -128,7 +128,10 @@ docker run --rm -v /volume1/docker/navelix:/src:ro -v "$(pwd)":/dst alpine \
 
 > ⚠️ **重要：目前没有「全库重新加密」工具，换密钥会丢凭据**
 >
-> 代码中不存在任何批量重加密的实现（`scripts/` 与后台均无此功能）。解密失败时系统的行为是
+> 常规运行与后台都没有批量重加密入口；唯一的例外是停服离线恢复场景下
+> `scripts/recover-secrets.mjs --migrate-legacy-fallback`，用于把历史固定兜底密钥
+> 加密的数据迁到当前主密钥（见 [生产验收](docs/PRODUCTION-ACCEPTANCE.md)）。
+> 解密失败时系统的行为是
 > **静默返回空字符串**（仅打印一行服务端日志，界面无任何报错）。
 >
 > 因此：**改动 `APP_SECRET` 或替换 `.app_secret` 后，此前加密的所有凭据会全部无法解密**，

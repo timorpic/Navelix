@@ -1,8 +1,23 @@
+/**
+ * 重建应用图标：写入 SVG 源（public/logo.svg、extension/icons/icon.svg），
+ * 再用无头浏览器把 SVG 光栅化为 favicon / PWA / 扩展图标共 10 张 PNG。
+ *
+ * 浏览器路径按以下顺序确定（任一失效都会回落到下一项）：
+ *   1. 环境变量 NAVELIX_BROWSER_PATH（跨平台，CI 或非默认安装位置用这个）
+ *   2. 各系统常见安装路径（Windows Edge/Chrome、macOS Chrome/Edge、Linux chromium/google-chrome）
+ *   3. PATH 中的 chromium / google-chrome / microsoft-edge
+ *
+ * 注意：src/app/icon.svg 是 Next.js App Router 的约定图标（由框架直接映射为 /icon.svg），
+ * 它不在本脚本的写入范围内；改动 SVG 时需同步该文件，否则 /icon.svg 会与其余图标不一致。
+ *
+ * 用法：node scripts/render-icons.mjs
+ */
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
-const rootDir = process.cwd();
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const SVG_CONTENT = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
   <defs>
@@ -28,13 +43,43 @@ fs.writeFileSync(path.join(rootDir, "extension", "icons", "icon.svg"), SVG_CONTE
 fs.writeFileSync(path.join(rootDir, "public", "logo.svg"), SVG_CONTENT, "utf8");
 
 // 2. 准备渲染模板
-const browserPath = fs.existsSync("C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe")
-  ? "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
-  : "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+function findBrowser() {
+  if (process.env.NAVELIX_BROWSER_PATH) return process.env.NAVELIX_BROWSER_PATH;
+  const candidates = [
+    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+    "/usr/bin/google-chrome",
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  for (const name of ["chromium", "chromium-browser", "google-chrome", "google-chrome-stable", "microsoft-edge"]) {
+    try {
+      const found = execFileSync(process.platform === "win32" ? "where" : "which", [name], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      }).trim();
+      if (found) return found.split(/\r?\n/)[0];
+    } catch {
+      // 该候选不在 PATH 中，继续下一个
+    }
+  }
+  throw new Error("未找到可用的无头浏览器，请设置 NAVELIX_BROWSER_PATH 指向 Chrome/Edge/Chromium 可执行文件");
+}
+
+const browserPath = findBrowser();
 
 console.log(`Using browser: ${browserPath}`);
 
 const tempHtmlPath = path.join(rootDir, "temp-icon.html");
+
+for (const dir of ["extension/icons", "public/favicon", "public/pwa"]) {
+  fs.mkdirSync(path.join(rootDir, dir), { recursive: true });
+}
 
 function renderIcon(size, targetPath) {
   const html = `<!DOCTYPE html>

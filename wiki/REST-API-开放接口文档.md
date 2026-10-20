@@ -11,7 +11,7 @@
 - [2. 🔑 密钥管理接口 (API Tokens Management)](#2--密钥管理接口-api-tokens-management)
 - [3. 📅 日历日程、待办清单与自动顺延 (Todos & Schedules API)](#3--日历日程待办清单与自动顺延-todos--schedules-api)
   - [3.1 获取待办事项列表](#31-获取待办事项列表)
-  - [3.2 创建新待办事项 (支持指派责任人)](#32-创建新待办事项-支持指派责任人)
+  - [3.2 创建新待办事项 (支持指派负责人)](#32-创建新待办事项-支持指派负责人)
   - [3.3 更新待办状态与信息](#33-更新待办状态与信息)
   - [3.4 删除待办事项](#34-删除待办事项)
   - [3.5 逾期待办一键/定时顺延 (Rollover API)](#35-逾期待办一键定时顺延-rollover-api)
@@ -22,14 +22,14 @@
   - [4.3 更新项目信息与里程碑清单](#43-更新项目信息与里程碑清单)
   - [4.4 删除项目](#44-删除项目)
 - [5. 🤖 AI 智能中枢与拆解服务 (AI Engine API)](#5--ai-智能中枢与拆解服务-ai-engine-api)
-  - [5.1 AI 项目拆解与成员智能指派](#51-ai-项目拆解与成员智能指派)
+  - [5.1 AI 项目拆解与智能指派](#51-ai-项目拆解与智能指派)
   - [5.2 AI 智能每日日程规划与建议](#52-ai-智能每日日程规划与建议)
   - [5.3 AI 智能对话 (携带工作空间全量实时数据)](#53-ai-智能对话-携带工作空间全量实时数据)
 - [6. 👥 工作区成员 (Workspace Members API)](#6--工作区成员-workspace-members-api)
 - [7. 🔔 消息通知与活动推送 (Notifications API)](#7--消息通知与活动推送-notifications-api)
   - [7.1 推送新通知 (支持声明来源)](#71-推送新通知-支持声明来源)
   - [7.2 获取通知列表](#72-获取通知列表)
-  - [7.3 标记通知已读 / 全部已读](#73-标记通知已读--全部已读)
+  - [7.3 标记通知已读](#73-标记通知已读)
   - [7.4 删除通知](#74-删除通知)
 - [8. 🔖 导航书签与全量配置 (Categories & System Config API)](#8--导航书签与全量配置-categories--system-config-api)
   - [8.1 获取全量工作台数据与偏好配置](#81-获取全量工作台数据与偏好配置)
@@ -123,7 +123,7 @@ Content-Type: application/json
 {
   "todos": [
     {
-      "id": "todo-1786682000000-a1b2c3",
+      "id": "todo-3f2a1c4b-8d7e-4a91-b6c2-5e8f0d3a7b14",
       "title": "完成 API 开放接口文档升级",
       "priority": "high",
       "done": false,
@@ -143,7 +143,7 @@ Content-Type: application/json
 
 > **字段说明**：
 > - `done` 为 **布尔值**（`true` / `false`），不是 0/1。
-> - `id` 形如 `todo-<时间戳>-<6位随机串>`；`dueDate` / `projectId` / `assigneeId` / `assigneeName` 在未设置时**不出现**（而非 `null`）。
+> - `id` 形如 `todo-<UUID v4>`（如 `todo-3f2a…`）；`dueDate` / `projectId` / `assigneeId` / `assigneeName` 在未设置时**不出现**（而非 `null`）。
 > - `ownerId` / `ownerName` 为待办的**创建者**；`isDelegated` 表示该条是他人指派给你的。
 > - 该接口返回的是「自己创建的 + 他人指派给自己的」**并集**，请按 `isDelegated` 区分归属。
 
@@ -254,7 +254,7 @@ Content-Type: application/json
   "name": "官网改版项目",
   "description": "全新 UI 与品牌升级",
   "status": "in-progress",
-  "color": "sky",
+  "color": "#0284C7",
   "todos": [
     {
       "title": "确定设计主色调与视觉风格",
@@ -594,7 +594,7 @@ Content-Type: application/json
 
 ---
 
-*文档版本: 2.0 · 对应 Navelix v2.9.5 | Navelix 遵循**自定义许可证**（详见 [LICENSE](https://github.com/timorpic/Navelix/blob/main/LICENSE)）*
+*文档版本: 2.0 · 对应 Navelix v2.10.24 | Navelix 遵循**自定义许可证**（详见 [LICENSE](https://github.com/timorpic/Navelix/blob/main/LICENSE)）*
 
 
 ### 配置作用域与个人通知（Schema v16／v17）

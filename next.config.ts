@@ -53,12 +53,6 @@ const nextConfig: NextConfig = {
   outputFileTracingExcludes: {
     "/*": ["./data/**", "**/.app_secret", "**/navelix.db", "**/navelix.db-wal", "**/navelix.db-shm", "**/navelix-admin-password.txt", ...runtimeDataExcludes],
   },
-  images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "api.dicebear.com" },
-      { protocol: "https", hostname: "www.google.com" },
-    ],
-  },
   async headers() {
     return [
       {

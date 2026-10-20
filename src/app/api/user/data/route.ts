@@ -39,7 +39,7 @@ async function POSTHandler(req: NextRequest) {
     return localizedJson({ error: "未登录" }, { status: 401 });
   }
   const userId = user.id;
-  // 注：middleware.ts 已对该路由统一执行 CSRF 校验，此处为纵深防御的第二道校验。
+  // 注：src/proxy.ts 已对该路由统一执行 CSRF 校验，此处为纵深防御的第二道校验。
   // checkCSRF 返回对象，必须检查 .success 属性（对象本身恒为 truthy）
   const csrfResult = checkCSRF(req);
   if (!csrfResult.success) {

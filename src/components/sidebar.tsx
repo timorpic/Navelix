@@ -1,12 +1,10 @@
 "use client";
 
 import { useText } from "@/hooks/use-text";
-import AccountSocialLinks from "@/components/account-social-links";
 import { useTranslations } from "next-intl";
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Modal from "./modal";
 import ClockWeatherWidget from "./clock-weather-widget";
 import LogoMark from "./logo-mark";
 import BrandLogoText from "./brand-logo-text";
@@ -49,8 +47,7 @@ export default function Sidebar({
     queueMicrotask(() => setMounted(true));
   }, []);
 
-  // 2. Modals & Menu State
-  const [showProfileModal, setShowProfileModal] = useState(false);
+  // 菜单与弹窗状态
   const { notice, flash } = useToast();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -71,7 +68,6 @@ export default function Sidebar({
     displayName: user.displayName,
     role: user.role,
     avatar: user.avatar,
-    email: user.email,
     bio: user.bio,
   } : null, [user]);
 
@@ -477,78 +473,6 @@ export default function Sidebar({
         )}
       </aside>
 
-      {/* Profile Center Modal (我的信息) */}
-      <Modal
-        open={showProfileModal}
-        title={tx("my_profile_account_66ad55c2")}
-        onClose={() => setShowProfileModal(false)}
-      >
-        <div className="flex flex-col items-center p-3 text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#00C776] to-[#009a5a] flex items-center justify-center text-white text-2xl font-bold shadow-md overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element -- 头像可能是任意图片地址或 data URL */}
-            <img
-              src={resolveAvatar(currentUser?.avatar, currentUser?.username)}
-              alt={currentUser?.displayName || tx("user_0d0e1a86")}
-              className="w-full h-full object-cover"
-            />
-          </div>
-
-          <div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-white">
-              {currentUser?.displayName || tx("user_0d0e1a86")}
-            </h3>
-            <p className="text-xs text-gray-400 dark:text-slate-400">
-              {tx("account_b2e2e972")}<span className="font-mono text-gray-700 dark:text-slate-300">@{currentUser?.username || "admin"}</span>
-            </p>
-            <div className="mt-1.5 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-600 border border-teal-200 dark:bg-teal-950/60 dark:text-teal-400 dark:border-teal-900">
-              {currentUser?.role === "admin" ? tx("administrator_admin_ddd26fb7") : tx("registered_user_7fb8c713")}
-            </div>
-          </div>
-
-          <AccountSocialLinks config={config} />
-
-          {/* Detailed Info Grid */}
-          <div className="w-full text-left space-y-2.5 p-3 rounded-xl bg-gray-50 dark:bg-slate-800/80 border border-gray-100 dark:border-slate-700 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400 dark:text-slate-400">{tx("current_account_1bb1e785")}</span>
-              <span className="font-bold text-gray-800 dark:text-slate-200">@{currentUser?.username || "admin"}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400 dark:text-slate-400">{tx("display_name_1769d007")}</span>
-              <span className="font-bold text-gray-800 dark:text-slate-200">{currentUser?.displayName || tx("user_0d0e1a86")}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400 dark:text-slate-400">{tx("theme_44fb814b")}</span>
-              <span className="font-bold text-amber-600 dark:text-amber-400">
-                {config.theme === "system"
-                  ? tx("message_1ee845a62bec", {v0: isDark ? tx("dark_a6b75d06") : tx("light_aa0819df")})
-                  : isDark
-                  ? tx("dark_mode_94d2bd01")
-                  : tx("light_mode_d31a4d6b")}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400 dark:text-slate-400">{tx("signed_in_session_9def25d7")}</span>
-              <span className="font-mono text-emerald-600 dark:text-emerald-400">{tx("active_authenticated_c02f0524")}</span>
-            </div>
-          </div>
-
-          <div className="w-full pt-3 border-t border-gray-100 dark:border-slate-700 flex flex-col gap-2">
-            <Link
-              href="/admin"
-              onClick={() => setShowProfileModal(false)}
-              className="w-full h-9 rounded-lg bg-[#00C776] hover:bg-[#009a5a] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
-            >
-              {tx("open_my_administration_panel_0684e9a1")}</Link>
-
-            <button
-              onClick={handleLogout}
-              className="w-full h-9 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-100 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-            >
-              {tx("sign_out_5bddbfe7")}</button>
-          </div>
-        </div>
-      </Modal>
 
       {/* 团队公开分类订阅大厅 */}
       <TeamCategoriesModal

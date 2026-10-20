@@ -6,8 +6,9 @@ import { useCallback, useRef, useState } from "react";
  * Promise 风格的确认弹窗 hook —— 用于替换原生 `confirm()`。
  *
  * 动机：项目里 `confirm-dialog.tsx`（受控组件）与原生 `confirm()` 两套并存，
- * 7 处仍用原生弹窗。直接迁移需要在每个调用点各加一对 useState + 一段 JSX，
- * 而这些调用点所在的组件本就有 16~19 个 useState（见审计报告），再加状态会加剧问题。
+ * 曾有 7 处使用原生弹窗，现已全部迁移到本 hook。直接迁移需要在每个调用点
+ * 各加一对 useState + 一段 JSX，而这些调用点所在的组件本就有 16~19 个
+ * useState（见审计报告），再加状态会加剧问题。
  *
  * 本 hook 把弹窗状态收在一处，调用点几乎保持原生的写法：
  *

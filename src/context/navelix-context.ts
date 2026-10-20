@@ -43,7 +43,6 @@ export const defaultConfig: SystemConfig = {
   clockWidgetMode: "time",
   aiCopilotEnabled: true,
   recentVisitsEnabled: true,
-  pendingRemindersEnabled: false,
   todaySummaryEnabled: false,
   socialLinksEnabled: true,
 };

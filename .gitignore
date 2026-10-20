@@ -65,6 +65,8 @@ next-env.d.ts
 # -- AI --
 IDEA.md
 /temp/
+# scripts/render-icons.mjs 光栅化时的工作文件
+/temp-icon.html
 .agents/
 # 项目通用协作规范与长期记忆随仓库分发（AGENTS.md / CLAUDE.md / MEMORY.md / .handoff/）。
 # MEMORY.md 与 .handoff/ 已取消忽略：跨工具接力依赖真实现场记录，且不含凭据。

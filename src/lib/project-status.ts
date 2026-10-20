@@ -1,5 +1,3 @@
-import type { Project } from "@/types";
-
 /**
  * 项目状态的单一真源。
  *
@@ -169,9 +167,4 @@ export function projectStatusOptions(raw?: unknown): Array<{ value: string }> {
     options.push({ value: custom });
   }
   return options;
-}
-
-/** 项目列表的便捷类型收窄（避免调用方重复写 `p.status` 取值）。 */
-export function projectStatusOf(project: Pick<Project, "status">): ProjectStatusKey | null {
-  return normalizeProjectStatus(project.status);
 }

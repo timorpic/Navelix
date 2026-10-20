@@ -102,7 +102,7 @@ async function POSTHandler(req: NextRequest) {
       try { fs.unlinkSync(tempRestorePath); } catch { /* best effort */ }
     }
 
-    // 4. 再次执行自动迁移确保结构最新
+    // 3. 再次执行自动迁移确保结构最新
     runMigrations(db);
 
     recordAuditLog({

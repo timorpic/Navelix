@@ -224,7 +224,6 @@ function HomeContent() {
                 actions={<WorkspaceAssistant assistant={assistant} />}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
-                onSelectCategory={handleSelectCategory}
               />
 
               {searchQuery.trim() ? (
@@ -282,12 +281,11 @@ function HomeContent() {
                   <TopStatsBar
                     onOpenAssistant={assistant.enabled ? assistant.show : undefined}
                     categories={categories}
-                    links={links}
                     onSelectCategory={handleSelectCategory}
                   />
 
-                  {/* Quick Access Section */}
-                  <QuickAccess links={quickAccessLinks} />
+                  {/* Quick Access Section（后台「工作区组件」可关闭，缺省显示） */}
+                  {config.recentVisitsEnabled !== false && <QuickAccess links={quickAccessLinks} />}
 
                   {/* 首页工作空间概览：项目概览、日程概览 */}
                   <WorkspaceOverviewColumns
@@ -303,7 +301,7 @@ function HomeContent() {
         </div>
       </main>
 
-      {/* 4. 自定义 CSS 与统计探针代码注入 */}
+      {/* 3. 自定义 CSS 与统计探针代码注入 */}
       {config.customCss && (
         <style dangerouslySetInnerHTML={{ __html: config.customCss }} />
       )}

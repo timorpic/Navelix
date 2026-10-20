@@ -148,22 +148,6 @@
     "key": "message_e9d637c0cb75"
   },
   {
-    "source": "• {v0} 正在推进中",
-    "key": "message_b33d973d7a46"
-  },
-  {
-    "source": "• 已记录 {v0} 个重点项目",
-    "key": "message_277bd0cc5aa8"
-  },
-  {
-    "source": "• 今天还有 {v0} 项待处理待办",
-    "key": "message_07a3e6a37326"
-  },
-  {
-    "source": "• 其中 {v0} 项为高优先级任务",
-    "key": "message_dc2822a82122"
-  },
-  {
     "source": "标记 \"{v0}\" 完成状态",
     "key": "message_e72e425e69ab"
   },
@@ -330,20 +314,8 @@
     "key": "message_b3bca764f1f2"
   },
   {
-    "source": "周{v0}",
-    "key": "message_e09c5781009d"
-  },
-  {
     "source": "日排期视界：{v0} ~ {v1}",
     "key": "message_a523f125f4b6"
-  },
-  {
-    "source": "{v0}月",
-    "key": "message_75d60af5256e"
-  },
-  {
-    "source": "{v0}年",
-    "key": "message_b5b06d03a38e"
   },
   {
     "source": "月推进视界：{v0}{v1} ~ {v2}{v3}",

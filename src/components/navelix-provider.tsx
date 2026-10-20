@@ -309,7 +309,6 @@ export function NavelixProvider({
     onLinksChange: loadData,
     onProjectsChange: loadData,
     onTodosChange: loadData,
-    onNotificationsNew: () => window.dispatchEvent(new Event("navelix-notifications-updated")),
     enabled: hydrated && Boolean(user),
   });
 
@@ -326,7 +325,7 @@ export function NavelixProvider({
       window.removeEventListener("navelix-workspace-updated", handleWorkspaceUpdate);
   }, [refreshData]);
 
-  // 6. 系统主题变动监听器（当 config.theme === 'system' 时响应系统级浅色/深色切换）
+  // 7. 系统主题变动监听器（当 config.theme === 'system' 时响应系统级浅色/深色切换）
   useEffect(() => {
     if (config.theme !== "system" || typeof window === "undefined") return;
 
@@ -339,7 +338,7 @@ export function NavelixProvider({
     return () => media.removeEventListener("change", handleSystemChange);
   }, [config.theme, applyThemeToDom]);
 
-  // 7. 自定义站点标题（浏览器标签页）
+  // 8. 自定义站点标题（浏览器标签页）
   useEffect(() => {
     if (hydrated && config.siteTitle) {
       document.title = config.siteTitle;

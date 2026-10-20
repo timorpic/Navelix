@@ -10,7 +10,6 @@ interface HeroBannerProps {
   actions?: ReactNode;
   searchQuery: string;
   onSearchChange: (q: string) => void;
-  onSelectCategory?: (cat: string) => void;
 }
 
 export default function HeroBanner({

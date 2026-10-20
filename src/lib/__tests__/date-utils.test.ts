@@ -48,7 +48,7 @@ describe("date-utils: formatRelativeTime", () => {
     const at10Days = formatRelativeTime(NOW - 10 * DAY, { fallbackAfterDays: 7 });
     assert.doesNotMatch(at10Days, /天前$/, "7 天阈值下 10 天应回退为日期");
 
-    // today-activity-widget 原本永不回退
+    // 选项契约：传入 Infinity 时不做日期回退（当前无调用点使用）
     const unbounded = formatRelativeTime(NOW - 400 * DAY, {
       style: "compact",
       fallbackAfterDays: Infinity,
