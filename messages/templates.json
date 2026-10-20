@@ -314,20 +314,8 @@
     "key": "message_b3bca764f1f2"
   },
   {
-    "source": "周{v0}",
-    "key": "message_e09c5781009d"
-  },
-  {
     "source": "日排期视界：{v0} ~ {v1}",
     "key": "message_a523f125f4b6"
-  },
-  {
-    "source": "{v0}月",
-    "key": "message_75d60af5256e"
-  },
-  {
-    "source": "{v0}年",
-    "key": "message_b5b06d03a38e"
   },
   {
     "source": "月推进视界：{v0}{v1} ~ {v2}{v3}",
