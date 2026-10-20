@@ -5,7 +5,7 @@
 - task_id: cleanup-invalid-refs-20261020
 - context_revision: 2
 - checkpoint_seq: 2
-- updated_at: 2026-10-20T15:20:00+08:00
+- updated_at: 2026-10-20T16:12:00+08:00
 - owner: Claude Code（会话 d8bf7d8a）
 - status: completed
 - current_step: 已合并、已清理分支、已发布 v2.10.25 并通过 Docker 构建
@@ -13,10 +13,11 @@
 ## 现场
 
 - repo_root: /root/Navelix
-- branch: `main`（本地与 `origin/main` 一致）
-- HEAD: `334bbbe3957c2e21748b2cd2962fdf2a4b0cfa75`
+- branch: `main`（本地分支；交接记录提交后领先 `origin/main`，待 PR 合并后追平）
+- HEAD: 以 `git rev-parse HEAD` 为准（本文件无法记录包含自身的提交）
+- base_commit: `334bbbe3957c2e21748b2cd2962fdf2a4b0cfa75`（v2.10.25 发布提交，即本交接记录提交的父提交；业务状态以它为基准）
 - tag: `v2.10.25`（指向 `334bbbe`，已推送）
-- 工作区：仅 `.handoff/` 交接记录有改动（本次写入），业务代码干净
+- 工作区状态：以 `git status --short --branch` 为准。记录基线时改动限于文档（`.handoff/CHECKPOINT.md`、`.handoff/CONTEXT.md`、`CHANGELOG.md`），业务代码干净
 - 分支清理：`chore/cleanup-invalid-refs-20261020` 与 `release/v2.10.25` 的远程分支均已删除（前者随 PR 合并，后者手工删除后 `git fetch --prune` 清除本地过时引用），本地分支已 `-d` 删除
 
 ## 已完成的清理（按提交）
@@ -62,7 +63,7 @@
 - PR #29（清理改动，25 个提交）合并为 `5693aa4`。
 - PR #30（版本发布）合并为 `334bbbe`。
 - `v2.10.25` tag 已推送，GitHub Release 已创建：https://github.com/timorpic/Navelix/releases/tag/v2.10.25
-- Docker 镜像已构建、冒烟测试通过并提升至 stable tag。该工作流只由 release 触发，PR 阶段不验证，本次为首次实际执行。
+- Docker 镜像已构建、冒烟测试通过并提升至 stable tag。该工作流有两个触发器：`release: types: [published]`（`docker.yml:4-5`）与 `workflow_dispatch`（`docker.yml:6`）。手动触发会依次执行 `quality`、`build`、`smoke-test`（三者无 job 级 `event_name` 限制，靠 `needs` 串联），用于发版前验证镜像，但仍会推送 candidate 镜像、且跳过版本一致性闸门；`promote`（`docker.yml:290`，条件为 `github.event_name == 'release' && !github.event.release.prerelease`）与 `notify`（`docker.yml:358`，条件为 `always() && github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')`）只在 Release 触发时执行，手动触发不会推 stable tag、也不发通知。本次走的是 Release 触发路径（历史 45 次运行全部为 release 事件）。
 
 ## 关键判定（避免后续重复劳动）
 

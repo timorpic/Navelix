@@ -4,7 +4,7 @@
 - project_id: Navelix
 - task_id: cleanup-invalid-refs-20261020
 - context_revision: 2
-- updated_at: 2026-10-20T15:20:00+08:00
+- updated_at: 2026-10-20T16:12:00+08:00
 - release_version: 2.10.25
 - status: completed
 
@@ -28,7 +28,7 @@
 
 ## 入口与现场
 
-任务已完成并发布 v2.10.25。`main` 的 HEAD 为 `334bbbe`，工作区干净。
+任务已完成并发布 v2.10.25，发布提交（记录基线）为 `334bbbe`。读取时的 HEAD 与工作区以 `git rev-parse HEAD`、`git status --short --branch` 实测为准，不要直接用基线值。
 
 实现、验证与发布证据见 CHECKPOINT.md。
 
