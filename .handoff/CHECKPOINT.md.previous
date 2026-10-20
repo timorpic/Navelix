@@ -4,16 +4,16 @@
 - project_id: Navelix
 - task_id: remove-home-greeting-20261020
 - context_revision: 2
-- checkpoint_seq: 2
+- checkpoint_seq: 4
 - updated_at: 2026-10-20T08:58:08+08:00
 - owner: Codex
 - status: active
-- current_step: 准备 v2.10.24 发布 PR
+- current_step: PR #27 已合并，Release 已发布，等待镜像验收
 
 ## 现场与交付
 
 - repo_root: /root/Navelix
-- branch: codex/remove-home-greeting-2.10.24
+- branch: main
 - base_HEAD: 77be039cbde06c30a85d7c268834bfcd80a29905
 - 移除首页欢迎卡片挥手图标、时段问候语、用户名及专用计算，保留日期与操作区；同步 DESIGN 和 CHANGELOG。
 - 远程 Tag / Release 最新为 v2.10.23，已核对当月序号，脚本同步四处版本至 2.10.24。
@@ -29,4 +29,22 @@
 
 ## 外部操作台账与下一步
 
-尚未推送、合并、创建 Tag 或 Release。下一步完成构建后提交并创建 PR，记录 URL 和检查结果；只有成功后发布。
+发布提交 89fc25dfedc0a46f21a105d27f0b746e0b9689b8 已推送至 origin/codex/remove-home-greeting-2.10.24。
+
+PR: https://github.com/timorpic/Navelix/pull/27
+
+CI run 39350832734 两项检查通过，但自动审查指出首页失去唯一 h1；已添加 sr-only「工作空间」一级标题，保持可见文案移除。合并未发生，需新提交 CI 通过并解决该审查讨论后继续。
+
+## 合并与发布准备
+
+- 最终发布分支提交 5e6f553ca00be359da94372fd4a43e1c519fdf95，CI 39351240852 两项成功，审查讨论已解决。
+- PR #27 于 2026-10-20 09:05:25 +08:00 合并，main 提交 e81d44d2b2cf108ffca0307e1c7f10cd613b4ca5，与已验证分支 tree 一致。
+- 再次确认 v2.10.24 Tag 和 Release 尚不存在，准备将附注 Tag 指向上述 main 提交，再通过既有脚本发布。
+
+## Release 执行结果
+
+- v2.10.24 附注 Tag 已推送，指向 e81d44d2b2cf108ffca0307e1c7f10cd613b4ca5。
+- 正式 Release（非草稿、非预发布）已发布：https://github.com/timorpic/Navelix/releases/tag/v2.10.24 。
+- PR CI run 39351240852 成功：645 tests / 175 suites，31 项 E2E 通过。
+- main CI 39351472583、镜像流水线 39351510753 运行中，尚不能宣称镜像稳定标签更新成功。
+- 本地已切回 main 并快进到发布提交；只保留本轮接力证据文档的本地修改，应用代码已合并发布。

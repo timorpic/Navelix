@@ -4,9 +4,9 @@
 - project_id: Navelix
 - task_id: remove-home-greeting-20261020
 - context_revision: 2
-- updated_at: 2026-10-20T08:55:48+08:00
+- updated_at: 2026-10-20T09:13:50+08:00
 - release_version: 2.10.24
-- status: active
+- status: completed
 
 ## 用户目标与授权
 
@@ -19,3 +19,7 @@
 ## 入口与现场
 
 实现：src/components/hero-banner.tsx；说明：DESIGN.md、CHANGELOG.md 的 [2.10.24]。现场见 CHECKPOINT.md。上一任务上下文及检查点已归档至 archive/assistant-header-row-20261019/。
+
+## 发布结果
+
+v2.10.24 已通过 PR #27 合并、推送 Tag 并发布正式 Release；main CI 与镜像流水线成功，两个 registry 六个稳定标签回读均与被测镜像一致。预览已关闭。验证证据及本地未提交接力记录边界见 CHECKPOINT.md。
