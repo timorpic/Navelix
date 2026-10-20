@@ -59,6 +59,8 @@ CI 配置见 `.github/workflows/ci.yml`，镜像发布与冒烟测试见 `.githu
 
 该设置属于仓库管理配置，不在 Git 文件中自动生效；实际状态以 [main 保护设置](https://github.com/timorpic/Navelix/settings/branches) 为准。调整 CI job 名称时须同步更新 required checks，避免 PR 永久等待不存在的检查。Tag/Release 仍只对应通过验证的目标提交，Docker 构建继续全部在 GitHub Actions 执行。
 
+合并成功后，删除对应本地与远程工作分支，并清理失效的远程引用。删除前核对 PR 已合并、提交已保留且分支未被其他工作树使用；不要删除未合并工作。仓库已启用 GitHub「合并后自动删除分支」，仍需回读远程状态并清理本地分支。
+
 ## 组件交付
 
 当前组件随应用代码一起交付，没有独立组件发布命令。新增或修改组件需完成调用点接入、类型、样式及必要的交互验证，随应用版本发布。浏览器扩展有独立 `extension/manifest.json` 和说明，不能用应用版本号覆盖其版本策略。
