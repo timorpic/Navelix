@@ -36,7 +36,8 @@
 
 ## API 依赖
 
-- `GET /api/links`：读取书签与分类（收藏弹窗分类下拉）
+- `GET /api/links`：读取书签与分类（收藏弹窗分类下拉、连接测试）
 - `POST /api/links`：新增单条书签（幂等去重）
+- `POST /api/ai/summarize`：抓取当前网页并生成 Markdown 摘要（「✨ AI 摘要」按钮；未配置 AI Key 时返回内置兜底摘要）
 
-这两个接口随 Navelix 主仓库交付。
+这些接口随 Navelix 主仓库交付。

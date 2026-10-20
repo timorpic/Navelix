@@ -34,7 +34,7 @@ function setBtnReset(btnId, iconId, labelId, text, idleIcon) {
 }
 
 // ── 状态消息 ──
-const MSG_ICON = { ok: "i-check", err: "i-alert-circle", warn: "i-alert", info: "i-info" };
+const MSG_ICON = { ok: "i-check", err: "i-alert-circle", info: "i-info" };
 function setStatus(elId, type, title, desc) {
   const el = $(elId);
   el.className = "msg " + type;

@@ -13,7 +13,7 @@
  *   node scripts/sync-changelog.mjs --dry-run [版本]  # 只打印将要执行的 gh 命令与内容，不做任何写操作
  *   node scripts/sync-changelog.mjs --publish [版本]  # 发布章节到 GitHub Release（已存在则 edit，否则 create）
  *
- * 版本参数可写 2.9.5 或 v2.9.5；扩展版本可写 extension-v1.1.0。
+ * 版本参数可写 X.Y.Z 或 vX.Y.Z；扩展版本可写 extension-vX.Y.Z。
  */
 
 import fs from "node:fs";
@@ -30,7 +30,7 @@ function fail(msg) {
   process.exitCode = 1;
 }
 
-/** 章节标题匹配：## [2.9.5] - 2026-09-15 / ## [未发布] / ## [extension-v1.1.0] - … */
+/** 章节标题匹配：## [X.Y.Z] - YYYY-MM-DD / ## [未发布] / ## [extension-vX.Y.Z] - … */
 const SECTION_RE = /^## \[(.+?)\]/;
 
 /** 解析 CHANGELOG.md → Map<规范化标题, { title, body }> */
@@ -40,7 +40,7 @@ function parseChangelog(markdown) {
   let current = null;
 
   for (const line of lines) {
-    // 底部链接定义区（[2.9.5]: https://…）视为结束
+    // 底部链接定义区（[X.Y.Z]: https://…）视为结束
     if (/^\[[^\]]+\]:\s+https?:/.test(line)) {
       current = null;
       continue;
@@ -63,7 +63,7 @@ function parseChangelog(markdown) {
   return sections;
 }
 
-/** 规范化版本标识：去 v 前缀、去空白，便于 "v2.9.5" / "2.9.5" 互相匹配 */
+/** 规范化版本标识：去 v 前缀、去空白，便于 "vX.Y.Z" / "X.Y.Z" 互相匹配 */
 function normalize(name) {
   return name.replace(/^v/i, "").trim();
 }

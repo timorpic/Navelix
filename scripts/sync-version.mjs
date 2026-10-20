@@ -77,8 +77,7 @@ function verifyAll() {
       cur = content.match(/FALLBACK_VERSION = "v(\d+\.\d+\.\d+)"/)?.[1] ?? "";
       consistent = cur === expected;
     } else {
-      cur = content.match(/: "v(\d+\.\d+\.\d+)"/)?.[1] ?? "";
-      consistent = cur === expected;
+      throw new Error(`verifyAll 缺少 ${relPath} 的校验分支，请同步更新 PATTERNS 与本函数`);
     }
     if (!consistent) {
       console.error(`✗ ${relPath} 与 package.json (${expected}) 不一致${cur ? `，当前 ${cur}` : ""}`);

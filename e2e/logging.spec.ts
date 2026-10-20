@@ -95,13 +95,13 @@ test("日志每页可选 20/50/100，改变条数保留筛选并回到第一页"
 });
 
 
-test("日志设置可重试，统计故障不阻塞保存，表单与确认框支持键盘操作", async ({ page }) => {
+test("日志设置可重试，统计故障不阻塞保存，表单与确认框支持键盘操作", async ({ page }, testInfo) => {
   await login(page);
   await page.goto("/admin?tab=logs");
   await expect(page.getByText(/^第 1 \/ .* 页，共 .* 条$/)).toBeVisible();
   await expect(page.getByLabel("日志级别", { exact: true }).locator('option[value="error"]')).toHaveText("错误");
   await expect(page.getByLabel("来源", { exact: true }).locator('option[value="frontend"]')).toHaveText("前端");
-  await page.screenshot({ path: "/tmp/navelix-final-logs-desktop.png", fullPage: true, animations: "disabled" });
+  await testInfo.attach("logs-desktop", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
   await page.route("**/api/admin/logs/stats", route => route.fulfill({ status: 503, json: { error: "test statistics failure" } }));
   let failLoad = true;
   await page.route("**/api/admin/logs/settings", route => {
@@ -132,17 +132,17 @@ test("日志设置可重试，统计故障不阻塞保存，表单与确认框�
   await expect(page.getByText("操作完成", { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.screenshot({ path: "/tmp/navelix-final-settings-mobile.png", fullPage: true, animations: "disabled" });
+  await testInfo.attach("settings-mobile", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
   await page.getByRole("button", { name: "日志记录", exact: true }).click();
   await expect(page.getByText(/^第 1 \/ .* 页，共 .* 条$/)).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.screenshot({ path: "/tmp/navelix-final-logs-mobile.png", fullPage: true, animations: "disabled" });
+  await testInfo.attach("logs-mobile", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
   await page.evaluate(() => document.documentElement.classList.add("dark"));
-  await page.screenshot({ path: "/tmp/navelix-final-logs-mobile-dark.png", fullPage: true, animations: "disabled" });
+  await testInfo.attach("logs-mobile-dark", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.getByRole("button", { name: "日志设置", exact: true }).click();
   await page.getByRole("button", { name: "保存设置", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeFocused();
-  await page.screenshot({ path: "/tmp/navelix-final-confirm-dark.png", fullPage: true, animations: "disabled" });
+  await testInfo.attach("confirm-dark", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
   await page.keyboard.press("Escape");
 });

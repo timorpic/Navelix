@@ -1,4 +1,4 @@
-import { getConfig, saveBookmark, baseUrlOf } from "./common.js";
+import { getConfig, saveBookmark } from "./common.js";
 
 const PAGES_MENU_ID = "navelix-save-page";
 const LINKS_MENU_ID = "navelix-save-link";
@@ -51,16 +51,4 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   } else if (info.menuItemId === LINKS_MENU_ID && info.linkUrl) {
     save(info.linkUrl, "").catch(() => {});
   }
-});
-
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg?.type === "navelix:open") {
-    getConfig()
-      .then((c) => baseUrlOf(c.baseUrl))
-      .then((base) => {
-        if (base) chrome.tabs.create({ url: base, active: true });
-      });
-    sendResponse({ ok: true });
-  }
-  return false;
 });

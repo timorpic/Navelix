@@ -26,8 +26,6 @@ jobs:
       contents: read
       packages: write
     env:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       HAS_EE_BUNDLE: ${{ secrets.EE_COMMERCIAL_BUNDLE != '' }}
 
     steps:
@@ -136,7 +134,6 @@ jobs:
       - name: Run container and verify health & features
         run: |
           IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          SHORT_SHA="${{ github.sha }}"
           IMAGE_TAG="${IMAGE_NAME}@${{ needs.build.outputs.digest }}"
 
           echo "Pulling image ${IMAGE_TAG}..."
@@ -247,7 +244,6 @@ jobs:
       - name: Verify legacy v20 database upgrade
         run: |
           IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          SOURCE_SHA="${{ github.sha }}"
           bash scripts/smoke-log-upgrade.sh "${IMAGE_NAME}@${{ needs.build.outputs.digest }}"
 
       - name: Setup pnpm
