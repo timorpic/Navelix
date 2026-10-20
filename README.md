@@ -87,7 +87,7 @@ Navelix 兼容 Sun-Panel 导出的 JSON 配置（含 v1.8.x `icons` 及多种导
 
 - **下载**：[⬇️ navelix-extension-v1.1.0.zip](https://github.com/timorpic/Navelix/releases/download/extension-v1.1.0/navelix-extension-v1.1.0.zip)（约 25 KB）
 - **安装**：解压后，在 `chrome://extensions`（或 `edge://extensions`）开启「开发者模式」→「加载已解压的扩展程序」→ 选择解压后的文件夹
-- **配置**：点击工具栏扩展图标 →「设置」→ 填写实例地址与 API 令牌（后台 → API 令牌 → 新建）
+- **配置**：点击工具栏扩展图标 →「设置」→ 填写实例地址与 API 令牌（后台 → 用户设置 → 账号与数据 → 个人 API Access Token → 新建）
 
 ## 文档中心
 
