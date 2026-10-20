@@ -3,11 +3,11 @@
 /**
  * Navelix 版本号统一同步工具 (Single Source of Truth)
  *
- * 唯一版本真源：package.json 的 version 字段（不含 v 前缀，如 "1.8.1"）。
+ * 唯一版本真源：package.json 的 version 字段（不含 v 前缀，如 "2.10.24"）。
  * 本脚本将指定版本号同步到所有出现版本的代码位置，避免发版时遗漏不同步。
  *
  * 用法：
- *   node scripts/sync-version.mjs 1.8.1        # 同步全部位置到 1.8.1
+ *   node scripts/sync-version.mjs 2.10.24       # 同步全部位置到 2.10.24
  *   node scripts/sync-version.mjs              # 无参数：仅校验当前一致性并在不一致时退出非零
  */
 
