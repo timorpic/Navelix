@@ -458,3 +458,54 @@ test("现场章节的 HEAD 漂移即使没有助手快照也会提示", async t 
   const inspected = cli(root, "inspect", "--json");
   assert.match(JSON.parse(inspected.stdout).warnings.join(" "), /HEAD 已变化/);
 });
+
+test("未决外部操作不能靠后续空数组抹掉，必须显式重申", async t => {
+  const root = await fixture(t);
+  assert.equal(claim(root).code, 0);
+  const input = await resultFile(root, {
+    external_effects: [{ operation: "deploy", status: "in_progress", recovery: "核对部署 ID 与目标环境" }],
+  });
+  assert.equal(cli(root, "save", "--agent", "receiver-1", "--input", input).code, 0);
+  const recorded = await readFile(path.join(root, checkpoints), "utf8");
+  assert.match(recorded, /\| deploy \| in_progress \|/);
+  await resultFile(root, { external_effects: [] });
+  const dropped = cli(root, "save", "--agent", "receiver-1", "--input", input);
+  assert.equal(dropped.code, 1, "省略未决外部操作必须被拒绝");
+  assert.match(dropped.stderr, /deploy/);
+  assert.deepEqual(await readFile(path.join(root, checkpoints), "utf8"), recorded, "拒绝时不得改写台账");
+  await resultFile(root, {
+    external_effects: [{ operation: "deploy", status: "succeeded", recovery: "已核对部署 ID 与目标版本" }],
+  });
+  assert.equal(cli(root, "save", "--agent", "receiver-1", "--input", input).code, 0, "确认成功后即可不再重复");
+  assert.match(await readFile(path.join(root, checkpoints), "utf8"), /\| deploy \| succeeded \|/);
+});
+
+test("previous 被替换为符号链接时拒绝写入仓库外", async t => {
+  const root = await fixture(t);
+  const outside = await mkdtemp(path.join(os.tmpdir(), "navelix-handoff-outside-"));
+  t.after(() => rm(outside, { recursive: true, force: true }));
+  await rm(path.join(root, ".handoff/previous"), { recursive: true, force: true });
+  await symlink(outside, path.join(root, ".handoff/previous"));
+  assert.equal(claim(root).code, 1);
+  assert.deepEqual(await readdir(outside), [], "不得在仓库外写入备份");
+});
+
+test("检查点缺少 project_id 或 task_id 时正常认领被拒，恢复仍需核对", async t => {
+  const root = await fixture(t);
+  const file = path.join(root, checkpoints);
+  for (const field of ["project_id", "task_id"]) {
+    const stripped = (await readFile(file, "utf8")).replace(new RegExp(`^- ${field}:.*\\n`, "m"), "");
+    await writeFile(file, stripped);
+    const inspected = cli(root, "inspect", "--json");
+    assert.equal(inspected.code, 1, `缺少 ${field} 时 inspect 必须报告`);
+    assert.match(JSON.parse(inspected.stdout).errors.join(" "), new RegExp(field));
+    assert.equal(claim(root).code, 1, `缺少 ${field} 时不得正常认领`);
+    assert.equal(await readFile(file, "utf8"), stripped);
+  }
+  assert.equal(claim(root, ["--recover"]).code, 0, "恢复流程可重建身份字段");
+  // 恢复只放宽「缺失」，不放宽「不符」：否则 --recover 会变成改写项目身份的通道。
+  const mismatched = replace(await readFile(file, "utf8"), "project_id", "other");
+  await writeFile(file, mismatched);
+  assert.equal(claim(root, ["--recover"]).code, 1, "project_id 不符时恢复也必须拒绝");
+  assert.equal(await readFile(file, "utf8"), mismatched);
+});

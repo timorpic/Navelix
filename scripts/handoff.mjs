@@ -45,6 +45,7 @@ const PREVIOUS_CONTEXT = ".handoff/CONTEXT.md.previous";
 const BACKUP_DIR = ".handoff/previous";
 const STATES = new Set(["open", "claimed", "declined", "expired", "not_applicable"]);
 const RESULTS = new Set(["passed", "failed", "blocked", "not_run", "stale"]);
+const EFFECT_STATES = new Set(["prepared", "in_progress", "succeeded", "failed", "unknown"]);
 
 const hash = value => createHash("sha256").update(value).digest("hex");
 const nextSequence = data => {
@@ -271,7 +272,12 @@ async function load(root) {
     } catch {
       issues.push(`CONTEXT 的 ${name} 未初始化或无效`);
     }
-    if (checkpoint[name] && !blank(checkpoint[name]) && checkpoint[name] !== context[name])
+    // 检查点缺字段时，下面的相等比较会被跳过；必须显式报告，否则 inspect 看起来健康，
+    // 正常 claim 会放过一份身份不明的检查点。用独立措辞，避免与「不符」共用前缀：
+    // 缺失可由 --recover 重建，project_id 不符则始终阻断。
+    if (checkpointText && blank(checkpoint[name]))
+      issues.push(`检查点身份字段缺失（${name}）；需按恢复流程核对`);
+    else if (checkpoint[name] && !blank(checkpoint[name]) && checkpoint[name] !== context[name])
       issues.push(`检查点 ${name} 与 CONTEXT 不符`);
   }
   if (!/^[1-9]\d*$/.test(context.context_revision || "")) issues.push("CONTEXT 修订号无效");
@@ -496,6 +502,24 @@ async function safeDestination(root, relative) {
   });
   assert(!info || (info.isFile() && !info.isSymbolicLink()), `拒绝覆盖非普通文件：${relative}`);
 }
+// 备份目录必须是仓库内的普通目录。mkdir 会跟随已存在的符号链接，
+// 若不先检查，被替换成链接的 .handoff/previous 会把「不可变备份」写到仓库外。
+async function safeDirectory(root, relative) {
+  const target = path.join(root, relative);
+  const info = await lstat(target).catch(error => {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  });
+  if (!info) {
+    await mkdir(target, { recursive: true });
+    const created = await lstat(target);
+    assert(created.isDirectory() && !created.isSymbolicLink(), `拒绝使用非普通目录：${relative}`);
+    return;
+  }
+  assert(info.isDirectory() && !info.isSymbolicLink(), `拒绝使用非普通目录：${relative}`);
+  const resolved = await realpath(target);
+  assert(resolved.startsWith(root + path.sep), `备份目录不得指向仓库外：${relative}`);
+}
 async function atomic(root, relative, content) {
   await safeDestination(root, relative);
   const temporary = `.handoff/${path.basename(relative)}.${randomUUID()}.tmp.md`;
@@ -507,7 +531,7 @@ async function atomic(root, relative, content) {
   }
 }
 async function backup(root, relative, content) {
-  await mkdir(path.join(root, BACKUP_DIR), { recursive: true });
+  await safeDirectory(root, BACKUP_DIR);
   await safeDestination(root, relative);
   await writeFile(path.join(root, relative), content, { flag: "wx", mode: 0o600 });
   return relative;
@@ -534,7 +558,7 @@ async function persist(data, checkpointText, contextText, token, checkpointBacku
   await atomic(data.root, CONTEXT, contextText);
   await atomic(data.root, PREVIOUS_CONTEXT, data.contextText);
 }
-async function resultInput(root, input) {
+async function resultInput(root, input, state) {
   assert(input, "save 需要 --input JSON 文件");
   let value;
   try {
@@ -599,6 +623,7 @@ async function resultInput(root, input) {
     }
   }
   assert(Array.isArray(value.external_effects), "缺少 external_effects 数组");
+  const known = new Set();
   for (const item of value.external_effects) {
     assert(
       item &&
@@ -609,10 +634,19 @@ async function resultInput(root, input) {
       "外部操作需要 operation、recovery",
     );
     assert(
-      ["prepared", "in_progress", "succeeded", "failed", "unknown"].includes(item.status),
+      EFFECT_STATES.has(item.status),
       "外部操作状态无效",
     );
+    assert(!known.has(item.operation.trim()), `外部操作重复：${item.operation.trim()}`);
+    known.add(item.operation.trim());
   }
+  // 上一次记录中未确认成功的外部操作不能靠本次省略来消失：部署、迁移或发布一旦发起，
+  // 后续结果必须显式重申其真实状态，否则台账会出现「看起来从没发生过」的空档。
+  const carried = (state?.external_effects || []).filter(item => item.status !== "succeeded" && !known.has(item.operation));
+  assert(
+    !carried.length,
+    `上一次记录的外部操作仍未确认成功，必须在 external_effects 中重申其状态：${carried.map(item => `${item.operation}（${item.status}）`).join("、")}`,
+  );
   return value;
 }
 async function mutate(options, data) {
@@ -632,6 +666,9 @@ async function mutate(options, data) {
       "检查点 task_id",
       "检查点上下文修订",
       "CONTEXT 与 CHECKPOINT 任务状态",
+      // 旧检查点可能整段缺失身份字段；恢复时按 CONTEXT 重建，不猜测其他来源。
+      // 只放宽「缺失」；`project_id 与 CONTEXT 不符` 仍阻断。
+      "检查点身份字段缺失",
     ];
   const blocking = data.issues.filter(issue => !allowedIssues.some(prefix => issue.startsWith(prefix)));
   assert(!blocking.length, blocking.join("；"));
@@ -679,7 +716,7 @@ async function mutate(options, data) {
       "先用 claim 建立本工具的接管记录，再保存结果；owner 不是锁",
     );
     assert(data.context.status === "active" && data.checkpoint.status === "active", "仅活动执行者可保存；交接后应停止修改");
-    result = await resultInput(data.root, options.input);
+    result = await resultInput(data.root, options.input, data.state);
     lease = data.state.session.lease;
     claimedAt = data.state.session.claimed_at;
     claim = data.checkpoint.handoff_claim;
@@ -717,6 +754,8 @@ async function mutate(options, data) {
     handoff_history: [...new Set(history)],
     snapshot: data.current,
     verifications: result.verifications.map(item => ({ evidence: item.evidence, evidence_hash: item.evidence_hash })),
+    // 台账随状态持久化，供下一次保存核对未决操作是否被遗漏。
+    external_effects: result.external_effects.map(item => ({ operation: item.operation, status: item.status })),
   };
   const checkpoint = render(data, { owner, lease, claim, status, result, state, backup: checkpointBackup, now, claimedAt });
   await persist(data, checkpoint, context, token, checkpointBackup);
