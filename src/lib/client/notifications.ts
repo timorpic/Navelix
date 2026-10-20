@@ -24,20 +24,17 @@ export async function pushNotification(
   source: "api" | "calendar" | "project" | "system" | string = "system",
 ) {
   try {
-    const response = await fetch("/api/notifications", {
+    await fetch("/api/notifications", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, content, source }),
     });
-    if (response.ok) window.dispatchEvent(new Event("navelix-notifications-updated"));
   } catch {
     // 通知失败不影响操作本身
   }
 }
 
-/** Notify all workspace consumers after an activity record is removed. */
 export async function deleteNotificationRecords(id?: string): Promise<void> {
   const response = await fetch(id === undefined ? "/api/notifications" : `/api/notifications/${encodeURIComponent(id)}`, { method: "DELETE" });
   if (!response.ok) throw new Error("Delete notification failed");
-  window.dispatchEvent(new Event("navelix-notifications-updated"));
 }

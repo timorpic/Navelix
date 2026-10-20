@@ -34,12 +34,12 @@ describe("Realtime Event Bus (SSE)", () => {
 
     eventBus.on("broadcast", handler);
 
-    emitUserEvent(testUserId, "notifications:new", { title: "Test Alert" });
+    emitUserEvent(testUserId, "categories:change", { title: "Test Alert" });
 
     eventBus.off("broadcast", handler);
 
     assert.equal(broadcasts.length, 1);
-    assert.equal(broadcasts[0].type, "notifications:new");
+    assert.equal(broadcasts[0].type, "categories:change");
     assert.equal(broadcasts[0].userId, testUserId);
     assert.equal(broadcasts[0].payload?.title, "Test Alert");
   });
