@@ -71,7 +71,7 @@ API 处理器保持 HTTP 职责，复杂行为使用 `admin-*`、`todos-projects
 
 `src/instrumentation.ts` 在 Node 运行时尝试挂载 `ee/dist/bundle.jsc`，随后启动守护任务。缺失商业驱动时使用 CE 实现；桥接注册表见 [REGISTRY](REGISTRY.md)，读取和写入门禁仍需要独立检查。
 
-后台任务涵盖维护、备份、磁盘检查与模型刷新等。当前结构适合单服务配本地持久卷，不能直接假设多副本共享 SQLite 与定时任务具有分布式协调能力。
+后台任务涵盖日志维护与落盘、个人 Telegram 提醒、数据库维护、云备份与本地自动备份、磁盘占用与 WAL 膨胀检查等。当前结构适合单服务配本地持久卷，不能直接假设多副本共享 SQLite 与定时任务具有分布式协调能力。
 
 部署约束和备份说明见 [DEPLOYMENT](DEPLOYMENT.md)；更详细背景见 [Wiki 架构](../wiki/Architecture-系统架构与技术选型.md)。
 
