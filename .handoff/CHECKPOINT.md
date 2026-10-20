@@ -52,7 +52,7 @@
 ## 验证证据
 
 - 每个提交前均通过 `pnpm typecheck`、`pnpm lint`；`pre-commit` hook 亦重复执行两者，全部通过。
-- `pnpm test`（走 `scripts/run-isolated.mjs`）：**644 tests / 175 suites，pass 644，fail 0**。
+- `pnpm test`（走 `scripts/run-isolated.mjs`）：**644 tests / 175 suites，fail 0**。本地因存在被 gitignore 的 `ee/`，两项 EE 依赖图测试实际执行，故 644 全通过；CI 无 `ee/` 时同样 644 tests，结果为 pass 642 / skipped 2 / fail 0（run `39384159106`、`39384780677`、`39385094028` 三次一致）。
 - `pnpm build` 生产构建通过（验证删除 `images.remotePatterns` 不影响 `link-card.tsx` 的 `unoptimized` 用法）。
 - `messages/` 校验：zh-CN 与 en 各 1577 键且逐键对齐；`source-index.json` 1363 条 0 悬空；`templates.json` 101 条 0 悬空。
 - **CI（GitHub Actions）**：PR #29 与 #30 的 `Lint, Test & Build` 与 `Playwright E2E (Core UI Flow)` 均 pass（E2E 32 用例）。
@@ -63,7 +63,7 @@
 - PR #29（清理改动，25 个提交）合并为 `5693aa4`。
 - PR #30（版本发布）合并为 `334bbbe`。
 - `v2.10.25` tag 已推送，GitHub Release 已创建：https://github.com/timorpic/Navelix/releases/tag/v2.10.25
-- Docker 镜像已构建、冒烟测试通过并提升至 stable tag。该工作流有两个触发器：`release: types: [published]`（`docker.yml:4-5`）与 `workflow_dispatch`（`docker.yml:6`）。手动触发会依次执行 `quality`、`build`、`smoke-test`（三者无 job 级 `event_name` 限制，靠 `needs` 串联），用于发版前验证镜像，但仍会推送 candidate 镜像、且跳过版本一致性闸门；`promote`（`docker.yml:290`，条件为 `github.event_name == 'release' && !github.event.release.prerelease`）与 `notify`（`docker.yml:358`，条件为 `always() && github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')`）只在 Release 触发时执行，手动触发不会推 stable tag、也不发通知。本次走的是 Release 触发路径（历史 45 次运行全部为 release 事件）。
+- Docker 镜像已构建、冒烟测试通过并提升至 stable tag。该工作流有两个触发器：`release: types: [published]`（`docker.yml:4-5`）与 `workflow_dispatch`（`docker.yml:6`）。手动触发会依次执行 `quality`、`build`、`smoke-test`，用于发版前验证镜像：`quality` 的 job 级 `if` 显式放行 `workflow_dispatch`（`docker.yml:14`），`build` 与 `smoke-test` 只靠 `needs` 串联；手动触发仍会推送 candidate 镜像、且跳过版本一致性闸门。`promote`（`docker.yml:287`，条件为 `github.event_name == 'release' && !github.event.release.prerelease`）与 `notify`（`docker.yml:355`，条件为 `always() && github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')`）只在 Release 触发时执行，手动触发不会推 stable tag、也不发通知。本次走的是 Release 触发路径（该工作流历史 45 次运行全部为 release 事件）。
 
 ## 关键判定（避免后续重复劳动）
 
@@ -82,11 +82,11 @@
 ## 遗留事项
 
 - `e2e/sun-panel-migration.spec.ts` 仍用 `card.screenshot({ path: "public/screenshots/..." })` 直接改写仓库内受版本控制的图片。本地跑该 e2e 会污染工作区（本次已两次 `git checkout` 还原）。不属于清理范围，建议后续单独处理。
-- `wiki/` 是 GitHub wiki 的源副本，本次改动 7 个 wiki 文件；线上 wiki 停在 v2.9.5，逐文件比对后**有 8 个文件与仓库不同**（含本分支未改、但已在更早版本更新的 `DESIGN_SYSTEM.md` 与 `Sun-Panel-Migration-从-Sun-Panel-迁移.md`），**尚未同步到线上 wiki**，需手工同步。
+- `wiki/` 已同步到线上（提交 `3fae1fa`，8 个文件）。同步前线上最后提交为 `9a1ebd1`（2026-10-13），逐文件比对有 8 个文件与仓库不同：Architecture、DESIGN_SYSTEM、FAQ、Mobile、Quick-Start、REST-API、Security、User-Guide；其中本分支未改、但更早版本已领先的只有 `DESIGN_SYSTEM.md`（`Sun-Panel-Migration-从-Sun-Panel-迁移.md` 当时与线上字节一致）。同步后线上 12 个文件与仓库 `wiki/` 全部一致。
 
 ## 外部操作台账
 
-- 已推送 2 个分支（均已删除）、合并 2 个 PR、推送 1 个 tag、创建 1 个 Release、执行 1 次 Docker 构建。
+- 已推送 3 个分支（均已删除）、合并 3 个 PR（#29、#30、#31）、推送 1 个 tag、创建 1 个 Release（后续用 `sync-changelog.mjs --publish` 更正过正文）、执行 1 次 Docker 构建、推送 1 次 wiki 同步（`9a1ebd1..3fae1fa`）。
 - 无部署、无生产库写入。
 - 私有商业驱动 `ee/` 全目录未被 Git 跟踪；本轮在其中修正了一处测试文件路径，该修改**留在本地，不会进入提交**。
 - 已清除本分支历史中一处对 `ee/` 内部文件名的引用（rebase 改写 + 逐提交扫描验证），仓库为 PUBLIC。
