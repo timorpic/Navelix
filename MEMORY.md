@@ -130,6 +130,29 @@ README 面向使用者与入口；`docs/` 面向开发与维护；仓库 `wiki/`
 确认依据及证据
 根目录 [AGENTS.md](AGENTS.md)；[README.md](README.md) 文档中心章节。
 
+#### DEC-004 接力现场保留在版本控制，助手只补充机读校验（2026-10-20 确认）
+
+背景
+对照上游 `agent-handoff` 模板检查接力能力时，模板默认把 `.handoff/` 当作忽略的运行文件，
+而本仓库自接入起就把 `MEMORY.md` 与 `.handoff/` 纳入 Git，作为跨工具交接的真实记录。
+
+决定
+继续跟踪 `.handoff/`（含 `archive/` 与 `previous/` 备份），不引入模板的 gitignore 规则；
+新增本地助手 `scripts/handoff.mjs`，只做现场指纹、认领状态、备份轮换与证据哈希，
+不改模板的目录结构、AI 技能或多 Agent 约定，也不替换 Hindsight/OpenMemory 流程。
+
+原因
+跟踪现场让交接证据随 PR 评审并可回滚；忽略后新克隆拿不到历史检查点。
+模板的锁文件式假设与“open 认领”只适用于未跟踪场景，直接照搬会与现有记录冲突。
+
+影响
+重复内容（IDENTITY、skills、多 Agent 章节）不导入；`docs/INITIALIZATION.md` 保留并扩展文件职责。
+助手写入的备份同属版本控制，评审时与代码一并提交。
+
+确认依据及证据
+[docs/HANDOFF-HELPER.md](docs/HANDOFF-HELPER.md)、[scripts/handoff.mjs](scripts/handoff.mjs)、
+[src/lib/__tests__/handoff-helper.test.ts](src/lib/__tests__/handoff-helper.test.ts)。
+
 ---
 
 ## 5. 设计规范

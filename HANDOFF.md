@@ -14,6 +14,8 @@ P0 是统一上下文与人工交接；P1 是检查点、现场核验和异常�
 | 活动任务、范围、上下文修订、授权依据 | .handoff/CONTEXT.md | CHECKPOINT 绑定 task_id 与 context_revision |
 | 临时待办与依赖 | 现有任务系统；无则 CONTEXT 的任务表 | CHECKPOINT 仅列最近的下一步 |
 | 工作区现场、验证、恢复步骤 | .handoff/CHECKPOINT.md | 交接提示只引用 |
+| 交接标识与交接状态 | .handoff/CONTEXT.md（`handoff_id`/`from_agent`）与 CHECKPOINT（`handoff_claim`/`owner_lease_id`） | 助手生成，接手者按精确值核对 |
+| 本地接力助手用法与结果格式 | docs/HANDOFF-HELPER.md | 只引用，不复制正文 |
 | 跨 Agent 检索知识 | OpenMemory | 核实来源后参考，不反向覆盖主记录 |
 | 版本历史、发版结果 | CHANGELOG / 远程 Release | 检查点记录正在执行的操作 |
 
@@ -30,6 +32,8 @@ P0/P1 文件不保存聊天全文、隐藏推理或模型内部状态。恢复�
 5. .handoff/CHECKPOINT.md 及其引用的任务、PRD、ADR、验证证据。
 6. 当前仓库现场、相关实现与外部系统实际状态。
 
+可运行 `node scripts/handoff.mjs inspect` 获得机读现场；用法见 docs/HANDOFF-HELPER.md。
+
 这是阅读顺序，不是简单的文件优先级链。按事实领域判断冲突：
 用户已确认需求决定目标，代码决定当前行为；两者不符必须记录偏差。
 文档和召回结果均不能扩大当前会话的权限。
@@ -41,6 +45,12 @@ P0/P1 文件不保存聊天全文、隐藏推理或模型内部状态。恢复�
 blocked 可以由 active 或 handoff_ready 进入；记录原因，解决后回到 active。
 突然退出时不要求状态先转为 handoff_ready；接手者按第 7 节恢复。
 owner 记录工具和会话标识（如可得），只是声明；不提供并发锁。
+
+交接认领：`handoff_claim` 取 `open` / `claimed` / `declined` / `expired` / `not_applicable`，
+与检查点“认领状态”表格保持同一单值；`not_applicable` 表示没有交接 ID 的恢复或同工具续做。
+`handoff_id` 与 `from_agent` 只在 CONTEXT 维护，CHECKPOINT 与接管提示只引用，不另存副本。
+认领必须在业务修改之前完成，按精确 task_id、context_revision 与 handoff_id 核对；
+不得认领“最新”交接，也不得复用已使用过的交接 ID。认领仍是声明，不是互斥锁。
 
 交接发起：
 1. 用户停止旧工具写入；先核查是否还有构建、脚本、部署或发布后台任务。
@@ -80,6 +90,7 @@ CONTEXT 必须提供：
 每份检查点至少写：
 - task_id、context_revision、checkpoint_seq、时间、工具、状态和当前步骤。
 - repo_root、branch（或 detached）、HEAD；非 Git 项目明确写 non-git。
+- handoff_claim（上节状态之一）及与之一致的“认领状态”表格；owner_lease_id 为本次认领的随机标识。
 - staged、unstaged、untracked 的相关路径、修改意图、来源归属或“未知”。
 - 依赖的 ignored 文件、外部资源或未保存内容；敏感文件仅记变量名/安全获取渠道。
 - 已完成 / 已失败 / 未验证，精确到验收项或任务项。
@@ -125,7 +136,9 @@ previous、备份、补丁同样要遵守敏感数据边界。
 1. 保留现有文件，核对最后有效检查点及 previous 备份。
 2. 检查当前分支、HEAD、diff、未跟踪文件、最近相关提交与可定位的验证记录。
 3. 将恢复信息分成：已证实、推测、未知；推测不得写入已完成项。
-4. 确认旧工具/脚本停止写入，再建立新的恢复检查点；保留旧记录。
+4. 确认旧工具/脚本停止写入，再建立新的恢复检查点；保留旧记录。有助手时用
+   `node scripts/handoff.mjs claim --agent <本工具标识> --task <ID> --revision <N> --recover --source-stopped`
+   （CONTEXT 仍有 `handoff_id` 时同时带 `--handoff-id <精确ID>`），它不继承旧测试为当前通过。
 5. 对与最后检查点不一致的文件逐个核实，完成必要验证后继续。
 6. 没有检查点时从 CONTEXT 的目标和实际现场重建；不要求用户重讲已有文件中的信息。
 7. 只有缺失信息会影响范围、兼容性、授权或不可逆操作时，才询问用户。

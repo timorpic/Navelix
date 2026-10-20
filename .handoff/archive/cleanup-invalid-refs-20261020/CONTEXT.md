@@ -2,24 +2,47 @@
 
 - schema_version: 1
 - project_id: Navelix
-- task_id: remove-home-greeting-20261020
-- context_revision: 2
-- updated_at: 2026-10-20T09:13:50+08:00
-- release_version: 2.10.24
+- task_id: cleanup-invalid-refs-20261020
+- context_revision: 3
+- updated_at: 2026-10-20T17:05:00+08:00
+- release_version: 2.10.25
 - status: completed
 
 ## 用户目标与授权
 
-用户于 2026-10-20 根据截图要求移除红框内文案：删除首页欢迎卡片的挥手图标、时段问候语及用户名，保留日期、当前状态、搜索框和 AI 助手入口。用户随后要求启动预览，已授权使用独立演示数据提供本地预览；用户最新要求「发release吧」，已授权按既有流程提交、推送、PR 合并、Tag/Release 与自动镜像发布；不涉及直接生产操作。
+用户要求「无效引用、代码、注释清理」。经确认范围为**全仓库代码 + 文档**（`src/`、`e2e/`、`scripts/`、`extension/`、`public/`、`messages/`、`docs/`、`wiki/`、根目录 Markdown、配置、CI 与 Dockerfile），归档目录 `.handoff/previous`、`.handoff/archive` 不动；交付方式为**分批提交到分支**，每批过 typecheck / lint / test。
 
-## 验收与约束
+授权演进（按时间顺序）：本地分支提交 → 推送并开 PR → 合并、清理分支、发 release。所有对外操作均已获用户明确授权后执行。
 
-对应内容不再渲染，清理仅用于问候语的依赖与计算。沿用 DESIGN.md 和现有组件布局。测试遵循用户 Computer Use 要求；工具不可用时如实记录限制。
+## 范围与判定标准
+
+只清理「确定无读取方 / 确定不可达 / 与实现明确不符」的内容。以下一律保留，不作为清理对象：
+
+- `ee/` 私有商业驱动（gitignored 的 bytenode 字节码），仅作为运行时可达性证据来源；
+- 防御性配置（`.dockerignore` 的 `.pnpm-store-tmp`、`.workbuddy`、`.gemini`）；
+- 模块内自用的 `export`（如 `validateUrl`、`matchesFilter`）、公共类型与对外契约；
+- CHANGELOG 历史条目（记录过去版本的事实，不复写）；
+- 已被删除但仍有历史意义的归档文档。
+
+先例：下线 UI 开关时从 `buildWidgetToggles` / `defaultConfig` 移除，但保留 DB 列与 `SystemConfig` 的 `@deprecated` 字段（依据 commit `b65b7ad` 移除 `todayActivity` 的做法）。
 
 ## 入口与现场
 
-实现：src/components/hero-banner.tsx；说明：DESIGN.md、CHANGELOG.md 的 [2.10.24]。现场见 CHECKPOINT.md。上一任务上下文及检查点已归档至 archive/assistant-header-row-20261019/。
+任务已完成并发布 v2.10.25，发布提交（记录基线）为 `334bbbe`。读取时的 HEAD 与工作区以 `git rev-parse HEAD`、`git status --short --branch` 实测为准，不要直接用基线值。
 
-## 发布结果
+实现、验证与发布证据见 CHECKPOINT.md。
 
-v2.10.24 已通过 PR #27 合并、推送 Tag 并发布正式 Release；main CI 与镜像流水线成功，两个 registry 六个稳定标签回读均与被测镜像一致。预览已关闭。验证证据及本地未提交接力记录边界见 CHECKPOINT.md。
+验证命令：`pnpm typecheck`、`pnpm lint`、`pnpm test`（必须走 `pnpm test`，裸 `node --test` 会因共享临时库报 `database is locked`）。
+
+## 三项产品决策（已由用户决定并实施）
+
+1. 「我的信息」弹窗不可达 → **整个删除**，连带 `AccountSocialLinks`；社交配置字段保留，后台仍可编辑（`69b5815`）。
+2. `recentVisitsEnabled` 开关空转 → **修复**，遵循其它工作区组件的「缺省即开启」约定（`6dff774`），并补 e2e 覆盖。
+3. `notifications:new` 无发送方 → **整条删除**（事件类型 + SSE 分支 + Provider 转接 + 两处派发），通知行为不变（`e8e8469`）。
+
+三项均已在 v2.10.25 交付。
+
+## 遗留
+
+- `e2e/sun-panel-migration.spec.ts` 直接改写仓库内受版本控制的截图，本地跑会污染工作区，建议后续单独处理。
+- `wiki/` 本次改动 7 个文件；线上此前停在 `9a1ebd1`（2026-10-13），已于本次同步（`3fae1fa`，8 个文件），现线上与仓库 `wiki/` 一致。

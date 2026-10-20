@@ -99,6 +99,7 @@ Navelix 兼容 Sun-Panel 导出的 JSON 配置（含 v1.8.x `icons` 及多种导
 | [详细工作规则](docs/AGENT-RULES.md) | 开发、验证、安全、图标、Release 与跨 Agent 协作规则正文 |
 | [长期知识](MEMORY.md) | 项目身份、已确认决策、已知问题与经验 |
 | [人工接力协议](HANDOFF.md) · [接力提示词](PROMPTS.md) | 工具间人工交接、接管与异常恢复 |
+| [接力助手](docs/HANDOFF-HELPER.md) | 本地 `scripts/handoff.mjs` 的用法、结果格式与保存边界 |
 | [当前任务](.handoff/CONTEXT.md) · [执行现场](.handoff/CHECKPOINT.md) | 活动任务目标、验收与最近一次真实验证现场 |
 | [技术栈与架构](docs/ARCHITECTURE.md) | Next.js 16、React 19、Tailwind CSS 4、TypeScript 与 Node SQLite；目录和数据流 |
 | [产品规格](docs/PROJECT-SPEC.md) | 项目定位、目标用户与功能边界 |

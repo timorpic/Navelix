@@ -739,6 +739,11 @@ Release 和 Git Tag 统一使用 vx.MM.xx 三段格式，
 - 测试结论绑定实际被测代码与环境；没有证据的“通过”不继承。
 - 每个工作区同一时间只有一位写入者。接管前由用户停止旧工具写入。
 - 检查点中的 owner/status 是人工协作声明，不是互斥锁。
+- 交接字段：`handoff_id`/`from_agent` 只在 CONTEXT 维护；CHECKPOINT 的 `handoff_claim`
+  取 `open|claimed|declined|expired|not_applicable`，与“认领状态”表格一致。
+- 认领先于业务修改，按精确任务、修订与交接 ID 核对；不认领“最新”，不复用旧 ID。
+- 本地助手（scripts/handoff.mjs）只读写接力记录和固定 Git 只读查询；
+  操作步骤与结果格式见 [HANDOFF-HELPER](HANDOFF-HELPER.md)，不在此复制。
 - 不把密钥、完整环境变量、隐私数据、原始敏感日志或隐藏推理写进接力文件。
 
 ### 19.4 项目初始化与隔离

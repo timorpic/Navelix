@@ -1,0 +1,29 @@
+# 接力助手接入验证证据（2026-10-20）
+
+工作区：/root/Navelix；分支：feat/handoff-helper（基于 main 14bb61288c64c5bc84b93861929f8699f3d8c2c7）；提交前现场
+Node：v24.21.0；pnpm：11.16.0；任务修订：2
+
+## pnpm typecheck
+$ tsc --noEmit --noUnusedLocals --noUnusedParameters
+exit=0（无诊断）
+
+## pnpm lint
+$ eslint
+exit=0（无告警）
+
+## pnpm test
+$ node scripts/run-isolated.mjs test
+tests 664 / pass 664 / fail 0 / skipped 0
+其中 src/lib/__tests__/handoff-helper.test.ts：20 tests / pass 20 / fail 0
+
+## pnpm test:coverage
+exit=0；all files 84.95% lines / 82.75% branches / 78.86% functions（门禁 60/55）
+
+## pnpm build
+exit=0（Next.js 生产构建完成）
+
+## 助手命令冒烟
+$ node scripts/handoff.mjs inspect        → exit 0，输出任务/现场/认领状态
+$ node scripts/handoff.mjs prompt         → exit 0，只输出核对用标识
+$ node scripts/handoff.mjs bogus          → exit 2（参数错误）
+$ node scripts/handoff.mjs claim --recover --source-stopped → exit 1（缺 --agent，未写入）
