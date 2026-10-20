@@ -116,12 +116,12 @@ export function startBackgroundDaemon(): void {
   }, 90_000);
   globalThis.__navelix_daemon_timers__.push(autoBackupInit);
 
-  // 6. 磁盘占用检查（每 6 小时）
+  // 5. 磁盘占用检查（每 6 小时）
   globalThis.__navelix_daemon_timers__.push(
     scheduleTask(() => checkDiskUsage(), 6 * 60 * 60 * 1000),
   );
 
-  // 7. SQLite WAL 文件膨胀检查（每 1 小时）
+  // 6. SQLite WAL 文件膨胀检查（每 1 小时）
   globalThis.__navelix_daemon_timers__.push(
     scheduleTask(() => checkWalSize(), 60 * 60 * 1000),
   );
