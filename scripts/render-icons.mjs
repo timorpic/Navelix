@@ -7,6 +7,9 @@
  *   2. 各系统常见安装路径（Windows Edge/Chrome、macOS Chrome/Edge、Linux chromium/google-chrome）
  *   3. PATH 中的 chromium / google-chrome / microsoft-edge
  *
+ * 注意：src/app/icon.svg 是 Next.js App Router 的约定图标（由框架直接映射为 /icon.svg），
+ * 它不在本脚本的写入范围内；改动 SVG 时需同步该文件，否则 /icon.svg 会与其余图标不一致。
+ *
  * 用法：node scripts/render-icons.mjs
  */
 import fs from "node:fs";

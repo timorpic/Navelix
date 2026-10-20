@@ -73,7 +73,7 @@ CI 配置见 `.github/workflows/ci.yml`，镜像发布与冒烟测试见 `.githu
 node scripts/render-icons.mjs
 ```
 
-脚本需要本机装有 Chrome / Edge / Chromium；默认按系统常见路径与 `PATH` 自动探测，装在别处时用 `NAVELIX_BROWSER_PATH` 指定可执行文件。修改图标先改脚本内的 `SVG_CONTENT`，再重新运行，避免 SVG 与 PNG 不同步。
+脚本需要本机装有 Chrome / Edge / Chromium；默认按系统常见路径与 `PATH` 自动探测，装在别处时用 `NAVELIX_BROWSER_PATH` 指定可执行文件。修改图标先改脚本内的 `SVG_CONTENT`，再重新运行，避免 SVG 与 PNG 不同步。`src/app/icon.svg` 是 Next.js 的约定图标（框架直接映射为 `/icon.svg`），不在脚本写入范围内，改动时需手工同步。
 
 ## README Logo 动画资源
 
