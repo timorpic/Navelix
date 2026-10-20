@@ -22,8 +22,9 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: 1,
   // CI 下同时输出 github 注解与 HTML 报告；后者供失败时 upload-artifact 收集。
+  // 数组形式要求每一项都是 [name, arg] 元组，不能混入裸字符串。
   reporter: (process.env.CI
-    ? ["github", ["html", { open: "never" }]]
+    ? [["github"], ["html", { open: "never" }]]
     : "list") as ReporterDescription[] | "list",
   timeout: 90_000,
 
