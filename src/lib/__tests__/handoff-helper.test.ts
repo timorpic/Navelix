@@ -509,3 +509,45 @@ test("检查点缺少 project_id 或 task_id 时正常认领被拒，恢复仍�
   assert.equal(claim(root, ["--recover"]).code, 1, "project_id 不符时恢复也必须拒绝");
   assert.equal(await readFile(file, "utf8"), mismatched);
 });
+
+test("认领交接时不解除旧写入者发起的外部操作", async t => {
+  const root = await fixture(t);
+  assert.equal(claim(root).code, 0);
+  const input = await resultFile(root, {
+    external_effects: [{ operation: "deploy", status: "in_progress", recovery: "核对部署 ID 与目标版本" }],
+  });
+  assert.equal(cli(root, "save", "--agent", "receiver-1", "--input", input, "--handoff-id", "relay-002").code, 0);
+  const incoming = cli(
+    root, "claim", "--agent", "receiver-2", "--task", "task-001", "--revision", "1", "--handoff-id", "relay-002", "--source-stopped",
+  );
+  assert.equal(incoming.code, 0, incoming.stderr);
+  const checkpoint = await readFile(path.join(root, checkpoints), "utf8");
+  assert.match(checkpoint, /\| deploy \| in_progress \|/, "认领不得清空未决台账");
+  assert.match(checkpoint, /核对部署 ID 与目标版本/, "恢复办法应随台账保留");
+  await writeFile(path.join(root, ".handoff/log.tmp.md"), "reported exit 0\n");
+  await resultFile(root, {
+    remaining: [],
+    unverified: [],
+    next: [],
+    accepted: true,
+    verifications: [{ acceptance: "AC-01", command: "test command", result: "passed", evidence: ".handoff/log.tmp.md" }],
+    external_effects: [],
+  });
+  assert.equal(
+    cli(root, "save", "--agent", "receiver-2", "--input", input, "--complete").code,
+    1,
+    "接手者不得绕过旧写入者的未决外部操作直接宣告完成",
+  );
+});
+
+test("外部操作名前后空白被规范化，不会导致永久拒绝", async t => {
+  const root = await fixture(t);
+  assert.equal(claim(root).code, 0);
+  const input = await resultFile(root, {
+    external_effects: [{ operation: "  deploy  ", status: "in_progress", recovery: "核对部署状态" }],
+  });
+  assert.equal(cli(root, "save", "--agent", "receiver-1", "--input", input).code, 0);
+  assert.match(await readFile(path.join(root, checkpoints), "utf8"), /\| deploy \| in_progress \|/);
+  const repeated = cli(root, "save", "--agent", "receiver-1", "--input", input);
+  assert.equal(repeated.code, 0, `重复同一操作应被接受：${repeated.stderr}`);
+});

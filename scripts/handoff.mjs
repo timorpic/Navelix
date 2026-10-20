@@ -637,8 +637,11 @@ async function resultInput(root, input, state) {
       EFFECT_STATES.has(item.status),
       "外部操作状态无效",
     );
-    assert(!known.has(item.operation.trim()), `外部操作重复：${item.operation.trim()}`);
-    known.add(item.operation.trim());
+    // 规范化只在这里做一次：持久化与比较都用同一个名字，
+    // 否则 `" deploy "` 会永远被当成「未重申」而无限拒绝保存。
+    item.operation = item.operation.trim();
+    assert(!known.has(item.operation), `外部操作重复：${item.operation}`);
+    known.add(item.operation);
   }
   // 上一次记录中未确认成功的外部操作不能靠本次省略来消失：部署、迁移或发布一旦发起，
   // 后续结果必须显式重申其真实状态，否则台账会出现「看起来从没发生过」的空档。
@@ -705,7 +708,11 @@ async function mutate(options, data) {
       blockers: [],
       next: ["读取完整上一版检查点与正式需求，核对业务进度和外部状态后继续已有授权工作"],
       verifications: [],
-      external_effects: [],
+      // 认领不解除旧写入者发起的外部操作：部署、迁移或发布可能仍在进行。
+      // 未确认成功的条目原样带入新检查点，接手者必须显式核实后才能宣告完成。
+      external_effects: (data.state?.external_effects || [])
+        .filter(item => item.status !== "succeeded")
+        .map(item => ({ ...item, recovery: item.recovery || "核对旧检查点记录的实际状态与恢复办法" })),
       environment: "尚未核对业务运行环境",
     };
   } else {
@@ -754,8 +761,12 @@ async function mutate(options, data) {
     handoff_history: [...new Set(history)],
     snapshot: data.current,
     verifications: result.verifications.map(item => ({ evidence: item.evidence, evidence_hash: item.evidence_hash })),
-    // 台账随状态持久化，供下一次保存核对未决操作是否被遗漏。
-    external_effects: result.external_effects.map(item => ({ operation: item.operation, status: item.status })),
+    // 台账随状态持久化，供下一次保存核对未决操作是否被遗漏，也供接管时原样带入。
+    external_effects: result.external_effects.map(item => ({
+      operation: item.operation,
+      status: item.status,
+      recovery: item.recovery,
+    })),
   };
   const checkpoint = render(data, { owner, lease, claim, status, result, state, backup: checkpointBackup, now, claimedAt });
   await persist(data, checkpoint, context, token, checkpointBackup);
