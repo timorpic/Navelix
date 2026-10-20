@@ -13,12 +13,12 @@
 ## 现场与交付范围
 
 - repo_root: /root/Navelix
-- branch: main
-- HEAD: e81d44d2b2cf108ffca0307e1c7f10cd613b4ca5（v2.10.24 Tag 对应提交，与 origin/main 一致）。
+- branch: main（记录提交在 `docs/v2.10.24-acceptance`，经 PR #28 合入）。
+- 发布基线：e81d44d2b2cf108ffca0307e1c7f10cd613b4ca5（v2.10.24 Tag 对应提交，与 origin/main 一致）。这是本检查点捕获时的现场，不是记录提交本身。
 - 首页移除挥手图标、时段问候语、用户名及专用读取计算；保留日期、状态、搜索及 AI 入口。根据自动审查保留 sr-only「工作空间」h1，无新增可见文案。
 - DESIGN、CHANGELOG 和四处版本位置已同步，随 PR #27 合并。无 Schema 或部署方式变化。
 - 预览已关闭：原 exec session 86834 exit 130，3723 端口不再监听；演示目录独立，未访问真实业务库。
-- 本地仅接力记录及 previous 备份有未提交更新；应用实现、版本、设计说明、更新日志及上一任务归档已提交并发布。实际文件状态以 git status 为准。
+- 应用实现、版本、设计说明、更新日志及上一任务归档已提交并发布。捕获时本地仅接力记录及 previous 备份尚未提交；这些记录随后作为独立提交并入 main，记录提交后的实际 HEAD 与工作区状态以 git 为准。
 
 ## 验证证据
 
