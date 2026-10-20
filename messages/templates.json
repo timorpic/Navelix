@@ -148,22 +148,6 @@
     "key": "message_e9d637c0cb75"
   },
   {
-    "source": "• {v0} 正在推进中",
-    "key": "message_b33d973d7a46"
-  },
-  {
-    "source": "• 已记录 {v0} 个重点项目",
-    "key": "message_277bd0cc5aa8"
-  },
-  {
-    "source": "• 今天还有 {v0} 项待处理待办",
-    "key": "message_07a3e6a37326"
-  },
-  {
-    "source": "• 其中 {v0} 项为高优先级任务",
-    "key": "message_dc2822a82122"
-  },
-  {
     "source": "标记 \"{v0}\" 完成状态",
     "key": "message_e72e425e69ab"
   },
