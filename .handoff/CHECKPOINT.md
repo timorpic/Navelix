@@ -4,16 +4,16 @@
 - project_id: Navelix
 - task_id: category-input-contrast-20261021
 - context_revision: 4
-- checkpoint_seq: 6
+- checkpoint_seq: 7
 - updated_at: 2026-10-21T02:15:51.501620+00:00
 - owner: codex-category-contrast
 - owner_lease_id: 28dac634-a91a-4fd2-b24c-7348f5809026
-- status: active
+- status: completed
 - handoff_claim: not_applicable
 
 ## 现场
 - repo_root: /root/Navelix
-- branch: feat/handoff-helper
+- branch: main
 - 业务提交 HEAD: cde811785e0b94fa9c36c1b3130ff82311756cdb
 - 当前步骤：代码已提交并推送，保存本轮验收和交接记录后提交推送记录。
 - 当前唯一写入者 Codex；认领状态 not_applicable。
@@ -34,3 +34,10 @@ OpenMemory unavailable：无 recall 工具；本地资料已核对。
 
 ## 合并前修复现场
 用户已授权合并 PR #33。最新原检查 300d755 的 Lint/Test/Build 与 Playwright E2E 均成功；五条已有修复的讨论已核对并解决。补齐缺少 context_revision 及损坏元数据集合的检查，新增两个回归测试（含六组损坏集合场景），待提交后由 CI 验证。其余两条讨论将在验证通过后解决。未绕过保护、未改变审查配置。
+
+## 合并结果（本地更新，未另行提交）
+- 修复提交 03d96e2 的两项必需 CI 均成功（run 39533112119），七条审查讨论全部已解决。
+- PR #33 合并成功，合并提交 c73f08e518085cfe5d1c8600a40646b132dad231；GitHub 返回 merged=true。
+- 本地 main 已快进至合并提交，已核对包含 03d96e2；远程工作分支由 GitHub 删除，fetch --prune 后删除本地 feat/handoff-helper。
+- 无发版或部署，无审查配置变更。此前“待 CI、待合并”记录已被本段结果取代。
+- 剩余：仅本地检查点及其 previous 备份更新未提交；不再自动创建文档 PR。
