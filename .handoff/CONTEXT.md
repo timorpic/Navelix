@@ -5,7 +5,7 @@
 - task_id: category-input-contrast-20261021
 - context_revision: 4
 - updated_at: 2026-10-21T02:09:01.945533+00:00
-- status: active
+- status: completed
 - from_agent: Codex
 
 ## 用户目标与授权
