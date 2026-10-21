@@ -3,40 +3,31 @@
 - schema_version: 1
 - project_id: Navelix
 - task_id: category-input-contrast-20261021
-- context_revision: 2
-- checkpoint_seq: 4
-- updated_at: 2026-10-21T02:09:01.945533+00:00
+- context_revision: 3
+- checkpoint_seq: 5
+- updated_at: 2026-10-21T02:15:51.501620+00:00
 - owner: codex-category-contrast
 - owner_lease_id: 28dac634-a91a-4fd2-b24c-7348f5809026
-- status: active
+- status: completed
 - handoff_claim: not_applicable
 
-## 现场与认领
-根目录 /root/Navelix；分支 feat/handoff-helper；HEAD f9a6b24952b360e968e7850428e67105d24ee258；初始工作区干净。
-进程检查未发现 Claude 或项目开发服务写入进程；未启动其他 Agent。认领状态：not_applicable；当前唯一写入者 Codex。
-OpenMemory unavailable：当前无 recall 工具，以本地文档与源码为依据。
-
-## 当前步骤
-实现完成：分类名称输入框及甘特图项目筛选、AI 拆解任务负责人、后台链接列表每页条数选择框均使用 dark:text-white；保留各自浅色文字样式。CHANGELOG [未发布] 已记录。
-
-## 验证与外部操作
-Computer Use 工具不可用，界面实测待验证；未运行测试。本任务无外部操作；上一任务未决事项保留于归档原检查点。
+## 现场
+- repo_root: /root/Navelix
+- branch: feat/handoff-helper
+- 业务提交 HEAD: cde811785e0b94fa9c36c1b3130ff82311756cdb
+- 当前步骤：代码已提交并推送，保存本轮验收和交接记录后提交推送记录。
+- 当前唯一写入者 Codex；认领状态 not_applicable。
 
 ## 本轮结果摘要
-- 已完成：局部文字颜色修复与更新日志；旧任务上下文及现场完整归档。
-- 验证：git diff --check 通过；人工源码核对深色 class 与 globals.css 主题选择器一致。
-- 未验证：按用户要求测试使用 Computer Use，但当前无此工具，未作浏览器实测；未运行自动化测试、构建、类型检查与 lint（四处纯样式 class 修改）。
-- 状态：实现完成，界面验收受阻；未宣称全部通过。
-- 下一步：Computer Use 可用时检查深浅主题下分类名称及三处选择框文字的可读性。
-- 修改现场：src/components/add-category-modal.tsx、src/components/project-gantt-view.tsx、src/components/ai-breakdown-card.tsx、src/app/(app)/admin/components/admin-links-table-card.tsx、CHANGELOG.md、.handoff/CONTEXT.md、CHECKPOINT.md 及其备份/归档，均为本轮修改，未提交。
-- 长期事实无变化，不更新 MEMORY 或共享记忆。
+- 已完成：分类名称、甘特图项目筛选、AI 拆解任务负责人、后台每页条数控件的深色文字改为白色，浅色样式保留；更新 CHANGELOG [未发布]。
+- 验收：用户预览后明确确认「没问题，提交推送吧」。
+- 静态检查：pnpm precommit 通过（typecheck + lint），Git 提交 Hook 再次通过；git diff --check 通过。
+- 未执行：Computer Use 工具不可用，未做工具界面验收；未运行单元测试、E2E、完整构建，本次仅四处颜色 class 变化。
+- 外部操作：修复提交 cde8117 已推送 origin/feat/handoff-helper；git ls-remote 回读远程 SHA 与本地一致。
+- 后续：交接记录同步到同一分支；合并、发版、部署未授权，未执行。
 
-## 修订 2 验证补充
-- 三处选择框仅替换 dark:text-slate-300 为 dark:text-white；浅色文字、背景、事件处理保持原样。
-- git diff --check 通过；React Best Practices 人工核对：未增加状态、Hook、依赖或改变数据流。
-- Computer Use unavailable，未执行界面实测；本轮未提交、推送或部署。
-
-## 预览现场
-用户要求预览，已启动 pnpm dev（端口 3721，执行会话 49898）。使用 /tmp 下新建独立 NAVELIX_DATA_DIR，未使用真实业务库；预览管理员凭据仅供当前临时实例，不写入仓库。APP_SECRET 与 NAVELIX_LICENSE_KEY 为空覆盖。
-启动日志确认 Ready in 644ms；浏览器打开 http://localhost:3721 的请求已排队（queued），不能据此认定页面或交互验证通过。
-服务保持运行供用户查看；Computer Use 仍不可用，未进行界面操作验收。
+## 保存与恢复
+原任务完整归档：archive/handoff-helper-adoption-20261020-before-category-fix-20261021/。不修改其未决事项或继承旧授权。
+预览 pnpm dev 保持运行（端口 3721，执行会话 49898），使用 /tmp 独立数据目录；临时凭据未写入仓库，未访问真实业务库。
+修改/归档的 .handoff 文件均为本轮现场记录；长期事实未变，不更新 MEMORY。
+OpenMemory unavailable：无 recall 工具；本地资料已核对。

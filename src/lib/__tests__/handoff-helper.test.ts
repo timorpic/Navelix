@@ -551,3 +551,44 @@ test("外部操作名前后空白被规范化，不会导致永久拒绝", async
   const repeated = cli(root, "save", "--agent", "receiver-1", "--input", input);
   assert.equal(repeated.code, 0, `重复同一操作应被接受：${repeated.stderr}`);
 });
+
+test("检查点缺少上下文修订时必须显式恢复", async t => {
+  const root = await fixture(t);
+  const file = path.join(root, checkpoints);
+  const stripped = (await readFile(file, "utf8")).replace(/^- context_revision:.*\n/m, "");
+  await writeFile(file, stripped);
+  const inspected = cli(root, "inspect", "--json");
+  assert.equal(inspected.code, 1);
+  assert.match(JSON.parse(inspected.stdout).errors.join(" "), /context_revision/);
+  assert.equal(claim(root).code, 1);
+  assert.equal(await readFile(file, "utf8"), stripped);
+  const recovered = claim(root, ["--recover"]);
+  assert.equal(recovered.code, 0, recovered.stderr);
+  assert.match(await readFile(file, "utf8"), /- context_revision: 1/);
+  assert.equal(await readFile(path.join(root, ".handoff/CHECKPOINT.md.previous"), "utf8"), stripped);
+});
+
+test("损坏的助手元数据集合可被检查并显式恢复", async t => {
+  for (const field of ["verifications", "external_effects", "handoff_history"]) {
+    for (const invalid of [{}, [null]]) {
+      const root = await fixture(t);
+      assert.equal(claim(root).code, 0);
+      const file = path.join(root, checkpoints);
+      const before = await readFile(file, "utf8");
+      const corrupt = before.replace(/<!-- handoff-helper-state\n([\s\S]*?)\n-->/, (_match, json: string) => {
+        const state = JSON.parse(json);
+        state[field] = invalid;
+        return `<!-- handoff-helper-state\n${JSON.stringify(state)}\n-->`;
+      });
+      await writeFile(file, corrupt);
+      const inspected = cli(root, "inspect", "--json");
+      assert.equal(inspected.code, 1);
+      assert.match(JSON.parse(inspected.stdout).errors.join(" "), /助手现场数据结构无效/);
+      assert.equal(claim(root).code, 1);
+      assert.equal(await readFile(file, "utf8"), corrupt);
+      const recovered = claim(root, ["--recover"]);
+      assert.equal(recovered.code, 0, recovered.stderr);
+      assert.equal(await readFile(path.join(root, ".handoff/CHECKPOINT.md.previous"), "utf8"), corrupt);
+    }
+  }
+});

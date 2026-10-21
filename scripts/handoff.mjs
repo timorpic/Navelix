@@ -145,7 +145,13 @@ function metadata(text) {
       typeof value.snapshot.files === "object" &&
       !Array.isArray(value.snapshot.files) &&
       typeof value.snapshot.fingerprint === "string" &&
-      Array.isArray(value.handoff_history),
+      Array.isArray(value.handoff_history) &&
+      value.handoff_history.every(item => typeof item === "string") &&
+      [value.verifications, value.external_effects].every(items =>
+        items === undefined || (Array.isArray(items) && items.every(item =>
+          item !== null && typeof item === "object" && !Array.isArray(item),
+        )),
+      ),
     "助手现场数据结构无效或版本不支持",
   );
   return value;
@@ -281,7 +287,9 @@ async function load(root) {
       issues.push(`检查点 ${name} 与 CONTEXT 不符`);
   }
   if (!/^[1-9]\d*$/.test(context.context_revision || "")) issues.push("CONTEXT 修订号无效");
-  if (
+  if (checkpointText && blank(checkpoint.context_revision))
+    issues.push("检查点身份字段缺失（context_revision）；需按恢复流程核对");
+  else if (
     checkpoint.context_revision &&
     !blank(checkpoint.context_revision) &&
     checkpoint.context_revision !== context.context_revision
