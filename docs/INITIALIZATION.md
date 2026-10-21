@@ -22,11 +22,15 @@
 ├── .handoff/
 │   ├── CONTEXT.md             # 活动任务目标与验收入口
 │   ├── CHECKPOINT.md          # 执行现场、验证与下一步
-│   └── previous/              # 最近一次改动前的文件备份（恢复用）
+│   ├── CONTEXT.md.previous    # 直接前一版上下文（恢复用）
+│   ├── CHECKPOINT.md.previous # 直接前一版检查点（恢复用）
+│   ├── previous/              # 历次完整备份（按任务与序号命名）
+│   └── archive/               # 已完成任务的上下文与检查点（历史证据）
 ├── adapters/
 │   └── ENTRY.md               # 其他工具可显式使用的统一入口
 └── docs/
     ├── INITIALIZATION.md      # 本文件：工作流文件职责与阅读维护路径
+    ├── HANDOFF-HELPER.md      # 本地接力助手用法、结果格式与边界
     └── AGENT-RULES.md         # 开发、验证、安全、图标、Release、记忆与接力详细规则
 ~~~
 
@@ -50,6 +54,8 @@
 | docs/DEVELOPMENT.md | 开发环境、验证及贡献流程 |
 | docs/DEPLOYMENT.md | 构建、部署、发布验证与回滚 |
 | HANDOFF.md | P0+P1 人工接力协议 |
+| docs/HANDOFF-HELPER.md | 本地接力助手用法、结果格式与保存边界 |
+| scripts/handoff.mjs | inspect/prompt/claim/save 本地助手；测试在 `src/lib/__tests__/handoff-helper.test.ts` |
 | .handoff/CONTEXT.md | 活动任务目标及正式文档入口 |
 | .handoff/CHECKPOINT.md | 执行现场、验证结果和最近下一步 |
 | PROMPTS.md | 初始化、交接、接管与恢复提示 |

@@ -17,6 +17,8 @@
 请按 HANDOFF.md 保存当前现场并更新 CHECKPOINT：
 当前步骤、已完成及未验证内容、暂存/未暂存/未跟踪文件、
 后台操作、外部副作用实际状态、验证证据与最近三步。
+先用 `node scripts/handoff.mjs save --agent <本工具标识> --input <结果JSON>` 生成检查点，
+正常交接时再加 `--handoff-id <新ID>`；结果格式见 docs/HANDOFF-HELPER.md。
 填写本轮结果摘要及阻塞解除条件，不因交接而把未完成任务标记完成。
 有长期事实变化时更新 MEMORY 并按规范同步 OpenMemory。
 不要为了交接重置、清理、自动暂存或提交工作区。
@@ -27,6 +29,9 @@
 我已停止原工具写入，请按 AGENTS.md 和 HANDOFF.md 接管当前任务。
 读取 MEMORY、.handoff/CONTEXT.md 和 CHECKPOINT.md，核对
 project_id、task_id、上下文修订、当前分支、HEAD、所有相关未提交与未跟踪文件。
+先运行 `node scripts/handoff.mjs inspect`；确认旧工具已停止后，用
+`node scripts/handoff.mjs claim --agent <本工具标识> --task <ID> --revision <N> --handoff-id <精确ID> --source-stopped` 认领，
+再开始业务修改。没有交接 ID 或现场损坏时改用 `--recover`，不要认领“最新”或复用旧 ID。
 按 docs/AGENT-RULES.md 第 17 节召回当前项目相关决策并核对本地依据；无匹配或离线时继续本地恢复。
 先核查未知外部操作结果，避免重复发布或迁移。
 简要说明接管位置、差异和未验证项，更新 owner 和检查点后继续已有授权范围内的工作。
@@ -38,6 +43,8 @@ project_id、task_id、上下文修订、当前分支、HEAD、所有相关未�
 原工具突然退出，可能没有最终交接记录；我已停止其后续写入。
 请按 HANDOFF.md 第 7 节，从最后有效检查点、previous 备份、
 当前文件、相关提交和可定位日志重建现场。
+用 `node scripts/handoff.mjs claim --agent <本工具标识> --task <ID> --revision <N> --recover --source-stopped` 建立恢复检查点，
+CONTEXT 仍有 `handoff_id` 时同时带 `--handoff-id <精确ID>`；旧记录完整保留，不继承旧的“全通过”结论。
 区分已证实、推测及未知，不把未知测试结果当作通过。
 保留用户修改；确认有外部副作用时先查实际状态再决定继续。
 建立恢复检查点后，从可核实的下一步继续。
@@ -45,7 +52,9 @@ project_id、task_id、上下文修订、当前分支、HEAD、所有相关未�
 ## 任务结束
 
 请按验收标准及 AGENTS.md 完成必要验证，最终检查点区分已完成、
-未验证和未完成。仅把长期有效的事实更新到 MEMORY 和共享记忆。
+未验证和未完成。可用 `node scripts/handoff.mjs save --agent <本工具标识> --input <结果JSON> --complete` 宣告完成，
+它要求 accepted、全部通过且有证据的验证记录、无未决外部操作。
+仅把长期有效的事实更新到 MEMORY 和共享记忆。
 填写本轮结果摘要，说明是否满足任务验收；不以会话结束代替任务完成。
 未实际发布成功不得记为已发版。保留活动文件，待新任务开始前再人工归档。
 

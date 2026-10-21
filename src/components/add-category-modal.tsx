@@ -81,7 +81,7 @@ export default function AddCategoryModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Finance"
-            className="h-10 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-[#00C776] focus:outline-none focus:ring-2 focus:ring-[#00C776]/20"
+            className="h-10 w-full rounded-lg border border-gray-200 px-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 transition-colors focus:border-[#00C776] focus:outline-none focus:ring-2 focus:ring-[#00C776]/20"
             autoFocus
           />
         </div>

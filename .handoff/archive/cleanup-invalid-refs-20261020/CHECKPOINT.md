@@ -2,43 +2,96 @@
 
 - schema_version: 1
 - project_id: Navelix
-- task_id: remove-home-greeting-20261020
-- context_revision: 2
-- checkpoint_seq: 5
-- updated_at: 2026-10-20T09:13:50+08:00
-- owner: Codex
+- task_id: cleanup-invalid-refs-20261020
+- context_revision: 3
+- checkpoint_seq: 3
+- updated_at: 2026-10-20T17:05:00+08:00
+- owner: Claude Code（会话 d8bf7d8a）
 - status: completed
-- current_step: v2.10.24 Release 与镜像发布验收完成
+- current_step: 已合并、已清理分支、已发布 v2.10.25 并通过 Docker 构建
 
-## 现场与交付范围
+## 现场
 
 - repo_root: /root/Navelix
-- branch: main（记录提交在 `docs/v2.10.24-acceptance`，经 PR #28 合入）。
-- 发布基线：e81d44d2b2cf108ffca0307e1c7f10cd613b4ca5（v2.10.24 Tag 对应提交，与 origin/main 一致）。这是本检查点捕获时的现场，不是记录提交本身。
-- 首页移除挥手图标、时段问候语、用户名及专用读取计算；保留日期、状态、搜索及 AI 入口。根据自动审查保留 sr-only「工作空间」h1，无新增可见文案。
-- DESIGN、CHANGELOG 和四处版本位置已同步，随 PR #27 合并。无 Schema 或部署方式变化。
-- 预览已关闭：原 exec session 86834 exit 130，3723 端口不再监听；演示目录独立，未访问真实业务库。
-- 应用实现、版本、设计说明、更新日志及上一任务归档已提交并发布。捕获时本地仅接力记录及 previous 备份尚未提交；这些记录随后作为独立提交并入 main，记录提交后的实际 HEAD 与工作区状态以 git 为准。
+- branch: `main`（本地分支；交接记录提交后领先 `origin/main`，待 PR 合并后追平）
+- HEAD: 以 `git rev-parse HEAD` 为准（本文件无法记录包含自身的提交）
+- base_commit: `334bbbe3957c2e21748b2cd2962fdf2a4b0cfa75`（v2.10.25 发布提交，即本交接记录提交的父提交；业务状态以它为基准）
+- tag: `v2.10.25`（指向 `334bbbe`，已推送）
+- 工作区状态：以 `git status --short --branch` 为准。记录基线时改动限于文档（`.handoff/CHECKPOINT.md`、`.handoff/CONTEXT.md`、`CHANGELOG.md`），业务代码干净
+- 分支清理：`chore/cleanup-invalid-refs-20261020` 与 `release/v2.10.25` 的远程分支均已删除（前者随 PR 合并，后者手工删除后 `git fetch --prune` 清除本地过时引用），本地分支已 `-d` 删除
+
+## 已完成的清理（按提交）
+
+| 提交 | 内容 |
+| --- | --- |
+| `d1ff28e` | 首页问候语残留的 6 个翻译键 |
+| `e718e2b` | 编号注释的断号与重复 |
+| `723d232` | sync-version 注释中的历史版本示例 |
+| `5a41ef3` | 60 个不可达翻译键与 4 条失效模板 |
+| `005e714` | 已断链的通知铃铛组件簇（5 个文件，含 `pending-reminders-widget`、`workspace-notifications`、`use-workspace-notifications`、`use-dismissible-popover`） |
+| `7e2ae22` | 与实现不符的首页与后台任务描述（docs + wiki） |
+| `2b7bd68` | 无读取方的配置字段（`showLinkLatency`、`sidebarRightDefaultState`）与死导出 `projectStatusOf`；死 prop `links` / `onSelectCategory`；Pro 卡片编号注释 |
+| `25d10fc` | 扩展 `navelix:open` 监听器与无用样式、`next.config.ts` 的 `images.remotePatterns`、CI 无用环境变量、e2e 截图落盘改为 `testInfo.attach`、`sync-version` 不可达分支改为显式报错、`render-icons.mjs` 跨平台化 |
+| `6861f85` | 说明 `src/app/icon.svg` 不在图标生成脚本范围内 |
+| `6db6179` | 注释中的 `middleware.ts` 更正为 `src/proxy.ts` |
+| `2363fb3` | 甘特图轴上不可达的 3 条日期模板（`周{v0}`、`{v0}月`、`{v0}年`） |
+| `69b5815` | 删除不可达的「我的信息」弹窗与 `AccountSocialLinks`（配置字段保留） |
+| `e8e8469` | 删除从未接通的 `notifications:new` 事件链 |
+| `6dff774` | 修复：「快捷访问」开关此前只写库不生效 |
+| `32b96a1` | 修复：安全引导指向 `/admin?tab=system` → `/admin?tab=access` |
+| `70c4e6d` | 上线评审记录标明为 2026-10-18 历史快照 |
+| `fda49e8` | 接力现场写入 `.handoff/` |
+| `de86c6f` / `5b09b81` / `ff466b1` / `47e85cd` | wiki（7 个文件）与 README 的陈旧描述、错误菜单路径、失配锚点、两处与源码矛盾的断言 |
+| `abaede5` | 修复：Playwright reporter 数组元素类型 |
+| `591178f` | 修复：快捷访问 e2e 用例自建前置数据 |
+| `2d9b19b` | CHANGELOG `[未发布]` 章节 |
+| `6a3974c` | 修复：改密按钮指向 `tab=account` 而非 `tab=profile` |
+
+累计：`messages/` 词典 1676 → 1577 键（净删 99 中文键，中英逐键对齐），模板 108 → 101 条。
 
 ## 验证证据
 
-- 本地 pnpm typecheck、pnpm lint、pnpm build、版本/CHANGELOG 校验、git diff --check 通过。构建使用项目一次性隔离目录。
-- PR 最终 CI run 39351240852 success：645 tests / 175 suites，行覆盖率 90.81%、函数 85.31%，31 项 E2E 通过。
-- main CI run 39351472583 success。
-- 镜像 run 39351510753 success：质量检查、候选构建、运行冒烟、历史 v20 库升级、生产镜像 UI、稳定标签提升及结果通知全部成功。
-- GHCR / Docker Hub 的 v2.10.24、2.10.24、latest 六个标签已独立回读，均与被测 candidate-39351510753-1 一致：sha256:05ddc79039d054f0b0ca1c595410ce246b42e1ad166075ff9b5b0bc20a774306。
-- Computer Use unavailable；未声称人工浏览器测试通过。用户已查看独立预览后授权发布，自动验证与人工证据分别记录。
-- OpenMemory unavailable，无新增共享条目；无需要新增到 MEMORY 的架构或长期约束。
+- 每个提交前均通过 `pnpm typecheck`、`pnpm lint`；`pre-commit` hook 亦重复执行两者，全部通过。
+- `pnpm test`（走 `scripts/run-isolated.mjs`）：**644 tests / 175 suites，fail 0**。本地因存在被 gitignore 的 `ee/`，两项 EE 依赖图测试实际执行，故 644 全通过；CI 无 `ee/` 时同样 644 tests，结果为 pass 642 / skipped 2 / fail 0（run `39384159106`、`39384780677`、`39385094028` 三次一致）。
+- `pnpm build` 生产构建通过（验证删除 `images.remotePatterns` 不影响 `link-card.tsx` 的 `unoptimized` 用法）。
+- `messages/` 校验：zh-CN 与 en 各 1577 键且逐键对齐；`source-index.json` 1363 条 0 悬空；`templates.json` 101 条 0 悬空。
+- **CI（GitHub Actions）**：PR #29 与 #30 的 `Lint, Test & Build` 与 `Playwright E2E (Core UI Flow)` 均 pass（E2E 32 用例）。
+- **Docker**：`docker.yml` run `39385185094` 全 6 阶段成功（quality 两 job、Build Candidate Image、Smoke Test Image、Promote verified digest、Notify release result）。
+
+## 发布结果
+
+- PR #29（清理改动，25 个提交）合并为 `5693aa4`。
+- PR #30（版本发布）合并为 `334bbbe`。
+- `v2.10.25` tag 已推送，GitHub Release 已创建：https://github.com/timorpic/Navelix/releases/tag/v2.10.25
+- Docker 镜像已构建、冒烟测试通过并提升至 stable tag。该工作流有两个触发器：`release: types: [published]`（`docker.yml:4-5`）与 `workflow_dispatch`（`docker.yml:6`）。手动触发会依次执行 `quality`、`build`、`smoke-test`，用于发版前验证镜像：`quality` 的 job 级 `if` 显式放行 `workflow_dispatch`（`docker.yml:14`），`build` 与 `smoke-test` 只靠 `needs` 串联；手动触发仍会推送 candidate 镜像、且跳过版本一致性闸门。`promote`（`docker.yml:287`，条件为 `github.event_name == 'release' && !github.event.release.prerelease`）与 `notify`（`docker.yml:355`，条件为 `always() && github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')`）只在 Release 触发时执行，手动触发不会推 stable tag、也不发通知。本次走的是 Release 触发路径（该工作流历史 45 次运行全部为 release 事件）。
+
+## 关键判定（避免后续重复劳动）
+
+- `周{v0}` / `{v0}月` / `{v0}年` 判定为不可达的依据：`src/lib/gantt.ts` 直接拼出 `col.label` / `col.subLabel` / `timelineLabel`，`project-gantt-view.tsx` 按原样渲染，**不经 `useText` 或 `translateText`**；`gantt.ts` 仅被 `use-gantt.ts` 消费。
+- `，截止 {v0}` 模板**保留**：经实际执行 `localizeText` 证实，被 `已创建待办「{v0}」{v1}（优先级：{v2}）。` 的 `translateValues: ["v1"]` 递归命中。
+- `showLinkLatency` / `sidebarRightDefaultState` 可安全删除的依据：无 DB 列、无迁移、不在 `validateConfigPatch` 白名单、EE 字节码零命中。
+- `render-icons.mjs` **不可删**：它是 `extension/icons/icon-{16,32,48,128}.png`、`public/favicon/*`、`public/pwa/*` 共 10 张 PNG 的唯一生成器。
+- 改密控件的实际位置：`admin-profile-tab.tsx:41` 的 `section === "account"` 分支，即 `/admin?tab=account`；`tab=profile` 只渲染 `AdminProfileBasicsCard`。
+- Playwright CI reporter 必须写成元组数组 `[["github"], ["html", {...}]]`；本地 `CI` 为空时永远走 `"list"` 分支，此 bug 只在 CI 暴露。
+- e2e 用例不得依赖种子数据：`sun-panel-migration.spec.ts:20` 会清空 admin 工作区，种子只在建号时播种一次。
+
+## 已知失败与阻塞
+
+- 无失败项，无阻塞项。
+
+## 遗留事项
+
+- `e2e/sun-panel-migration.spec.ts` 仍用 `card.screenshot({ path: "public/screenshots/..." })` 直接改写仓库内受版本控制的图片。本地跑该 e2e 会污染工作区（本次已两次 `git checkout` 还原）。不属于清理范围，建议后续单独处理。
+- `wiki/` 已同步到线上（提交 `3fae1fa`，8 个文件）。同步前线上最后提交为 `9a1ebd1`（2026-10-13），逐文件比对有 8 个文件与仓库不同：Architecture、DESIGN_SYSTEM、FAQ、Mobile、Quick-Start、REST-API、Security、User-Guide；其中本分支未改、但更早版本已领先的只有 `DESIGN_SYSTEM.md`（`Sun-Panel-Migration-从-Sun-Panel-迁移.md` 当时与线上字节一致）。同步后线上 12 个文件与仓库 `wiki/` 全部一致。
 
 ## 外部操作台账
 
-- 发布分支 codex/remove-home-greeting-2.10.24；最终分支提交 5e6f553ca00be359da94372fd4a43e1c519fdf95。
-- PR #27：https://github.com/timorpic/Navelix/pull/27 ，必需检查通过且无障碍审查讨论解决后 squash 合并。
-- 附注 Tag v2.10.24 已推送，指向上述 main 发布提交。
-- 正式 Release（非草稿、非预发布）：https://github.com/timorpic/Navelix/releases/tag/v2.10.24 。
-- 流水线：https://github.com/timorpic/Navelix/actions/runs/39351510753 。
-- 无直接生产部署、生产库写入或本地 Docker 构建。保持既有 latest / Watchtower 使用方式。
+- 已推送 3 个分支（均已删除）、合并 3 个 PR（#29、#30、#31）、推送 1 个 tag、创建 1 个 Release（后续用 `sync-changelog.mjs --publish` 更正过正文）、执行 1 次 Docker 构建、推送 1 次 wiki 同步（`9a1ebd1..3fae1fa`）。
+- 无部署、无生产库写入。
+- 私有商业驱动 `ee/` 全目录未被 Git 跟踪；本轮在其中修正了一处测试文件路径，该修改**留在本地，不会进入提交**。
+- 已清除本分支历史中一处对 `ee/` 内部文件名的引用（rebase 改写 + 逐提交扫描验证），仓库为 PUBLIC。
 
-## 本轮结果与后续
+## 共享记忆
 
-授权的修改、预览及正式 Release / 镜像发布全部完成。无发布阻塞；不将流水线成功等同于已确认用户生产实例自动升级。后续若需要确认生产运行版本，应另行查询实际实例。接力证据已提交至 `docs/v2.10.24-acceptance` 并通过 PR #28 交付；PR 合并状态、记录提交后的 HEAD 与工作区状态以 Git 和 GitHub 实际结果为准。用户于 2026-10-20 明确授权合并 PR #28 后删除对应本地和远程分支。
+- OpenMemory 未使用。
+- MEMORY.md 无需更新：本轮未产生新的架构决策或长期约束。

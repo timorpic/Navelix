@@ -9,7 +9,7 @@
 3. 读取 [MEMORY.md](MEMORY.md)、[.handoff/CONTEXT.md](.handoff/CONTEXT.md) 和 [.handoff/CHECKPOINT.md](.handoff/CHECKPOINT.md)，确认项目身份、目标与实际现场。
 4. 开始新任务、接手或作关键决策前，读取详细规则第 17 节，按稳定 project_id 及相关主题召回 OpenMemory；核对标签与本地依据，不导入其他项目事实。工具不可用或无匹配时说明限制，继续依据本地资料工作。
 5. 按下表读取本次适用章节和相关正式文档，再修改代码。按章节读取；输出被截断时继续补读，不默认将整本详细规则或全部历史一次加载。
-6. 长任务在可恢复的小步骤后更新检查点；交接、接管与异常恢复遵循 [HANDOFF.md](HANDOFF.md) 与详细规则第 19 节。
+6. 长任务在可恢复的小步骤后更新检查点；交接、接管与异常恢复遵循 [HANDOFF.md](HANDOFF.md) 与详细规则第 19 节。需要机读现场或自动备份时，用 [接力助手](docs/HANDOFF-HELPER.md)（`node scripts/handoff.mjs inspect|claim|save`）。
 
 ## 按任务读取
 
@@ -19,7 +19,7 @@
 | UI、图标或视觉调整 | 详细规则第 6、16 节及 [DESIGN.md](DESIGN.md) |
 | 共享记忆、长期知识整理 | 详细规则第 13、17 节及 [MEMORY.md](MEMORY.md) |
 | 版本、Tag、Release 或部署 | 详细规则第 18 节及 [开发与发布](docs/DEVELOPMENT.md)、[构建与部署](docs/DEPLOYMENT.md) |
-| 初始化、接管、交接或异常恢复 | 详细规则第 19 节及 [HANDOFF.md](HANDOFF.md)；提示词见 [PROMPTS.md](PROMPTS.md) |
+| 初始化、接管、交接或异常恢复 | 详细规则第 19 节及 [HANDOFF.md](HANDOFF.md)、[接力助手](docs/HANDOFF-HELPER.md)；提示词见 [PROMPTS.md](PROMPTS.md) |
 
 ## 项目与事实来源
 

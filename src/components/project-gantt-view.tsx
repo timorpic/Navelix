@@ -48,7 +48,7 @@ export default function ProjectGanttView({
                     <select
                       value={gantt.projectFilter}
                       onChange={(e) => gantt.setProjectFilter(e.target.value)}
-                      className="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-700 dark:text-slate-300 cursor-pointer shadow-2xs transition-colors focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
+                      className="px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-700 dark:text-white cursor-pointer shadow-2xs transition-colors focus:outline-none focus:ring-2 focus:ring-[#00C776]/40"
                     >
                       <option value="all">{tx("all_projects_e3040dfd")}</option>
                       {projects.map((p) => (

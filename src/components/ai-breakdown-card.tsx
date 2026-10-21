@@ -88,7 +88,7 @@ export default function AiBreakdownCard({
                 onChange={(e) =>
                   ai.updateAssignee(idx, e.target.value)
                 }
-                className="px-2 py-1 text-xs font-bold rounded-lg border bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 cursor-pointer max-w-[110px] truncate"
+                className="px-2 py-1 text-xs font-bold rounded-lg border bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-white cursor-pointer max-w-[110px] truncate"
                 title={tx("assign_to_1c362011")}
               >
                 {members.map((m) => (

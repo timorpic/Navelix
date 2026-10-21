@@ -1,0 +1,40 @@
+# 接力助手接入验证证据（2026-10-20）
+
+工作区：/root/Navelix；分支：feat/handoff-helper（基于 main 14bb61288c64c5bc84b93861929f8699f3d8c2c7）
+Node：v24.21.0；pnpm：11.16.0；任务修订：2
+
+## pnpm typecheck
+$ tsc --noEmit --noUnusedLocals --noUnusedParameters
+exit=0（无诊断）
+
+## pnpm lint
+$ eslint
+exit=0（无告警）
+
+## pnpm test
+$ node scripts/run-isolated.mjs test
+tests 669 / pass 669 / fail 0 / skipped 0
+其中 src/lib/__tests__/handoff-helper.test.ts：25 tests / pass 25 / fail 0
+
+新增用例覆盖评审指出的五处缺口：
+- 未决外部操作不能靠后续空数组抹掉，必须显式重申
+- previous 被替换为符号链接时拒绝写入仓库外
+- 检查点缺少 project_id 或 task_id 时正常认领被拒，恢复仍需核对
+- 认领交接时不解除旧写入者发起的外部操作
+- 外部操作名前后空白被规范化，不会导致永久拒绝
+
+## pnpm test:coverage
+exit=0；all files 84.66% lines / 82.71% branches / 78.76% functions（门禁 60/55）
+
+## pnpm build
+exit=0（Next.js 生产构建完成）
+
+## PR CI（提交 1da0737，run 39420428123）
+Lint, Test & Build：pass（1m7s）
+Playwright E2E (Core UI Flow)：pass（2m7s）
+
+## 助手命令冒烟
+$ node scripts/handoff.mjs inspect        → exit 0，输出任务/现场/认领状态
+$ node scripts/handoff.mjs prompt         → exit 0，只输出核对用标识
+$ node scripts/handoff.mjs bogus          → exit 2（参数错误）
+$ node scripts/handoff.mjs claim --recover --source-stopped → exit 1（缺 --agent，未写入）

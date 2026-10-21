@@ -288,7 +288,7 @@ export default function AdminLinksTableCard({
               setCurrentPage(1);
             }}
             aria-label={tx("rows_per_page_d577b91f")}
-            className="h-7 px-2 border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-xs text-gray-600 dark:text-slate-300"
+            className="h-7 px-2 border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-xs text-gray-600 dark:text-white"
           >
             <option value={10}>{tx("10_per_page_68487531")}</option>
             <option value={20}>{tx("20_per_page_c0c4a643")}</option>
