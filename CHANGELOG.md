@@ -10,6 +10,9 @@
 
 ## [未发布]
 
+### 安全
+- `.dockerignore` 增加构建上下文排除：`ee/license-cli.mjs`（内嵌 Ed25519 发牌私钥）、`ee/pack-bundle.mjs`、`ee/bundle.base64.txt` 不再进入镜像构建上下文；原 `*.pem` 规则改为 `**/*.pem`，因为 Docker 的忽略语义不像 git 那样递归匹配子目录。刻意不使用目录级 `ee` 规则：`docker buildx` 会因此丢弃 CI 从 `EE_COMMERCIAL_BUNDLE` 恢复的 `ee/index.ts`，使 Pro 镜像静默降级为 CE 且不触发任何检查失败。
+
 ### 修复
 - 接力助手检查点缺少上下文修订号时拒绝正常认领；损坏的助手元数据集合按可恢复错误处理，避免检查和恢复直接崩溃。
 - 修复深色模式下新增、编辑分类弹窗的名称输入文字过暗、难以辨认的问题。
