@@ -38,7 +38,6 @@ MEMORY.md
 .license_private_key.pem
 
 # ── 发牌私钥与发码工具不进构建上下文（ee/index.ts 仍保留供 CI 编译）──
-ee/license-cli.mjs
 ee/pack-bundle.mjs
 ee/bundle.base64.txt
 **/*.pem
