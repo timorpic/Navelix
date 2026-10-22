@@ -30,12 +30,14 @@ pnpm dev
 | `pnpm start` | 启动已构建应用，端口 3721 |
 | `pnpm precommit` | 类型检查与 lint；本地 pre-commit Hook 使用 |
 
+测试、E2E 与生产构建在 CI 执行，不在本地开发机运行：该机只有 3.6 GiB 内存，完整测试或 `next build` 与编辑器、Agent 进程叠加会让整机失去响应（2026-10-22 已有实例）。本地只做 `pnpm typecheck`、`pnpm lint`；确需本地验证构建时，用 cgroup 限制兜底超限终止，见 [AGENTS](../AGENTS.md) 「验证」一节。
+
 pre-commit Hook 由 `simple-git-hooks` 生成，指向 `scripts/pre-commit.sh`。该脚本优先使用本机 `pnpm precommit`；本机没有 Node/pnpm 而存在 Docker 时，回退到 `node:24-alpine` 容器执行同一组检查（复用仓库内已安装的 `node_modules`，约半分钟）。两者都不可用时钩子以非零码失败，而不是静默放过——门禁默认为开，需要临时绕过时用 `SKIP_SIMPLE_GIT_HOOKS=1 git commit`。
 
-Node 测试的 `src/**/*.test.ts` glob 已在脚本中加引号，由 Node 展开；不要去掉引号造成部分测试漏跑。测试使用串行配置以避免共享 SQLite 竞争。测试与覆盖率脚本通过 `scripts/run-isolated.mjs` 自动分配一次性数据目录，忽略继承的业务数据目录及密钥。构建也使用该入口；结束后清理临时数据。直接调用 Node 测试或 `next build` 会绕过隔离，不得指向真实业务库。运行本地测试：
+Node 测试的 `src/**/*.test.ts` glob 已在脚本中加引号，由 Node 展开；不要去掉引号造成部分测试漏跑。测试使用串行配置以避免共享 SQLite 竞争。测试与覆盖率脚本通过 `scripts/run-isolated.mjs` 自动分配一次性数据目录，忽略继承的业务数据目录及密钥。构建也使用该入口；结束后清理临时数据。直接调用 Node 测试或 `next build` 会绕过隔离，不得指向真实业务库。测试与构建命令在 CI 中运行；本地如需执行，先套用上一节的 cgroup 限制：
 
 ```bash
-pnpm test
+systemd-run --scope -p MemoryMax=2G -p MemorySwapMax=1G -p CPUQuota=300% -- pnpm test
 ```
 
 Playwright 配置自行创建临时数据目录，先构建生产包再以 `next start` 在端口 3722 启动，使用专用初始管理员密码，禁止复用已运行服务。可用 `E2E_DATA_DIR` 指定专用测试目录。镜像发布任务通过 `E2E_BASE_URL=http://localhost:3722` 测试独立候选容器，配置拒绝非本机 HTTP 地址；本机地址也必须由操作者确认是隔离实例，不能指向生产库。浏览器人工验收按项目约定使用 Computer Use，自动 CI 与人工证据分别记录。
