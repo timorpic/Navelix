@@ -64,7 +64,13 @@ Navelix 是可自托管的个人数字工作空间，包含网址导航、项目
 
 今后的测试使用 Computer Use 模式。
 
-常用检查：`pnpm typecheck`、`pnpm lint`、`pnpm test`、`pnpm build`。CI 还运行 `pnpm test:coverage` 和 `pnpm test:e2e`，详见开发文档。
+常用检查：`pnpm typecheck`、`pnpm lint`。CI 运行 `pnpm test`、`pnpm build`、`pnpm test:coverage` 和 `pnpm test:e2e`，详见开发文档。
+
+当前开发机仅 3.6 GiB 内存，本地运行完整测试或生产构建会让整机失去响应（2026-10-22 已有实例）。测试与构建一律交给 CI；确需本地验证时，用 cgroup 限制兜底，让内核能终止超限进程而不是拖死系统：
+
+```bash
+systemd-run --scope -p MemoryMax=2G -p MemorySwapMax=1G -p CPUQuota=300% -- pnpm build
+```
 
 行为修复增加能覆盖回归场景的测试；纯文档修改检查路径、链接、命令及事实一致性即可。测试、构建和启动可能初始化 SQLite，应设置独立的 `NAVELIX_DATA_DIR`，不使用真实业务库验证破坏性操作。
 
