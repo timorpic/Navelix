@@ -13,7 +13,7 @@
 
 1. 核对实际项目根目录，遵循适用的上层及局部规则。
 2. 首次进入项目先读取 [docs/AGENT-RULES.md](docs/AGENT-RULES.md) 第 1–14 节；本会话已读且未变化时无需重复。
-3. 读取 [MEMORY.md](MEMORY.md)、[.handoff/CONTEXT.md](.handoff/CONTEXT.md) 和 [.handoff/CHECKPOINT.md](.handoff/CHECKPOINT.md)，确认项目身份、目标与实际现场。
+3. 读取 [MEMORY.md](MEMORY.md)、[.handoff/CONTEXT.md](.handoff/CONTEXT.md) 和 [.handoff/CHECKPOINT.md](.handoff/CHECKPOINT.md)（如存在），确认项目身份、目标与实际现场。
 4. 开始新任务、接手或作关键决策前，读取详细规则第 17 节，按稳定 project_id 及相关主题召回 OpenMemory；核对标签与本地依据，不导入其他项目事实。工具不可用或无匹配时说明限制，继续依据本地资料工作。
 5. 按下表读取本次适用章节和相关正式文档，再修改代码。按章节读取；输出被截断时继续补读，不默认将整本详细规则或全部历史一次加载。
 6. 长任务在可恢复的小步骤后更新检查点；交接、接管与异常恢复遵循 [HANDOFF.md](HANDOFF.md) 与详细规则第 19 节。需要机读现场或自动备份时，用 [接力助手](docs/HANDOFF-HELPER.md)（`node scripts/handoff.mjs inspect|claim|save`）。
@@ -100,3 +100,5 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+提交收尾与活动接力记录的 Git 归属遵循 [开发文档](docs/DEVELOPMENT.md#提交收尾与现场记录)；提交后仅回填忽略的现场记录，避免正式文档反复出现未提交改动。

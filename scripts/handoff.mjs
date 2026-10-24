@@ -545,6 +545,11 @@ async function backup(root, relative, content) {
   return relative;
 }
 async function persist(data, checkpointText, contextText, token, checkpointBackup) {
+  const tracked = git(data.root, ["ls-files", "-z", "--", CONTEXT, CHECKPOINT, PREVIOUS_CHECKPOINT, PREVIOUS_CONTEXT])
+    .split("\0")
+    .filter(Boolean);
+  assert(tracked.length === 0,
+    `接力现场文件仍被 Git 跟踪，拒绝写入：${tracked.join("、")}。请核对后用 git rm --cached -- <路径> 取消跟踪并确认忽略生效；助手不会修改暂存区。`);
   assert(
     Buffer.byteLength(checkpointText) < 4 * 1024 * 1024 && Buffer.byteLength(contextText) < 4 * 1024 * 1024,
     "生成的接力记录超过读取上限；请精简结果或缩小工作区后重试，未写入记录",
