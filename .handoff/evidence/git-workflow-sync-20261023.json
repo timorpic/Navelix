@@ -1,0 +1,19 @@
+{
+  "result": "passed",
+  "scope": "静态文档、文件完整性、链接和授权边界核对；非测试或构建",
+  "unchanged_protected_tracked_files": 598,
+  "HEAD": "d5c39b94743b14287638a8824fa0a1390729bc96",
+  "user_edits_preserved": true,
+  "CI_and_protocol_unchanged": true,
+  "previous_records_archived": true,
+  "source_git_section_sha256": "5c53cfbc95bff41d1af96798315f68ec341e562d2e265474fa1ed7b300556a66",
+  "files": {
+    "AGENTS.md": "25a385b9120d1b377d326266a5da54bf7dd28e4a03d95051ab3fce48136b8b7d",
+    "MEMORY.md": "f7051dfc74b3f7a663d906e9e9fed793ca1cf291a82417de3f94fcb69da61f58",
+    "docs/DEVELOPMENT.md": "72cdd0301a0441c61389d44044b23ac5571a05855ff3c7cf4610065f823ebf2e",
+    ".github/PULL_REQUEST_TEMPLATE.md": "9d9d3192cc3c169f838b5e8ade885d2308b98cf8d663975801c1043f9e337e98",
+    "CHANGELOG.md": "fd3f7c5c414202b53f27a0c8eab487464398275e85391d5d08e36eff0484eb36"
+  },
+  "tests_and_build": "not_run",
+  "remote_protection": "not_verified"
+}

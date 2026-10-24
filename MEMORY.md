@@ -205,13 +205,13 @@ AI（OpenAI 兼容）、天气、云存储、链接探针均可能访问外部�
 
 ### 分支策略
 
-主干 `main`；变更使用短期分支并通过 PR，默认 `codex/` 前缀。用户于 2026-10-18 确认个人维护模式：main 要求两个现有 GitHub Actions CI 检查、分支保持最新和讨论解决，审批人数 0；管理员同样受约束，禁止强推及删除。实际已通过 GitHub API 设置并回读确认，详见 [DEVELOPMENT](docs/DEVELOPMENT.md)「main 分支保护」。
+主干 `main`；变更使用用途前缀短期分支并通过 PR，具体规范见 [DEVELOPMENT](docs/DEVELOPMENT.md#git-工作流)。用户于 2026-10-23 确认同步模板 Git 规范，替代旧的默认 `codex/` 前缀。用户于 2026-10-18 确认个人维护模式：main 要求两个现有 GitHub Actions CI 检查、分支保持最新和讨论解决，审批人数 0；管理员同样受约束，禁止强推及删除。实际已通过 GitHub API 设置并回读确认，详见 [DEVELOPMENT](docs/DEVELOPMENT.md)「main 分支保护」。
 
 用户于 2026-10-20 确认：每次 PR 合入 `main` 后，清理对应本地与远程分支及失效远程引用；先核对合并结果、未提交修改与工作树占用，保留未合并工作。GitHub 的 `delete_branch_on_merge` 已启用（当日 API 回读确认）。共享记忆同步 unavailable，以本地记录为准。
 
 ### Commit 规范
 
-沿用现有风格：`<type>(<scope>): <说明>`，发版提交常以 `and publish vX.Y.Z` 结尾；中文说明可用。不添加任何协作者署名行。
+Commit 与 PR 标题遵循 [Git 工作流](docs/DEVELOPMENT.md#git-工作流)；保留中文说明、不添加协作者署名行及既有发版提交惯例。
 
 ### Release
 

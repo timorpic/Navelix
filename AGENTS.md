@@ -1,5 +1,12 @@
 # 项目协作与代码开发规范
 
+> **本机禁令（用户级常驻规则，优先于本文件其余内容）**
+> 这台服务器上永远不执行任何编译、构建或测试构建，所有构建一律交给 GitHub Actions。
+> 完整规则见 `~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.pi/agent/AGENTS.md`（正文不在此复制）。
+> 本机只做代码编辑、静态阅读、lint 与 `tsc --noEmit`；`npm run dev` 可跑已构建的开发服务器。
+> 需要构建时用 `gh workflow run <workflow>`，不得为了发布前验证在本机运行。
+> 该禁令由三层强制：全局指令文件 + 各运行时的 PreToolUse/tool_call 拦截 + 本文件。
+
 本文件是本仓库的启动入口：提供读取要求、项目事实来源与必守边界。适用于人工贡献者及编码助手。通用详细工作规则统一维护在 [docs/AGENT-RULES.md](docs/AGENT-RULES.md)，工具入口（[CLAUDE.md](CLAUDE.md)、[adapters/ENTRY.md](adapters/ENTRY.md)）只引用，不复制正文。
 
 ## 开始任务
@@ -10,6 +17,8 @@
 4. 开始新任务、接手或作关键决策前，读取详细规则第 17 节，按稳定 project_id 及相关主题召回 OpenMemory；核对标签与本地依据，不导入其他项目事实。工具不可用或无匹配时说明限制，继续依据本地资料工作。
 5. 按下表读取本次适用章节和相关正式文档，再修改代码。按章节读取；输出被截断时继续补读，不默认将整本详细规则或全部历史一次加载。
 6. 长任务在可恢复的小步骤后更新检查点；交接、接管与异常恢复遵循 [HANDOFF.md](HANDOFF.md) 与详细规则第 19 节。需要机读现场或自动备份时，用 [接力助手](docs/HANDOFF-HELPER.md)（`node scripts/handoff.mjs inspect|claim|save`）。
+
+7. 涉及新功能、修复、文档或 Git 交付时，读取 [Git 工作流](docs/DEVELOPMENT.md#git-工作流)，遵循本项目分支、PR 与审查约定。
 
 ## 按任务读取
 
@@ -66,11 +75,7 @@ Navelix 是可自托管的个人数字工作空间，包含网址导航、项目
 
 常用检查：`pnpm typecheck`、`pnpm lint`。CI 运行 `pnpm test`、`pnpm build`、`pnpm test:coverage` 和 `pnpm test:e2e`，详见开发文档。
 
-当前开发机仅 3.6 GiB 内存，本地运行完整测试或生产构建会让整机失去响应（2026-10-22 已有实例）。测试与构建一律交给 CI；确需本地验证时，用 cgroup 限制兜底，让内核能终止超限进程而不是拖死系统：
-
-```bash
-systemd-run --scope -p MemoryMax=2G -p MemorySwapMax=1G -p CPUQuota=300% -- pnpm build
-```
+当前开发机仅 3.6 GiB 内存，本地运行完整测试或生产构建会让整机失去响应（2026-10-22 已有实例）。测试与构建一律交给 GitHub Actions；本机只做允许的静态检查，不以 cgroup 限制作为本机运行构建的例外。
 
 行为修复增加能覆盖回归场景的测试；纯文档修改检查路径、链接、命令及事实一致性即可。测试、构建和启动可能初始化 SQLite，应设置独立的 `NAVELIX_DATA_DIR`，不使用真实业务库验证破坏性操作。
 
