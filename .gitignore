@@ -67,7 +67,9 @@ IDEA.md
 /temp/
 # scripts/render-icons.mjs 光栅化时的工作文件
 /temp-icon.html
-.agents/
+# 仅忽略客户端临时缓存；共享技能和正式文档必须可跟踪。
+/.agents/cache/
+/.agents/tmp/
 # 规则入口、长期记忆及冻结的接力归档随仓库分发；活动现场不进 Git。
 
 # 活动接力记录与运行备份仅保留在本机；正式 archive/evidence 继续跟踪。

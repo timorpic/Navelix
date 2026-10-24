@@ -68,7 +68,7 @@ node scripts/handoff.mjs save --agent claude-session-1 --input result.json
   "remaining": ["AC-02 数组去重"],
   "unverified": ["完整测试待运行"],
   "blockers": [],
-  "next": ["实现 AC-02 后运行完整测试"],
+  "next": ["实现 AC-02 后，按实际授权通过 GitHub Actions 验证"],
   "verifications": [],
   "external_effects": [],
   "environment": "本地 Node.js；无新增依赖"
@@ -95,7 +95,7 @@ node scripts/handoff.mjs save --agent claude-session-1 --input result.json --han
   "blockers": [],
   "next": [],
   "verifications": [
-    {"acceptance": "AC-01, AC-02", "command": "pnpm test", "result": "passed", "evidence": ".handoff/evidence/tests.txt"}
+    {"acceptance": "AC-01, AC-02", "command": "GitHub Actions ci.yml / Run Test Suite (with Coverage Gate)", "result": "passed", "evidence": ".handoff/evidence/ci-result.txt"}
   ],
   "external_effects": [],
   "environment": "Node 24.21.0；pnpm 11.16.0",
@@ -130,10 +130,8 @@ node scripts/handoff.mjs inspect
 
 ## 回归验证
 
-助手测试位于 [src/lib/__tests__/handoff-helper.test.ts](../src/lib/__tests__/handoff-helper.test.ts)，随 `pnpm test` 执行：
+助手测试位于 [src/lib/__tests__/handoff-helper.test.ts](../src/lib/__tests__/handoff-helper.test.ts)，由已有 [CI](../.github/workflows/ci.yml) 的 coverage 步骤覆盖。本机禁止执行测试和构建，包括直接运行该测试文件；`inspect`、`prompt` 是允许的只读现场检查，不等于回归测试通过。
 
-```sh
-pnpm test
-```
+未来按实际授权提交并推送 PR 后，由现有 CI 执行；此说明本身不授予提交或推送权限。仅触发现有远程分支的 CI，不能验证尚未推送的本地修改。记录验证时应保存实际运行链接、run ID、被测提交、环境、结束时间和结论；可将脱敏结果保存到 `.handoff/evidence/`，再交给助手绑定哈希。没有对应证据时如实填写 `not_run` 或 `blocked`。
 
-测试在一次性临时仓库中运行，不改动本项目 `.handoff/` 或业务文件。
+CI 中的测试在一次性临时仓库中运行，不改动本项目 `.handoff/` 或业务文件。
