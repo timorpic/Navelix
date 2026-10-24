@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task_id": "task",
+  "goal": "填写本次已获用户授权的实际目标",
+  "allowed_paths": [
+    ".ai/tasks/task.json",
+    "docs/**"
+  ],
+  "forbidden_paths": [
+    ".env",
+    ".env.local",
+    "data/**"
+  ],
+  "constraints": {
+    "allow_new_dependencies": false,
+    "allow_database_changes": false,
+    "allow_api_breaking_changes": false,
+    "allow_unrelated_refactor": false
+  },
+  "acceptance": [
+    "填写可验证的实际验收条件；路径与约束必须在修改前按本次授权收窄"
+  ]
+}

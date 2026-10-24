@@ -1,0 +1,62 @@
+name: AI Governance
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-governance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  governance-checks:
+    name: governance-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Check governance syntax and regression behavior
+        run: |
+          node --check scripts/ai-check.mjs
+          node --test scripts/ai-check.test.mjs
+
+  task-scope:
+    name: task-scope
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Check task contract against complete PR diff
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          node --input-type=module <<'JS'
+          import { execFileSync } from 'node:child_process';
+          const lines = (process.env.PR_BODY ?? '').split(/\r?\n/).filter(line => line.startsWith('Task-Contract:'));
+          if (lines.length !== 1 || !/^Task-Contract: \.ai\/tasks\/[a-zA-Z0-9_-]+\.json$/.test(lines[0])) {
+            console.error('PR 正文须包含唯一的 Task-Contract: .ai/tasks/<task_id>.json 行');
+            process.exit(1);
+          }
+          execFileSync(process.execPath, ['scripts/ai-check.mjs', lines[0].slice(15), process.env.BASE_SHA, process.env.HEAD_SHA], { stdio: 'inherit' });
+          JS
