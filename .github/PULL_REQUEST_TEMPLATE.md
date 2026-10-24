@@ -32,7 +32,7 @@
 ## 任务契约与证据
 
 <!-- PR 正文在注释外填写唯一独立行：
-Task-Contract: .ai/tasks/<task_id>.json
+示例：Task-Contract: .ai/tasks/<task_id>.json
 审查契约范围及实际用户授权；契约本身不产生授权。 -->
 
 - 契约与用户授权依据：待填写。
