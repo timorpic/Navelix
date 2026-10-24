@@ -102,3 +102,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 <!-- END:nextjs-agent-rules -->
 
 提交收尾与活动接力记录的 Git 归属遵循 [开发文档](docs/DEVELOPMENT.md#提交收尾与现场记录)；提交后仅回填忽略的现场记录，避免正式文档反复出现未提交改动。
+
+
+## 研发治理
+
+修改前读取 [本项目研发治理](docs/AI-GOVERNANCE.md)，按 `.ai/templates/task.json` 为实际任务建立 `.ai/tasks/<task_id>.json`；契约不产生新授权。
+遵循事实证据分级、变更范围与交付标准，保留项目原有规则、接力与长期记录职责。
+PR 正文提供唯一 Task-Contract 行，通过独立范围检查与项目原有适用检查后再合并。

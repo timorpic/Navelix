@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task_id": "governance-adoption",
+  "goal": "为 Navelix 增量适配研发治理、任务契约与 Git Diff 范围检查；保留项目既有架构和验证约定",
+  "allowed_paths": [
+    "AGENTS.md",
+    "docs/DEVELOPMENT.md",
+    "docs/AI-GOVERNANCE.md",
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    "scripts/ai-check.mjs",
+    "scripts/ai-check.test.mjs",
+    ".ai/templates/task.json",
+    ".ai/tasks/governance-adoption.json",
+    ".github/workflows/ai-governance.yml",
+    "CHANGELOG.md"
+  ],
+  "forbidden_paths": [
+    "MEMORY.md",
+    "HANDOFF.md",
+    "PROMPTS.md",
+    "docs/AGENT-RULES.md",
+    ".handoff/**"
+  ],
+  "constraints": {
+    "allow_new_dependencies": false,
+    "allow_database_changes": false,
+    "allow_api_breaking_changes": false,
+    "allow_unrelated_refactor": false
+  },
+  "acceptance": [
+    "规则入口与 PR 模板可定位本项目的任务契约及事实/交付标准",
+    "检查器正确覆盖完整 PR 差异和本地未跟踪路径，拒绝非法契约及越界",
+    "不修改业务、依赖、vendored 协议或既有 CI/发布文件",
+    "遵守本机测试构建禁令；GitHub Actions 的治理回归与范围检查通过，保留原有业务 CI"
+  ]
+}
