@@ -31,3 +31,38 @@ test('Git 差异覆盖删除、重命名、暂存、未暂存和未跟踪文件'
     assert.deepEqual(new Set(changedFiles('HEAD^', 'HEAD')), new Set(['src/old', 'outside', 'deleted', 'untracked space']));
   } finally { process.chdir(previous); rmSync(root, { recursive: true, force: true }); }
 });
+
+test('主分支前进时只检查 PR 自身改动', () => {
+  const root = mkdtempSync(join(tmpdir(), 'ai-scope-upstream-'));
+  const previous = process.cwd();
+  const git = (...args) => execFileSync('git', args, { cwd: root, stdio: 'pipe' });
+  try {
+    git('init'); git('config', 'user.email', 'ci@example.invalid'); git('config', 'user.name', 'CI');
+    mkdirSync(join(root, 'src')); writeFileSync(join(root, 'src/task'), 'baseline');
+    git('add', '.'); git('commit', '-m', 'baseline');
+    const main = git('branch', '--show-current').toString().trim();
+    git('checkout', '-b', 'topic'); writeFileSync(join(root, 'src/task'), 'task change');
+    git('add', '.'); git('commit', '-m', 'task');
+    git('checkout', main); writeFileSync(join(root, 'upstream-only'), 'upstream change');
+    git('add', '.'); git('commit', '-m', 'upstream');
+    process.chdir(root);
+    const files = changedFiles('HEAD', 'topic');
+    assert.deepEqual(files, ['src/task']);
+    assert.deepEqual(violations(contract, files), []);
+  } finally { process.chdir(previous); rmSync(root, { recursive: true, force: true }); }
+});
+
+test('工作区恢复原文后仍检测已暂存的越界修改', () => {
+  const root = mkdtempSync(join(tmpdir(), 'ai-scope-index-'));
+  const previous = process.cwd();
+  const git = (...args) => execFileSync('git', args, { cwd: root, stdio: 'pipe' });
+  try {
+    git('init'); git('config', 'user.email', 'ci@example.invalid'); git('config', 'user.name', 'CI');
+    writeFileSync(join(root, 'outside'), 'baseline');
+    git('add', '.'); git('commit', '-m', 'baseline');
+    writeFileSync(join(root, 'outside'), 'staged violation'); git('add', 'outside');
+    writeFileSync(join(root, 'outside'), 'baseline');
+    process.chdir(root);
+    assert.deepEqual(violations(contract, changedFiles('HEAD')), ['outside']);
+  } finally { process.chdir(previous); rmSync(root, { recursive: true, force: true }); }
+});

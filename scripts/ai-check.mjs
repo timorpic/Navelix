@@ -35,8 +35,9 @@ export function changedFiles(base, head) {
   const git = args => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
   const split = value => value.split('\0').filter(Boolean);
   // 禁用 rename 折叠，同时检查旧路径和新路径；工作区包含已暂存、未暂存及未跟踪文件。
-  if (head) return split(git(['diff', '--no-renames', '--name-only', '-z', base, head, '--']));
-  return [...split(git(['diff', '--no-renames', '--name-only', '-z', base, '--'])),
+  if (head) return split(git(['diff', '--no-renames', '--name-only', '-z', `${base}...${head}`, '--']));
+  return [...split(git(['diff', '--cached', '--no-renames', '--name-only', '-z', base, '--'])),
+    ...split(git(['diff', '--no-renames', '--name-only', '-z', '--'])),
     ...split(git(['ls-files', '--others', '--exclude-standard', '-z']))];
 }
 function main() {
