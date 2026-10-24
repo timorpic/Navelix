@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "task_id": "gitflow-policy-20261024",
+  "goal": "按用户确认的分支协作规范整合 Git Flow 分支来源、发布冻结、修复回流与 PR 要求，保留当前项目有效差异",
+  "allowed_paths": [
+    ".ai/tasks/gitflow-policy-20261024.json",
+    "docs/DEVELOPMENT.md",
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    ".handoff/archive/governance-adoption-20261024/CONTEXT.md",
+    ".handoff/archive/governance-adoption-20261024/CHECKPOINT.md"
+  ],
+  "forbidden_paths": [
+    ".github/workflows/**",
+    ".env",
+    ".env.local",
+    "data/**"
+  ],
+  "constraints": {
+    "allow_new_dependencies": false,
+    "allow_database_changes": false,
+    "allow_api_breaking_changes": false,
+    "allow_unrelated_refactor": false
+  },
+  "acceptance": [
+    "明确短期分支默认流程与可选 Git Flow 的分支来源和合并去向",
+    "明确发布冻结、紧急修复回流、Tag 与合并方式",
+    "保留当前项目主分支、版本编号、CI 与个人维护差异",
+    "PR 模板提示核对分支流向、审批和回流；静态范围及差异检查通过",
+    "不执行本机构建或测试，不推送、发布或修改远程设置"
+  ]
+}
