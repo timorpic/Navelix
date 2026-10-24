@@ -2,7 +2,7 @@
 
 > 本文件说明本仓库已接入的 Agent Handoff 工作流文件及其职责。
 > 来源：`https://github.com/timorpic/agent-handoff`（`main`，提交 `e22828631d80a9617ea8fb74eefbf0a974e7fe86`）。
-> 接入日期：2026-10-16；接入时的任务现场见 [.handoff/CHECKPOINT.md](../.handoff/CHECKPOINT.md)。
+> 接入日期：2026-10-16；接入时的冻结记录见 [.handoff/archive/handoff-workflow-adoption/](../.handoff/archive/handoff-workflow-adoption/)。
 
 ## 工作流文件树
 
@@ -83,10 +83,10 @@ AGENTS.md 是精简启动入口；CLAUDE.md 和 adapters/ENTRY.md 引导工具�
 2. 模板文件与 `.handoff/` 逐项与现有同名文件核对后合并，未直接覆盖；改动前原文备份在 `.handoff/previous/`。
 3. README 只补充工作流导航行；`docs/PROJECT-SPEC.md`、`ARCHITECTURE.md`、`DEVELOPMENT.md`、`DEPLOYMENT.md` 等原有文档保持原职责，未被模板文件替换。
 4. MEMORY 只登记本仓库已核实、长期有效的事实与决策，详细依据引用正式文档。
-5. 本次任务上下文与首份检查点已建立；无新任务时保持 `draft`。
+5. 当时的任务上下文与首份检查点已建立；仅首次初始化且没有实际任务时使用 `draft`。已有记录保留实际状态，开始新任务前成对归档，不将完成记录清空。
 6. Claude Code 使用 CLAUDE.md，其他工具使用根目录 AGENTS.md，必要时显式使用 adapters/ENTRY.md。
    工具输出被截断时应补读，不能默认为已读完。
-7. Hindsight/OpenMemory 连接已核对可用（Bank: OpenMemory）；本项目尚无已同步条目，
+7. 2026-10-16 接入时 Hindsight/OpenMemory 连接已核对可用（Bank: OpenMemory），当时尚无已同步条目；现行同步索引见 MEMORY 第 13 节，会话可用性须重新核对，
    连接地址与凭据不写入本仓库，操作规则见 [AGENT-RULES](AGENT-RULES.md) 第 17 节。
 
 仍需按项目实际情况确认的项：部署平台细节以 [DEPLOYMENT](DEPLOYMENT.md) 与用户实际环境为准；
@@ -132,3 +132,18 @@ Hindsight 是长期摘要的检索副本，不能替代以上主记录。
 突然退出按 HANDOFF.md 恢复，不将未知结果写成成功。
 新任务开始前将旧上下文与检查点成对归档。
 不配置自动 Agent 调度、余额探测或自动工具切换。
+
+## 新工具接入核验
+
+复用根 AGENTS.md；CLAUDE.md 和 adapters/ENTRY.md 只提供引用，不另建身份、任务或记忆副本。
+客户端是否自动加载入口不由文件存在证明；新工具首次接入时，在用户人工切换后的真实任务中核验：
+
+1. 只读复述实际读取的入口、project_id、task_id、context_revision、当前目标和授权边界，不能只复述接管提示。
+2. 按 HANDOFF 第 3、6 节核实旧写入者停止，比较实际分支、HEAD、暂存、未暂存及未跟踪文件；owner/lease 与进程目录检查都不是锁。
+3. 用 `inspect` 核对记录，再按精确标识 `claim`；突然中断按第 7 节恢复。任务已完成时先归档并建立新任务，不直接认领或重开旧任务。
+4. 指出哪些验证仍适用、哪些已过期或未运行，给出证据位置和最近下一步；按 HANDOFF 第 5 节保存检查点后，只读核对 `inspect` 的结果。
+5. 将实际入口读取情况、现场差异与验证限制写入当前 CHECKPOINT；未经实际切换验证的客户端标为未验证，不借用其他客户端结论。
+
+以上是人工接入核验步骤，不是本机测试执行许可，不自动打开第二工具或模拟跨工具并发。
+共享技能仅在确有需求时沿用已有位置；不因模板提供技能而创建空技能库或客户端目录。
+忽略规则只屏蔽明确的缓存路径；不得整体忽略客户端目录而使正式文档、共享技能或需跟踪归档丢失。

@@ -28,7 +28,7 @@ function replace(text: string, key: string, value: string) {
 }
 
 // 夹具沿用 Navelix 现行记录方言：全角冒号的 `- 稳定 project_id：**fixture**（说明）`、
-// `## 现场` 章节、反引号包裹的分支、散文式 HEAD，以及 .handoff 随仓库跟踪。
+// `## 现场` 章节、反引号包裹的分支、散文式 HEAD；活动记录和运行备份被忽略。
 async function fixture(t: { after(fn: () => Promise<void>): void }) {
   const root = await mkdtemp(path.join(os.tmpdir(), "navelix-handoff-test-"));
   t.after(() => rm(root, { recursive: true, force: true }));
@@ -60,6 +60,7 @@ async function fixture(t: { after(fn: () => Promise<void>): void }) {
       "",
     ].join("\n"),
   );
+  await writeFile(path.join(root, ".gitignore"), "/.handoff/CONTEXT.md\n/.handoff/CHECKPOINT.md\n/.handoff/*.previous\n/.handoff/previous/\n/.handoff/*.tmp.json\n");
   await writeFile(path.join(root, "business.txt"), "baseline\n");
   git(root, "init", "-q", "-b", "main");
   git(root, "add", ".");
@@ -92,8 +93,6 @@ async function fixture(t: { after(fn: () => Promise<void>): void }) {
       "",
     ].join("\n"),
   );
-  git(root, "add", ".");
-  git(root, "commit", "-qm", "fixture handoff records");
   await writeFile(path.join(root, "business.txt"), "user staged change\n");
   git(root, "add", "business.txt");
   await writeFile(path.join(root, "scratch.txt"), "user untracked change\n");
@@ -591,4 +590,39 @@ test("损坏的助手元数据集合可被检查并显式恢复", async t => {
       assert.equal(await readFile(path.join(root, ".handoff/CHECKPOINT.md.previous"), "utf8"), corrupt);
     }
   }
+});
+
+for (const command of ["claim", "save"]) {
+  for (const trackedPath of [contexts, checkpoints, ".handoff/CONTEXT.md.previous", ".handoff/CHECKPOINT.md.previous"]) {
+    test(`${command} refuses tracked ${trackedPath} without changing records or the index`, async t => {
+      const root = await fixture(t);
+      if (command === "save") assert.equal(claim(root).code, 0);
+      const input = command === "save" ? await resultFile(root) : null;
+      if (!await lstat(path.join(root, trackedPath)).catch(() => null))
+        await writeFile(path.join(root, trackedPath), "old backup\n");
+      git(root, "add", "-f", "--", trackedPath);
+      const before = await preserved(root);
+      const oldContext = await readFile(path.join(root, contexts));
+      const oldCheckpoint = await readFile(path.join(root, checkpoints));
+      const oldNames = (await readdir(path.join(root, ".handoff"), { recursive: true })).sort();
+      const result = command === "claim" ? claim(root)
+        : cli(root, "save", "--agent", "receiver-1", "--input", input!);
+      assert.equal(result.code, 1);
+      assert.match(result.stderr, /仍被 Git 跟踪/);
+      assert.deepEqual(await readFile(path.join(root, contexts)), oldContext);
+      assert.deepEqual(await readFile(path.join(root, checkpoints)), oldCheckpoint);
+      assert.deepEqual((await readdir(path.join(root, ".handoff"), { recursive: true })).sort(), oldNames);
+      assert.deepEqual(await preserved(root), before);
+    });
+  }
+}
+
+test("claim and save ignored records leave Git status unchanged", async t => {
+  const root = await fixture(t);
+  const before = git(root, "status", "--porcelain=v1", "--untracked-files=all");
+  assert.equal(claim(root).code, 0);
+  const input = await resultFile(root);
+  const saved = cli(root, "save", "--agent", "receiver-1", "--input", input);
+  assert.equal(saved.code, 0, saved.stderr);
+  assert.equal(git(root, "status", "--porcelain=v1", "--untracked-files=all"), before);
 });

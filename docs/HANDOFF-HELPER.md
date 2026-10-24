@@ -12,7 +12,7 @@ Node.js >= 24、Git，无需安装依赖。助手只执行固定的 Git 只读�
 - HH-03：`save` 自动生成完整检查点与认领表格，备份上一版到 `.handoff/previous/`，递增 `checkpoint_seq`；不改业务文件、Git 暂存区和历史。
 - HH-04：收尾必须填写已完成、未完成、未验证、阻塞和下一步；完成状态需要显式验收声明与可定位的通过证据。
 - HH-05：代码变更后提示记录过期；身份不符、交接已认领、符号链接写入目标或输入无效时拒绝写入。
-- HH-06：记录字段与仓库现行方言兼容（全角冒号、`## 现场`、反引号分支、散文式 HEAD）；`.handoff/` 继续随仓库跟踪。
+- HH-06：记录字段与仓库现行方言兼容（全角冒号、`## 现场`、反引号分支、散文式 HEAD）；活动记录和新运行备份忽略，冻结归档继续跟踪。
 
 ## 与本项目记录的关系
 
@@ -26,7 +26,7 @@ Node.js >= 24、Git，无需安装依赖。助手只执行固定的 Git 只读�
 | `MEMORY.md` | 只读核对稳定 `project_id`；助手不写入长期事实 |
 | `.handoff/archive/` | 不读写；归档仍按 HANDOFF.md 第 10 节人工执行 |
 
-`.handoff/` 在本仓库是刻意纳入版本控制的正式记录，因此助手**不会**把检查点写入 gitignore，也不会拒绝被跟踪的现场文件。备份同样进 Git，属于交接证据而非忽略的运行文件。
+活动上下文、检查点、直接前一版及新生成的 `previous/` 运行备份只保留在本机并忽略；冻结的 `archive/`、正式验证 `evidence/` 和已跟踪的历史不可变备份继续保留。助手拒绝改写被 Git 跟踪的活动记录与直接前一版；遇到拒绝时先核对再取消对应文件的跟踪，保留本地内容。提交后只回填忽略的现场记录，正式文档先收尾再提交，详见 docs/DEVELOPMENT.md「提交收尾与现场记录」。
 
 ## 日常用法
 
@@ -68,7 +68,7 @@ node scripts/handoff.mjs save --agent claude-session-1 --input result.json
   "remaining": ["AC-02 数组去重"],
   "unverified": ["完整测试待运行"],
   "blockers": [],
-  "next": ["实现 AC-02 后运行完整测试"],
+  "next": ["实现 AC-02 后，按实际授权通过 GitHub Actions 验证"],
   "verifications": [],
   "external_effects": [],
   "environment": "本地 Node.js；无新增依赖"
@@ -95,7 +95,7 @@ node scripts/handoff.mjs save --agent claude-session-1 --input result.json --han
   "blockers": [],
   "next": [],
   "verifications": [
-    {"acceptance": "AC-01, AC-02", "command": "pnpm test", "result": "passed", "evidence": ".handoff/evidence/tests.txt"}
+    {"acceptance": "AC-01, AC-02", "command": "GitHub Actions ci.yml / Run Test Suite (with Coverage Gate)", "result": "passed", "evidence": ".handoff/evidence/ci-result.txt"}
   ],
   "external_effects": [],
   "environment": "Node 24.21.0；pnpm 11.16.0",
@@ -130,10 +130,8 @@ node scripts/handoff.mjs inspect
 
 ## 回归验证
 
-助手测试位于 [src/lib/__tests__/handoff-helper.test.ts](../src/lib/__tests__/handoff-helper.test.ts)，随 `pnpm test` 执行：
+助手测试位于 [src/lib/__tests__/handoff-helper.test.ts](../src/lib/__tests__/handoff-helper.test.ts)，由已有 [CI](../.github/workflows/ci.yml) 的 coverage 步骤覆盖。本机禁止执行测试和构建，包括直接运行该测试文件；`inspect`、`prompt` 是允许的只读现场检查，不等于回归测试通过。
 
-```sh
-pnpm test
-```
+未来按实际授权提交并推送 PR 后，由现有 CI 执行；此说明本身不授予提交或推送权限。仅触发现有远程分支的 CI，不能验证尚未推送的本地修改。记录验证时应保存实际运行链接、run ID、被测提交、环境、结束时间和结论；可将脱敏结果保存到 `.handoff/evidence/`，再交给助手绑定哈希。没有对应证据时如实填写 `not_run` 或 `blocked`。
 
-测试在一次性临时仓库中运行，不改动本项目 `.handoff/` 或业务文件。
+CI 中的测试在一次性临时仓库中运行，不改动本项目 `.handoff/` 或业务文件。

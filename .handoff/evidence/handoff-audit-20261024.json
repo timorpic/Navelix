@@ -1,0 +1,122 @@
+{
+  "task_id": "handoff-audit-20261024",
+  "timestamp": "2026-10-24T12:01:45.036770+08:00",
+  "scope": "仅文档、忽略规则与现有助手操作的静态验收；不代表测试、构建或跨客户端切换验证",
+  "reference": {
+    "url": "https://github.com/timorpic/agent-handoff",
+    "commit": "1180fb65ed825cfbddcdbcc461afb76143f41932",
+    "files": {
+      "HANDOFF.md": "6117d152209766aeed26279b189a055c88f40c4c3117ceee919f647a76dea46b",
+      "docs/AGENT-RULES.md": "e1f18693cce0b74a8de089aff464dee46675104d2ce68f25e4df4691597269a7",
+      "docs/HANDOFF-HELPER.md": "ae7aa1914c10fcbd8e1cc31fcaaac0f8fbd60be34fdcbb99abd1d1b46c04e31e",
+      "docs/MULTI-AGENT.md": "bdc069d79e2ea7fdfc82995a02c904d8e2c1631b489e13c851728a2480b6f828",
+      ".gitignore": "1f12c787ba56630beb025ecba0dea75309b53a92051ee52b2fd1d2e223640f62",
+      "scripts/handoff.mjs": "62229866fe1f84f4884207aca882562c99d1b6c5e5b4d2f40a79d95a9075729b"
+    }
+  },
+  "comparison": [
+    {
+      "capability": "规则入口与记录职责",
+      "existing": "AGENTS + docs/AGENT-RULES + MEMORY + CONTEXT/CHECKPOINT",
+      "action": "保留；仅补引用与接入核验"
+    },
+    {
+      "capability": "任务与现场身份",
+      "existing": "inspect 解析项目/任务/修订/分支/HEAD、暂存/未暂存/未跟踪及指纹",
+      "action": "保留脚本；旧检查点分支/HEAD 已落后，成对归档后建立当前现场"
+    },
+    {
+      "capability": "验证状态",
+      "existing": "证据路径/哈希、工作区指纹、stale 提示；claim 不继承旧测试",
+      "action": "保留；明确 CI 证据应绑定被测提交，本机不执行回归测试"
+    },
+    {
+      "capability": "下一步与中断恢复",
+      "existing": "save/claim --recover，精确 handoff_id，完整 previous 备份，外部副作用台账",
+      "action": "保留；明确实际备份命名、owner_lease 不提供锁"
+    },
+    {
+      "capability": "客户端接入",
+      "existing": "CLAUDE.md/adapters/ENTRY.md 引用统一入口",
+      "action": "补实际读取核验步骤；避免将已有记录重置 draft；不创建新的客户端入口"
+    },
+    {
+      "capability": "Git 忽略",
+      "existing": "DEC-004 要求现场/备份/归档跟踪；原 .agents/ 整目录忽略",
+      "action": "保留业务规则和跟踪策略；只忽略 .agents/cache/ 与 tmp/"
+    },
+    {
+      "capability": "不适用模板变更",
+      "existing": "本项目保留 OpenMemory 与既有目录",
+      "action": "不导入忽略现场、移除记忆、共享技能库/治理目录及模板 CI/历史"
+    }
+  ],
+  "checks": {
+    "git_diff_check": "passed",
+    "local_links": {
+      "result": "passed",
+      "count": 13
+    },
+    "ignore_cases": {
+      "result": "passed",
+      "cases": {
+        ".agents/skills/example/SKILL.md": false,
+        ".agents/AGENTS.md": false,
+        "skills/example/SKILL.md": false,
+        ".handoff/CONTEXT.md": false,
+        ".handoff/CHECKPOINT.md": false,
+        ".handoff/archive/example/CONTEXT.md": false,
+        "docs/INITIALIZATION.md": false,
+        "MEMORY.md": false,
+        ".agents/cache/item.json": true,
+        ".agents/tmp/item.txt": true,
+        "data/example.db": true,
+        ".env.local": true,
+        "ee/example.jsc": true,
+        "scripts/analytics-receiver/example.js": true,
+        "node_modules/example/index.js": true,
+        ".next/cache/example": true
+      }
+    },
+    "protected_files": {
+      "result": "passed",
+      "count": 600
+    },
+    "old_task_archive": {
+      "result": "passed",
+      "path": ".handoff/archive/git-workflow-sync-20261023",
+      "byte_identical": true
+    },
+    "index_unchanged": true,
+    "head_unchanged": true,
+    "inspect": {
+      "result": "passed",
+      "verification_state": "stale（修改文档后，旧现场指纹正确提示过期；最终保存后再核对）"
+    },
+    "prompt": {
+      "result": "passed",
+      "task_id_present": true,
+      "recovery_guidance_present": true
+    }
+  },
+  "files": {
+    ".gitignore": "71f7aef9da9c715c3c428360336eb26e45fe7b76730c3dd316aa412dec38c3c2",
+    "HANDOFF.md": "32f39a2edb52c610fbb2a06e37fad70055c3184df1c8663429524abaa165208d",
+    "adapters/ENTRY.md": "bb7ca92b5fa568064c3cdfcab848af4f0698fc81a58fcc58c1bb7d3d09af935b",
+    "docs/HANDOFF-HELPER.md": "59fc3bd1d9773892f755cdfd414b2cb2cd88fad1c387fe70dabb3fea479d1397",
+    "docs/INITIALIZATION.md": "9e37e19cef36ccfa0a1e66bb0742da46057adeb569f3cb3726eae9487cf35bcc",
+    "CHANGELOG.md": "2fa33f53e8ba222fa6a095f6b425048931a2af35592e01a68bb335a90dc14863"
+  },
+  "not_run": [
+    "本机所有测试与构建：用户常驻禁令",
+    "GitHub Actions：修改未提交/推送，远程运行不能覆盖本地现场；本轮未触发",
+    "跨客户端实际切换及中断故障演练：未启动或调度其他工具",
+    "OpenMemory recall/retain：工具 unavailable"
+  ],
+  "remaining_limits": [
+    "无法恢复未保存缓冲区或模型内部状态",
+    "进程目录核查只是辅助证据；owner/lease 与认领不是互斥锁",
+    "ignored 文件、敏感/大文件及外部环境需人工核对"
+  ],
+  "authorization": "未提交、推送、创建 PR、发布、部署；未自动调度 Agent"
+}

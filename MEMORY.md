@@ -130,28 +130,23 @@ README 面向使用者与入口；`docs/` 面向开发与维护；仓库 `wiki/`
 确认依据及证据
 根目录 [AGENTS.md](AGENTS.md)；[README.md](README.md) 文档中心章节。
 
-#### DEC-004 接力现场保留在版本控制，助手只补充机读校验（2026-10-20 确认）
+#### DEC-004 活动接力现场留在本机，冻结归档随仓库跟踪（2026-10-24 调整）
 
 背景
-对照上游 `agent-handoff` 模板检查接力能力时，模板默认把 `.handoff/` 当作忽略的运行文件，
-而本仓库自接入起就把 `MEMORY.md` 与 `.handoff/` 纳入 Git，作为跨工具交接的真实记录。
+原 2026-10-20 约定跟踪全部接力记录，导致提交后回填 HEAD 和结果再次产生未提交改动。
 
 决定
-继续跟踪 `.handoff/`（含 `archive/` 与 `previous/` 备份），不引入模板的 gitignore 规则；
-新增本地助手 `scripts/handoff.mjs`，只做现场指纹、认领状态、备份轮换与证据哈希，
-不改模板的目录结构、AI 技能或多 Agent 约定，也不替换 Hindsight/OpenMemory 流程。
-
-原因
-跟踪现场让交接证据随 PR 评审并可回滚；忽略后新克隆拿不到历史检查点。
-模板的锁文件式假设与“open 认领”只适用于未跟踪场景，直接照搬会与现有记录冲突。
+`MEMORY.md`、正式冻结的 `archive/` 和验证 `evidence/` 继续跟踪；活动 CONTEXT、CHECKPOINT、直接前一版及新运行备份忽略，保留本地文件。已跟踪的历史不可变备份保留，不批量删除。
+助手写入前拒绝被跟踪的活动记录和直接前一版；提交前收尾正式文档，提交后只更新忽略的现场。
 
 影响
-重复内容（IDENTITY、skills、多 Agent 章节）不导入；`docs/INITIALIZATION.md` 保留并扩展文件职责。
-助手写入的备份同属版本控制，评审时与代码一并提交。
+新克隆缺少活动记录时按当前需求重建；跨机器接力须另行人工传递必要的本地现场，不把提交号当作完整现场。
+保留 Navelix 的助手兼容方言及 Hindsight/OpenMemory 约定；共享记忆工具不可用时以本地记录为准，不宣称已写入。
 
 确认依据及证据
-[docs/HANDOFF-HELPER.md](docs/HANDOFF-HELPER.md)、[scripts/handoff.mjs](scripts/handoff.mjs)、
-[src/lib/__tests__/handoff-helper.test.ts](src/lib/__tests__/handoff-helper.test.ts)。
+用户于 2026-10-24 在 agent-handoff 会话要求修复提交后反复出现未提交 Markdown 的问题，并要求同步其他项目；另确认 Navelix 旧任务已停止。
+[开发文档](docs/DEVELOPMENT.md#提交收尾与现场记录)、[接力助手](scripts/handoff.mjs) 与 [回归用例](src/lib/__tests__/handoff-helper.test.ts)。
+替代关系：替代本条原“全部接力现场及备份进 Git”的策略；历史版本保留在 Git。
 
 ---
 
@@ -178,7 +173,7 @@ README 面向使用者与入口；`docs/` 面向开发与维护；仓库 `wiki/`
 ## 6. 开发约束
 
 - `pnpm test`、`pnpm test:coverage` 和 `pnpm build` 已由 `scripts/run-isolated.mjs` 强制分配临时数据目录并清理，不继承外部业务库路径及密钥；直接调用底层 Node 测试 / Next 构建会绕过隔离。启动服务仍须显式指定正确数据目录；验收实例不得复用生产库。
-- `MEMORY.md` 与 `.handoff/` **有意纳入版本控制**；`.gitignore` 中取消忽略它们是刻意决定，不是遗留问题。`ee/`、`data/`、`.env*`、`/scripts/analytics-receiver/` 必须保持未跟踪。
+- `MEMORY.md`、冻结接力归档及正式证据纳入版本控制；活动现场及新运行备份按 DEC-004 忽略。`ee/`、`data/`、`.env*`、`/scripts/analytics-receiver/` 必须保持未跟踪。
 - 提交信息不得添加 `Co-Authored-By` 或工具署名（详见 LES-003）。
 - 不引入与当前任务无关的依赖、格式化或部署方式变更；Schema 改动必须同步首次建表与升级迁移。
 - 迁移编号须核对完整发布历史（含已回滚版本），禁止复用。
